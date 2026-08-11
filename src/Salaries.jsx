@@ -49,12 +49,30 @@ export default function Salaries() {
       calculatedPay = ((emp.payRate || 0) / daysInMonth) * totalDays;
     }
 
-    const netPayable = Math.round(calculatedPay);
     const payoutStatus = payouts[emp.id];
     const isPaidOrPending = !!payoutStatus;
+
+    // If already paid this month, the current due is 0.
+    const prevPaidAmt = isPaidOrPending ? payoutStatus.amount : 0;
+    const netPayable = isPaidOrPending ? 0 : Math.round(calculatedPay);
     const canBePaid = !isPaidOrPending && netPayable > 0 && !!emp.accountNo;
 
-    return { ...emp, totalDays, netPayable, payoutStatus, isPaidOrPending, canBePaid };
+    // Format payment date if it exists
+    const paidDate = isPaidOrPending && payoutStatus.created_at 
+      ? new Date(payoutStatus.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
+      : null;
+
+    return { 
+      ...emp, 
+      totalDays, 
+      calculatedPay: Math.round(calculatedPay), 
+      netPayable, 
+      prevPaidAmt, 
+      paidDate,
+      payoutStatus, 
+      isPaidOrPending, 
+      canBePaid 
+    };
   });
 
   // --- Dashboard Metrics ---
@@ -100,7 +118,7 @@ export default function Salaries() {
 
       const optimisticPayouts = { ...payouts };
       employeesToPay.forEach(emp => {
-        optimisticPayouts[emp.id] = { status: 'API_PENDING', amount: emp.netPayable };
+        optimisticPayouts[emp.id] = { status: 'API_PENDING', amount: emp.netPayable, created_at: new Date() };
       });
       setPayouts(optimisticPayouts);
       setSelectedEmps(new Set());
@@ -146,7 +164,7 @@ export default function Salaries() {
         </div>
       </div>
 
-      {/* Projection Dashboard (Sleeker fonts) */}
+      {/* Projection Dashboard */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         <div className="bg-white/50 backdrop-blur-xl p-5 rounded-2xl border border-white/60 shadow-sm">
           <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest block mb-1">Current Bank Balance</span>
@@ -185,11 +203,11 @@ export default function Salaries() {
         </button>
       </div>
 
-      {/* Full Width Table (Softer typography) */}
-      <div className="bg-white/50 backdrop-blur-xl p-4 rounded-3xl border border-white/60 shadow-xl overflow-x-auto w-full">
-        <table className="w-full text-left border-collapse whitespace-nowrap">
+      {/* Full Width Borderless Table */}
+      <div className="w-full overflow-x-auto pb-8">
+        <table className="w-full text-left border-collapse whitespace-nowrap min-w-[1200px]">
           <thead>
-            <tr className="text-zinc-400 text-[10px] uppercase tracking-widest border-b border-zinc-200">
+            <tr className="text-zinc-400 text-[10px] uppercase tracking-widest border-b-2 border-zinc-200">
               <th className="py-3 px-3 w-10">
                 <input 
                   type="checkbox" 
@@ -200,21 +218,25 @@ export default function Salaries() {
                 />
               </th>
               <th className="py-3 px-2 font-semibold">Employee</th>
+              <th className="py-3 px-2 font-semibold">Bank Details</th>
               <th className="py-3 px-2 font-semibold text-center">Days Worked</th>
               <th className="py-3 px-2 font-semibold text-right">Rate / Salary</th>
-              <th className="py-3 px-2 font-semibold text-right">Net Payable</th>
-              <th className="py-3 px-2 font-semibold text-center">Bank Status</th>
+              <th className="py-3 px-2 font-semibold text-right">Paid (This Month)</th>
+              <th className="py-3 px-2 font-semibold text-right">Current Due</th>
+              <th className="py-3 px-2 font-semibold text-center">Status</th>
             </tr>
           </thead>
-          <tbody className="text-sm text-zinc-700 divide-y divide-zinc-200/40">
+          <tbody className="text-sm text-zinc-700">
             {loading ? (
-              <tr><td colSpan="6" className="py-12 text-center text-zinc-500 font-medium">Calculating payroll...</td></tr>
+              <tr><td colSpan="8" className="py-12 text-center text-zinc-500 font-medium">Calculating payroll...</td></tr>
             ) : payrollData.length === 0 ? (
-              <tr><td colSpan="6" className="py-12 text-center text-zinc-400 font-medium">No active employees found.</td></tr>
+              <tr><td colSpan="8" className="py-12 text-center text-zinc-400 font-medium">No active employees found.</td></tr>
             ) : (
               payrollData.map(emp => (
-                <tr key={emp.id} className={`transition-colors ${selectedEmps.has(emp.id) ? 'bg-orange-50/50' : 'hover:bg-white/40'}`}>
-                  <td className="py-4 px-3">
+                <tr key={emp.id} className={`border-b border-zinc-200/40 transition-colors ${selectedEmps.has(emp.id) ? 'bg-orange-50/50' : 'hover:bg-white/40'}`}>
+                  
+                  {/* Checkbox */}
+                  <td className="py-3 px-3">
                     <input 
                       type="checkbox" 
                       checked={selectedEmps.has(emp.id)}
@@ -223,16 +245,53 @@ export default function Salaries() {
                       className="w-4 h-4 rounded text-orange-500 focus:ring-orange-500 cursor-pointer border-zinc-300 disabled:opacity-30 disabled:cursor-not-allowed"
                     />
                   </td>
-                  <td className="py-4 px-2">
+                  
+                  {/* Employee Name & Role */}
+                  <td className="py-3 px-2">
                     <p className={`font-semibold ${selectedEmps.has(emp.id) ? 'text-orange-900' : 'text-zinc-800'}`}>{emp.fullName}</p>
-                    <p className={`text-[10px] ${!emp.accountNo ? 'text-red-400 font-medium' : 'text-zinc-400'}`}>
-                      {emp.accountNo ? `A/c: ${emp.accountNo.slice(-4)} | ${emp.ifscCode}` : '⚠️ Bank Details Missing'}
-                    </p>
+                    <p className="text-[10px] text-zinc-500">{emp.role}</p>
                   </td>
-                  <td className="py-4 px-2 text-center font-medium text-zinc-600">{emp.totalDays}</td>
-                  <td className="py-4 px-2 text-right text-zinc-500">₹{emp.payRate.toLocaleString('en-IN')} <span className="text-[10px]">({emp.payType})</span></td>
-                  <td className="py-4 px-2 text-right font-bold text-zinc-800">₹{emp.netPayable.toLocaleString('en-IN')}</td>
-                  <td className="py-4 px-2 text-center">
+
+                  {/* Bank Details */}
+                  <td className="py-3 px-2">
+                    {emp.accountNo ? (
+                      <div>
+                        <p className="font-mono text-xs text-zinc-700">{emp.accountNo}</p>
+                        <p className="text-[10px] text-zinc-500">IFSC: {emp.ifscCode}</p>
+                      </div>
+                    ) : (
+                      <span className="text-[10px] text-red-500 font-medium flex items-center gap-1">⚠️ Setup Required</span>
+                    )}
+                  </td>
+
+                  {/* Days Worked */}
+                  <td className="py-3 px-2 text-center font-medium text-zinc-600">
+                    {emp.totalDays}
+                  </td>
+
+                  {/* Rate / Salary */}
+                  <td className="py-3 px-2 text-right">
+                    <p className="text-zinc-700 font-medium">₹{emp.payRate.toLocaleString('en-IN')}</p>
+                    <p className="text-[9px] text-zinc-400">{emp.payType}</p>
+                  </td>
+
+                  {/* Paid Amount & Date */}
+                  <td className="py-3 px-2 text-right">
+                    <p className={`font-medium ${emp.prevPaidAmt > 0 ? 'text-emerald-600' : 'text-zinc-400'}`}>
+                      ₹{emp.prevPaidAmt.toLocaleString('en-IN')}
+                    </p>
+                    <p className="text-[9px] text-zinc-400">{emp.paidDate ? `Date: ${emp.paidDate}` : '-'}</p>
+                  </td>
+
+                  {/* Current Due (Net Payable) */}
+                  <td className="py-3 px-2 text-right">
+                    <span className={`font-bold ${emp.netPayable > 0 ? 'text-zinc-900 text-base' : 'text-zinc-400'}`}>
+                      ₹{emp.netPayable.toLocaleString('en-IN')}
+                    </span>
+                  </td>
+
+                  {/* Status */}
+                  <td className="py-3 px-2 text-center">
                     {emp.isPaidOrPending ? (
                       <span className={`inline-block px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider ${
                         emp.payoutStatus.status === 'API_PENDING' ? 'bg-amber-50 text-amber-600 border border-amber-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'
@@ -242,11 +301,12 @@ export default function Salaries() {
                     ) : emp.netPayable === 0 ? (
                       <span className="text-[10px] text-zinc-300 font-medium uppercase tracking-wider">No Dues</span>
                     ) : !emp.accountNo ? (
-                      <span className="text-[10px] text-red-400 font-medium uppercase tracking-wider">Setup Reqd</span>
+                      <span className="text-[10px] text-red-400 font-medium uppercase tracking-wider">Missing Bank</span>
                     ) : (
-                      <span className="text-[10px] text-zinc-400 font-medium uppercase tracking-wider">Unpaid</span>
+                      <span className="text-[10px] text-zinc-500 font-medium uppercase tracking-wider">Unpaid</span>
                     )}
                   </td>
+
                 </tr>
               ))
             )}
