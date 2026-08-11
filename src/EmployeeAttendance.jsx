@@ -1,41 +1,44 @@
 import React, { useState, useEffect } from 'react';
-import { getEmployees, saveEmployee, getTodayAttendance, saveAttendance } from './db';
+import { getEmployees, saveEmployee, getTodayAttendance, saveAttendance, getMonthlyAttendance } from './db';
 
 export default function EmployeeAttendance({ companySettings = {} }) {
-  const [currentView, setCurrentView] = useState('attendance'); 
+  const [currentView, setCurrentView] = useState('attendance'); // 'attendance', 'monthly', 'directory', 'register', 'view_emp'
   const [selectedEmp, setSelectedEmp] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const [employees, setEmployees] = useState([]);
   const [todayAttendance, setTodayAttendance] = useState({});
+  const [monthlyAttendance, setMonthlyAttendance] = useState({});
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  // Monthly View State
+  const currentDate = new Date();
+  const [viewMonth, setViewMonth] = useState(currentDate.getMonth() + 1);
+  const [viewYear, setViewYear] = useState(currentDate.getFullYear());
+
+  const todayStr = currentDate.toISOString().split('T')[0];
 
   const loadData = async () => {
     setLoading(true);
     const emps = await getEmployees();
     setEmployees(emps);
     
-    const att = await getTodayAttendance(todayStr);
-    setTodayAttendance(att);
+    if (currentView === 'attendance') {
+      const att = await getTodayAttendance(todayStr);
+      setTodayAttendance(att);
+    } else if (currentView === 'monthly') {
+      const monthAtt = await getMonthlyAttendance(viewYear, viewMonth);
+      setMonthlyAttendance(monthAtt);
+    }
     setLoading(false);
   };
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [currentView, viewMonth, viewYear]);
 
   const [newEmp, setNewEmp] = useState({
-    fullName: '',
-    role: 'Site Supervisor',
-    phone: '',
-    payType: 'Monthly',
-    payRate: '',
-    joiningDate: todayStr,
-    bankName: '',
-    accountNo: '',
-    ifscCode: '',
-    idNumber: ''
+    fullName: '', role: 'Site Supervisor', phone: '', payType: 'Monthly', payRate: '',
+    joiningDate: todayStr, bankName: '', accountNo: '', ifscCode: '', idNumber: ''
   });
 
   const [errors, setErrors] = useState({});
@@ -46,9 +49,7 @@ export default function EmployeeAttendance({ companySettings = {} }) {
   const halfDayCount = Object.values(todayAttendance).filter(v => v === 'Half Day').length;
 
   const handleAttendanceChange = async (empId, status) => {
-    // Optimistic UI update
     setTodayAttendance(prev => ({ ...prev, [empId]: status }));
-    // Save to DB
     await saveAttendance(empId, todayStr, status);
   };
 
@@ -75,7 +76,6 @@ export default function EmployeeAttendance({ companySettings = {} }) {
     try {
       await saveEmployee(createdEmp);
       await loadData();
-      
       setNewEmp({
         fullName: '', role: 'Site Supervisor', phone: '', payType: 'Monthly', payRate: '',
         joiningDate: todayStr, bankName: '', accountNo: '', ifscCode: '', idNumber: ''
@@ -85,6 +85,29 @@ export default function EmployeeAttendance({ companySettings = {} }) {
       setCurrentView('attendance');
     } catch (err) {
       alert('Failed to register employee. Check DB connection.');
+    }
+  };
+
+  const getDaysInMonth = (year, month) => new Date(year, month, 0).getDate();
+  const daysArray = Array.from({ length: getDaysInMonth(viewYear, viewMonth) }, (_, i) => i + 1);
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'Present': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+      case 'Half Day': return 'bg-amber-100 text-amber-700 border-amber-200';
+      case 'Absent': return 'bg-red-100 text-red-700 border-red-200';
+      case 'Leave': return 'bg-purple-100 text-purple-700 border-purple-200';
+      default: return 'bg-transparent text-zinc-300 border-dashed border-zinc-200';
+    }
+  };
+
+  const getStatusLetter = (status) => {
+    switch (status) {
+      case 'Present': return 'P';
+      case 'Half Day': return 'H';
+      case 'Absent': return 'A';
+      case 'Leave': return 'L';
+      default: return '-';
     }
   };
 
@@ -108,6 +131,12 @@ export default function EmployeeAttendance({ companySettings = {} }) {
             Today's Attendance
           </button>
           <button 
+            onClick={() => setCurrentView('monthly')}
+            className={`px-4 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${currentView === 'monthly' ? 'bg-zinc-900 text-white shadow-md' : 'bg-white/40 hover:bg-white text-zinc-700 border border-white/50'}`}
+          >
+            Monthly View
+          </button>
+          <button 
             onClick={() => setCurrentView('directory')}
             className={`px-4 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${currentView === 'directory' ? 'bg-zinc-900 text-white shadow-md' : 'bg-white/40 hover:bg-white text-zinc-700 border border-white/50'}`}
           >
@@ -122,85 +151,161 @@ export default function EmployeeAttendance({ companySettings = {} }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white/40 backdrop-blur-md p-5 rounded-2xl border border-white/60 shadow-sm">
-          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Total Staff</span>
-          <p className="text-2xl font-black text-zinc-900 mt-1">{totalEmployees}</p>
-        </div>
-        <div className="bg-emerald-50/50 backdrop-blur-md p-5 rounded-2xl border border-emerald-100 shadow-sm">
-          <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Present Today</span>
-          <p className="text-2xl font-black text-emerald-700 mt-1">{presentCount}</p>
-        </div>
-        <div className="bg-amber-50/50 backdrop-blur-md p-5 rounded-2xl border border-amber-100 shadow-sm">
-          <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest">Half Day</span>
-          <p className="text-2xl font-black text-amber-700 mt-1">{halfDayCount}</p>
-        </div>
-        <div className="bg-red-50/50 backdrop-blur-md p-5 rounded-2xl border border-red-100 shadow-sm">
-          <span className="text-[10px] font-bold text-red-600 uppercase tracking-widest">Absent</span>
-          <p className="text-2xl font-black text-red-700 mt-1">{absentCount}</p>
-        </div>
-      </div>
-
       {currentView === 'attendance' && (
-        <div className="bg-white/40 backdrop-blur-xl p-6 rounded-3xl border border-white/60 shadow-xl">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-wider">
-              Mark Attendance for <span className="text-amber-600">{new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
-            </h3>
-            <span className="text-[10px] bg-zinc-900 text-white font-bold px-3 py-1 rounded-full uppercase tracking-widest">Auto-Saved to DB</span>
+        <>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div className="bg-white/40 backdrop-blur-md p-5 rounded-2xl border border-white/60 shadow-sm">
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Total Staff</span>
+              <p className="text-2xl font-black text-zinc-900 mt-1">{totalEmployees}</p>
+            </div>
+            <div className="bg-emerald-50/50 backdrop-blur-md p-5 rounded-2xl border border-emerald-100 shadow-sm">
+              <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Present Today</span>
+              <p className="text-2xl font-black text-emerald-700 mt-1">{presentCount}</p>
+            </div>
+            <div className="bg-amber-50/50 backdrop-blur-md p-5 rounded-2xl border border-amber-100 shadow-sm">
+              <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest">Half Day</span>
+              <p className="text-2xl font-black text-amber-700 mt-1">{halfDayCount}</p>
+            </div>
+            <div className="bg-red-50/50 backdrop-blur-md p-5 rounded-2xl border border-red-100 shadow-sm">
+              <span className="text-[10px] font-bold text-red-600 uppercase tracking-widest">Absent</span>
+              <p className="text-2xl font-black text-red-700 mt-1">{absentCount}</p>
+            </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+          <div className="bg-white/40 backdrop-blur-xl p-6 rounded-3xl border border-white/60 shadow-xl">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-wider">
+                Mark Attendance for <span className="text-amber-600">{currentDate.toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+              </h3>
+              <span className="text-[10px] bg-zinc-900 text-white font-bold px-3 py-1 rounded-full uppercase tracking-widest">Auto-Saved to DB</span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="text-zinc-500 text-[10px] uppercase tracking-widest border-b border-zinc-300/50">
+                    <th className="py-3 px-3 font-bold">Emp ID</th>
+                    <th className="py-3 px-3 font-bold">Employee Name</th>
+                    <th className="py-3 px-3 font-bold">Role / Job</th>
+                    <th className="py-3 px-3 font-bold text-center">Status Control</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-200/40 text-xs">
+                  {loading ? (
+                    <tr><td colSpan="4" className="text-center py-6 text-zinc-500">Loading staff data...</td></tr>
+                  ) : employees.length === 0 ? (
+                    <tr><td colSpan="4" className="text-center py-6 text-zinc-500">No staff registered yet.</td></tr>
+                  ) : (
+                    employees.map((emp) => {
+                      const currentStatus = todayAttendance[emp.id] || 'Present';
+                      return (
+                        <tr key={emp.id} className="hover:bg-white/30 transition-colors">
+                          <td className="py-3.5 px-3 font-bold text-zinc-500">{emp.empId}</td>
+                          <td className="py-3.5 px-3 font-extrabold text-zinc-900">{emp.fullName}</td>
+                          <td className="py-3.5 px-3 text-zinc-600 font-medium">{emp.role}</td>
+                          <td className="py-3.5 px-3">
+                            <div className="flex justify-center gap-1.5">
+                              {[
+                                { label: 'Present', color: 'bg-emerald-600 text-white' },
+                                { label: 'Half Day', color: 'bg-amber-500 text-white' },
+                                { label: 'Absent', color: 'bg-red-600 text-white' },
+                                { label: 'Leave', color: 'bg-purple-600 text-white' }
+                              ].map((st) => (
+                                <button
+                                  key={st.label}
+                                  onClick={() => handleAttendanceChange(emp.id, st.label)}
+                                  className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                                    currentStatus === st.label
+                                      ? `${st.color} shadow-sm scale-105`
+                                      : 'bg-white/60 text-zinc-500 hover:bg-white hover:text-zinc-900 border border-white/60'
+                                  }`}
+                                >
+                                  {st.label}
+                                </button>
+                              ))}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ========================================================= */}
+      {/* VIEW 2: MONTHLY CALENDAR GRID                             */}
+      {/* ========================================================= */}
+      {currentView === 'monthly' && (
+        <div className="bg-white/40 backdrop-blur-xl p-6 rounded-3xl border border-white/60 shadow-xl">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-wider">Monthly Register</h3>
+            <div className="flex items-center gap-2">
+              <select 
+                value={viewMonth} 
+                onChange={(e) => setViewMonth(Number(e.target.value))} 
+                className="bg-white/60 border border-white/60 rounded-xl px-3 py-1.5 text-xs font-bold text-zinc-800 outline-none"
+              >
+                {Array.from({length: 12}, (_, i) => (
+                  <option key={i+1} value={i+1}>{new Date(2000, i).toLocaleString('en-US', { month: 'long' })}</option>
+                ))}
+              </select>
+              <select 
+                value={viewYear} 
+                onChange={(e) => setViewYear(Number(e.target.value))} 
+                className="bg-white/60 border border-white/60 rounded-xl px-3 py-1.5 text-xs font-bold text-zinc-800 outline-none"
+              >
+                <option value={currentDate.getFullYear() - 1}>{currentDate.getFullYear() - 1}</option>
+                <option value={currentDate.getFullYear()}>{currentDate.getFullYear()}</option>
+                <option value={currentDate.getFullYear() + 1}>{currentDate.getFullYear() + 1}</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto pb-4">
+            <table className="w-full text-left border-collapse min-w-max">
               <thead>
-                <tr className="text-zinc-500 text-[10px] uppercase tracking-widest border-b border-zinc-300/50">
-                  <th className="py-3 px-3 font-bold">Emp ID</th>
-                  <th className="py-3 px-3 font-bold">Employee Name</th>
-                  <th className="py-3 px-3 font-bold">Role / Job</th>
-                  <th className="py-3 px-3 font-bold text-center">Status Control</th>
+                <tr className="text-zinc-500 text-[9px] uppercase border-b border-zinc-300/50">
+                  <th className="py-2 px-3 font-bold sticky left-0 bg-white/60 backdrop-blur-md z-10">Employee Name</th>
+                  {daysArray.map(day => (
+                    <th key={day} className="py-2 px-1 font-bold text-center w-8">{day}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-200/40 text-xs">
                 {loading ? (
-                  <tr><td colSpan="4" className="text-center py-6 text-zinc-500">Loading staff data...</td></tr>
-                ) : employees.length === 0 ? (
-                  <tr><td colSpan="4" className="text-center py-6 text-zinc-500">No staff registered yet.</td></tr>
-                ) : (
-                  employees.map((emp) => {
-                    const currentStatus = todayAttendance[emp.id] || 'Present';
-                    return (
-                      <tr key={emp.id} className="hover:bg-white/30 transition-colors">
-                        <td className="py-3.5 px-3 font-bold text-zinc-500">{emp.empId}</td>
-                        <td className="py-3.5 px-3 font-extrabold text-zinc-900">{emp.fullName}</td>
-                        <td className="py-3.5 px-3 text-zinc-600 font-medium">{emp.role}</td>
-                        <td className="py-3.5 px-3">
-                          <div className="flex justify-center gap-1.5">
-                            {[
-                              { label: 'Present', color: 'bg-emerald-600 text-white' },
-                              { label: 'Half Day', color: 'bg-amber-500 text-white' },
-                              { label: 'Absent', color: 'bg-red-600 text-white' },
-                              { label: 'Leave', color: 'bg-purple-600 text-white' }
-                            ].map((st) => (
-                              <button
-                                key={st.label}
-                                onClick={() => handleAttendanceChange(emp.id, st.label)}
-                                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
-                                  currentStatus === st.label
-                                    ? `${st.color} shadow-sm scale-105`
-                                    : 'bg-white/60 text-zinc-500 hover:bg-white hover:text-zinc-900 border border-white/60'
-                                }`}
-                              >
-                                {st.label}
-                              </button>
-                            ))}
+                  <tr><td colSpan={daysArray.length + 1} className="text-center py-6 text-zinc-500">Loading Calendar...</td></tr>
+                ) : employees.map(emp => (
+                  <tr key={emp.id} className="hover:bg-white/30">
+                    <td className="py-2 px-3 font-extrabold text-zinc-900 sticky left-0 bg-white/60 backdrop-blur-md z-10 border-r border-zinc-200/50">
+                      {emp.fullName}
+                    </td>
+                    {daysArray.map(day => {
+                      const dateStr = `${viewYear}-${String(viewMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                      const empRecord = monthlyAttendance[emp.id] || {};
+                      const status = empRecord[dateStr];
+                      
+                      return (
+                        <td key={day} className="py-2 px-0.5 text-center">
+                          <div className={`w-6 h-6 mx-auto flex items-center justify-center rounded text-[9px] font-black border ${getStatusColor(status)}`}>
+                            {getStatusLetter(status)}
                           </div>
                         </td>
-                      </tr>
-                    );
-                  })
-                )}
+                      );
+                    })}
+                  </tr>
+                ))}
               </tbody>
             </table>
+          </div>
+          <div className="mt-4 flex gap-4 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+            <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-emerald-100 border border-emerald-200 text-emerald-700 flex items-center justify-center text-[7px]">P</span> Present</div>
+            <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-amber-100 border border-amber-200 text-amber-700 flex items-center justify-center text-[7px]">H</span> Half Day</div>
+            <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-red-100 border border-red-200 text-red-700 flex items-center justify-center text-[7px]">A</span> Absent</div>
+            <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-purple-100 border border-purple-200 text-purple-700 flex items-center justify-center text-[7px]">L</span> Leave</div>
           </div>
         </div>
       )}
@@ -313,28 +418,6 @@ export default function EmployeeAttendance({ companySettings = {} }) {
               </div>
             </div>
 
-            <div>
-              <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-3">3. ID & Banking</h4>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                  <label className={labelClass}>Aadhaar / PAN ID</label>
-                  <input type="text" placeholder="Aadhaar Number" value={newEmp.idNumber} onChange={e => setNewEmp({...newEmp, idNumber: e.target.value})} className={inputClass} />
-                </div>
-                <div>
-                  <label className={labelClass}>Bank Name</label>
-                  <input type="text" placeholder="e.g. HDFC Bank" value={newEmp.bankName} onChange={e => setNewEmp({...newEmp, bankName: e.target.value})} className={inputClass} />
-                </div>
-                <div>
-                  <label className={labelClass}>Account Number</label>
-                  <input type="text" placeholder="Account Number" value={newEmp.accountNo} onChange={e => setNewEmp({...newEmp, accountNo: e.target.value})} className={inputClass} />
-                </div>
-                <div>
-                  <label className={labelClass}>IFSC Code</label>
-                  <input type="text" placeholder="IFSC Code" value={newEmp.ifscCode} onChange={e => setNewEmp({...newEmp, ifscCode: e.target.value})} className={inputClass} />
-                </div>
-              </div>
-            </div>
-
             <div className="pt-4 flex justify-end gap-3 border-t border-zinc-200">
               <button type="button" onClick={() => setCurrentView('attendance')} className="px-6 py-3 bg-white/50 border border-white/60 rounded-2xl font-bold text-xs text-zinc-600 hover:bg-white transition-all">Cancel</button>
               <button type="submit" className="px-8 py-3 bg-zinc-900 hover:bg-black text-white font-extrabold rounded-2xl text-xs uppercase tracking-wider transition-all shadow-lg hover:-translate-y-0.5">Complete Registration</button>
@@ -364,19 +447,13 @@ export default function EmployeeAttendance({ companySettings = {} }) {
               <p><strong>Mobile:</strong> {selectedEmp.phone}</p>
               <p><strong>Joining Date:</strong> {selectedEmp.joiningDate}</p>
               <p><strong>Status:</strong> <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 font-bold">{selectedEmp.status}</span></p>
-              <p><strong>ID Record:</strong> {selectedEmp.idNumber || 'N/A'}</p>
             </div>
-
             <div className="space-y-3 bg-white/40 p-4 rounded-2xl border border-white/60">
               <p className="font-bold text-zinc-400 uppercase text-[9px] tracking-widest">Pay & Bank Details</p>
               <p><strong>Wage Type:</strong> {selectedEmp.payType}</p>
               <p><strong>Rate / Salary:</strong> ₹{selectedEmp.payRate.toLocaleString('en-IN')}</p>
-              <p><strong>Bank:</strong> {selectedEmp.bankName || 'N/A'}</p>
-              <p><strong>Account:</strong> {selectedEmp.accountNo || 'N/A'}</p>
-              <p><strong>IFSC:</strong> {selectedEmp.ifscCode || 'N/A'}</p>
             </div>
           </div>
-
           <div className="mt-6 pt-4 border-t border-zinc-200 flex justify-end">
             <button onClick={() => setCurrentView('directory')} className="px-6 py-2.5 bg-zinc-900 text-white rounded-xl text-xs font-bold">Back to Directory</button>
           </div>
