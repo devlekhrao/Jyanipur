@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getEmployees, saveEmployee, getTodayAttendance, saveAttendance, getMonthlyAttendance } from './db';
 
 export default function EmployeeAttendance({ companySettings = {} }) {
-  const [currentView, setCurrentView] = useState('monthly'); // Default to monthly grid now
+  const [currentView, setCurrentView] = useState('monthly'); // Default to monthly grid
   const [selectedEmp, setSelectedEmp] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -56,7 +56,6 @@ export default function EmployeeAttendance({ companySettings = {} }) {
     await saveAttendance(empId, todayStr, status);
   };
 
-  // NEW: Interactive Grid Click Handler
   const handleGridCellClick = async (empId, day) => {
     const dateStr = `${viewYear}-${String(viewMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     const currentStatus = (monthlyAttendance[empId] && monthlyAttendance[empId][dateStr]) || '';
@@ -69,11 +68,9 @@ export default function EmployeeAttendance({ companySettings = {} }) {
       if (nextIndex >= cycle.length) nextIndex = 0;
       nextStatus = cycle[nextIndex];
     } else {
-      // If clicking with the same tool, toggle it off (clear it). Otherwise, apply the tool.
       nextStatus = currentStatus === activeTool ? '' : activeTool;
     }
 
-    // Optimistic UI Update
     setMonthlyAttendance(prev => ({
       ...prev,
       [empId]: {
@@ -82,7 +79,6 @@ export default function EmployeeAttendance({ companySettings = {} }) {
       }
     }));
 
-    // Save to DB in background
     await saveAttendance(empId, dateStr, nextStatus);
   };
 
@@ -150,6 +146,7 @@ export default function EmployeeAttendance({ companySettings = {} }) {
   return (
     <div className="w-full font-['Poppins'] pb-12">
       
+      {/* Top Header & Navigation */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end pb-4 border-b border-zinc-300/50 mb-6 gap-4">
         <div>
           <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Staff & Attendance Portal</h2>
@@ -269,13 +266,14 @@ export default function EmployeeAttendance({ companySettings = {} }) {
       )}
 
       {/* ========================================================= */}
-      {/* VIEW 2: INTERACTIVE MONTHLY CALENDAR GRID                 */}
+      {/* VIEW 2: FULL WIDTH INTERACTIVE MONTHLY CALENDAR GRID        */}
       {/* ========================================================= */}
       {currentView === 'monthly' && (
-        <div className="bg-white/40 backdrop-blur-xl p-6 rounded-3xl border border-white/60 shadow-xl w-full overflow-hidden flex flex-col">
+        <div className="w-full flex flex-col pb-8">
+          
           <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-6 gap-4">
             <div>
-              <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-wider">Interactive Master Register</h3>
+              <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-wider">Monthly Register</h3>
               <p className="text-[10px] text-zinc-500 font-medium mt-1">Select a paintbrush tool, then click cells to mark attendance instantly.</p>
             </div>
             
@@ -309,7 +307,7 @@ export default function EmployeeAttendance({ companySettings = {} }) {
               <div className="w-px h-8 bg-zinc-300/50 hidden xl:block"></div>
 
               {/* Month/Year Filter */}
-              <div className="flex items-center gap-1.5 h-10 bg-white/60 border border-white/60 rounded-2xl px-3 shadow-sm">
+              <div className="flex items-center gap-1.5 h-10 bg-white/60 border border-zinc-200/60 shadow-sm rounded-2xl px-3">
                 <select 
                   value={viewMonth} 
                   onChange={(e) => setViewMonth(Number(e.target.value))} 
@@ -333,11 +331,12 @@ export default function EmployeeAttendance({ companySettings = {} }) {
             </div>
           </div>
 
-          <div className="overflow-x-auto pb-4 flex-1">
+          {/* Full Width Table without Container Box */}
+          <div className="w-full overflow-x-auto pb-4 flex-1">
             <table className="w-full text-left border-collapse min-w-max">
               <thead>
                 <tr className="text-zinc-500 text-[9px] uppercase border-b-2 border-zinc-300/50">
-                  <th className="py-3 px-3 font-bold sticky left-0 bg-[#f4f4f5] z-10 border-r border-zinc-200">Employee Name</th>
+                  <th className="py-3 px-3 font-bold sticky left-0 bg-white/60 backdrop-blur-md z-10 border-r border-zinc-200/50">Employee Name</th>
                   {daysArray.map(day => (
                     <th key={day} className="py-3 px-1 font-bold text-center w-8">{day}</th>
                   ))}
@@ -349,17 +348,16 @@ export default function EmployeeAttendance({ companySettings = {} }) {
                 ) : employees.map(emp => {
                   const empRecord = monthlyAttendance[emp.id] || {};
                   
-                  // Calculate local metrics for the row
                   const presentCount = Object.values(empRecord).filter(s => s === 'Present').length;
                   const halfCount = Object.values(empRecord).filter(s => s === 'Half Day').length;
                   const totalPayableDays = presentCount + (halfCount * 0.5);
 
                   return (
                     <tr key={emp.id} className="hover:bg-white/30 group">
-                      <td className="py-2.5 px-3 sticky left-0 bg-[#fafafa] group-hover:bg-[#f4f4f5] z-10 border-r border-zinc-200 transition-colors">
+                      <td className="py-2.5 px-3 sticky left-0 bg-white/60 backdrop-blur-md group-hover:bg-white/80 z-10 border-r border-zinc-200/50 transition-colors">
                         <div className="flex justify-between items-center w-48">
                           <span className="font-extrabold text-zinc-900 truncate">{emp.fullName}</span>
-                          <span className="text-[9px] font-bold text-zinc-400 bg-white px-1.5 py-0.5 rounded shadow-sm">
+                          <span className="text-[9px] font-bold text-zinc-500 bg-white/50 px-1.5 py-0.5 rounded shadow-sm">
                             {totalPayableDays} Days
                           </span>
                         </div>
@@ -387,8 +385,7 @@ export default function EmployeeAttendance({ companySettings = {} }) {
             </table>
           </div>
           
-          <div className="mt-4 pt-4 border-t border-zinc-300/50 flex flex-wrap gap-4 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
-            <span className="mr-2 text-zinc-400">Legend:</span>
+          <div className="mt-2 pt-4 border-t border-zinc-300/50 flex flex-wrap gap-4 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
             <div className="flex items-center gap-1.5"><span className="w-4 h-4 rounded bg-emerald-500 border border-emerald-600 text-white flex items-center justify-center text-[8px] shadow-sm">P</span> Present</div>
             <div className="flex items-center gap-1.5"><span className="w-4 h-4 rounded bg-amber-400 border border-amber-500 text-white flex items-center justify-center text-[8px] shadow-sm">H</span> Half Day</div>
             <div className="flex items-center gap-1.5"><span className="w-4 h-4 rounded bg-red-500 border border-red-600 text-white flex items-center justify-center text-[8px] shadow-sm">A</span> Absent</div>
