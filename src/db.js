@@ -333,6 +333,9 @@ export async function getProjects() {
       id: p.id,
       name: p.name,
       clientName: p.client_name,
+      clientGstin: p.client_gstin || '',
+      clientPhone: p.client_phone || '',
+      poDate: p.po_date ? new Date(p.po_date).toISOString().split('T')[0] : '',
       budget: Number(p.budget),
       status: p.status
     }));
@@ -348,7 +351,9 @@ export async function saveProject(project) {
       // Update existing project
       const result = await sql`
         UPDATE projects 
-        SET name = ${project.name}, client_name = ${project.clientName}, budget = ${project.budget}, status = ${project.status}
+        SET name = ${project.name}, client_name = ${project.clientName}, 
+            client_gstin = ${project.clientGstin}, client_phone = ${project.clientPhone},
+            po_date = ${project.poDate || null}, budget = ${project.budget}, status = ${project.status}
         WHERE id = ${project.id}
         RETURNING *;
       `;
@@ -356,8 +361,8 @@ export async function saveProject(project) {
     } else {
       // Create new project
       const result = await sql`
-        INSERT INTO projects (name, client_name, budget, status)
-        VALUES (${project.name}, ${project.clientName}, ${project.budget}, ${project.status})
+        INSERT INTO projects (name, client_name, client_gstin, client_phone, po_date, budget, status)
+        VALUES (${project.name}, ${project.clientName}, ${project.clientGstin}, ${project.clientPhone}, ${project.poDate || null}, ${project.budget}, ${project.status})
         RETURNING *;
       `;
       return result[0];

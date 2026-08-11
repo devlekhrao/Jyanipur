@@ -4,14 +4,20 @@ import { getProjects, saveProject, deleteProject } from './db';
 export default function Projects() {
   const [loading, setLoading] = useState(true);
   const [projects, setProjects] = useState([]);
+  const [uniqueClients, setUniqueClients] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isNewClient, setIsNewClient] = useState(false);
+  
   const [formData, setFormData] = useState({
     id: null,
-    name: '',
     clientName: '',
+    clientGstin: '',
+    clientPhone: '',
+    name: '',
+    poDate: new Date().toISOString().split('T')[0],
     budget: '',
     status: 'Planning'
   });
@@ -20,7 +26,7 @@ export default function Projects() {
     setLoading(true);
     const data = await getProjects();
     
-    // Simulating aggregated data from other modules for the UI picture.
+    // Simulating aggregated data (To be replaced with live DB links later)
     const enhancedProjects = data.map(p => ({
       ...p,
       invoicesCount: Math.floor(Math.random() * 5) + 1,
@@ -31,6 +37,20 @@ export default function Projects() {
     }));
 
     setProjects(enhancedProjects);
+
+    // Extract unique clients for the dropdown
+    const clientsMap = {};
+    data.forEach(p => {
+      if (p.clientName && !clientsMap[p.clientName]) {
+        clientsMap[p.clientName] = { 
+          name: p.clientName, 
+          gstin: p.clientGstin, 
+          phone: p.clientPhone 
+        };
+      }
+    });
+    setUniqueClients(Object.values(clientsMap));
+    
     setLoading(false);
   };
 
@@ -41,22 +61,52 @@ export default function Projects() {
   // --- Modal Handlers ---
   const handleOpenModal = (project = null) => {
     if (project) {
+      setIsNewClient(false);
       setFormData({
         id: project.id,
-        name: project.name,
         clientName: project.clientName,
+        clientGstin: project.clientGstin || '',
+        clientPhone: project.clientPhone || '',
+        name: project.name,
+        poDate: project.poDate || new Date().toISOString().split('T')[0],
         budget: project.budget,
         status: project.status
       });
     } else {
-      setFormData({ id: null, name: '', clientName: '', budget: '', status: 'Planning' });
+      setIsNewClient(uniqueClients.length === 0);
+      setFormData({ 
+        id: null, 
+        clientName: uniqueClients.length > 0 ? uniqueClients[0].name : '', 
+        clientGstin: uniqueClients.length > 0 ? uniqueClients[0].gstin : '',
+        clientPhone: uniqueClients.length > 0 ? uniqueClients[0].phone : '',
+        name: '', 
+        poDate: new Date().toISOString().split('T')[0],
+        budget: '', 
+        status: 'Planning' 
+      });
     }
     setIsModalOpen(true);
   };
 
+  const handleClientSelectChange = (e) => {
+    const val = e.target.value;
+    if (val === 'NEW') {
+      setIsNewClient(true);
+      setFormData(prev => ({ ...prev, clientName: '', clientGstin: '', clientPhone: '' }));
+    } else {
+      setIsNewClient(false);
+      const selected = uniqueClients.find(c => c.name === val);
+      setFormData(prev => ({ 
+        ...prev, 
+        clientName: selected.name, 
+        clientGstin: selected.gstin || '', 
+        clientPhone: selected.phone || '' 
+      }));
+    }
+  };
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setFormData({ id: null, name: '', clientName: '', budget: '', status: 'Planning' });
   };
 
   const handleSaveProject = async (e) => {
@@ -91,15 +141,17 @@ export default function Projects() {
   };
 
   const handleView = (projName) => {
-    alert(`Detailed view for ${projName} is coming soon! This will open a dedicated page showing all linked POs, Staff Expenses, and Material Bills.`);
+    alert(`Detailed view for ${projName} is coming soon!`);
   };
 
-  // Group projects by Client Name
+  // Group projects by Client Name and Sort by PO Date
   const clients = {};
   projects.forEach(p => {
     if (!clients[p.clientName]) {
       clients[p.clientName] = {
         name: p.clientName,
+        gstin: p.clientGstin,
+        phone: p.clientPhone,
         totalBudget: 0,
         totalBilled: 0,
         totalCost: 0,
@@ -110,6 +162,11 @@ export default function Projects() {
     clients[p.clientName].totalBudget += p.budget;
     clients[p.clientName].totalBilled += p.totalBilled;
     clients[p.clientName].totalCost += (p.materialCost + p.laborCost);
+  });
+
+  // Sort projects inside each client by PO Date (Oldest first)
+  Object.values(clients).forEach(c => {
+    c.projects.sort((a, b) => new Date(a.poDate || 0) - new Date(b.poDate || 0));
   });
 
   const filteredClients = Object.values(clients).filter(c => {
@@ -132,7 +189,7 @@ export default function Projects() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end pb-4 border-b border-zinc-300/50 mb-6 gap-4">
         <div>
           <h2 className="text-2xl font-bold text-zinc-800 tracking-tight">Project Board & Job Costing</h2>
-          <p className="text-zinc-500 text-xs mt-1 font-medium">Manage client sites, view true profitability, and track sub-projects.</p>
+          <p className="text-zinc-500 text-xs mt-1 font-medium">Onboard clients and sequence multiple projects by PO Date.</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -186,15 +243,19 @@ export default function Projects() {
             <div key={client.name} className="bg-white/50 backdrop-blur-xl rounded-3xl border border-white/60 shadow-xl overflow-hidden">
               
               {/* Client Header */}
-              <div className="bg-zinc-100/50 px-6 py-4 border-b border-zinc-200/50 flex justify-between items-center">
+              <div className="bg-zinc-100/50 px-6 py-4 border-b border-zinc-200/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                   <h3 className="text-sm font-bold text-zinc-900 flex items-center gap-2">
                     <span className="w-6 h-6 rounded-full bg-zinc-800 text-white flex items-center justify-center text-[10px]">{client.name.charAt(0)}</span>
                     {client.name}
                   </h3>
-                  <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest mt-1 ml-8">
-                    {client.projects.length} Sub-Project{client.projects.length > 1 ? 's' : ''} Active
-                  </p>
+                  <div className="flex gap-4 mt-1.5 ml-8">
+                    {client.gstin && <p className="text-[9px] font-mono text-zinc-500 bg-white px-2 py-0.5 rounded border border-zinc-200 shadow-sm">GST: {client.gstin}</p>}
+                    {client.phone && <p className="text-[9px] font-mono text-zinc-500 bg-white px-2 py-0.5 rounded border border-zinc-200 shadow-sm">Ph: {client.phone}</p>}
+                    <p className="text-[9px] font-semibold text-zinc-400 uppercase tracking-widest py-0.5">
+                      {client.projects.length} Project{client.projects.length > 1 ? 's' : ''}
+                    </p>
+                  </div>
                 </div>
                 <div className="text-right hidden sm:block">
                   <p className="text-xs font-bold text-zinc-800">Client Budget: ₹{client.totalBudget.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
@@ -208,6 +269,7 @@ export default function Projects() {
                   <thead>
                     <tr className="text-zinc-400 text-[9px] uppercase tracking-widest border-b border-zinc-200/50 bg-white/30">
                       <th className="py-3 px-6 font-semibold w-64">Project / Site Name</th>
+                      <th className="py-3 px-4 font-semibold w-28">PO Date</th>
                       <th className="py-3 px-4 font-semibold text-center w-24">Status</th>
                       <th className="py-3 px-4 font-semibold text-right w-32">PO Budget</th>
                       <th className="py-3 px-4 font-semibold text-right w-32">Billed (Sales)</th>
@@ -217,17 +279,25 @@ export default function Projects() {
                     </tr>
                   </thead>
                   <tbody className="text-sm text-zinc-700 divide-y divide-zinc-200/30">
-                    {client.projects.map(proj => {
+                    {client.projects.map((proj, index) => {
                       const totalCost = proj.materialCost + proj.laborCost;
                       const margin = proj.totalBilled - totalCost;
                       
                       return (
                         <tr key={proj.id} className="hover:bg-white/60 transition-colors">
                           <td className="py-4 px-6">
-                            <p className="font-bold text-zinc-800">{proj.name}</p>
-                            <p className="text-[10px] text-zinc-500 font-medium mt-0.5">
-                              {proj.invoicesCount} Invoices Linked
-                            </p>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[9px] font-black text-zinc-400">#{index + 1}</span>
+                              <div>
+                                <p className="font-bold text-zinc-800">{proj.name}</p>
+                                <p className="text-[10px] text-zinc-500 font-medium mt-0.5">
+                                  {proj.invoicesCount} Invoices Linked
+                                </p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-4 px-4 text-zinc-600 font-medium text-xs">
+                            {proj.poDate || '-'}
                           </td>
                           <td className="py-4 px-4 text-center">
                             <span className={`inline-block px-2.5 py-1 rounded-md text-[9px] font-semibold uppercase tracking-wider ${
@@ -278,47 +348,115 @@ export default function Projects() {
               <h2 className="text-xl font-extrabold text-zinc-900 tracking-tight">
                 {formData.id ? 'Edit Project Details' : 'Create New Project'}
               </h2>
-              <p className="text-zinc-500 text-xs mt-1 font-medium">Link this project to a client to track budgets and expenses.</p>
+              <p className="text-zinc-500 text-xs mt-1 font-medium">Link this project to a client to track budgets and sequence.</p>
             </div>
 
-            <form onSubmit={handleSaveProject} className="space-y-4 relative z-10">
-              <div>
-                <label className={labelClass}>Client / Company Name *</label>
-                <input 
-                  type="text" 
-                  required
-                  placeholder="e.g., TechCorp Inc." 
-                  value={formData.clientName} 
-                  onChange={e => setFormData({...formData, clientName: e.target.value})} 
-                  className={inputClass} 
-                />
+            <form onSubmit={handleSaveProject} className="space-y-5 relative z-10 max-h-[70vh] overflow-y-auto px-1 hide-scrollbar">
+              
+              {/* CLIENT SECTION */}
+              <div className="bg-zinc-50/80 p-4 rounded-2xl border border-zinc-200/60 space-y-4">
+                <div className="flex justify-between items-center mb-1">
+                  <h3 className="text-[10px] font-black text-zinc-800 uppercase tracking-widest">1. Client Details</h3>
+                </div>
+
+                {!formData.id && uniqueClients.length > 0 && (
+                  <div>
+                    <select 
+                      value={isNewClient ? 'NEW' : formData.clientName} 
+                      onChange={handleClientSelectChange} 
+                      className={`${inputClass} cursor-pointer appearance-none font-bold text-zinc-700`}
+                    >
+                      {uniqueClients.map(c => (
+                        <option key={c.name} value={c.name}>{c.name}</option>
+                      ))}
+                      <option value="NEW">➕ Onboard New Client</option>
+                    </select>
+                  </div>
+                )}
+
+                {(isNewClient || formData.id) && (
+                  <>
+                    <div>
+                      <label className={labelClass}>Client / Company Name *</label>
+                      <input 
+                        type="text" 
+                        required
+                        disabled={!isNewClient && !formData.id}
+                        placeholder="e.g., TechCorp Inc." 
+                        value={formData.clientName} 
+                        onChange={e => setFormData({...formData, clientName: e.target.value})} 
+                        className={`${inputClass} ${!isNewClient && !formData.id ? 'opacity-60 cursor-not-allowed' : ''}`} 
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className={labelClass}>GSTIN (Optional)</label>
+                        <input 
+                          type="text" 
+                          disabled={!isNewClient && !formData.id}
+                          placeholder="e.g., 29ABCDE1234F1Z5" 
+                          value={formData.clientGstin} 
+                          onChange={e => setFormData({...formData, clientGstin: e.target.value.toUpperCase()})} 
+                          className={`${inputClass} font-mono ${!isNewClient && !formData.id ? 'opacity-60 cursor-not-allowed' : ''}`} 
+                          maxLength="15"
+                        />
+                      </div>
+                      <div>
+                        <label className={labelClass}>Phone (Optional)</label>
+                        <input 
+                          type="text" 
+                          disabled={!isNewClient && !formData.id}
+                          placeholder="Contact Number" 
+                          value={formData.clientPhone} 
+                          onChange={e => setFormData({...formData, clientPhone: e.target.value})} 
+                          className={`${inputClass} ${!isNewClient && !formData.id ? 'opacity-60 cursor-not-allowed' : ''}`} 
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
 
-              <div>
-                <label className={labelClass}>Project / Site Name *</label>
-                <input 
-                  type="text" 
-                  required
-                  placeholder="e.g., Office Floor 3 Fitout" 
-                  value={formData.name} 
-                  onChange={e => setFormData({...formData, name: e.target.value})} 
-                  className={inputClass} 
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
+              {/* PROJECT SECTION */}
+              <div className="bg-zinc-50/80 p-4 rounded-2xl border border-zinc-200/60 space-y-4">
+                <h3 className="text-[10px] font-black text-zinc-800 uppercase tracking-widest mb-1">2. Project Details</h3>
+                
                 <div>
-                  <label className={labelClass}>PO Budget (₹) *</label>
+                  <label className={labelClass}>Project / Site Name *</label>
                   <input 
-                    type="number" 
-                    step="any"
+                    type="text" 
                     required
-                    placeholder="0.00" 
-                    value={formData.budget} 
-                    onChange={e => setFormData({...formData, budget: e.target.value})} 
+                    placeholder="e.g., Office Floor 3 Fitout" 
+                    value={formData.name} 
+                    onChange={e => setFormData({...formData, name: e.target.value})} 
                     className={inputClass} 
                   />
                 </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelClass}>PO Budget (₹) *</label>
+                    <input 
+                      type="number" 
+                      step="any"
+                      required
+                      placeholder="0.00" 
+                      value={formData.budget} 
+                      onChange={e => setFormData({...formData, budget: e.target.value})} 
+                      className={inputClass} 
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>PO Date</label>
+                    <input 
+                      type="date" 
+                      value={formData.poDate} 
+                      onChange={e => setFormData({...formData, poDate: e.target.value})} 
+                      className={inputClass} 
+                    />
+                  </div>
+                </div>
+
                 <div>
                   <label className={labelClass}>Status</label>
                   <select 
@@ -334,7 +472,7 @@ export default function Projects() {
                 </div>
               </div>
 
-              <div className="flex gap-3 mt-8 pt-4 border-t border-zinc-200">
+              <div className="flex gap-3 pt-4">
                 <button 
                   type="button" 
                   onClick={handleCloseModal}
@@ -354,7 +492,7 @@ export default function Projects() {
                 <button 
                   type="button"
                   onClick={() => handleDelete(formData.id)}
-                  className="w-full mt-3 py-2 text-[10px] text-red-500 hover:text-red-700 font-bold uppercase tracking-widest transition-colors"
+                  className="w-full mt-2 py-2 text-[10px] text-red-500 hover:text-red-700 font-bold uppercase tracking-widest transition-colors"
                 >
                   Delete Project
                 </button>
