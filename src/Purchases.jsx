@@ -80,15 +80,12 @@ export default function Purchases() {
     setEndDate(getLastDay(y, selectedMonth));
   };
 
-  // Filter by Date Range AND Search Query
   const filteredPurchases = purchases.filter(p => {
     if (!p.invoiceDate) return false;
     
-    // Check Date
     const inDateRange = p.invoiceDate >= startDate && p.invoiceDate <= endDate;
     if (!inDateRange) return false;
 
-    // Check Search Query
     if (searchQuery.trim() !== '') {
       const q = searchQuery.toLowerCase();
       return (
@@ -151,13 +148,12 @@ export default function Purchases() {
   };
 
   const handleStatusChange = async (id, newStatus) => {
-    // Optimistic Update for fast UI
     setPurchases(prev => prev.map(p => p.id === id ? { ...p, returnStatus: newStatus } : p));
     try {
       await updatePurchaseStatus(id, newStatus);
     } catch (err) {
       alert("Failed to update status.");
-      loadData(); // Revert on failure
+      loadData(); 
     }
   };
 
@@ -226,19 +222,19 @@ export default function Purchases() {
         <div className="flex flex-wrap items-center gap-3">
           
           {/* Universal Search Bar */}
-          <div className="flex items-center bg-white/60 border border-zinc-200/60 rounded-xl px-2 py-1 shadow-sm w-full md:w-auto">
-            <span className="text-[10px] text-zinc-400 pl-1">🔍</span>
+          <div className="flex items-center h-9 bg-white/60 border border-zinc-200/60 rounded-xl px-3 shadow-sm w-full md:w-auto">
+            <span className="text-[10px] text-zinc-400">🔍</span>
             <input 
               type="text" 
               placeholder="Search vendor, amt, hsn..." 
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="bg-transparent border-none text-[11px] font-medium text-zinc-800 outline-none px-2 py-1 w-full md:w-36"
+              className="bg-transparent border-none text-xs font-medium text-zinc-800 outline-none px-2 w-full md:w-36 placeholder:text-zinc-400"
             />
           </div>
 
           {/* Month / Year Quick Select */}
-          <div className="flex items-center gap-1.5 bg-white/60 border border-zinc-200/60 rounded-xl px-2 py-1 shadow-sm">
+          <div className="flex items-center h-9 bg-white/60 border border-zinc-200/60 rounded-xl px-2 shadow-sm">
             <select value={selectedMonth} onChange={handleMonthChange} className="bg-transparent border-none text-xs font-bold text-zinc-800 outline-none cursor-pointer px-1">
               {Array.from({length: 12}, (_, i) => (
                 <option key={i+1} value={i+1}>{new Date(2000, i).toLocaleString('en-US', { month: 'short' })}</option>
@@ -254,20 +250,20 @@ export default function Purchases() {
           <span className="text-zinc-300 font-light hidden xl:inline">|</span>
 
           {/* Explicit Date Range */}
-          <div className="flex items-center bg-white/60 border border-zinc-200/60 rounded-xl px-2 py-1 shadow-sm">
-            <span className="text-[9px] font-bold text-zinc-500 uppercase px-1.5">From:</span>
-            <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="bg-transparent border-none text-[11px] font-bold text-zinc-800 outline-none cursor-pointer" />
+          <div className="flex items-center h-9 bg-white/60 border border-zinc-200/60 rounded-xl px-3 shadow-sm">
+            <span className="text-[10px] font-bold text-zinc-500 uppercase mr-1.5">From:</span>
+            <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="bg-transparent border-none text-xs font-bold text-zinc-800 outline-none cursor-pointer" />
           </div>
-          <div className="flex items-center bg-white/60 border border-zinc-200/60 rounded-xl px-2 py-1 shadow-sm">
-            <span className="text-[9px] font-bold text-zinc-500 uppercase px-1.5">To:</span>
-            <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="bg-transparent border-none text-[11px] font-bold text-zinc-800 outline-none cursor-pointer" />
+          <div className="flex items-center h-9 bg-white/60 border border-zinc-200/60 rounded-xl px-3 shadow-sm">
+            <span className="text-[10px] font-bold text-zinc-500 uppercase mr-1.5">To:</span>
+            <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="bg-transparent border-none text-xs font-bold text-zinc-800 outline-none cursor-pointer" />
           </div>
 
           {/* Export Dropdown */}
           <div className="relative" ref={exportRef}>
             <button 
               onClick={() => setExportMenuOpen(!exportMenuOpen)} 
-              className="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2 rounded-xl text-xs font-bold transition-all shadow-md ml-1 flex items-center gap-2"
+              className="flex items-center justify-center h-9 bg-emerald-600 hover:bg-emerald-500 text-white px-5 rounded-xl text-xs font-bold transition-all shadow-md gap-2"
             >
               Export <span className="text-[9px]">▼</span>
             </button>
@@ -374,7 +370,7 @@ export default function Purchases() {
             {loading ? (
               <tr><td colSpan="12" className="py-12 text-center text-zinc-500 font-medium">Loading purchases...</td></tr>
             ) : filteredPurchases.length === 0 ? (
-              <tr><td colSpan="12" className="py-12 text-center text-zinc-400 font-medium">No purchases found. Type in the row above to add a bill.</td></tr>
+              <tr><td colSpan="12" className="py-12 text-center text-zinc-400 font-medium">No purchases found for this criteria. Type in the row above to add a bill.</td></tr>
             ) : (
               filteredPurchases.map(p => (
                 <tr key={p.id} className="border-b border-zinc-200/40 hover:bg-white/30 transition-colors group">
