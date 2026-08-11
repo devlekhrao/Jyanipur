@@ -5,7 +5,7 @@ import EmployeeAttendance from './EmployeeAttendance';
 import Purchases from './Purchases';
 import EmployeeExpenses from './EmployeeExpenses';
 import Salaries from './Salaries';
-import GST from './GST'; // Replaced Reports with GST
+import GST from './GST';
 
 export default function App() {
   const [email, setEmail] = useState('');
@@ -99,7 +99,8 @@ export default function App() {
               <div className="h-px w-full bg-zinc-300/40"></div>
             </div>
 
-            <div className="flex-1 overflow-y-auto py-4 px-5 flex flex-col gap-2">
+            {/* Main Application Modules */}
+            <div className="flex-1 overflow-y-auto py-4 px-5 flex flex-col gap-2 custom-scrollbar">
               {[
                 'Dashboard',
                 'Projects',
@@ -110,8 +111,7 @@ export default function App() {
                 'Staff Expenses',     
                 'Salaries',
                 'Income',
-                'GST Filing', // Updated sidebar entry
-                'Settings'
+                'GST Filing'
               ].map((page) => (
                 <button
                   key={page}
@@ -127,7 +127,18 @@ export default function App() {
               ))}
             </div>
 
-            <div className="p-6">
+            {/* Pinned Bottom Actions */}
+            <div className="p-5 flex flex-col gap-2 border-t border-zinc-300/40">
+              <button
+                onClick={() => setActivePage('Settings')}
+                className={`text-left px-5 py-3 rounded-xl text-xs transition-all duration-300 flex items-center ${
+                  activePage === 'Settings' 
+                    ? 'bg-zinc-900 text-white font-semibold shadow-lg shadow-zinc-900/20 translate-x-1' 
+                    : 'text-zinc-600 hover:bg-white/80 hover:text-zinc-900 font-medium'
+                }`}
+              >
+                Settings
+              </button>
               <button 
                 onClick={handleLogout}
                 className="w-full bg-white/50 border border-white/60 text-zinc-500 hover:bg-red-500 hover:text-white hover:border-red-500 py-3 rounded-xl text-[10px] uppercase tracking-widest font-bold transition-all duration-300 cursor-pointer shadow-sm"
@@ -138,7 +149,7 @@ export default function App() {
           </aside>
 
           <main className="flex-1 flex flex-col h-full overflow-hidden relative z-10 print:overflow-visible">
-            <div className="flex-1 p-8 lg:p-12 overflow-y-auto print:p-0 print:overflow-visible">
+            <div className="flex-1 p-8 lg:p-12 overflow-y-auto print:p-0 print:overflow-visible custom-scrollbar">
               <div className="max-w-7xl mx-auto print:max-w-none print:mx-0">
                 
                 {activePage === 'Tax Invoice' ? (
@@ -153,7 +164,7 @@ export default function App() {
                   <EmployeeExpenses />
                 ) : activePage === 'Salaries' ? (
                   <Salaries />
-                ) : activePage === 'GST Filing' ? ( // Updated rendering condition
+                ) : activePage === 'GST Filing' ? ( 
                   <GST />
                 ) : activePage === 'Settings' ? (
                   <div className="w-full pb-20">
