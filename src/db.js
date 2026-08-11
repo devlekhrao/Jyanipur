@@ -188,7 +188,6 @@ export async function getExpenses() {
     return [];
   }
 }
-
 // ==========================================
 // PURCHASES & INWARD SUPPLIES MODULE
 // ==========================================
@@ -204,6 +203,8 @@ export async function getPurchases() {
       gstin: p.gstin,
       hsn: p.hsn,
       taxableAmount: Number(p.taxable_amount),
+      gstPercent: Number(p.gst_percent || 18),
+      gstType: p.gst_type || 'CGST/SGST',
       gstAmount: Number(p.gst_amount),
       totalAmount: Number(p.total_amount),
       returnStatus: p.return_status
@@ -219,10 +220,10 @@ export async function savePurchase(p) {
     const result = await sql`
       INSERT INTO purchases (
         fy, invoice_date, invoice_no, vendor_name, gstin, hsn, 
-        taxable_amount, gst_amount, total_amount, return_status
+        taxable_amount, gst_percent, gst_type, gst_amount, total_amount, return_status
       ) VALUES (
         ${p.fy}, ${p.invoiceDate}, ${p.invoiceNo}, ${p.vendorName}, ${p.gstin}, ${p.hsn},
-        ${p.taxableAmount}, ${p.gstAmount}, ${p.totalAmount}, ${p.returnStatus}
+        ${p.taxableAmount}, ${p.gstPercent}, ${p.gstType}, ${p.gstAmount}, ${p.totalAmount}, ${p.returnStatus}
       )
       RETURNING *;
     `;
