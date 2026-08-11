@@ -290,3 +290,32 @@ export async function deleteEmployeeExpense(id) {
     console.error('Error deleting employee expense:', err);
   }
 }
+// ==========================================
+// SALARIES MODULE
+// ==========================================
+export async function getMonthlyPayouts(year, month) {
+  try {
+    const data = await sql`SELECT * FROM salary_payouts WHERE year = ${year} AND month = ${month}`;
+    return data.reduce((acc, curr) => {
+      acc[curr.emp_id] = curr;
+      return acc;
+    }, {});
+  } catch (err) {
+    console.error('Error fetching payouts:', err);
+    return {};
+  }
+}
+
+export async function initiatePayout(empId, month, year, amount) {
+  try {
+    const result = await sql`
+      INSERT INTO salary_payouts (emp_id, month, year, amount, status)
+      VALUES (${empId}, ${month}, ${year}, ${amount}, 'API_PENDING')
+      RETURNING *;
+    `;
+    return result[0];
+  } catch (err) {
+    console.error('Error initiating payout:', err);
+    throw err;
+  }
+}
