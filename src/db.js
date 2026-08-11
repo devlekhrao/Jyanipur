@@ -249,3 +249,44 @@ export async function updatePurchaseStatus(id, newStatus) {
     throw err;
   }
 }
+// ==========================================
+// EMPLOYEE EXPENSES MODULE
+// ==========================================
+export async function getEmployeeExpenses() {
+  try {
+    const data = await sql`SELECT * FROM employee_expenses ORDER BY date DESC, id DESC`;
+    return data.map(e => ({
+      id: e.id,
+      empId: e.emp_id,
+      date: e.date ? new Date(e.date).toISOString().split('T')[0] : '',
+      category: e.category,
+      description: e.description,
+      amount: Number(e.amount)
+    }));
+  } catch (err) {
+    console.error('Error fetching employee expenses:', err);
+    return [];
+  }
+}
+
+export async function saveEmployeeExpense(exp) {
+  try {
+    const result = await sql`
+      INSERT INTO employee_expenses (emp_id, date, category, description, amount) 
+      VALUES (${exp.empId}, ${exp.date}, ${exp.category}, ${exp.description}, ${exp.amount})
+      RETURNING *;
+    `;
+    return result[0];
+  } catch (err) {
+    console.error('Error saving employee expense:', err);
+    throw err;
+  }
+}
+
+export async function deleteEmployeeExpense(id) {
+  try {
+    await sql`DELETE FROM employee_expenses WHERE id = ${id}`;
+  } catch (err) {
+    console.error('Error deleting employee expense:', err);
+  }
+}

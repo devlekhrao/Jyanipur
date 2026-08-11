@@ -4,6 +4,7 @@ import Estimation from './Estimation';
 import EmployeeAttendance from './EmployeeAttendance';
 import Reports from './Reports';
 import Purchases from './Purchases';
+import EmployeeExpenses from './EmployeeExpenses';
 
 export default function App() {
   const [email, setEmail] = useState('');
@@ -105,6 +106,7 @@ export default function App() {
                 'Tax Invoice',
                 'Purchases',
                 'Employee Attendance',
+                'Staff Expenses',     
                 'Salaries',
                 'Income',
                 'Reports',
@@ -146,6 +148,8 @@ export default function App() {
                   <Purchases />
                 ) : activePage === 'Employee Attendance' ? (
                   <EmployeeAttendance companySettings={companySettings} />
+                ) : activePage === 'Staff Expenses' ? (
+                  <EmployeeExpenses />
                 ) : activePage === 'Reports' ? (
                   <Reports />
                 ) : activePage === 'Settings' ? (
