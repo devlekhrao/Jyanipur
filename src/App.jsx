@@ -5,6 +5,7 @@ import EmployeeAttendance from './EmployeeAttendance';
 import Purchases from './Purchases';
 import EmployeeExpenses from './EmployeeExpenses';
 import Salaries from './Salaries';
+import Income from './Income';
 import GST from './GST';
 
 export default function App() {
@@ -128,13 +129,13 @@ export default function App() {
             </div>
 
             {/* Pinned Bottom Actions */}
-            <div className="p-5 flex flex-col gap-2 border-t border-zinc-300/40">
+            <div className="p-5 flex flex-col gap-3 border-t border-zinc-300/40">
               <button
                 onClick={() => setActivePage('Settings')}
                 className={`w-full py-3 rounded-xl text-[10px] uppercase tracking-widest font-bold transition-all duration-300 cursor-pointer shadow-sm border ${
                   activePage === 'Settings' 
                     ? 'bg-zinc-900 text-white border-zinc-900 shadow-md' 
-                    : 'bg-white/50 border-white/60 text-zinc-500 hover:bg-white/80 hover:text-zinc-900'
+                    : 'bg-white/50 border-white/60 text-zinc-500 hover:bg-zinc-800 hover:text-white hover:border-zinc-800'
                 }`}
               >
                 Settings
@@ -164,6 +165,8 @@ export default function App() {
                   <EmployeeExpenses />
                 ) : activePage === 'Salaries' ? (
                   <Salaries />
+                ) : activePage === 'Income' ? (
+                  <Income />
                 ) : activePage === 'GST Filing' ? ( 
                   <GST />
                 ) : activePage === 'Settings' ? (

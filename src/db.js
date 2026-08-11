@@ -319,3 +319,69 @@ export async function initiatePayout(empId, month, year, amount) {
     throw err;
   }
 }
+// ==========================================
+// PROJECTS & INCOME MODULE
+// ==========================================
+export async function getProjects() {
+  try {
+    const data = await sql`SELECT * FROM projects ORDER BY created_at DESC`;
+    return data.map(p => ({
+      id: p.id,
+      name: p.name,
+      clientName: p.client_name,
+      budget: Number(p.budget),
+      status: p.status
+    }));
+  } catch (err) {
+    console.error('Error fetching projects:', err);
+    return [];
+  }
+}
+
+export async function getIncomeRecords() {
+  try {
+    const data = await sql`
+      SELECT i.*, p.name as project_name, p.client_name 
+      FROM income_records i
+      JOIN projects p ON i.project_id = p.id
+      ORDER BY i.date DESC, i.id DESC
+    `;
+    return data.map(i => ({
+      id: i.id,
+      projectId: i.project_id,
+      projectName: i.project_name,
+      clientName: i.client_name,
+      date: i.date ? new Date(i.date).toISOString().split('T')[0] : '',
+      amount: Number(i.amount),
+      paymentMode: i.payment_mode,
+      referenceNo: i.reference_no,
+      notes: i.notes
+    }));
+  } catch (err) {
+    console.error('Error fetching income:', err);
+    return [];
+  }
+}
+
+export async function saveIncomeRecord(record) {
+  try {
+    const result = await sql`
+      INSERT INTO income_records (project_id, date, amount, payment_mode, reference_no, notes)
+      VALUES (${record.projectId}, ${record.date}, ${record.amount}, ${record.paymentMode}, ${record.referenceNo}, ${record.notes})
+      RETURNING *;
+    `;
+    return result[0];
+  } catch (err) {
+    console.error('Error saving income:', err);
+    throw err;
+  }
+}
+
+export async function deleteIncomeRecord(id) {
+  try {
+    await sql`DELETE FROM income_records WHERE id = ${id}`;
+  } catch (err) {
+    console.error('Error deleting income:', err);
+    throw err;
+  }
+}
