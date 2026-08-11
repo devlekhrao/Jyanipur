@@ -188,6 +188,7 @@ export async function getExpenses() {
     return [];
   }
 }
+
 // ==========================================
 // PURCHASES & INWARD SUPPLIES MODULE
 // ==========================================
@@ -249,6 +250,7 @@ export async function updatePurchaseStatus(id, newStatus) {
     throw err;
   }
 }
+
 // ==========================================
 // EMPLOYEE EXPENSES MODULE
 // ==========================================
@@ -290,6 +292,7 @@ export async function deleteEmployeeExpense(id) {
     console.error('Error deleting employee expense:', err);
   }
 }
+
 // ==========================================
 // SALARIES MODULE
 // ==========================================
@@ -319,6 +322,7 @@ export async function initiatePayout(empId, month, year, amount) {
     throw err;
   }
 }
+
 // ==========================================
 // PROJECTS & INCOME MODULE
 // ==========================================
@@ -335,6 +339,41 @@ export async function getProjects() {
   } catch (err) {
     console.error('Error fetching projects:', err);
     return [];
+  }
+}
+
+export async function saveProject(project) {
+  try {
+    if (project.id) {
+      // Update existing project
+      const result = await sql`
+        UPDATE projects 
+        SET name = ${project.name}, client_name = ${project.clientName}, budget = ${project.budget}, status = ${project.status}
+        WHERE id = ${project.id}
+        RETURNING *;
+      `;
+      return result[0];
+    } else {
+      // Create new project
+      const result = await sql`
+        INSERT INTO projects (name, client_name, budget, status)
+        VALUES (${project.name}, ${project.clientName}, ${project.budget}, ${project.status})
+        RETURNING *;
+      `;
+      return result[0];
+    }
+  } catch (err) {
+    console.error('Error saving project:', err);
+    throw err;
+  }
+}
+
+export async function deleteProject(id) {
+  try {
+    await sql`DELETE FROM projects WHERE id = ${id}`;
+  } catch (err) {
+    console.error('Error deleting project:', err);
+    throw err;
   }
 }
 
