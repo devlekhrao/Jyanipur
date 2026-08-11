@@ -241,3 +241,11 @@ export async function deletePurchase(id) {
     console.error('Error deleting purchase:', err);
   }
 }
+export async function updatePurchaseStatus(id, newStatus) {
+  try {
+    await sql`UPDATE purchases SET return_status = ${newStatus} WHERE id = ${id}`;
+  } catch (err) {
+    console.error('Error updating purchase status:', err);
+    throw err;
+  }
+}

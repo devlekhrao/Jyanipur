@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getPurchases, savePurchase, deletePurchase } from './db';
+import { getPurchases, savePurchase, deletePurchase, updatePurchaseStatus } from './db';
 
-// Helper to auto-calculate Financial Year (e.g., "2026-27") based on Invoice Date
 function getFinancialYear(dateStr) {
   if (!dateStr) return '';
   const d = new Date(dateStr);
@@ -26,8 +25,8 @@ export default function Purchases() {
 
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // Default to 1st of current month to end of current month
   const getFirstDay = (y, m) => new Date(y, m - 1, 1).toISOString().split('T')[0];
   const getLastDay = (y, m) => new Date(y, m, 0).toISOString().split('T')[0];
 
@@ -57,7 +56,6 @@ export default function Purchases() {
     loadData();
   }, []);
 
-  // Close export menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (exportRef.current && !exportRef.current.contains(event.target)) {
@@ -68,7 +66,6 @@ export default function Purchases() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Handle Month/Year Quick Select changes
   const handleMonthChange = (e) => {
     const m = Number(e.target.value);
     setSelectedMonth(m);
@@ -83,17 +80,34 @@ export default function Purchases() {
     setEndDate(getLastDay(y, selectedMonth));
   };
 
-  // Filter by Date Range
+  // Filter by Date Range AND Search Query
   const filteredPurchases = purchases.filter(p => {
     if (!p.invoiceDate) return false;
-    return p.invoiceDate >= startDate && p.invoiceDate <= endDate;
+    
+    // Check Date
+    const inDateRange = p.invoiceDate >= startDate && p.invoiceDate <= endDate;
+    if (!inDateRange) return false;
+
+    // Check Search Query
+    if (searchQuery.trim() !== '') {
+      const q = searchQuery.toLowerCase();
+      return (
+        (p.invoiceNo && p.invoiceNo.toLowerCase().includes(q)) ||
+        (p.vendorName && p.vendorName.toLowerCase().includes(q)) ||
+        (p.gstin && p.gstin.toLowerCase().includes(q)) ||
+        (p.hsn && p.hsn.toLowerCase().includes(q)) ||
+        (p.returnStatus && p.returnStatus.toLowerCase().includes(q)) ||
+        (p.totalAmount && p.totalAmount.toString().includes(q)) ||
+        (p.invoiceDate && p.invoiceDate.includes(q))
+      );
+    }
+    return true;
   });
 
   const totalTaxable = filteredPurchases.reduce((sum, p) => sum + p.taxableAmount, 0);
   const totalGst = filteredPurchases.reduce((sum, p) => sum + p.gstAmount, 0);
   const totalGross = filteredPurchases.reduce((sum, p) => sum + p.totalAmount, 0);
 
-  // Live Calculations for the Input Row (Ensuring perfect decimal math)
   const liveTaxable = parseFloat(newBill.taxableAmount) || 0;
   const liveGstAmount = Number((liveTaxable * (parseFloat(newBill.gstPercent) / 100)).toFixed(2));
   const liveTotalAmount = Number((liveTaxable + liveGstAmount).toFixed(2));
@@ -136,13 +150,23 @@ export default function Purchases() {
     }
   };
 
-  // --- EXPORT FUNCTIONS ---
+  const handleStatusChange = async (id, newStatus) => {
+    // Optimistic Update for fast UI
+    setPurchases(prev => prev.map(p => p.id === id ? { ...p, returnStatus: newStatus } : p));
+    try {
+      await updatePurchaseStatus(id, newStatus);
+    } catch (err) {
+      alert("Failed to update status.");
+      loadData(); // Revert on failure
+    }
+  };
+
   const getExportData = () => {
     const headers = ["Inv Date", "Inv No", "Vendor Name", "GSTIN", "HSN", "Taxable Amt", "Tax Type", "GST %", "GST Amt", "Total Amt", "Return Status"];
     const rows = filteredPurchases.map(p => [
       p.invoiceDate, 
       p.invoiceNo || '-', 
-      `"${p.vendorName}"`, // Quotes to prevent comma breaks
+      `"${p.vendorName}"`, 
       p.gstin || '-', 
       p.hsn || '-',
       p.taxableAmount.toFixed(2), 
@@ -165,7 +189,6 @@ export default function Purchases() {
 
   const exportToXLS = () => {
     const { headers, rows } = getExportData();
-    // Excel reads Tab-Separated Values (TSV) natively when saved as .xls
     const xlsContent = [headers, ...rows].map(e => e.join("\t")).join("\n");
     const blob = new Blob([xlsContent], { type: 'application/vnd.ms-excel;charset=utf-8;' });
     triggerDownload(blob, `Purchases_${startDate}_to_${endDate}.xls`);
@@ -188,7 +211,6 @@ export default function Purchases() {
     document.body.removeChild(link);
   };
 
-  // Seamless Inputs
   const inputClass = "w-full px-1 py-2 bg-transparent border-b border-transparent hover:border-zinc-300 focus:border-zinc-900 focus:outline-none text-zinc-900 text-[11px] font-medium transition-all placeholder:text-zinc-400";
 
   return (
@@ -203,6 +225,18 @@ export default function Purchases() {
 
         <div className="flex flex-wrap items-center gap-3">
           
+          {/* Universal Search Bar */}
+          <div className="flex items-center bg-white/60 border border-zinc-200/60 rounded-xl px-2 py-1 shadow-sm w-full md:w-auto">
+            <span className="text-[10px] text-zinc-400 pl-1">🔍</span>
+            <input 
+              type="text" 
+              placeholder="Search vendor, amt, hsn..." 
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="bg-transparent border-none text-[11px] font-medium text-zinc-800 outline-none px-2 py-1 w-full md:w-36"
+            />
+          </div>
+
           {/* Month / Year Quick Select */}
           <div className="flex items-center gap-1.5 bg-white/60 border border-zinc-200/60 rounded-xl px-2 py-1 shadow-sm">
             <select value={selectedMonth} onChange={handleMonthChange} className="bg-transparent border-none text-xs font-bold text-zinc-800 outline-none cursor-pointer px-1">
@@ -217,7 +251,7 @@ export default function Purchases() {
             </select>
           </div>
 
-          <span className="text-zinc-300 font-light">|</span>
+          <span className="text-zinc-300 font-light hidden xl:inline">|</span>
 
           {/* Explicit Date Range */}
           <div className="flex items-center bg-white/60 border border-zinc-200/60 rounded-xl px-2 py-1 shadow-sm">
@@ -340,7 +374,7 @@ export default function Purchases() {
             {loading ? (
               <tr><td colSpan="12" className="py-12 text-center text-zinc-500 font-medium">Loading purchases...</td></tr>
             ) : filteredPurchases.length === 0 ? (
-              <tr><td colSpan="12" className="py-12 text-center text-zinc-400 font-medium">No purchases found for this date range. Type in the row above to add a bill.</td></tr>
+              <tr><td colSpan="12" className="py-12 text-center text-zinc-400 font-medium">No purchases found. Type in the row above to add a bill.</td></tr>
             ) : (
               filteredPurchases.map(p => (
                 <tr key={p.id} className="border-b border-zinc-200/40 hover:bg-white/30 transition-colors group">
@@ -355,13 +389,20 @@ export default function Purchases() {
                   <td className="py-3.5 px-2 text-right text-emerald-600 font-bold">₹ {p.gstAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                   <td className="py-3.5 px-2 text-right font-black text-zinc-900">₹ {p.totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                   <td className="py-3.5 px-2 text-center">
-                    <span className={`inline-block px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest border ${
-                      p.returnStatus === '2B Matched' ? 'bg-blue-50 text-blue-600 border-blue-200' :
-                      p.returnStatus === 'ITC Claimed' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
-                      'bg-amber-50 text-amber-600 border-amber-200'
-                    }`}>
-                      {p.returnStatus}
-                    </span>
+                    {/* Live Update Status Dropdown */}
+                    <select 
+                      value={p.returnStatus} 
+                      onChange={(e) => handleStatusChange(p.id, e.target.value)}
+                      className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest border outline-none cursor-pointer appearance-none ${
+                        p.returnStatus === '2B Matched' ? 'bg-blue-50 text-blue-600 border-blue-200' :
+                        p.returnStatus === 'ITC Claimed' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
+                        'bg-amber-50 text-amber-600 border-amber-200'
+                      }`}
+                    >
+                      <option value="Pending" className="text-zinc-800 bg-white">Pending</option>
+                      <option value="2B Matched" className="text-zinc-800 bg-white">2B Matched</option>
+                      <option value="ITC Claimed" className="text-zinc-800 bg-white">ITC Claimed</option>
+                    </select>
                   </td>
                   <td className="py-3.5 px-2 text-center opacity-0 group-hover:opacity-100 transition-opacity print:hidden">
                     <button onClick={() => handleDelete(p.id)} className="text-red-400 hover:text-red-600 font-bold text-[10px] uppercase tracking-wider">Del</button>
