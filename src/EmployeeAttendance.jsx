@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getEmployees, saveEmployee, getTodayAttendance, saveAttendance, getMonthlyAttendance } from './db';
 
 export default function EmployeeAttendance({ companySettings = {} }) {
-  const [currentView, setCurrentView] = useState('attendance'); // 'attendance', 'monthly', 'directory', 'register', 'view_emp'
+  const [currentView, setCurrentView] = useState('monthly'); // Default to monthly grid now
   const [selectedEmp, setSelectedEmp] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -14,6 +14,9 @@ export default function EmployeeAttendance({ companySettings = {} }) {
   const currentDate = new Date();
   const [viewMonth, setViewMonth] = useState(currentDate.getMonth() + 1);
   const [viewYear, setViewYear] = useState(currentDate.getFullYear());
+  
+  // Interactive Grid "Paint" Tool
+  const [activeTool, setActiveTool] = useState('Present'); // 'Present', 'Half Day', 'Absent', 'Leave', 'Cycle'
 
   const todayStr = currentDate.toISOString().split('T')[0];
 
@@ -53,6 +56,36 @@ export default function EmployeeAttendance({ companySettings = {} }) {
     await saveAttendance(empId, todayStr, status);
   };
 
+  // NEW: Interactive Grid Click Handler
+  const handleGridCellClick = async (empId, day) => {
+    const dateStr = `${viewYear}-${String(viewMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const currentStatus = (monthlyAttendance[empId] && monthlyAttendance[empId][dateStr]) || '';
+
+    let nextStatus = '';
+    
+    if (activeTool === 'Cycle') {
+      const cycle = ['', 'Present', 'Half Day', 'Absent', 'Leave'];
+      let nextIndex = cycle.indexOf(currentStatus) + 1;
+      if (nextIndex >= cycle.length) nextIndex = 0;
+      nextStatus = cycle[nextIndex];
+    } else {
+      // If clicking with the same tool, toggle it off (clear it). Otherwise, apply the tool.
+      nextStatus = currentStatus === activeTool ? '' : activeTool;
+    }
+
+    // Optimistic UI Update
+    setMonthlyAttendance(prev => ({
+      ...prev,
+      [empId]: {
+        ...(prev[empId] || {}),
+        [dateStr]: nextStatus
+      }
+    }));
+
+    // Save to DB in background
+    await saveAttendance(empId, dateStr, nextStatus);
+  };
+
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     const newErrors = {};
@@ -82,7 +115,7 @@ export default function EmployeeAttendance({ companySettings = {} }) {
       });
       setErrors({});
       alert(`Employee ${createdEmp.fullName} registered successfully!`);
-      setCurrentView('attendance');
+      setCurrentView('directory');
     } catch (err) {
       alert('Failed to register employee. Check DB connection.');
     }
@@ -93,11 +126,11 @@ export default function EmployeeAttendance({ companySettings = {} }) {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Present': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
-      case 'Half Day': return 'bg-amber-100 text-amber-700 border-amber-200';
-      case 'Absent': return 'bg-red-100 text-red-700 border-red-200';
-      case 'Leave': return 'bg-purple-100 text-purple-700 border-purple-200';
-      default: return 'bg-transparent text-zinc-300 border-dashed border-zinc-200';
+      case 'Present': return 'bg-emerald-500 text-white border-emerald-600 shadow-sm shadow-emerald-500/30';
+      case 'Half Day': return 'bg-amber-400 text-white border-amber-500 shadow-sm shadow-amber-400/30';
+      case 'Absent': return 'bg-red-500 text-white border-red-600 shadow-sm shadow-red-500/30';
+      case 'Leave': return 'bg-purple-500 text-white border-purple-600 shadow-sm shadow-purple-500/30';
+      default: return 'bg-white/40 text-transparent border-white/60 hover:bg-white/60';
     }
   };
 
@@ -107,7 +140,7 @@ export default function EmployeeAttendance({ companySettings = {} }) {
       case 'Half Day': return 'H';
       case 'Absent': return 'A';
       case 'Leave': return 'L';
-      default: return '-';
+      default: return '';
     }
   };
 
@@ -115,7 +148,7 @@ export default function EmployeeAttendance({ companySettings = {} }) {
   const labelClass = "block text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
 
   return (
-    <div className="w-full font-['Poppins']">
+    <div className="w-full font-['Poppins'] pb-12">
       
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end pb-4 border-b border-zinc-300/50 mb-6 gap-4">
         <div>
@@ -125,16 +158,16 @@ export default function EmployeeAttendance({ companySettings = {} }) {
 
         <div className="flex items-center gap-2">
           <button 
-            onClick={() => setCurrentView('attendance')}
-            className={`px-4 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${currentView === 'attendance' ? 'bg-zinc-900 text-white shadow-md' : 'bg-white/40 hover:bg-white text-zinc-700 border border-white/50'}`}
-          >
-            Today's Attendance
-          </button>
-          <button 
             onClick={() => setCurrentView('monthly')}
             className={`px-4 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${currentView === 'monthly' ? 'bg-zinc-900 text-white shadow-md' : 'bg-white/40 hover:bg-white text-zinc-700 border border-white/50'}`}
           >
-            Monthly View
+            Interactive Grid
+          </button>
+          <button 
+            onClick={() => setCurrentView('attendance')}
+            className={`px-4 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${currentView === 'attendance' ? 'bg-zinc-900 text-white shadow-md' : 'bg-white/40 hover:bg-white text-zinc-700 border border-white/50'}`}
+          >
+            Today's List
           </button>
           <button 
             onClick={() => setCurrentView('directory')}
@@ -177,7 +210,6 @@ export default function EmployeeAttendance({ companySettings = {} }) {
               <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-wider">
                 Mark Attendance for <span className="text-amber-600">{currentDate.toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
               </h3>
-              <span className="text-[10px] bg-zinc-900 text-white font-bold px-3 py-1 rounded-full uppercase tracking-widest">Auto-Saved to DB</span>
             </div>
 
             <div className="overflow-x-auto">
@@ -197,7 +229,7 @@ export default function EmployeeAttendance({ companySettings = {} }) {
                     <tr><td colSpan="4" className="text-center py-6 text-zinc-500">No staff registered yet.</td></tr>
                   ) : (
                     employees.map((emp) => {
-                      const currentStatus = todayAttendance[emp.id] || 'Present';
+                      const currentStatus = todayAttendance[emp.id] || '';
                       return (
                         <tr key={emp.id} className="hover:bg-white/30 transition-colors">
                           <td className="py-3.5 px-3 font-bold text-zinc-500">{emp.empId}</td>
@@ -237,75 +269,130 @@ export default function EmployeeAttendance({ companySettings = {} }) {
       )}
 
       {/* ========================================================= */}
-      {/* VIEW 2: MONTHLY CALENDAR GRID                             */}
+      {/* VIEW 2: INTERACTIVE MONTHLY CALENDAR GRID                 */}
       {/* ========================================================= */}
       {currentView === 'monthly' && (
-        <div className="bg-white/40 backdrop-blur-xl p-6 rounded-3xl border border-white/60 shadow-xl">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-wider">Monthly Register</h3>
-            <div className="flex items-center gap-2">
-              <select 
-                value={viewMonth} 
-                onChange={(e) => setViewMonth(Number(e.target.value))} 
-                className="bg-white/60 border border-white/60 rounded-xl px-3 py-1.5 text-xs font-bold text-zinc-800 outline-none"
-              >
-                {Array.from({length: 12}, (_, i) => (
-                  <option key={i+1} value={i+1}>{new Date(2000, i).toLocaleString('en-US', { month: 'long' })}</option>
+        <div className="bg-white/40 backdrop-blur-xl p-6 rounded-3xl border border-white/60 shadow-xl w-full overflow-hidden flex flex-col">
+          <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-6 gap-4">
+            <div>
+              <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-wider">Interactive Master Register</h3>
+              <p className="text-[10px] text-zinc-500 font-medium mt-1">Select a paintbrush tool, then click cells to mark attendance instantly.</p>
+            </div>
+            
+            <div className="flex flex-wrap items-center gap-4">
+              
+              {/* Tool Selector */}
+              <div className="flex items-center gap-1 bg-zinc-900 p-1.5 rounded-2xl shadow-md">
+                <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest pl-2 pr-1">Tool:</span>
+                {[
+                  { id: 'Present', color: 'bg-emerald-500 text-white', label: 'P' },
+                  { id: 'Half Day', color: 'bg-amber-400 text-white', label: 'H' },
+                  { id: 'Absent', color: 'bg-red-500 text-white', label: 'A' },
+                  { id: 'Leave', color: 'bg-purple-500 text-white', label: 'L' },
+                  { id: 'Cycle', color: 'bg-white text-zinc-900', label: '↻' }
+                ].map(tool => (
+                  <button
+                    key={tool.id}
+                    onClick={() => setActiveTool(tool.id)}
+                    title={tool.id}
+                    className={`h-7 px-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
+                      activeTool === tool.id 
+                        ? `${tool.color} shadow-sm scale-105 ring-2 ring-white/20` 
+                        : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white'
+                    }`}
+                  >
+                    {tool.id === 'Cycle' ? tool.label : tool.id}
+                  </button>
                 ))}
-              </select>
-              <select 
-                value={viewYear} 
-                onChange={(e) => setViewYear(Number(e.target.value))} 
-                className="bg-white/60 border border-white/60 rounded-xl px-3 py-1.5 text-xs font-bold text-zinc-800 outline-none"
-              >
-                <option value={currentDate.getFullYear() - 1}>{currentDate.getFullYear() - 1}</option>
-                <option value={currentDate.getFullYear()}>{currentDate.getFullYear()}</option>
-                <option value={currentDate.getFullYear() + 1}>{currentDate.getFullYear() + 1}</option>
-              </select>
+              </div>
+
+              <div className="w-px h-8 bg-zinc-300/50 hidden xl:block"></div>
+
+              {/* Month/Year Filter */}
+              <div className="flex items-center gap-1.5 h-10 bg-white/60 border border-white/60 rounded-2xl px-3 shadow-sm">
+                <select 
+                  value={viewMonth} 
+                  onChange={(e) => setViewMonth(Number(e.target.value))} 
+                  className="bg-transparent border-none text-xs font-bold text-zinc-800 outline-none cursor-pointer"
+                >
+                  {Array.from({length: 12}, (_, i) => (
+                    <option key={i+1} value={i+1}>{new Date(2000, i).toLocaleString('en-US', { month: 'long' })}</option>
+                  ))}
+                </select>
+                <select 
+                  value={viewYear} 
+                  onChange={(e) => setViewYear(Number(e.target.value))} 
+                  className="bg-transparent border-none text-xs font-bold text-zinc-800 outline-none cursor-pointer"
+                >
+                  <option value={currentDate.getFullYear() - 1}>{currentDate.getFullYear() - 1}</option>
+                  <option value={currentDate.getFullYear()}>{currentDate.getFullYear()}</option>
+                  <option value={currentDate.getFullYear() + 1}>{currentDate.getFullYear() + 1}</option>
+                </select>
+              </div>
+
             </div>
           </div>
 
-          <div className="overflow-x-auto pb-4">
+          <div className="overflow-x-auto pb-4 flex-1">
             <table className="w-full text-left border-collapse min-w-max">
               <thead>
-                <tr className="text-zinc-500 text-[9px] uppercase border-b border-zinc-300/50">
-                  <th className="py-2 px-3 font-bold sticky left-0 bg-white/60 backdrop-blur-md z-10">Employee Name</th>
+                <tr className="text-zinc-500 text-[9px] uppercase border-b-2 border-zinc-300/50">
+                  <th className="py-3 px-3 font-bold sticky left-0 bg-[#f4f4f5] z-10 border-r border-zinc-200">Employee Name</th>
                   {daysArray.map(day => (
-                    <th key={day} className="py-2 px-1 font-bold text-center w-8">{day}</th>
+                    <th key={day} className="py-3 px-1 font-bold text-center w-8">{day}</th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-200/40 text-xs">
                 {loading ? (
-                  <tr><td colSpan={daysArray.length + 1} className="text-center py-6 text-zinc-500">Loading Calendar...</td></tr>
-                ) : employees.map(emp => (
-                  <tr key={emp.id} className="hover:bg-white/30">
-                    <td className="py-2 px-3 font-extrabold text-zinc-900 sticky left-0 bg-white/60 backdrop-blur-md z-10 border-r border-zinc-200/50">
-                      {emp.fullName}
-                    </td>
-                    {daysArray.map(day => {
-                      const dateStr = `${viewYear}-${String(viewMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                      const empRecord = monthlyAttendance[emp.id] || {};
-                      const status = empRecord[dateStr];
-                      
-                      return (
-                        <td key={day} className="py-2 px-0.5 text-center">
-                          <div className={`w-6 h-6 mx-auto flex items-center justify-center rounded text-[9px] font-black border ${getStatusColor(status)}`}>
-                            {getStatusLetter(status)}
-                          </div>
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
+                  <tr><td colSpan={daysArray.length + 1} className="text-center py-10 text-zinc-500 font-medium">Loading Master Register...</td></tr>
+                ) : employees.map(emp => {
+                  const empRecord = monthlyAttendance[emp.id] || {};
+                  
+                  // Calculate local metrics for the row
+                  const presentCount = Object.values(empRecord).filter(s => s === 'Present').length;
+                  const halfCount = Object.values(empRecord).filter(s => s === 'Half Day').length;
+                  const totalPayableDays = presentCount + (halfCount * 0.5);
+
+                  return (
+                    <tr key={emp.id} className="hover:bg-white/30 group">
+                      <td className="py-2.5 px-3 sticky left-0 bg-[#fafafa] group-hover:bg-[#f4f4f5] z-10 border-r border-zinc-200 transition-colors">
+                        <div className="flex justify-between items-center w-48">
+                          <span className="font-extrabold text-zinc-900 truncate">{emp.fullName}</span>
+                          <span className="text-[9px] font-bold text-zinc-400 bg-white px-1.5 py-0.5 rounded shadow-sm">
+                            {totalPayableDays} Days
+                          </span>
+                        </div>
+                      </td>
+                      {daysArray.map(day => {
+                        const dateStr = `${viewYear}-${String(viewMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                        const status = empRecord[dateStr] || '';
+                        
+                        return (
+                          <td 
+                            key={day} 
+                            onClick={() => handleGridCellClick(emp.id, day)}
+                            className="py-1 px-0.5 text-center cursor-cell"
+                          >
+                            <div className={`w-[26px] h-[26px] mx-auto flex items-center justify-center rounded-md text-[10px] font-black border transition-all ${getStatusColor(status)}`}>
+                              {getStatusLetter(status)}
+                            </div>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
-          <div className="mt-4 flex gap-4 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
-            <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-emerald-100 border border-emerald-200 text-emerald-700 flex items-center justify-center text-[7px]">P</span> Present</div>
-            <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-amber-100 border border-amber-200 text-amber-700 flex items-center justify-center text-[7px]">H</span> Half Day</div>
-            <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-red-100 border border-red-200 text-red-700 flex items-center justify-center text-[7px]">A</span> Absent</div>
-            <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-purple-100 border border-purple-200 text-purple-700 flex items-center justify-center text-[7px]">L</span> Leave</div>
+          
+          <div className="mt-4 pt-4 border-t border-zinc-300/50 flex flex-wrap gap-4 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+            <span className="mr-2 text-zinc-400">Legend:</span>
+            <div className="flex items-center gap-1.5"><span className="w-4 h-4 rounded bg-emerald-500 border border-emerald-600 text-white flex items-center justify-center text-[8px] shadow-sm">P</span> Present</div>
+            <div className="flex items-center gap-1.5"><span className="w-4 h-4 rounded bg-amber-400 border border-amber-500 text-white flex items-center justify-center text-[8px] shadow-sm">H</span> Half Day</div>
+            <div className="flex items-center gap-1.5"><span className="w-4 h-4 rounded bg-red-500 border border-red-600 text-white flex items-center justify-center text-[8px] shadow-sm">A</span> Absent</div>
+            <div className="flex items-center gap-1.5"><span className="w-4 h-4 rounded bg-purple-500 border border-purple-600 text-white flex items-center justify-center text-[8px] shadow-sm">L</span> Leave</div>
           </div>
         </div>
       )}
@@ -364,8 +451,8 @@ export default function EmployeeAttendance({ companySettings = {} }) {
               <p className="text-zinc-500 text-xs mt-0.5">Onboard new carpenters, supervisors, interior architects, and site labor.</p>
             </div>
             <button 
-              onClick={() => setCurrentView('attendance')}
-              className="text-zinc-500 hover:text-zinc-900 text-[10px] font-bold uppercase tracking-widest bg-white/50 px-3.5 py-1.5 rounded-full border border-white/60"
+              onClick={() => setCurrentView('monthly')}
+              className="text-zinc-500 hover:text-zinc-900 text-[10px] font-bold uppercase tracking-widest bg-white/50 px-3.5 py-1.5 rounded-full border border-white/60 shadow-sm"
             >
               ✕ Cancel
             </button>
@@ -418,8 +505,30 @@ export default function EmployeeAttendance({ companySettings = {} }) {
               </div>
             </div>
 
+            <div>
+              <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-3">3. ID & Banking</h4>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <label className={labelClass}>Aadhaar / PAN ID</label>
+                  <input type="text" placeholder="Aadhaar Number" value={newEmp.idNumber} onChange={e => setNewEmp({...newEmp, idNumber: e.target.value})} className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>Bank Name</label>
+                  <input type="text" placeholder="e.g. HDFC Bank" value={newEmp.bankName} onChange={e => setNewEmp({...newEmp, bankName: e.target.value})} className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>Account Number</label>
+                  <input type="text" placeholder="Account Number" value={newEmp.accountNo} onChange={e => setNewEmp({...newEmp, accountNo: e.target.value})} className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>IFSC Code</label>
+                  <input type="text" placeholder="IFSC Code" value={newEmp.ifscCode} onChange={e => setNewEmp({...newEmp, ifscCode: e.target.value})} className={inputClass} />
+                </div>
+              </div>
+            </div>
+
             <div className="pt-4 flex justify-end gap-3 border-t border-zinc-200">
-              <button type="button" onClick={() => setCurrentView('attendance')} className="px-6 py-3 bg-white/50 border border-white/60 rounded-2xl font-bold text-xs text-zinc-600 hover:bg-white transition-all">Cancel</button>
+              <button type="button" onClick={() => setCurrentView('monthly')} className="px-6 py-3 bg-white/50 border border-white/60 rounded-2xl font-bold text-xs text-zinc-600 hover:bg-white transition-all shadow-sm">Cancel</button>
               <button type="submit" className="px-8 py-3 bg-zinc-900 hover:bg-black text-white font-extrabold rounded-2xl text-xs uppercase tracking-wider transition-all shadow-lg hover:-translate-y-0.5">Complete Registration</button>
             </div>
           </form>
@@ -438,24 +547,24 @@ export default function EmployeeAttendance({ companySettings = {} }) {
                 <p className="text-xs font-bold text-amber-600">{selectedEmp.role} | {selectedEmp.empId}</p>
               </div>
             </div>
-            <button onClick={() => setCurrentView('directory')} className="text-zinc-500 hover:text-zinc-900 text-xs font-bold uppercase tracking-widest bg-white/60 px-3 py-1.5 rounded-full border border-zinc-200">✕ Close</button>
+            <button onClick={() => setCurrentView('directory')} className="text-zinc-500 hover:text-zinc-900 text-xs font-bold uppercase tracking-widest bg-white/60 px-3 py-1.5 rounded-full border border-zinc-200 shadow-sm">✕ Close</button>
           </div>
 
           <div className="grid grid-cols-2 gap-6 text-xs text-zinc-700">
-            <div className="space-y-3 bg-white/40 p-4 rounded-2xl border border-white/60">
+            <div className="space-y-3 bg-white/40 p-4 rounded-2xl border border-white/60 shadow-sm">
               <p className="font-bold text-zinc-400 uppercase text-[9px] tracking-widest">Contact & Joining</p>
               <p><strong>Mobile:</strong> {selectedEmp.phone}</p>
               <p><strong>Joining Date:</strong> {selectedEmp.joiningDate}</p>
               <p><strong>Status:</strong> <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 font-bold">{selectedEmp.status}</span></p>
             </div>
-            <div className="space-y-3 bg-white/40 p-4 rounded-2xl border border-white/60">
+            <div className="space-y-3 bg-white/40 p-4 rounded-2xl border border-white/60 shadow-sm">
               <p className="font-bold text-zinc-400 uppercase text-[9px] tracking-widest">Pay & Bank Details</p>
               <p><strong>Wage Type:</strong> {selectedEmp.payType}</p>
               <p><strong>Rate / Salary:</strong> ₹{selectedEmp.payRate.toLocaleString('en-IN')}</p>
             </div>
           </div>
           <div className="mt-6 pt-4 border-t border-zinc-200 flex justify-end">
-            <button onClick={() => setCurrentView('directory')} className="px-6 py-2.5 bg-zinc-900 text-white rounded-xl text-xs font-bold">Back to Directory</button>
+            <button onClick={() => setCurrentView('directory')} className="px-6 py-2.5 bg-zinc-900 text-white rounded-xl text-xs font-bold shadow-md">Back to Directory</button>
           </div>
         </div>
       )}
