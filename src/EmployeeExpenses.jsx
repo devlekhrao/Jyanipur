@@ -95,13 +95,14 @@ export default function EmployeeExpenses() {
     }
   };
 
+  // Seamless Inputs
   const inputClass = "w-full px-1.5 py-2 bg-transparent border-b border-transparent hover:border-zinc-300 focus:border-zinc-900 focus:outline-none text-zinc-900 text-xs font-medium transition-all placeholder:text-zinc-400";
 
   return (
     <div className="w-full font-['Poppins'] pb-12">
       
       {/* Header & Filters */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end pb-4 border-b border-zinc-300/50 mb-6 gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end pb-4 border-b border-zinc-300/50 mb-6 gap-4 print:hidden">
         <div>
           <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Staff Expenses</h2>
           <p className="text-zinc-600 text-xs mt-1 font-medium">Track allowances, petty cash, and site purchases given to employees.</p>
@@ -130,18 +131,18 @@ export default function EmployeeExpenses() {
       </div>
 
       {/* Dashboard Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-zinc-900 text-white p-5 rounded-3xl shadow-xl">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 print:hidden">
+        <div className="bg-zinc-900 text-white p-5 rounded-2xl shadow-md flex flex-col justify-center">
           <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Total Given (This Month)</span>
           <p className="text-2xl font-black">₹ {totalMonthExpense.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
         </div>
-        <div className="bg-amber-50/50 backdrop-blur-xl p-5 rounded-3xl border border-amber-200/60 shadow-md">
+        <div className="bg-amber-50/50 backdrop-blur-xl p-5 rounded-2xl border border-amber-200/60 shadow-sm flex flex-col justify-center">
           <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest block mb-1">Total Given (Past 7 Days)</span>
           <p className="text-xl font-black text-amber-700">₹ {totalWeekExpense.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
         </div>
         
         {/* Employee Breakdown Mini-Dashboard */}
-        <div className="bg-white/50 backdrop-blur-xl p-4 rounded-3xl border border-white/60 shadow-md overflow-hidden flex flex-col justify-center">
+        <div className="bg-white/50 backdrop-blur-xl p-4 rounded-2xl border border-white/60 shadow-sm overflow-hidden flex flex-col justify-center">
           <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block mb-2">Highest Spenders (This Month)</span>
           <div className="space-y-2 max-h-[60px] overflow-y-auto pr-1 custom-scrollbar">
             {Object.keys(employeeTotals).length === 0 ? (
@@ -161,8 +162,14 @@ export default function EmployeeExpenses() {
         </div>
       </div>
 
+      {/* PDF Header (Only visible when printing) */}
+      <div className="hidden print:block mb-6">
+        <h2 className="text-xl font-black text-zinc-900">Staff Expense Register</h2>
+        <p className="text-xs text-zinc-600">Period: {new Date(selectedYear, selectedMonth - 1).toLocaleString('en-US', { month: 'long', year: 'numeric' })}</p>
+      </div>
+
       {/* Full Width Seamless Entry Table */}
-      <div className="bg-white/50 backdrop-blur-xl p-4 rounded-3xl border border-white/60 shadow-xl overflow-x-auto w-full">
+      <div className="w-full overflow-x-auto pb-8">
         <table className="w-full text-left border-collapse whitespace-nowrap min-w-[900px]">
           <thead>
             <tr className="text-zinc-400 text-[9px] uppercase tracking-widest border-b-2 border-zinc-200">
@@ -171,22 +178,22 @@ export default function EmployeeExpenses() {
               <th className="py-3 px-2 font-bold w-40">Category</th>
               <th className="py-3 px-2 font-bold min-w-[200px]">Description / Bill Ref</th>
               <th className="py-3 px-2 font-bold text-right w-32">Amount</th>
-              <th className="py-3 px-2 font-bold text-center w-16">Action</th>
+              <th className="py-3 px-2 font-bold text-center w-16 print:hidden">Action</th>
             </tr>
           </thead>
           <tbody className="text-xs text-zinc-800">
             
             {/* INLINE ENTRY ROW (BORDERLESS) */}
-            <tr className="border-b border-zinc-200/60 bg-white/20">
+            <tr className="border-b border-zinc-200/60 bg-white/20 print:hidden">
               <td className="py-1 px-1"><input type="date" value={newExp.date} onChange={e => setNewExp({...newExp, date: e.target.value})} className={inputClass} /></td>
               <td className="py-1 px-1">
-                <select value={newExp.empId} onChange={e => setNewExp({...newExp, empId: e.target.value})} className={`${inputClass} cursor-pointer font-bold`}>
+                <select value={newExp.empId} onChange={e => setNewExp({...newExp, empId: e.target.value})} className={`${inputClass} cursor-pointer font-bold appearance-none`}>
                   <option value="" disabled>Select Staff...</option>
                   {employees.map(e => <option key={e.empId} value={e.empId}>{e.fullName} ({e.empId})</option>)}
                 </select>
               </td>
               <td className="py-1 px-1">
-                <select value={newExp.category} onChange={e => setNewExp({...newExp, category: e.target.value})} className={`${inputClass} cursor-pointer`}>
+                <select value={newExp.category} onChange={e => setNewExp({...newExp, category: e.target.value})} className={`${inputClass} cursor-pointer appearance-none`}>
                   <option value="Material/Tools">Material / Tools</option>
                   <option value="Travel/Fuel">Travel / Fuel</option>
                   <option value="Food/Meals">Food / Meals</option>
@@ -218,7 +225,7 @@ export default function EmployeeExpenses() {
                   </td>
                   <td className="py-3.5 px-2 text-zinc-500 truncate max-w-[250px]">{exp.description || '-'}</td>
                   <td className="py-3.5 px-2 text-right font-black text-zinc-900">₹ {exp.amount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                  <td className="py-3.5 px-2 text-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <td className="py-3.5 px-2 text-center opacity-0 group-hover:opacity-100 transition-opacity print:hidden">
                     <button onClick={() => handleDelete(exp.id)} className="text-red-400 hover:text-red-600 font-bold text-[10px] uppercase tracking-wider">Del</button>
                   </td>
                 </tr>
@@ -229,7 +236,7 @@ export default function EmployeeExpenses() {
             <tr className="font-black text-zinc-900 border-t-2 border-zinc-300">
               <td colSpan="4" className="py-4 text-right">MONTHLY TOTAL:</td>
               <td className="py-4 text-right">₹ {totalMonthExpense.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-              <td></td>
+              <td className="print:hidden"></td>
             </tr>
 
           </tbody>
