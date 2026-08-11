@@ -429,3 +429,83 @@ export async function deleteIncomeRecord(id) {
     throw err;
   }
 }
+// ==========================================
+// INVENTORY & GODOWN MODULE
+// ==========================================
+export async function getInventoryItems() {
+  try {
+    const data = await sql`SELECT * FROM inventory_items ORDER BY name ASC`;
+    return data.map(item => ({
+      id: item.id,
+      name: item.name,
+      category: item.category,
+      unit: item.unit,
+      totalStock: Number(item.total_stock)
+    }));
+  } catch (err) {
+    console.error('Error fetching inventory items:', err);
+    return [];
+  }
+}
+
+export async function saveInventoryItem(item) {
+  try {
+    const result = await sql`
+      INSERT INTO inventory_items (name, category, unit, total_stock)
+      VALUES (${item.name}, ${item.category}, ${item.unit}, 0)
+      RETURNING *;
+    `;
+    return result[0];
+  } catch (err) {
+    console.error('Error saving inventory item:', err);
+    throw err;
+  }
+}
+
+export async function getInventoryMovements() {
+  try {
+    const data = await sql`
+      SELECT m.*, i.name as item_name, i.unit, p.name as project_name 
+      FROM inventory_movements m
+      JOIN inventory_items i ON m.item_id = i.id
+      LEFT JOIN projects p ON m.project_id = p.id
+      ORDER BY m.date DESC, m.id DESC
+    `;
+    return data.map(m => ({
+      id: m.id,
+      itemId: m.item_id,
+      itemName: m.item_name,
+      unit: m.unit,
+      type: m.movement_type,
+      quantity: Number(m.quantity),
+      projectId: m.project_id,
+      projectName: m.project_name,
+      date: m.date ? new Date(m.date).toISOString().split('T')[0] : '',
+      notes: m.notes
+    }));
+  } catch (err) {
+    console.error('Error fetching inventory movements:', err);
+    return [];
+  }
+}
+
+export async function recordInventoryMovement(movement) {
+  try {
+    // 1. Log the movement
+    await sql`
+      INSERT INTO inventory_movements (item_id, movement_type, quantity, project_id, date, notes)
+      VALUES (${movement.itemId}, ${movement.type}, ${movement.quantity}, ${movement.projectId || null}, ${movement.date}, ${movement.notes})
+    `;
+
+    // 2. Adjust the total stock in the master table
+    const qtyChange = movement.type === 'IN' ? movement.quantity : -Math.abs(movement.quantity);
+    await sql`
+      UPDATE inventory_items 
+      SET total_stock = total_stock + ${qtyChange}
+      WHERE id = ${movement.itemId}
+    `;
+  } catch (err) {
+    console.error('Error recording movement:', err);
+    throw err;
+  }
+}

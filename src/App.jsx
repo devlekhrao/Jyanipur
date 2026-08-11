@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import Dashboard from './Dashboard'; // Added Dashboard import
+import Dashboard from './Dashboard';
 import TaxInvoice from './TaxInvoice';
 import Estimation from './Estimation';
 import EmployeeAttendance from './EmployeeAttendance';
 import Purchases from './Purchases';
+import Inventory from './Inventory'; // Added Inventory import
 import EmployeeExpenses from './EmployeeExpenses';
 import Salaries from './Salaries';
 import Income from './Income';
@@ -107,6 +108,7 @@ export default function App() {
                 'Estimation',
                 'Tax Invoice',
                 'Purchases',
+                'Inventory', // Added Inventory to Sidebar
                 'Employee Attendance',
                 'Staff Expenses',     
                 'Salaries',
@@ -161,6 +163,8 @@ export default function App() {
                   <Estimation companySettings={companySettings} />
                 ) : activePage === 'Purchases' ? (
                   <Purchases />
+                ) : activePage === 'Inventory' ? (
+                  <Inventory /> // Added Inventory Render Block
                 ) : activePage === 'Employee Attendance' ? (
                   <EmployeeAttendance companySettings={companySettings} />
                 ) : activePage === 'Staff Expenses' ? (
