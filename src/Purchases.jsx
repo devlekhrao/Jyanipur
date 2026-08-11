@@ -215,8 +215,8 @@ export default function Purchases() {
       {/* Header & Filters */}
       <div className="flex flex-col 2xl:flex-row justify-between items-start 2xl:items-end pb-4 border-b border-zinc-300/50 mb-6 gap-4 print:hidden">
         <div>
-          <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Purchases & Inward Supplies</h2>
-          <p className="text-zinc-600 text-xs mt-1 font-medium">Track vendor bills, input tax credit (ITC), and return matching.</p>
+          <h2 className="text-2xl font-bold text-zinc-800 tracking-tight">Purchases & Inward Supplies</h2>
+          <p className="text-zinc-500 text-xs mt-1 font-medium">Track vendor bills, input tax credit (ITC), and return matching.</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
@@ -235,12 +235,12 @@ export default function Purchases() {
 
           {/* Month / Year Quick Select */}
           <div className="flex items-center h-9 bg-white/60 border border-zinc-200/60 rounded-xl px-2 shadow-sm">
-            <select value={selectedMonth} onChange={handleMonthChange} className="bg-transparent border-none text-xs font-bold text-zinc-800 outline-none cursor-pointer px-1">
+            <select value={selectedMonth} onChange={handleMonthChange} className="bg-transparent border-none text-xs font-semibold text-zinc-700 outline-none cursor-pointer px-1">
               {Array.from({length: 12}, (_, i) => (
                 <option key={i+1} value={i+1}>{new Date(2000, i).toLocaleString('en-US', { month: 'short' })}</option>
               ))}
             </select>
-            <select value={selectedYear} onChange={handleYearChange} className="bg-transparent border-none text-xs font-bold text-zinc-800 outline-none cursor-pointer pr-1">
+            <select value={selectedYear} onChange={handleYearChange} className="bg-transparent border-none text-xs font-semibold text-zinc-700 outline-none cursor-pointer pr-1">
               <option value={currentDate.getFullYear() - 1}>{currentDate.getFullYear() - 1}</option>
               <option value={currentDate.getFullYear()}>{currentDate.getFullYear()}</option>
               <option value={currentDate.getFullYear() + 1}>{currentDate.getFullYear() + 1}</option>
@@ -251,12 +251,12 @@ export default function Purchases() {
 
           {/* Explicit Date Range */}
           <div className="flex items-center h-9 bg-white/60 border border-zinc-200/60 rounded-xl px-3 shadow-sm">
-            <span className="text-[10px] font-bold text-zinc-500 uppercase mr-1.5">From:</span>
-            <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="bg-transparent border-none text-xs font-bold text-zinc-800 outline-none cursor-pointer" />
+            <span className="text-[10px] font-semibold text-zinc-500 uppercase mr-1.5">From:</span>
+            <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="bg-transparent border-none text-xs font-semibold text-zinc-700 outline-none cursor-pointer" />
           </div>
           <div className="flex items-center h-9 bg-white/60 border border-zinc-200/60 rounded-xl px-3 shadow-sm">
-            <span className="text-[10px] font-bold text-zinc-500 uppercase mr-1.5">To:</span>
-            <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="bg-transparent border-none text-xs font-bold text-zinc-800 outline-none cursor-pointer" />
+            <span className="text-[10px] font-semibold text-zinc-500 uppercase mr-1.5">To:</span>
+            <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="bg-transparent border-none text-xs font-semibold text-zinc-700 outline-none cursor-pointer" />
           </div>
 
           {/* Export Dropdown */}
@@ -270,9 +270,9 @@ export default function Purchases() {
             
             {exportMenuOpen && (
               <div className="absolute right-0 mt-2 w-32 bg-white rounded-xl shadow-[0_10px_25px_rgba(0,0,0,0.1)] border border-zinc-200 overflow-hidden z-50">
-                <button onClick={exportToCSV} className="w-full text-left px-4 py-2.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 border-b border-zinc-100 transition-colors">.CSV File</button>
-                <button onClick={exportToXLS} className="w-full text-left px-4 py-2.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 border-b border-zinc-100 transition-colors">.XLS (Excel)</button>
-                <button onClick={exportToPDF} className="w-full text-left px-4 py-2.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 transition-colors">Print to PDF</button>
+                <button onClick={exportToCSV} className="w-full text-left px-4 py-2.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 border-b border-zinc-100 transition-colors">.CSV File</button>
+                <button onClick={exportToXLS} className="w-full text-left px-4 py-2.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 border-b border-zinc-100 transition-colors">.XLS (Excel)</button>
+                <button onClick={exportToPDF} className="w-full text-left px-4 py-2.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 transition-colors">Print to PDF</button>
               </div>
             )}
           </div>
@@ -282,22 +282,22 @@ export default function Purchases() {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 print:hidden">
         <div className="bg-white/50 backdrop-blur-xl p-5 rounded-2xl border border-white/60 shadow-sm">
-          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Total Taxable Value</span>
-          <p className="text-xl font-black text-zinc-900">₹ {totalTaxable.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+          <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest block mb-1">Total Taxable Value</span>
+          <p className="text-xl font-bold text-zinc-800">₹ {totalTaxable.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
         </div>
         <div className="bg-emerald-50/50 backdrop-blur-xl p-5 rounded-2xl border border-emerald-100 shadow-sm">
-          <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest block mb-1">Total Input Tax (ITC)</span>
-          <p className="text-xl font-black text-emerald-700">₹ {totalGst.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+          <span className="text-[10px] font-semibold text-emerald-600 uppercase tracking-widest block mb-1">Total Input Tax (ITC)</span>
+          <p className="text-xl font-bold text-emerald-700">₹ {totalGst.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
         </div>
-        <div className="bg-zinc-900 text-white p-5 rounded-2xl shadow-md">
-          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Total Gross Purchases</span>
-          <p className="text-xl font-black">₹ {totalGross.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+        <div className="bg-zinc-800 text-white p-5 rounded-2xl shadow-md">
+          <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest block mb-1">Total Gross Purchases</span>
+          <p className="text-xl font-bold">₹ {totalGross.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
         </div>
       </div>
 
       {/* PDF Header (Only visible when printing) */}
       <div className="hidden print:block mb-6">
-        <h2 className="text-xl font-black text-zinc-900">Purchase Register</h2>
+        <h2 className="text-xl font-bold text-zinc-800">Purchase Register</h2>
         <p className="text-xs text-zinc-600">Period: {startDate} to {endDate}</p>
       </div>
 
@@ -305,22 +305,22 @@ export default function Purchases() {
       <div className="w-full overflow-x-auto pb-8">
         <table className="w-full text-left border-collapse whitespace-nowrap min-w-[1200px]">
           <thead>
-            <tr className="text-zinc-400 text-[9px] uppercase tracking-widest border-b-2 border-zinc-200">
-              <th className="py-3 px-2 font-bold w-24">Inv Date</th>
-              <th className="py-3 px-2 font-bold w-24">Inv No</th>
-              <th className="py-3 px-2 font-bold min-w-[180px]">Vendor Name</th>
-              <th className="py-3 px-2 font-bold w-32">GSTIN</th>
-              <th className="py-3 px-2 font-bold w-20">HSN</th>
-              <th className="py-3 px-2 font-bold text-right w-24">Taxable Amt</th>
-              <th className="py-3 px-2 font-bold text-center w-24">Tax Type</th>
-              <th className="py-3 px-2 font-bold text-center w-16">GST %</th>
-              <th className="py-3 px-2 font-bold text-right w-24">GST Amt</th>
-              <th className="py-3 px-2 font-bold text-right w-28">Total Amt</th>
-              <th className="py-3 px-2 font-bold text-center w-24">Status</th>
-              <th className="py-3 px-2 font-bold text-center w-16 print:hidden">Action</th>
+            <tr className="text-zinc-400 text-[9px] uppercase tracking-widest border-b border-zinc-200">
+              <th className="py-3 px-2 font-semibold w-24">Inv Date</th>
+              <th className="py-3 px-2 font-semibold w-24">Inv No</th>
+              <th className="py-3 px-2 font-semibold min-w-[180px]">Vendor Name</th>
+              <th className="py-3 px-2 font-semibold w-32">GSTIN</th>
+              <th className="py-3 px-2 font-semibold w-20">HSN</th>
+              <th className="py-3 px-2 font-semibold text-right w-24">Taxable Amt</th>
+              <th className="py-3 px-2 font-semibold text-center w-24">Tax Type</th>
+              <th className="py-3 px-2 font-semibold text-center w-16">GST %</th>
+              <th className="py-3 px-2 font-semibold text-right w-24">GST Amt</th>
+              <th className="py-3 px-2 font-semibold text-right w-28">Total Amt</th>
+              <th className="py-3 px-2 font-semibold text-center w-24">Status</th>
+              <th className="py-3 px-2 font-semibold text-center w-16 print:hidden">Action</th>
             </tr>
           </thead>
-          <tbody className="text-xs text-zinc-800">
+          <tbody className="text-xs text-zinc-700">
             
             {/* INLINE ENTRY ROW (BORDERLESS) */}
             <tr className="border-b border-zinc-200/60 bg-white/20 print:hidden">
@@ -329,7 +329,7 @@ export default function Purchases() {
               <td className="py-1 px-1"><input type="text" placeholder="Supplier / Vendor" value={newBill.vendorName} onChange={e => setNewBill({...newBill, vendorName: e.target.value})} className={inputClass} /></td>
               <td className="py-1 px-1"><input type="text" placeholder="GSTIN" value={newBill.gstin} onChange={e => setNewBill({...newBill, gstin: e.target.value.toUpperCase()})} className={`${inputClass} font-mono`} maxLength="15" /></td>
               <td className="py-1 px-1"><input type="text" placeholder="HSN/SAC" value={newBill.hsn} onChange={e => setNewBill({...newBill, hsn: e.target.value})} className={inputClass} /></td>
-              <td className="py-1 px-1"><input type="number" step="any" placeholder="0.00" value={newBill.taxableAmount} onChange={e => setNewBill({...newBill, taxableAmount: e.target.value})} className={`${inputClass} text-right font-bold text-zinc-900`} /></td>
+              <td className="py-1 px-1"><input type="number" step="any" placeholder="0.00" value={newBill.taxableAmount} onChange={e => setNewBill({...newBill, taxableAmount: e.target.value})} className={`${inputClass} text-right font-semibold text-zinc-800`} /></td>
               
               <td className="py-1 px-1">
                 <select value={newBill.gstType} onChange={e => setNewBill({...newBill, gstType: e.target.value})} className={`${inputClass} text-center cursor-pointer appearance-none`}>
@@ -351,18 +351,18 @@ export default function Purchases() {
               <td className="py-1 px-2 text-right font-semibold text-emerald-600">
                 {liveGstAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
               </td>
-              <td className="py-1 px-2 text-right font-black text-zinc-900">
+              <td className="py-1 px-2 text-right font-bold text-zinc-800">
                 {liveTotalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
               </td>
               <td className="py-1 px-1">
-                <select value={newBill.returnStatus} onChange={e => setNewBill({...newBill, returnStatus: e.target.value})} className={`${inputClass} text-center cursor-pointer appearance-none font-bold`}>
+                <select value={newBill.returnStatus} onChange={e => setNewBill({...newBill, returnStatus: e.target.value})} className={`${inputClass} text-center cursor-pointer appearance-none font-semibold`}>
                   <option value="Pending">Pending</option>
                   <option value="2B Matched">2B Matched</option>
                   <option value="ITC Claimed">ITC Claimed</option>
                 </select>
               </td>
               <td className="py-1 px-1 text-center">
-                <button onClick={handleAddBill} className="w-full bg-zinc-900 hover:bg-black text-white py-2 rounded-lg font-bold text-[9px] uppercase tracking-wider transition-all shadow-sm">Add</button>
+                <button onClick={handleAddBill} className="w-full bg-zinc-800 hover:bg-zinc-900 text-white py-2 rounded-lg font-bold text-[9px] uppercase tracking-wider transition-all shadow-sm">Add</button>
               </td>
             </tr>
 
@@ -373,23 +373,23 @@ export default function Purchases() {
               <tr><td colSpan="12" className="py-12 text-center text-zinc-400 font-medium">No purchases found for this criteria. Type in the row above to add a bill.</td></tr>
             ) : (
               filteredPurchases.map(p => (
-                <tr key={p.id} className="border-b border-zinc-200/40 hover:bg-white/30 transition-colors group">
-                  <td className="py-3.5 px-2 font-medium">{p.invoiceDate}</td>
-                  <td className="py-3.5 px-2 font-bold text-zinc-900">{p.invoiceNo || '-'}</td>
-                  <td className="py-3.5 px-2 font-bold text-zinc-800 truncate max-w-[200px]">{p.vendorName}</td>
-                  <td className="py-3.5 px-2 text-zinc-500 font-mono text-[10px]">{p.gstin || 'UNREGISTERED'}</td>
+                <tr key={p.id} className="border-b border-zinc-200/40 hover:bg-white/40 transition-colors group">
+                  <td className="py-3.5 px-2 font-medium text-zinc-600">{p.invoiceDate}</td>
+                  <td className="py-3.5 px-2 font-semibold text-zinc-800">{p.invoiceNo || '-'}</td>
+                  <td className="py-3.5 px-2 font-semibold text-zinc-800 truncate max-w-[200px]">{p.vendorName}</td>
+                  <td className="py-3.5 px-2 text-zinc-400 font-mono text-[10px]">{p.gstin || 'UNREGISTERED'}</td>
                   <td className="py-3.5 px-2 text-zinc-500">{p.hsn || '-'}</td>
-                  <td className="py-3.5 px-2 text-right font-medium">₹ {p.taxableAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                  <td className="py-3.5 px-2 text-right font-medium text-zinc-700">₹ {p.taxableAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                   <td className="py-3.5 px-2 text-center text-zinc-500 text-[10px]">{p.gstType}</td>
-                  <td className="py-3.5 px-2 text-center text-zinc-600 font-medium">{p.gstPercent}%</td>
-                  <td className="py-3.5 px-2 text-right text-emerald-600 font-bold">₹ {p.gstAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                  <td className="py-3.5 px-2 text-right font-black text-zinc-900">₹ {p.totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                  <td className="py-3.5 px-2 text-center text-zinc-500 font-medium">{p.gstPercent}%</td>
+                  <td className="py-3.5 px-2 text-right text-emerald-600 font-semibold">₹ {p.gstAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                  <td className="py-3.5 px-2 text-right font-bold text-zinc-800">₹ {p.totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                   <td className="py-3.5 px-2 text-center">
                     {/* Live Update Status Dropdown */}
                     <select 
                       value={p.returnStatus} 
                       onChange={(e) => handleStatusChange(p.id, e.target.value)}
-                      className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest border outline-none cursor-pointer appearance-none ${
+                      className={`px-2 py-0.5 rounded text-[9px] font-semibold uppercase tracking-widest border outline-none cursor-pointer appearance-none ${
                         p.returnStatus === '2B Matched' ? 'bg-blue-50 text-blue-600 border-blue-200' :
                         p.returnStatus === 'ITC Claimed' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
                         'bg-amber-50 text-amber-600 border-amber-200'
@@ -401,14 +401,14 @@ export default function Purchases() {
                     </select>
                   </td>
                   <td className="py-3.5 px-2 text-center opacity-0 group-hover:opacity-100 transition-opacity print:hidden">
-                    <button onClick={() => handleDelete(p.id)} className="text-red-400 hover:text-red-600 font-bold text-[10px] uppercase tracking-wider">Del</button>
+                    <button onClick={() => handleDelete(p.id)} className="text-red-400 hover:text-red-600 font-semibold text-[10px] uppercase tracking-wider">Del</button>
                   </td>
                 </tr>
               ))
             )}
             
             {/* Print Footer Totals (Only visible on PDF/Print) */}
-            <tr className="hidden print:table-row font-black text-zinc-900 border-t-2 border-zinc-300">
+            <tr className="hidden print:table-row font-bold text-zinc-800 border-t border-zinc-300">
               <td colSpan="5" className="py-4 text-right">GRAND TOTAL:</td>
               <td className="py-4 text-right">₹ {totalTaxable.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
               <td colSpan="2"></td>
