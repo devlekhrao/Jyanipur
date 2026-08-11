@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Dashboard from './Dashboard'; // Added Dashboard import
 import TaxInvoice from './TaxInvoice';
 import Estimation from './Estimation';
 import EmployeeAttendance from './EmployeeAttendance';
@@ -7,14 +8,16 @@ import EmployeeExpenses from './EmployeeExpenses';
 import Salaries from './Salaries';
 import Income from './Income';
 import GST from './GST';
-import Projects from './Projects'; // Added import for the new Projects module
+import Projects from './Projects';
 
 export default function App() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [error, setError] = useState('');
-  const [activePage, setActivePage] = useState('Tax Invoice');
+  
+  // DEFAULT ACTIVE PAGE IS NOW DASHBOARD
+  const [activePage, setActivePage] = useState('Dashboard');
 
   // --- GLOBAL COMPANY & PRINT SETTINGS ---
   const [companySettings, setCompanySettings] = useState({
@@ -56,7 +59,7 @@ export default function App() {
     setIsLoggedIn(false);
     setEmail('');
     setPassword('');
-    setActivePage('Tax Invoice'); 
+    setActivePage('Dashboard'); 
   };
 
   // Handle signature file upload
@@ -149,7 +152,10 @@ export default function App() {
             <div className="flex-1 p-8 lg:p-12 overflow-y-auto print:p-0 print:overflow-visible custom-scrollbar">
               <div className="max-w-7xl mx-auto print:max-w-none print:mx-0">
                 
-                {activePage === 'Tax Invoice' ? (
+                {/* RENDER LOGIC */}
+                {activePage === 'Dashboard' ? (
+                  <Dashboard setActivePage={setActivePage} />
+                ) : activePage === 'Tax Invoice' ? (
                   <TaxInvoice companySettings={companySettings} />
                 ) : activePage === 'Estimation' ? (
                   <Estimation companySettings={companySettings} />
