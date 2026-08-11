@@ -2,20 +2,22 @@ import { neon } from '@neondatabase/serverless';
 
 const sql = neon(import.meta.env.VITE_DATABASE_URL);
 
-// Fetch all non-deleted invoices
+// ==========================================
+// INVOICE MODULE
+// ==========================================
 export async function getInvoices() {
   try {
     const data = await sql`SELECT * FROM invoices ORDER BY id DESC`;
     return data.map(inv => ({
       id: inv.id,
-      date: inv.date,
+      date: inv.date ? new Date(inv.date).toISOString().split('T')[0] : '',
       invoiceNo: inv.invoice_no,
       client: inv.client,
       partyAddress: inv.party_address,
       gstNo: inv.gst_no,
       placeOfSupply: inv.place_of_supply,
       poNumber: inv.po_number,
-      poDate: inv.po_date,
+      poDate: inv.po_date ? new Date(inv.po_date).toISOString().split('T')[0] : '',
       taxMode: inv.tax_mode,
       items: typeof inv.items === 'string' ? JSON.parse(inv.items) : inv.items,
       bankName: inv.bank_name,
@@ -24,8 +26,8 @@ export async function getInvoices() {
       ifscCode: inv.ifsc_code,
       terms: inv.terms,
       description: inv.description,
-      discount: inv.discount,
-      advanceReceived: inv.advance_received,
+      discount: Number(inv.discount),
+      advanceReceived: Number(inv.advance_received),
       amount: inv.amount,
       isCancelled: inv.is_cancelled
     }));
@@ -35,7 +37,6 @@ export async function getInvoices() {
   }
 }
 
-// Save or update an invoice
 export async function saveInvoice(inv) {
   try {
     const result = await sql`
@@ -49,24 +50,11 @@ export async function saveInvoice(inv) {
         ${inv.accountNo}, ${inv.ifscCode}, ${inv.terms}, ${inv.description}, ${parseFloat(inv.discount) || 0}, ${parseFloat(inv.advanceReceived) || 0}, ${inv.amount}, false
       )
       ON CONFLICT (invoice_no) DO UPDATE SET
-        date = EXCLUDED.date,
-        client = EXCLUDED.client,
-        party_address = EXCLUDED.party_address,
-        gst_no = EXCLUDED.gst_no,
-        place_of_supply = EXCLUDED.place_of_supply,
-        po_number = EXCLUDED.po_number,
-        po_date = EXCLUDED.po_date,
-        tax_mode = EXCLUDED.tax_mode,
-        items = EXCLUDED.items,
-        bank_name = EXCLUDED.bank_name,
-        account_name = EXCLUDED.account_name,
-        account_no = EXCLUDED.account_no,
-        ifsc_code = EXCLUDED.ifsc_code,
-        terms = EXCLUDED.terms,
-        description = EXCLUDED.description,
-        discount = EXCLUDED.discount,
-        advance_received = EXCLUDED.advance_received,
-        amount = EXCLUDED.amount
+        date = EXCLUDED.date, client = EXCLUDED.client, party_address = EXCLUDED.party_address, gst_no = EXCLUDED.gst_no,
+        place_of_supply = EXCLUDED.place_of_supply, po_number = EXCLUDED.po_number, po_date = EXCLUDED.po_date,
+        tax_mode = EXCLUDED.tax_mode, items = EXCLUDED.items, bank_name = EXCLUDED.bank_name, account_name = EXCLUDED.account_name,
+        account_no = EXCLUDED.account_no, ifsc_code = EXCLUDED.ifsc_code, terms = EXCLUDED.terms, description = EXCLUDED.description,
+        discount = EXCLUDED.discount, advance_received = EXCLUDED.advance_received, amount = EXCLUDED.amount
       RETURNING id;
     `;
     return result[0];
@@ -76,11 +64,81 @@ export async function saveInvoice(inv) {
   }
 }
 
-// Toggle Cancel / Restore invoice
 export async function toggleCancelInvoice(id, currentStatus) {
   try {
     await sql`UPDATE invoices SET is_cancelled = ${!currentStatus} WHERE id = ${id}`;
   } catch (err) {
     console.error('Error cancelling invoice:', err);
+  }
+}
+
+// ==========================================
+// EMPLOYEE & ATTENDANCE MODULE
+// ==========================================
+export async function getEmployees() {
+  try {
+    const data = await sql`SELECT * FROM employees ORDER BY id ASC`;
+    return data.map(emp => ({
+      id: emp.id,
+      empId: emp.emp_id,
+      fullName: emp.full_name,
+      role: emp.role,
+      phone: emp.phone,
+      payType: emp.pay_type,
+      payRate: Number(emp.pay_rate),
+      joiningDate: emp.joining_date ? new Date(emp.joining_date).toISOString().split('T')[0] : '',
+      bankName: emp.bank_name,
+      accountNo: emp.account_no,
+      ifscCode: emp.ifsc_code,
+      idNumber: emp.id_number,
+      status: emp.status
+    }));
+  } catch (err) {
+    console.error('Error fetching employees:', err);
+    return [];
+  }
+}
+
+export async function saveEmployee(emp) {
+  try {
+    const result = await sql`
+      INSERT INTO employees (
+        emp_id, full_name, role, phone, pay_type, pay_rate, joining_date, 
+        bank_name, account_no, ifsc_code, id_number, status
+      ) VALUES (
+        ${emp.empId}, ${emp.fullName}, ${emp.role}, ${emp.phone}, ${emp.payType}, 
+        ${emp.payRate}, ${emp.joiningDate}, ${emp.bankName}, ${emp.accountNo}, 
+        ${emp.ifscCode}, ${emp.idNumber}, ${emp.status}
+      )
+      RETURNING *;
+    `;
+    return result[0];
+  } catch (err) {
+    console.error('Error saving employee:', err);
+    throw err;
+  }
+}
+
+export async function getTodayAttendance(dateStr) {
+  try {
+    const data = await sql`SELECT emp_id, status FROM attendance_logs WHERE date = ${dateStr}`;
+    const map = {};
+    data.forEach(row => { map[row.emp_id] = row.status; });
+    return map;
+  } catch (err) {
+    console.error('Error fetching attendance:', err);
+    return {};
+  }
+}
+
+export async function saveAttendance(empId, dateStr, status) {
+  try {
+    await sql`
+      INSERT INTO attendance_logs (emp_id, date, status)
+      VALUES (${empId}, ${dateStr}, ${status})
+      ON CONFLICT (emp_id, date) DO UPDATE SET status = EXCLUDED.status;
+    `;
+  } catch (err) {
+    console.error('Error saving attendance:', err);
   }
 }

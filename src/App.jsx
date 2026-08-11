@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import TaxInvoice from './TaxInvoice';
 import Estimation from './Estimation';
+import EmployeeAttendance from './EmployeeAttendance';
 
 export default function App() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [error, setError] = useState('');
-  const [activePage, setActivePage] = useState('Settings');
+  const [activePage, setActivePage] = useState('Tax Invoice');
 
   // --- GLOBAL COMPANY & PRINT SETTINGS ---
   const [companySettings, setCompanySettings] = useState({
@@ -138,6 +139,8 @@ export default function App() {
                   <TaxInvoice companySettings={companySettings} />
                 ) : activePage === 'Estimation' ? (
                   <Estimation companySettings={companySettings} />
+                ) : activePage === 'Employee Attendance' ? (
+                  <EmployeeAttendance companySettings={companySettings} />
                 ) : activePage === 'Settings' ? (
                   <div className="w-full pb-20">
                     <div className="flex justify-between items-end pb-4 border-b border-zinc-300/50 mb-6">
