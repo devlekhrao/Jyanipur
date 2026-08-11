@@ -188,3 +188,55 @@ export async function getExpenses() {
     return [];
   }
 }
+
+// ==========================================
+// PURCHASES & INWARD SUPPLIES MODULE
+// ==========================================
+export async function getPurchases() {
+  try {
+    const data = await sql`SELECT * FROM purchases ORDER BY invoice_date DESC, id DESC`;
+    return data.map(p => ({
+      id: p.id,
+      fy: p.fy,
+      invoiceDate: p.invoice_date ? new Date(p.invoice_date).toISOString().split('T')[0] : '',
+      invoiceNo: p.invoice_no,
+      vendorName: p.vendor_name,
+      gstin: p.gstin,
+      hsn: p.hsn,
+      taxableAmount: Number(p.taxable_amount),
+      gstAmount: Number(p.gst_amount),
+      totalAmount: Number(p.total_amount),
+      returnStatus: p.return_status
+    }));
+  } catch (err) {
+    console.error('Error fetching purchases:', err);
+    return [];
+  }
+}
+
+export async function savePurchase(p) {
+  try {
+    const result = await sql`
+      INSERT INTO purchases (
+        fy, invoice_date, invoice_no, vendor_name, gstin, hsn, 
+        taxable_amount, gst_amount, total_amount, return_status
+      ) VALUES (
+        ${p.fy}, ${p.invoiceDate}, ${p.invoiceNo}, ${p.vendorName}, ${p.gstin}, ${p.hsn},
+        ${p.taxableAmount}, ${p.gstAmount}, ${p.totalAmount}, ${p.returnStatus}
+      )
+      RETURNING *;
+    `;
+    return result[0];
+  } catch (err) {
+    console.error('Error saving purchase:', err);
+    throw err;
+  }
+}
+
+export async function deletePurchase(id) {
+  try {
+    await sql`DELETE FROM purchases WHERE id = ${id}`;
+  } catch (err) {
+    console.error('Error deleting purchase:', err);
+  }
+}
