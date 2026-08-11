@@ -7,6 +7,7 @@ import EmployeeExpenses from './EmployeeExpenses';
 import Salaries from './Salaries';
 import Income from './Income';
 import GST from './GST';
+import Projects from './Projects'; // Added import for the new Projects module
 
 export default function App() {
   const [email, setEmail] = useState('');
@@ -57,11 +58,6 @@ export default function App() {
     setPassword('');
     setActivePage('Tax Invoice'); 
   };
-
-  const [projects, setProjects] = useState([
-    { id: 1, name: 'Skyline Commercial Office', client: 'TechCorp Inc.', status: 'Ongoing', budget: '₹ 15,00,000' },
-    { id: 2, name: 'Retail Store Renovation', client: 'Fashion Hub', status: 'Planning', budget: '₹ 8,50,000' },
-  ]);
 
   // Handle signature file upload
   const handleSignatureUpload = (e) => {
@@ -169,6 +165,8 @@ export default function App() {
                   <Income />
                 ) : activePage === 'GST Filing' ? ( 
                   <GST />
+                ) : activePage === 'Projects' ? (
+                  <Projects />
                 ) : activePage === 'Settings' ? (
                   <div className="w-full pb-20">
                     <div className="flex justify-between items-end pb-4 border-b border-zinc-300/50 mb-6">
@@ -332,54 +330,6 @@ export default function App() {
                         </div>
                       </div>
 
-                    </div>
-                  </div>
-                ) : activePage === 'Projects' ? (
-                  <div className="w-full">
-                    <div className="flex justify-between items-end pb-4 border-b border-zinc-300/50 mb-6">
-                      <div>
-                        <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Project Board</h2>
-                        <p className="text-zinc-600 text-xs mt-1 font-medium">Manage client sites and active blueprints.</p>
-                      </div>
-                      <button className="bg-zinc-900 hover:bg-black text-white px-5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer shadow-lg hover:-translate-y-0.5">
-                        + New Project
-                      </button>
-                    </div>
-
-                    <div className="overflow-hidden">
-                      <table className="w-full text-left border-collapse">
-                        <thead>
-                          <tr className="text-zinc-400 text-[10px] uppercase tracking-[0.15em] border-b border-zinc-300/50">
-                            <th className="py-4 pr-4 font-semibold">Project Name</th>
-                            <th className="py-4 pr-4 font-semibold">Client</th>
-                            <th className="py-4 pr-4 font-semibold">Status</th>
-                            <th className="py-4 pr-4 font-semibold">Budget</th>
-                            <th className="py-4 font-semibold text-right">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-zinc-200/40 text-sm">
-                          {projects.map((project) => (
-                            <tr key={project.id} className="hover:bg-white/30 transition-colors">
-                              <td className="py-4 pr-4 font-bold text-zinc-900 text-xs">{project.name}</td>
-                              <td className="py-4 pr-4 text-zinc-600 font-medium text-xs">{project.client}</td>
-                              <td className="py-4 pr-4">
-                                <span className={`inline-flex items-center px-2 py-1 rounded-md text-[9px] uppercase tracking-widest font-bold border ${
-                                  project.status === 'Ongoing' ? 'bg-blue-50/50 text-blue-600 border-blue-200' :
-                                  project.status === 'Completed' ? 'bg-emerald-50/50 text-emerald-600 border-emerald-200' :
-                                  'bg-amber-50/50 text-amber-600 border-amber-200'
-                                }`}>
-                                  {project.status}
-                                </span>
-                              </td>
-                              <td className="py-4 pr-4 text-zinc-800 font-semibold text-xs">{project.budget}</td>
-                              <td className="py-4 text-right space-x-3">
-                                <button className="text-zinc-400 hover:text-zinc-900 font-bold cursor-pointer transition-colors text-[10px] uppercase tracking-wider">Edit</button>
-                                <button className="text-zinc-400 hover:text-zinc-900 font-bold cursor-pointer transition-colors text-[10px] uppercase tracking-wider">View</button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
                     </div>
                   </div>
                 ) : (
