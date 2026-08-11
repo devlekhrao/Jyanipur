@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import TaxInvoice from './TaxInvoice';
 import Estimation from './Estimation';
 import EmployeeAttendance from './EmployeeAttendance';
+import Reports from './Reports';
 
 export default function App() {
   const [email, setEmail] = useState('');
@@ -105,6 +106,7 @@ export default function App() {
                 'Salaries',
                 'Expense',
                 'Income',
+                'Reports',
                 'Settings'
               ].map((page) => (
                 <button
@@ -141,6 +143,8 @@ export default function App() {
                   <Estimation companySettings={companySettings} />
                 ) : activePage === 'Employee Attendance' ? (
                   <EmployeeAttendance companySettings={companySettings} />
+                ) : activePage === 'Reports' ? (
+                  <Reports />
                 ) : activePage === 'Settings' ? (
                   <div className="w-full pb-20">
                     <div className="flex justify-between items-end pb-4 border-b border-zinc-300/50 mb-6">

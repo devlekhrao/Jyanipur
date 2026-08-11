@@ -119,28 +119,72 @@ export async function saveEmployee(emp) {
   }
 }
 
-export async function getMonthlyAttendance(year, month) {
-    try {
-      // Format start and end dates (e.g., 2026-08-01 to 2026-08-31)
-      const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
-      const endDate = new Date(year, month, 0).toISOString().split('T')[0]; 
-  
-      const data = await sql`
-        SELECT emp_id, date, status 
-        FROM attendance_logs 
-        WHERE date >= ${startDate} AND date <= ${endDate}
-      `;
-  
-      // Group by employee ID and then by Date
-      const map = {};
-      data.forEach(row => {
-        if (!map[row.emp_id]) map[row.emp_id] = {};
-        const dayStr = new Date(row.date).toISOString().split('T')[0];
-        map[row.emp_id][dayStr] = row.status;
-      });
-      return map;
-    } catch (err) {
-      console.error('Error fetching monthly attendance:', err);
-      return {};
-    }
+export async function getTodayAttendance(dateStr) {
+  try {
+    const data = await sql`SELECT emp_id, status FROM attendance_logs WHERE date = ${dateStr}`;
+    const map = {};
+    data.forEach(row => { map[row.emp_id] = row.status; });
+    return map;
+  } catch (err) {
+    console.error('Error fetching attendance:', err);
+    return {};
   }
+}
+
+export async function saveAttendance(empId, dateStr, status) {
+  try {
+    await sql`
+      INSERT INTO attendance_logs (emp_id, date, status)
+      VALUES (${empId}, ${dateStr}, ${status})
+      ON CONFLICT (emp_id, date) DO UPDATE SET status = EXCLUDED.status;
+    `;
+  } catch (err) {
+    console.error('Error saving attendance:', err);
+  }
+}
+
+export async function getMonthlyAttendance(year, month) {
+  try {
+    const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+    const endDate = new Date(year, month, 0).toISOString().split('T')[0]; 
+
+    const data = await sql`
+      SELECT emp_id, date, status 
+      FROM attendance_logs 
+      WHERE date >= ${startDate} AND date <= ${endDate}
+    `;
+
+    const map = {};
+    data.forEach(row => {
+      if (!map[row.emp_id]) map[row.emp_id] = {};
+      const dayStr = new Date(row.date).toISOString().split('T')[0];
+      map[row.emp_id][dayStr] = row.status;
+    });
+    return map;
+  } catch (err) {
+    console.error('Error fetching monthly attendance:', err);
+    return {};
+  }
+}
+
+// ==========================================
+// EXPENSES & REPORTS MODULE
+// ==========================================
+export async function getExpenses() {
+  try {
+    const data = await sql`SELECT * FROM expenses ORDER BY id DESC`;
+    return data.map(ex => ({
+      id: ex.id,
+      date: ex.date ? new Date(ex.date).toISOString().split('T')[0] : '',
+      category: ex.category,
+      vendor: ex.vendor,
+      gstin: ex.gstin,
+      taxableAmount: Number(ex.taxable_amount || 0),
+      gstAmount: Number(ex.gst_amount || 0),
+      totalAmount: Number(ex.total_amount || 0)
+    }));
+  } catch (err) {
+    console.error('Error fetching expenses:', err);
+    return [];
+  }
+}
