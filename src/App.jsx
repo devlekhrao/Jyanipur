@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import TaxInvoice from './TaxInvoice';
 import Estimation from './Estimation';
 import EmployeeAttendance from './EmployeeAttendance';
-import Reports from './Reports';
 import Purchases from './Purchases';
 import EmployeeExpenses from './EmployeeExpenses';
 import Salaries from './Salaries';
+import GST from './GST'; // Replaced Reports with GST
 
 export default function App() {
   const [email, setEmail] = useState('');
@@ -110,7 +110,7 @@ export default function App() {
                 'Staff Expenses',     
                 'Salaries',
                 'Income',
-                'Reports',
+                'GST Filing', // Updated sidebar entry
                 'Settings'
               ].map((page) => (
                 <button
@@ -153,8 +153,8 @@ export default function App() {
                   <EmployeeExpenses />
                 ) : activePage === 'Salaries' ? (
                   <Salaries />
-                ) : activePage === 'Reports' ? (
-                  <Reports />
+                ) : activePage === 'GST Filing' ? ( // Updated rendering condition
+                  <GST />
                 ) : activePage === 'Settings' ? (
                   <div className="w-full pb-20">
                     <div className="flex justify-between items-end pb-4 border-b border-zinc-300/50 mb-6">
