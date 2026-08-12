@@ -660,3 +660,61 @@ export async function saveWoPayment(payment) {
     throw err;
   }
 }
+// ==========================================
+// MEASUREMENT SHEETS (JMS) MODULE
+// ==========================================
+export async function getMeasurementSheets() {
+  try {
+    const data = await sql`
+      SELECT m.*, p.name as project_name, p.client_name 
+      FROM measurement_sheets m
+      JOIN projects p ON m.project_id = p.id
+      ORDER BY m.created_at DESC
+    `;
+    return data.map(m => ({
+      id: m.id,
+      projectId: m.project_id,
+      projectName: m.project_name,
+      clientName: m.client_name,
+      title: m.title,
+      date: m.date ? new Date(m.date).toISOString().split('T')[0] : '',
+      data: m.data ? JSON.parse(m.data) : []
+    }));
+  } catch (err) {
+    console.error('Error fetching measurement sheets:', err);
+    return [];
+  }
+}
+
+export async function saveMeasurementSheet(sheet) {
+  try {
+    if (sheet.id) {
+      const result = await sql`
+        UPDATE measurement_sheets 
+        SET title = ${sheet.title}, date = ${sheet.date}, data = ${JSON.stringify(sheet.data)}
+        WHERE id = ${sheet.id}
+        RETURNING *;
+      `;
+      return result[0];
+    } else {
+      const result = await sql`
+        INSERT INTO measurement_sheets (project_id, title, date, data)
+        VALUES (${sheet.projectId}, ${sheet.title}, ${sheet.date}, ${JSON.stringify(sheet.data)})
+        RETURNING *;
+      `;
+      return result[0];
+    }
+  } catch (err) {
+    console.error('Error saving measurement sheet:', err);
+    throw err;
+  }
+}
+
+export async function deleteMeasurementSheet(id) {
+  try {
+    await sql`DELETE FROM measurement_sheets WHERE id = ${id}`;
+  } catch (err) {
+    console.error('Error deleting measurement sheet:', err);
+    throw err;
+  }
+}

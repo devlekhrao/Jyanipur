@@ -6,12 +6,13 @@ import EmployeeAttendance from './EmployeeAttendance';
 import Purchases from './Purchases';
 import Inventory from './Inventory';
 import RateBook from './RateBook';
-import Subcontractors from './Subcontractors'; // Added Subcontractors import
+import Subcontractors from './Subcontractors';
 import EmployeeExpenses from './EmployeeExpenses';
 import Salaries from './Salaries';
 import Income from './Income';
 import GST from './GST';
 import Projects from './Projects';
+import MeasurementSheet from './MeasurementSheet'; // Added MeasurementSheet import
 
 export default function App() {
   const [email, setEmail] = useState('');
@@ -107,12 +108,13 @@ export default function App() {
               {[
                 'Dashboard',
                 'Projects',
+                'Measurement Sheet', // Added Measurement Sheet right below Projects
                 'Estimation',
                 'Tax Invoice',
                 'Purchases',
                 'Inventory',
                 'Rate Book', 
-                'Subcontractors', // Added Subcontractors to the sidebar
+                'Subcontractors',
                 'Employee Attendance',
                 'Staff Expenses',     
                 'Salaries',
@@ -172,7 +174,7 @@ export default function App() {
                 ) : activePage === 'Rate Book' ? (
                   <RateBook />
                 ) : activePage === 'Subcontractors' ? (
-                  <Subcontractors /> // Added Subcontractors render block
+                  <Subcontractors />
                 ) : activePage === 'Employee Attendance' ? (
                   <EmployeeAttendance companySettings={companySettings} />
                 ) : activePage === 'Staff Expenses' ? (
@@ -185,6 +187,8 @@ export default function App() {
                   <GST />
                 ) : activePage === 'Projects' ? (
                   <Projects />
+                ) : activePage === 'Measurement Sheet' ? (
+                  <MeasurementSheet /> // Added Measurement Sheet Render Block
                 ) : activePage === 'Settings' ? (
                   <div className="w-full pb-20">
                     <div className="flex justify-between items-end pb-4 border-b border-zinc-300/50 mb-6">
