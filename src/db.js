@@ -208,7 +208,8 @@ export async function getPurchases() {
       gstType: p.gst_type || 'CGST/SGST',
       gstAmount: Number(p.gst_amount),
       totalAmount: Number(p.total_amount),
-      returnStatus: p.return_status
+      returnStatus: p.return_status,
+      items: p.items ? JSON.parse(p.items) : [] // Added items to fetch logic
     }));
   } catch (err) {
     console.error('Error fetching purchases:', err);
@@ -221,10 +222,10 @@ export async function savePurchase(p) {
     const result = await sql`
       INSERT INTO purchases (
         fy, invoice_date, invoice_no, vendor_name, gstin, hsn, 
-        taxable_amount, gst_percent, gst_type, gst_amount, total_amount, return_status
+        taxable_amount, gst_percent, gst_type, gst_amount, total_amount, return_status, items
       ) VALUES (
         ${p.fy}, ${p.invoiceDate}, ${p.invoiceNo}, ${p.vendorName}, ${p.gstin}, ${p.hsn},
-        ${p.taxableAmount}, ${p.gstPercent}, ${p.gstType}, ${p.gstAmount}, ${p.totalAmount}, ${p.returnStatus}
+        ${p.taxableAmount}, ${p.gstPercent}, ${p.gstType}, ${p.gstAmount}, ${p.totalAmount}, ${p.returnStatus}, ${p.items || null}
       )
       RETURNING *;
     `;
@@ -242,6 +243,7 @@ export async function deletePurchase(id) {
     console.error('Error deleting purchase:', err);
   }
 }
+
 export async function updatePurchaseStatus(id, newStatus) {
   try {
     await sql`UPDATE purchases SET return_status = ${newStatus} WHERE id = ${id}`;
