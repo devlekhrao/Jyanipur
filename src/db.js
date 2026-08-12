@@ -1079,3 +1079,52 @@ export async function deleteTask(id) {
     console.error('Error deleting task:', err);
   }
 }
+// ==========================================
+// DOCUMENT VAULT MODULE
+// ==========================================
+export async function getVaultDocuments() {
+  try {
+    const data = await sql`
+      SELECT v.*, p.name as project_name 
+      FROM document_vault v
+      LEFT JOIN projects p ON v.project_id = p.id
+      ORDER BY v.id DESC
+    `;
+    return data.map(d => ({
+      id: d.id,
+      projectId: d.project_id,
+      projectName: d.project_name || 'General Company Doc',
+      documentName: d.document_name,
+      category: d.category,
+      fileUrl: d.file_url,
+      fileType: d.file_type,
+      uploadedAt: d.uploaded_at ? new Date(d.uploaded_at).toISOString().split('T')[0] : '',
+      notes: d.notes
+    }));
+  } catch (err) {
+    console.error('Error fetching vault docs:', err);
+    return [];
+  }
+}
+
+export async function saveVaultDocument(doc) {
+  try {
+    const result = await sql`
+      INSERT INTO document_vault (project_id, document_name, category, file_url, file_type, notes)
+      VALUES (${doc.projectId || null}, ${doc.documentName}, ${doc.category}, ${doc.fileUrl}, ${doc.fileType}, ${doc.notes})
+      RETURNING *;
+    `;
+    return result[0];
+  } catch (err) {
+    console.error('Error saving vault doc:', err);
+    throw err;
+  }
+}
+
+export async function deleteVaultDocument(id) {
+  try {
+    await sql`DELETE FROM document_vault WHERE id = ${id}`;
+  } catch (err) {
+    console.error('Error deleting vault doc:', err);
+  }
+}

@@ -15,7 +15,8 @@ import Salaries from './Salaries';
 import Income from './Income';
 import GST from './GST';
 import Projects from './Projects';
-import TaskBoard from './TaskBoard'; // <-- TASK BOARD IMPORT
+import TaskBoard from './TaskBoard';
+import DocumentVault from './DocumentVault'; // <-- DOCUMENT VAULT IMPORT
 import ProjectPnL from './ProjectPnL';
 import MeasurementSheet from './MeasurementSheet';
 import SiteManager from './SiteManager'; 
@@ -27,7 +28,7 @@ export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [error, setError] = useState('');
   
-  // DEFAULT ACTIVE PAGE IS NOW DASHBOARD
+  // DEFAULT ACTIVE PAGE IS DASHBOARD
   const [activePage, setActivePage] = useState('Dashboard');
 
   // --- GLOBAL COMPANY & PRINT SETTINGS ---
@@ -96,6 +97,33 @@ export default function App() {
           <div className="absolute inset-0 bg-black/20"></div>
         </div>
 
+        {/* FLOATING QUICK DOCK BUTTONS IN THE OUTER RIGHT SPACE */}
+        <div className="fixed right-3 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-3 print:hidden hidden xl:flex">
+          <button 
+            onClick={() => setActivePage('Document Vault')}
+            className={`flex items-center gap-2 px-4 py-3 rounded-2xl font-bold text-xs shadow-2xl backdrop-blur-2xl border transition-all hover:scale-105 cursor-pointer ${
+              activePage === 'Document Vault' 
+                ? 'bg-zinc-900 text-white border-zinc-700 shadow-zinc-900/50' 
+                : 'bg-white/70 text-zinc-800 border-white/80 hover:bg-white'
+            }`}
+          >
+            <span>📁</span>
+            <span className="tracking-wider uppercase text-[10px]">Vault</span>
+          </button>
+
+          <button 
+            onClick={() => setActivePage('Measurement Sheet')}
+            className={`flex items-center gap-2 px-4 py-3 rounded-2xl font-bold text-xs shadow-2xl backdrop-blur-2xl border transition-all hover:scale-105 cursor-pointer ${
+              activePage === 'Measurement Sheet' 
+                ? 'bg-zinc-900 text-white border-zinc-700 shadow-zinc-900/50' 
+                : 'bg-white/70 text-zinc-800 border-white/80 hover:bg-white'
+            }`}
+          >
+            <span>📐</span>
+            <span className="tracking-wider uppercase text-[10px]">Calc</span>
+          </button>
+        </div>
+
         <div className="relative z-10 flex w-full h-full max-w-[1600px] bg-white/80 backdrop-blur-3xl rounded-[2.5rem] shadow-[0_30px_80px_rgba(0,0,0,0.3)] border border-white/60 overflow-hidden print:bg-white print:shadow-none print:border-none print:rounded-none">
           
           <aside className="w-[250px] bg-white/40 border-r border-white/60 flex flex-col z-10 flex-shrink-0 print:hidden">
@@ -116,7 +144,8 @@ export default function App() {
                 'Dashboard',
                 'CRM',
                 'Projects',
-                'Task Board',       // <-- TASK BOARD ADDED TO MENU
+                'Task Board',
+                'Document Vault',    // <-- ADDED TO MENU
                 'Project P&L',      
                 'Daily Report',     
                 'Petty Cash',       
@@ -181,7 +210,9 @@ export default function App() {
                 ) : activePage === 'Projects' ? (
                   <Projects />
                 ) : activePage === 'Task Board' ? ( 
-                  <TaskBoard /> // <-- TASK BOARD RENDER BLOCK
+                  <TaskBoard />
+                ) : activePage === 'Document Vault' ? ( // <-- RENDER BLOCK
+                  <DocumentVault />
                 ) : activePage === 'Project P&L' ? ( 
                   <ProjectPnL />
                 ) : activePage === 'Daily Report' ? (  
