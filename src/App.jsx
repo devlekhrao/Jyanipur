@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import Dashboard from './Dashboard';
+import CRM from './CRM'; // Added CRM import
 import TaxInvoice from './TaxInvoice';
 import Estimation from './Estimation';
 import EmployeeAttendance from './EmployeeAttendance';
 import Purchases from './Purchases';
 import Inventory from './Inventory';
+import Tools from './Tools'; // Added Tools import
 import RateBook from './RateBook';
 import Subcontractors from './Subcontractors';
 import EmployeeExpenses from './EmployeeExpenses';
@@ -12,7 +14,7 @@ import Salaries from './Salaries';
 import Income from './Income';
 import GST from './GST';
 import Projects from './Projects';
-import MeasurementSheet from './MeasurementSheet'; // Added MeasurementSheet import
+import MeasurementSheet from './MeasurementSheet';
 
 export default function App() {
   const [email, setEmail] = useState('');
@@ -107,12 +109,14 @@ export default function App() {
             <div className="flex-1 overflow-y-auto py-4 px-5 flex flex-col gap-2 custom-scrollbar">
               {[
                 'Dashboard',
+                'CRM', // Added CRM to the sidebar
                 'Projects',
-                'Measurement Sheet', // Added Measurement Sheet right below Projects
+                'Measurement Sheet',
                 'Estimation',
                 'Tax Invoice',
                 'Purchases',
                 'Inventory',
+                'Tools & Assets', // Added Tools to the sidebar
                 'Rate Book', 
                 'Subcontractors',
                 'Employee Attendance',
@@ -163,6 +167,8 @@ export default function App() {
                 {/* RENDER LOGIC */}
                 {activePage === 'Dashboard' ? (
                   <Dashboard setActivePage={setActivePage} />
+                ) : activePage === 'CRM' ? (
+                  <CRM /> // Added CRM Render Block
                 ) : activePage === 'Tax Invoice' ? (
                   <TaxInvoice companySettings={companySettings} />
                 ) : activePage === 'Estimation' ? (
@@ -171,6 +177,8 @@ export default function App() {
                   <Purchases />
                 ) : activePage === 'Inventory' ? (
                   <Inventory /> 
+                ) : activePage === 'Tools & Assets' ? (
+                  <Tools /> // Added Tools Render Block
                 ) : activePage === 'Rate Book' ? (
                   <RateBook />
                 ) : activePage === 'Subcontractors' ? (
@@ -188,7 +196,7 @@ export default function App() {
                 ) : activePage === 'Projects' ? (
                   <Projects />
                 ) : activePage === 'Measurement Sheet' ? (
-                  <MeasurementSheet /> // Added Measurement Sheet Render Block
+                  <MeasurementSheet />
                 ) : activePage === 'Settings' ? (
                   <div className="w-full pb-20">
                     <div className="flex justify-between items-end pb-4 border-b border-zinc-300/50 mb-6">

@@ -718,3 +718,132 @@ export async function deleteMeasurementSheet(id) {
     throw err;
   }
 }
+// ==========================================
+// CRM & LEADS MODULE
+// ==========================================
+export async function getLeads() {
+  try {
+    const data = await sql`SELECT * FROM leads ORDER BY created_at DESC`;
+    return data.map(l => ({
+      id: l.id,
+      clientName: l.client_name,
+      phone: l.phone,
+      projectType: l.project_type,
+      estimatedValue: Number(l.estimated_value),
+      status: l.status,
+      notes: l.notes
+    }));
+  } catch (err) {
+    console.error('Error fetching leads:', err);
+    return [];
+  }
+}
+
+export async function saveLead(lead) {
+  try {
+    if (lead.id) {
+      const result = await sql`
+        UPDATE leads 
+        SET client_name = ${lead.clientName}, phone = ${lead.phone}, project_type = ${lead.projectType}, 
+            estimated_value = ${lead.estimatedValue}, status = ${lead.status}, notes = ${lead.notes}
+        WHERE id = ${lead.id} RETURNING *;
+      `;
+      return result[0];
+    } else {
+      const result = await sql`
+        INSERT INTO leads (client_name, phone, project_type, estimated_value, status, notes)
+        VALUES (${lead.clientName}, ${lead.phone}, ${lead.projectType}, ${lead.estimatedValue}, ${lead.status}, ${lead.notes})
+        RETURNING *;
+      `;
+      return result[0];
+    }
+  } catch (err) {
+    console.error('Error saving lead:', err);
+    throw err;
+  }
+}
+
+export async function updateLeadStatus(id, newStatus) {
+  try {
+    await sql`UPDATE leads SET status = ${newStatus} WHERE id = ${id}`;
+  } catch (err) {
+    console.error('Error updating lead status:', err);
+    throw err;
+  }
+}
+
+export async function deleteLead(id) {
+  try {
+    await sql`DELETE FROM leads WHERE id = ${id}`;
+  } catch (err) {
+    console.error('Error deleting lead:', err);
+  }
+}
+
+// ==========================================
+// TOOLS & ASSET MANAGEMENT MODULE
+// ==========================================
+export async function getTools() {
+  try {
+    const data = await sql`SELECT * FROM tools ORDER BY name ASC`;
+    return data.map(t => ({
+      id: t.id,
+      name: t.name,
+      category: t.category,
+      serialNumber: t.serial_number,
+      status: t.status,
+      assignedTo: t.assigned_to,
+      location: t.location,
+      purchasePrice: Number(t.purchase_price),
+      purchaseDate: t.purchase_date ? new Date(t.purchase_date).toISOString().split('T')[0] : ''
+    }));
+  } catch (err) {
+    console.error('Error fetching tools:', err);
+    return [];
+  }
+}
+
+export async function saveTool(tool) {
+  try {
+    if (tool.id) {
+      const result = await sql`
+        UPDATE tools 
+        SET name = ${tool.name}, category = ${tool.category}, serial_number = ${tool.serialNumber}, 
+            purchase_price = ${tool.purchasePrice}, purchase_date = ${tool.purchaseDate}
+        WHERE id = ${tool.id} RETURNING *;
+      `;
+      return result[0];
+    } else {
+      const result = await sql`
+        INSERT INTO tools (name, category, serial_number, purchase_price, purchase_date, status)
+        VALUES (${tool.name}, ${tool.category}, ${tool.serialNumber}, ${tool.purchasePrice}, ${tool.purchaseDate}, 'Available')
+        RETURNING *;
+      `;
+      return result[0];
+    }
+  } catch (err) {
+    console.error('Error saving tool:', err);
+    throw err;
+  }
+}
+
+export async function updateToolStatus(id, status, assignedTo, location) {
+  try {
+    await sql`
+      UPDATE tools 
+      SET status = ${status}, assigned_to = ${assignedTo}, location = ${location}
+      WHERE id = ${id}
+    `;
+  } catch (err) {
+    console.error('Error updating tool status:', err);
+    throw err;
+  }
+}
+
+export async function deleteTool(id) {
+  try {
+    await sql`DELETE FROM tools WHERE id = ${id}`;
+  } catch (err) {
+    console.error('Error deleting tool:', err);
+  }
+}
