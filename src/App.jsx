@@ -88,22 +88,22 @@ export default function App() {
     }
   };
 
-  const inputClass = "w-full px-4 py-3 rounded-xl border border-white/10 bg-slate-800/60 focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] text-slate-100 text-xs font-medium transition-all shadow-inner placeholder-slate-500";
-  const labelClass = "block text-[9px] font-mono font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1";
+  const inputClass = "w-full px-4 py-3 rounded-xl border-none bg-white/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] text-zinc-900 text-xs font-medium transition-all shadow-sm";
+  const labelClass = "block text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
 
   /* ========================================================================
-     1. AFTER LOGIN PAGE: INDIGO BLUE & GREY GLASS THEME
+     1. AFTER LOGIN PAGE: INDIGO SIDEBAR WITH WHITE TEXT + GLASS CANVAS
      ======================================================================== */
   if (isLoggedIn) {
     return (
-      <div className="fixed inset-0 w-screen h-[100dvh] font-['Poppins'] text-slate-100 selection:bg-[#1E3A8A] selection:text-white overflow-hidden flex items-center justify-center p-4 lg:p-6 print:p-0 print:block overscroll-none bg-zinc-900">
+      <div className="fixed inset-0 w-screen h-[100dvh] font-['Poppins'] text-zinc-800 selection:bg-blue-100 overflow-hidden flex items-center justify-center p-4 lg:p-6 print:p-0 print:block overscroll-none bg-zinc-900">
         
-        {/* Previous Original Background Image */}
+        {/* Background Image */}
         <div className="absolute inset-0 z-0 bg-[url('/background.png')] bg-cover bg-center bg-no-repeat print:hidden">
-          <div className="absolute inset-0 bg-black/40"></div>
+          <div className="absolute inset-0 bg-black/30"></div>
         </div>
 
-        {/* FLOATING QUICK DOCK BUTTONS IN INDIGO BLUE & GREY GLASS */}
+        {/* FLOATING QUICK DOCK BUTTONS */}
         <div className="fixed right-3 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-3 print:hidden hidden xl:flex">
           {[
             { name: 'Document Vault', icon: '📁', label: 'Vault' },
@@ -116,36 +116,42 @@ export default function App() {
               onClick={() => setActivePage(item.name)}
               className={`flex items-center gap-2 px-4 py-3 rounded-2xl font-bold text-xs shadow-2xl backdrop-blur-2xl border transition-all hover:scale-105 cursor-pointer ${
                 activePage === item.name 
-                  ? 'bg-[#1E3A8A] text-white border-blue-400/40 shadow-[#1E3A8A]/50' 
-                  : 'bg-slate-900/80 text-slate-300 border-white/10 hover:bg-slate-800 hover:text-white'
+                  ? 'bg-[#1E3A8A] text-white border-[#1E3A8A] shadow-blue-900/50' 
+                  : 'bg-white/70 text-zinc-800 border-white/80 hover:bg-white'
               }`}
             >
               <span>{item.icon}</span>
-              <span className="tracking-wider uppercase text-[10px] font-mono">{item.label}</span>
+              <span className="tracking-wider uppercase text-[10px]">{item.label}</span>
             </button>
           ))}
         </div>
 
-        {/* MAIN INDIGO-GREY GLASS CANVAS CONTAINER */}
-        <div className="relative z-10 flex w-full h-full max-w-[1600px] bg-slate-900/85 backdrop-blur-3xl rounded-[2.5rem] shadow-[0_30px_90px_rgba(0,0,0,0.6)] border border-white/10 overflow-hidden print:bg-white print:shadow-none print:border-none print:rounded-none">
+        {/* MAIN CANVAS CONTAINER */}
+        <div className="relative z-10 flex w-full h-full max-w-[1600px] bg-white/80 backdrop-blur-3xl rounded-[2.5rem] shadow-[0_30px_80px_rgba(0,0,0,0.3)] border border-white/60 overflow-hidden print:bg-white print:shadow-none print:border-none print:rounded-none">
           
-          {/* SIDEBAR NAVIGATION - INDIGO & GREY */}
-          <aside className="w-[250px] bg-slate-950/70 backdrop-blur-xl border-r border-white/10 flex flex-col z-10 flex-shrink-0 print:hidden">
+          {/* ==========================================================
+              STRICTLY INDIGO SIDEBAR WITH WHITE TEXT & LOGO
+              ========================================================== */}
+          <aside className="w-[250px] bg-[#1E3A8A] text-white border-r border-blue-900/50 flex flex-col z-10 flex-shrink-0 print:hidden shadow-xl">
             
+            {/* Header / Logo */}
             <div className="pt-8 pb-4 flex items-center justify-center gap-3">
               <div className="bg-white p-2 rounded-xl shadow-sm">
-                <img src={companySettings.logoUrl} alt="Logo" className="h-6 w-auto object-contain" onError={(e) => { e.target.style.display='none'; }} />
+                <img 
+                  src={companySettings.logoUrl} 
+                  alt="Logo" 
+                  className="h-6 w-auto object-contain" 
+                  onError={(e) => { e.target.style.display='none'; }} 
+                />
               </div>
-              <div>
-                <span className="font-extrabold text-sm tracking-[0.2em] text-white block uppercase">Jyanipur</span>
-                <span className="text-[8px] font-mono tracking-widest text-[#1E3A8A] uppercase block -mt-1 font-bold">ERP Portal</span>
-              </div>
+              <span className="font-bold text-sm tracking-[0.2em] text-white uppercase">Jyanipur</span>
             </div>
 
             <div className="px-6 py-1">
-              <div className="h-px w-full bg-white/10"></div>
+              <div className="h-px w-full bg-blue-400/20"></div>
             </div>
 
+            {/* Navigation Menu */}
             <div className="flex-1 overflow-y-auto py-3 px-4 flex flex-col gap-1.5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               {[
                 'Dashboard',
@@ -178,8 +184,8 @@ export default function App() {
                   onClick={() => setActivePage(page)}
                   className={`text-left px-4 py-2.5 rounded-xl text-xs transition-all duration-300 flex items-center ${
                     activePage === page 
-                      ? 'bg-[#1E3A8A] text-white font-semibold shadow-lg shadow-[#1E3A8A]/40 border border-blue-400/30 translate-x-1' 
-                      : 'text-slate-400 hover:bg-slate-800/80 hover:text-slate-100 font-medium'
+                      ? 'bg-white/20 text-white font-bold shadow-md shadow-blue-950/40 ring-1 ring-white/30 translate-x-1' 
+                      : 'text-blue-100/70 hover:bg-white/10 hover:text-white font-medium'
                   }`}
                 >
                   {page}
@@ -187,27 +193,28 @@ export default function App() {
               ))}
             </div>
 
-            <div className="p-4 flex flex-col gap-2 border-t border-white/10 bg-slate-950/90">
+            {/* Bottom Actions */}
+            <div className="p-4 flex flex-col gap-2 border-t border-blue-400/20 bg-[#172e6e]">
               <button
                 onClick={() => setActivePage('Settings')}
-                className={`w-full py-2.5 rounded-xl text-[10px] uppercase tracking-widest font-mono font-bold transition-all duration-300 cursor-pointer border ${
+                className={`w-full py-2.5 rounded-xl text-[10px] uppercase tracking-widest font-bold transition-all duration-300 cursor-pointer shadow-sm border ${
                   activePage === 'Settings' 
-                    ? 'bg-[#1E3A8A] text-white border-blue-400/40 shadow-md' 
-                    : 'bg-slate-900/60 border-white/10 text-slate-400 hover:bg-slate-800 hover:text-white'
+                    ? 'bg-white text-[#1E3A8A] border-white shadow-md' 
+                    : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
                 }`}
               >
                 Settings
               </button>
               <button 
                 onClick={handleLogout}
-                className="w-full bg-slate-900/60 border border-white/10 text-slate-400 hover:bg-red-600 hover:text-white hover:border-red-500 py-2.5 rounded-xl text-[10px] uppercase tracking-widest font-mono font-bold transition-all duration-300 cursor-pointer"
+                className="w-full bg-white/10 border border-white/20 text-white hover:bg-red-500 hover:border-red-500 py-2.5 rounded-xl text-[10px] uppercase tracking-widest font-bold transition-all duration-300 cursor-pointer"
               >
                 Log Out
               </button>
             </div>
           </aside>
 
-          {/* MAIN CONTENT WORKSPACE */}
+          {/* MAIN CONTENT AREA */}
           <main className="flex-1 flex flex-col h-full overflow-hidden relative z-10 print:overflow-visible">
             <div className="flex-1 p-8 lg:p-12 overflow-y-auto print:p-0 print:overflow-visible custom-scrollbar">
               <div className="max-w-7xl mx-auto print:max-w-none print:mx-0">
@@ -263,12 +270,12 @@ export default function App() {
                   <GST />
                 ) : activePage === 'Settings' ? (
                   <div className="w-full pb-20">
-                    <div className="flex justify-between items-end pb-4 border-b border-white/10 mb-6">
+                    <div className="flex justify-between items-end pb-4 border-b border-zinc-300/50 mb-6">
                       <div>
-                        <h2 className="text-2xl font-extrabold text-white tracking-tight">Portal & Print Settings</h2>
-                        <p className="text-slate-400 text-xs mt-1 font-medium">Configure company branding, digital signature, and PDF print preferences.</p>
+                        <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Portal & Print Settings</h2>
+                        <p className="text-zinc-600 text-xs mt-1 font-medium">Configure company branding, digital signature, and PDF print preferences.</p>
                       </div>
-                      <button onClick={() => alert('Settings Saved!')} className="bg-[#1E3A8A] hover:bg-blue-900 text-white px-6 py-3 rounded-xl text-xs font-semibold shadow-lg shadow-[#1E3A8A]/30 border border-blue-400/30 hover:-translate-y-0.5 transition-all cursor-pointer">
+                      <button onClick={() => alert('Settings Saved!')} className="bg-[#1E3A8A] text-white px-6 py-3 rounded-xl text-xs font-semibold shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer">
                         Save Preferences
                       </button>
                     </div>
@@ -277,8 +284,8 @@ export default function App() {
                       
                       {/* Left Side: Profile & Banking */}
                       <div className="space-y-6">
-                        <div className="bg-slate-900/60 backdrop-blur-md p-8 rounded-3xl border border-white/10 shadow-xl space-y-4">
-                          <h3 className="text-xs font-mono font-extrabold text-white uppercase tracking-wider border-b border-white/10 pb-2">Company Profile</h3>
+                        <div className="bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-white/60 shadow-xl space-y-4">
+                          <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b border-zinc-200/50 pb-2">Company Profile</h3>
                           <div>
                             <label className={labelClass}>Company Name</label>
                             <input type="text" value={companySettings.companyName} onChange={e => setCompanySettings({...companySettings, companyName: e.target.value})} className={inputClass} />
@@ -308,8 +315,8 @@ export default function App() {
                         </div>
 
                         {/* DIGITAL SIGNATURE UPLOAD BLOCK */}
-                        <div className="bg-slate-900/60 backdrop-blur-md p-8 rounded-3xl border border-white/10 shadow-xl space-y-4">
-                          <h3 className="text-xs font-mono font-extrabold text-white uppercase tracking-wider border-b border-white/10 pb-2">Authorized Digital Signature / Stamp</h3>
+                        <div className="bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-white/60 shadow-xl space-y-4">
+                          <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b border-zinc-200/50 pb-2">Authorized Digital Signature / Stamp</h3>
                           
                           <div>
                             <label className={labelClass}>Upload Signature Image (PNG recommended)</label>
@@ -317,7 +324,7 @@ export default function App() {
                               type="file" 
                               accept="image/*" 
                               onChange={handleSignatureUpload} 
-                              className="w-full text-xs text-slate-300 file:mr-4 file:py-2 px-1 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[#1E3A8A] file:text-white hover:file:bg-blue-900 cursor-pointer" 
+                              className="w-full text-xs text-zinc-600 file:mr-4 file:py-2 px-1 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[#1E3A8A] file:text-white hover:file:bg-blue-900 cursor-pointer" 
                             />
                           </div>
 
@@ -333,12 +340,12 @@ export default function App() {
                           </div>
 
                           {companySettings.signatureUrl && (
-                            <div className="mt-3 p-4 bg-slate-800/80 rounded-2xl border border-white/10 inline-block">
-                              <p className="text-[9px] font-mono font-bold text-slate-400 uppercase tracking-wider mb-2">Signature Preview:</p>
-                              <img src={companySettings.signatureUrl} alt="Signature Preview" className="h-14 w-auto object-contain border-b border-slate-700 pb-1 bg-white/10 p-1 rounded" />
+                            <div className="mt-3 p-4 bg-white/50 rounded-2xl border border-zinc-200/60 inline-block">
+                              <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider mb-2">Signature Preview:</p>
+                              <img src={companySettings.signatureUrl} alt="Signature Preview" className="h-14 w-auto object-contain border-b border-zinc-300 pb-1" />
                               <button 
                                 onClick={() => setCompanySettings({...companySettings, signatureUrl: ''})}
-                                className="text-[9px] text-red-400 font-bold hover:underline mt-2 block cursor-pointer"
+                                className="text-[9px] text-red-500 font-bold hover:underline mt-2 block"
                               >
                                 Remove Signature
                               </button>
@@ -346,8 +353,8 @@ export default function App() {
                           )}
                         </div>
 
-                        <div className="bg-slate-900/60 backdrop-blur-md p-8 rounded-3xl border border-white/10 shadow-xl space-y-4">
-                          <h3 className="text-xs font-mono font-extrabold text-white uppercase tracking-wider border-b border-white/10 pb-2">Bank Details (PDF)</h3>
+                        <div className="bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-white/60 shadow-xl space-y-4">
+                          <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b border-zinc-200/50 pb-2">Bank Details (PDF)</h3>
                           <div>
                             <label className={labelClass}>Bank Name</label>
                             <input type="text" value={companySettings.bankName} onChange={e => setCompanySettings({...companySettings, bankName: e.target.value})} className={inputClass} />
@@ -371,8 +378,8 @@ export default function App() {
 
                       {/* Right Side: PDF Structure Controls */}
                       <div className="space-y-6">
-                        <div className="bg-slate-900/60 backdrop-blur-md p-8 rounded-3xl border border-white/10 shadow-xl space-y-5">
-                          <h3 className="text-xs font-mono font-extrabold text-white uppercase tracking-wider border-b border-white/10 pb-2">Print Layout Visibility</h3>
+                        <div className="bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-white/60 shadow-xl space-y-5">
+                          <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b border-zinc-200/50 pb-2">Print Layout Visibility</h3>
                           
                           {[
                             { key: 'showBankDetailsOnPdf', label: 'Show Bank Details Box', desc: 'Include bank name, account number, and IFSC on printed PDFs' },
@@ -386,18 +393,18 @@ export default function App() {
                                 type="checkbox" 
                                 checked={companySettings[item.key]} 
                                 onChange={e => setCompanySettings({...companySettings, [item.key]: e.target.checked})} 
-                                className="w-5 h-5 rounded text-[#1E3A8A] bg-slate-800 border-slate-700 focus:ring-[#1E3A8A]" 
+                                className="w-5 h-5 rounded text-[#1E3A8A] border-zinc-300 focus:ring-[#1E3A8A]" 
                               />
                               <div>
-                                <span className="text-xs font-bold text-slate-200 block">{item.label}</span>
-                                <span className="text-[10px] text-slate-400">{item.desc}</span>
+                                <span className="text-xs font-bold text-zinc-800 block">{item.label}</span>
+                                <span className="text-[10px] text-zinc-500">{item.desc}</span>
                               </div>
                             </label>
                           ))}
                         </div>
 
-                        <div className="bg-slate-900/60 backdrop-blur-md p-8 rounded-3xl border border-white/10 shadow-xl space-y-4">
-                          <h3 className="text-xs font-mono font-extrabold text-white uppercase tracking-wider border-b border-white/10 pb-2">PDF Footer Note</h3>
+                        <div className="bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-white/60 shadow-xl space-y-4">
+                          <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b border-zinc-200/50 pb-2">PDF Footer Note</h3>
                           <div>
                             <label className={labelClass}>Disclaimer / Note</label>
                             <textarea value={companySettings.pdfFooterDisclaimer} onChange={e => setCompanySettings({...companySettings, pdfFooterDisclaimer: e.target.value})} className={`${inputClass} h-20 resize-none text-[11px]`}></textarea>
@@ -409,9 +416,9 @@ export default function App() {
                   </div>
                 ) : (
                   <div className="h-[60vh] flex flex-col items-center justify-center text-center print:hidden">
-                    <div className="bg-slate-900/60 backdrop-blur-xl p-10 rounded-[2rem] border border-white/10 shadow-lg max-w-sm w-full">
-                      <h2 className="text-xl font-extrabold text-white mb-2">{activePage}</h2>
-                      <p className="text-slate-400 text-xs font-medium">This module is currently being constructed.</p>
+                    <div className="bg-white/40 backdrop-blur-xl p-10 rounded-[2rem] border border-white/60 shadow-lg max-w-sm w-full">
+                      <h2 className="text-xl font-extrabold text-zinc-900 mb-2">{activePage}</h2>
+                      <p className="text-zinc-600 text-xs font-medium">This module is currently being constructed.</p>
                     </div>
                   </div>
                 )}
@@ -424,7 +431,7 @@ export default function App() {
   }
 
   /* ========================================================================
-     2. ORIGINAL LOGIN PAGE: RESTORED EXACTLY AS BEFORE
+     2. ORIGINAL LOGIN PAGE
      ======================================================================== */
   return (
     <div className="fixed inset-0 w-screen h-[100dvh] flex items-center justify-center bg-[url('/background.png')] bg-cover bg-center bg-no-repeat px-4 font-['Poppins'] overflow-hidden overscroll-none bg-zinc-900">
