@@ -926,3 +926,99 @@ export async function saveSnag(snag) {
 export async function updateSnagStatus(id, status) {
   await sql`UPDATE snag_list SET status = ${status} WHERE id = ${id}`;
 }
+// ==========================================
+// PETTY CASH WALLET MODULE
+// ==========================================
+export async function getPettyCash() {
+  try {
+    const data = await sql`
+      SELECT pc.*, p.name as project_name 
+      FROM petty_cash pc
+      LEFT JOIN projects p ON pc.project_id = p.id
+      ORDER BY pc.date DESC, pc.id DESC
+    `;
+    return data.map(row => ({
+      id: row.id,
+      projectId: row.project_id,
+      projectName: row.project_name || 'Office / Unassigned',
+      date: row.date ? new Date(row.date).toISOString().split('T')[0] : '',
+      type: row.type,
+      amount: Number(row.amount),
+      description: row.description,
+      loggedBy: row.logged_by
+    }));
+  } catch (err) {
+    console.error('Error fetching petty cash:', err);
+    return [];
+  }
+}
+
+export async function savePettyCash(txn) {
+  try {
+    const result = await sql`
+      INSERT INTO petty_cash (project_id, date, type, amount, description, logged_by)
+      VALUES (${txn.projectId || null}, ${txn.date}, ${txn.type}, ${txn.amount}, ${txn.description}, ${txn.loggedBy})
+      RETURNING *;
+    `;
+    return result[0];
+  } catch (err) {
+    console.error('Error saving petty cash:', err);
+    throw err;
+  }
+}
+
+export async function deletePettyCash(id) {
+  try {
+    await sql`DELETE FROM petty_cash WHERE id = ${id}`;
+  } catch (err) {
+    console.error('Error deleting petty cash:', err);
+  }
+}
+// ==========================================
+// PROJECT PROFIT & LOSS (P&L) MODULE
+// ==========================================
+export async function getProjectPnL(projectId) {
+  try {
+    // 1. Get Project Details
+    const projData = await sql`SELECT name, budget, status FROM projects WHERE id = ${projectId}`;
+    if (!projData || projData.length === 0) return null;
+    const project = projData[0];
+
+    // 2. Total Income Received
+    const incomeData = await sql`SELECT COALESCE(SUM(amount), 0) as total FROM income_records WHERE project_id = ${projectId}`;
+    const incomeReceived = Number(incomeData[0].total);
+
+    // 3. Subcontractor Payments (Advances & Cleared Bills)
+    const subData = await sql`
+      SELECT COALESCE(SUM(p.amount), 0) as total 
+      FROM wo_payments p 
+      JOIN work_orders w ON p.work_order_id = w.id 
+      WHERE w.project_id = ${projectId}
+    `;
+    const subCost = Number(subData[0].total);
+
+    // 4. Petty Cash Spent
+    const pettyData = await sql`SELECT COALESCE(SUM(amount), 0) as total FROM petty_cash WHERE project_id = ${projectId} AND type = 'Expense'`;
+    const pettyCost = Number(pettyData[0].total);
+
+    // Final Calculations
+    const totalCost = subCost + pettyCost;
+    const netProfit = incomeReceived - totalCost;
+    const profitMargin = incomeReceived > 0 ? ((netProfit / incomeReceived) * 100).toFixed(1) : 0;
+
+    return {
+      name: project.name,
+      status: project.status,
+      budget: Number(project.budget),
+      incomeReceived,
+      subCost,
+      pettyCost,
+      totalCost,
+      netProfit,
+      profitMargin
+    };
+  } catch (err) {
+    console.error('Error calculating P&L:', err);
+    return null;
+  }
+}

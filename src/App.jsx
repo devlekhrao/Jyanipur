@@ -15,8 +15,10 @@ import Salaries from './Salaries';
 import Income from './Income';
 import GST from './GST';
 import Projects from './Projects';
+import ProjectPnL from './ProjectPnL'; // Added Project P&L
 import MeasurementSheet from './MeasurementSheet';
 import SiteManager from './SiteManager'; 
+import PettyCash from './PettyCash'; // Added Petty Cash
 
 export default function App() {
   const [email, setEmail] = useState('');
@@ -113,7 +115,9 @@ export default function App() {
                 'Dashboard',
                 'CRM',
                 'Projects',
-                'Daily Report',  // <--- RENAMED FROM "Site Manager"
+                'Project P&L',      // <-- Added Project P&L
+                'Daily Report',     
+                'Petty Cash',       // <-- Added Petty Cash
                 'Measurement Sheet',
                 'Estimation',
                 'Tax Invoice',
@@ -174,8 +178,12 @@ export default function App() {
                   <CRM />
                 ) : activePage === 'Projects' ? (
                   <Projects />
-                ) : activePage === 'Daily Report' ? (  // <--- RENAMED RENDER BLOCK
+                ) : activePage === 'Project P&L' ? ( // <-- RENDER PROJECT P&L
+                  <ProjectPnL />
+                ) : activePage === 'Daily Report' ? (  
                   <SiteManager />
+                ) : activePage === 'Petty Cash' ? ( // <-- RENDER PETTY CASH
+                  <PettyCash />
                 ) : activePage === 'Measurement Sheet' ? (
                   <MeasurementSheet />
                 ) : activePage === 'Tax Invoice' ? (
