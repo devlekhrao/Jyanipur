@@ -1022,3 +1022,60 @@ export async function getProjectPnL(projectId) {
     return null;
   }
 }
+// ==========================================
+// PROJECT TASK BOARD MODULE
+// ==========================================
+export async function getTasks() {
+  try {
+    const data = await sql`
+      SELECT t.*, p.name as project_name 
+      FROM tasks t
+      LEFT JOIN projects p ON t.project_id = p.id
+      ORDER BY t.due_date ASC
+    `;
+    return data.map(t => ({
+      id: t.id,
+      projectId: t.project_id,
+      projectName: t.project_name || 'General / Internal',
+      title: t.title,
+      description: t.description,
+      status: t.status,
+      dueDate: t.due_date ? new Date(t.due_date).toISOString().split('T')[0] : '',
+      assignedTo: t.assigned_to
+    }));
+  } catch (err) {
+    console.error('Error fetching tasks:', err);
+    return [];
+  }
+}
+
+export async function saveTask(task) {
+  try {
+    const result = await sql`
+      INSERT INTO tasks (project_id, title, description, status, due_date, assigned_to)
+      VALUES (${task.projectId || null}, ${task.title}, ${task.description}, ${task.status}, ${task.dueDate}, ${task.assignedTo})
+      RETURNING *;
+    `;
+    return result[0];
+  } catch (err) {
+    console.error('Error saving task:', err);
+    throw err;
+  }
+}
+
+export async function updateTaskStatus(id, newStatus) {
+  try {
+    await sql`UPDATE tasks SET status = ${newStatus} WHERE id = ${id}`;
+  } catch (err) {
+    console.error('Error updating task status:', err);
+    throw err;
+  }
+}
+
+export async function deleteTask(id) {
+  try {
+    await sql`DELETE FROM tasks WHERE id = ${id}`;
+  } catch (err) {
+    console.error('Error deleting task:', err);
+  }
+}

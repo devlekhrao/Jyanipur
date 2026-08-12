@@ -15,10 +15,11 @@ import Salaries from './Salaries';
 import Income from './Income';
 import GST from './GST';
 import Projects from './Projects';
-import ProjectPnL from './ProjectPnL'; // Added Project P&L
+import TaskBoard from './TaskBoard'; // Added Task Board
+import ProjectPnL from './ProjectPnL';
 import MeasurementSheet from './MeasurementSheet';
 import SiteManager from './SiteManager'; 
-import PettyCash from './PettyCash'; // Added Petty Cash
+import PettyCash from './PettyCash';
 
 export default function App() {
   const [email, setEmail] = useState('');
@@ -115,9 +116,10 @@ export default function App() {
                 'Dashboard',
                 'CRM',
                 'Projects',
-                'Project P&L',      // <-- Added Project P&L
+                'Task Board',       // <-- Added Task Board
+                'Project P&L',      
                 'Daily Report',     
-                'Petty Cash',       // <-- Added Petty Cash
+                'Petty Cash',       
                 'Measurement Sheet',
                 'Estimation',
                 'Tax Invoice',
@@ -178,11 +180,13 @@ export default function App() {
                   <CRM />
                 ) : activePage === 'Projects' ? (
                   <Projects />
-                ) : activePage === 'Project P&L' ? ( // <-- RENDER PROJECT P&L
+                ) : activePage === 'Task Board' ? ( // <-- RENDER TASK BOARD
+                  <TaskBoard />
+                ) : activePage === 'Project P&L' ? ( 
                   <ProjectPnL />
                 ) : activePage === 'Daily Report' ? (  
                   <SiteManager />
-                ) : activePage === 'Petty Cash' ? ( // <-- RENDER PETTY CASH
+                ) : activePage === 'Petty Cash' ? ( 
                   <PettyCash />
                 ) : activePage === 'Measurement Sheet' ? (
                   <MeasurementSheet />
