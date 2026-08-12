@@ -91,16 +91,19 @@ export default function App() {
   const inputClass = "w-full px-4 py-3 rounded-xl border border-white/10 bg-slate-800/60 focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] text-slate-100 text-xs font-medium transition-all shadow-inner placeholder-slate-500";
   const labelClass = "block text-[9px] font-mono font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1";
 
+  /* ========================================================================
+     1. AFTER LOGIN PAGE: INDIGO BLUE & GREY GLASS THEME
+     ======================================================================== */
   if (isLoggedIn) {
     return (
-      <div className="fixed inset-0 w-screen h-[100dvh] font-['Poppins'] text-slate-100 selection:bg-[#1E3A8A] selection:text-white overflow-hidden flex items-center justify-center p-4 lg:p-6 print:p-0 print:block overscroll-none bg-slate-950">
+      <div className="fixed inset-0 w-screen h-[100dvh] font-['Poppins'] text-slate-100 selection:bg-[#1E3A8A] selection:text-white overflow-hidden flex items-center justify-center p-4 lg:p-6 print:p-0 print:block overscroll-none bg-zinc-900">
         
-        {/* Background Image Overlay with Dark Slate Tint */}
-        <div className="absolute inset-0 z-0 bg-[url('/background.png')] bg-cover bg-center bg-no-repeat print:hidden opacity-30">
-          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"></div>
+        {/* Previous Original Background Image */}
+        <div className="absolute inset-0 z-0 bg-[url('/background.png')] bg-cover bg-center bg-no-repeat print:hidden">
+          <div className="absolute inset-0 bg-black/40"></div>
         </div>
 
-        {/* FLOATING QUICK DOCK BUTTONS IN INDIGO GLASS */}
+        {/* FLOATING QUICK DOCK BUTTONS IN INDIGO BLUE & GREY GLASS */}
         <div className="fixed right-3 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-3 print:hidden hidden xl:flex">
           {[
             { name: 'Document Vault', icon: '📁', label: 'Vault' },
@@ -114,7 +117,7 @@ export default function App() {
               className={`flex items-center gap-2 px-4 py-3 rounded-2xl font-bold text-xs shadow-2xl backdrop-blur-2xl border transition-all hover:scale-105 cursor-pointer ${
                 activePage === item.name 
                   ? 'bg-[#1E3A8A] text-white border-blue-400/40 shadow-[#1E3A8A]/50' 
-                  : 'bg-slate-900/60 text-slate-300 border-white/10 hover:bg-slate-800/80 hover:text-white'
+                  : 'bg-slate-900/80 text-slate-300 border-white/10 hover:bg-slate-800 hover:text-white'
               }`}
             >
               <span>{item.icon}</span>
@@ -123,14 +126,14 @@ export default function App() {
           ))}
         </div>
 
-        {/* MAIN INDIGO-GREY GLASS CANVAS */}
-        <div className="relative z-10 flex w-full h-full max-w-[1600px] bg-slate-900/70 backdrop-blur-3xl rounded-[2.5rem] shadow-[0_30px_90px_rgba(0,0,0,0.6)] border border-white/10 overflow-hidden print:bg-white print:shadow-none print:border-none print:rounded-none">
+        {/* MAIN INDIGO-GREY GLASS CANVAS CONTAINER */}
+        <div className="relative z-10 flex w-full h-full max-w-[1600px] bg-slate-900/85 backdrop-blur-3xl rounded-[2.5rem] shadow-[0_30px_90px_rgba(0,0,0,0.6)] border border-white/10 overflow-hidden print:bg-white print:shadow-none print:border-none print:rounded-none">
           
-          {/* SIDEBAR NAVIGATION */}
-          <aside className="w-[250px] bg-slate-950/60 backdrop-blur-xl border-r border-white/10 flex flex-col z-10 flex-shrink-0 print:hidden">
+          {/* SIDEBAR NAVIGATION - INDIGO & GREY */}
+          <aside className="w-[250px] bg-slate-950/70 backdrop-blur-xl border-r border-white/10 flex flex-col z-10 flex-shrink-0 print:hidden">
             
             <div className="pt-8 pb-4 flex items-center justify-center gap-3">
-              <div className="bg-white/90 p-2 rounded-xl shadow-sm">
+              <div className="bg-white p-2 rounded-xl shadow-sm">
                 <img src={companySettings.logoUrl} alt="Logo" className="h-6 w-auto object-contain" onError={(e) => { e.target.style.display='none'; }} />
               </div>
               <div>
@@ -175,8 +178,8 @@ export default function App() {
                   onClick={() => setActivePage(page)}
                   className={`text-left px-4 py-2.5 rounded-xl text-xs transition-all duration-300 flex items-center ${
                     activePage === page 
-                      ? 'bg-[#1E3A8A] text-white font-semibold shadow-lg shadow-[#1E3A8A]/30 border border-blue-400/30 translate-x-1' 
-                      : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-100 font-medium'
+                      ? 'bg-[#1E3A8A] text-white font-semibold shadow-lg shadow-[#1E3A8A]/40 border border-blue-400/30 translate-x-1' 
+                      : 'text-slate-400 hover:bg-slate-800/80 hover:text-slate-100 font-medium'
                   }`}
                 >
                   {page}
@@ -184,7 +187,7 @@ export default function App() {
               ))}
             </div>
 
-            <div className="p-4 flex flex-col gap-2 border-t border-white/10 bg-slate-950/80">
+            <div className="p-4 flex flex-col gap-2 border-t border-white/10 bg-slate-950/90">
               <button
                 onClick={() => setActivePage('Settings')}
                 className={`w-full py-2.5 rounded-xl text-[10px] uppercase tracking-widest font-mono font-bold transition-all duration-300 cursor-pointer border ${
@@ -204,7 +207,7 @@ export default function App() {
             </div>
           </aside>
 
-          {/* MAIN CONTENT AREA */}
+          {/* MAIN CONTENT WORKSPACE */}
           <main className="flex-1 flex flex-col h-full overflow-hidden relative z-10 print:overflow-visible">
             <div className="flex-1 p-8 lg:p-12 overflow-y-auto print:p-0 print:overflow-visible custom-scrollbar">
               <div className="max-w-7xl mx-auto print:max-w-none print:mx-0">
@@ -420,37 +423,39 @@ export default function App() {
     );
   }
 
-  /* LOGIN PAGE - INDIGO & GREY GLASS */
+  /* ========================================================================
+     2. ORIGINAL LOGIN PAGE: RESTORED EXACTLY AS BEFORE
+     ======================================================================== */
   return (
-    <div className="fixed inset-0 w-screen h-[100dvh] flex items-center justify-center bg-[url('/background.png')] bg-cover bg-center bg-no-repeat px-4 font-['Poppins'] overflow-hidden overscroll-none bg-slate-950">
-      <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-md"></div>
+    <div className="fixed inset-0 w-screen h-[100dvh] flex items-center justify-center bg-[url('/background.png')] bg-cover bg-center bg-no-repeat px-4 font-['Poppins'] overflow-hidden overscroll-none bg-zinc-900">
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
 
-      <div className="max-w-md w-full bg-slate-900/80 backdrop-blur-3xl rounded-[2.5rem] shadow-[0_40px_100px_rgba(0,0,0,0.8)] border border-white/10 p-10 relative z-10">
+      <div className="max-w-md w-full bg-white/85 backdrop-blur-3xl rounded-[2.5rem] shadow-[0_40px_80px_rgba(0,0,0,0.3)] border border-white/60 p-10 relative z-10">
         <div className="mb-10 flex flex-col items-center text-center">
-          <div className="bg-white/90 p-4 rounded-3xl mb-5 shadow-lg border border-white/20">
+          <div className="bg-white p-4 rounded-3xl mb-5 shadow-sm border border-white/50">
             <img src="/jyanipur.png" alt="Jyanipur Logo" className="h-12 w-auto object-contain" onError={(e) => { e.target.style.display='none'; }} />
           </div>
-          <h1 className="text-2xl font-extrabold text-white tracking-tight">Jyanipur</h1>
-          <p className="text-slate-400 text-xs uppercase font-mono tracking-widest mt-2 font-bold">ERP Portal Access</p>
+          <h1 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Jyanipur</h1>
+          <p className="text-zinc-500 text-xs uppercase tracking-widest mt-2 font-bold">Portal Access</p>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-900/40 text-red-300 text-xs rounded-2xl border border-red-500/40 text-center font-bold tracking-wide">
+          <div className="mb-6 p-4 bg-red-50/90 text-red-600 text-xs rounded-2xl border border-red-200 text-center font-bold tracking-wide">
             {error}
           </div>
         )}
 
         <form onSubmit={handleLogin} className="space-y-5">
           <div>
-            <label className="block text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Work Email</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-5 py-4 rounded-2xl border border-white/10 bg-slate-800/80 focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] text-white text-sm font-medium transition-all shadow-inner" required />
+            <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2 ml-1">Work Email</label>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-5 py-4 rounded-2xl border border-white/60 bg-white/70 focus:bg-white focus:outline-none focus:ring-2 focus:ring-zinc-900 text-zinc-900 text-sm font-medium transition-all shadow-inner" required />
           </div>
           <div>
-            <label className="block text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Passkey</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-5 py-4 rounded-2xl border border-white/10 bg-slate-800/80 focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] text-white text-sm font-medium transition-all shadow-inner" required />
+            <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2 ml-1">Passkey</label>
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-5 py-4 rounded-2xl border border-white/60 bg-white/70 focus:bg-white focus:outline-none focus:ring-2 focus:ring-zinc-900 text-zinc-900 text-sm font-medium transition-all shadow-inner" required />
           </div>
-          <button type="submit" className="w-full py-4 bg-[#1E3A8A] hover:bg-blue-900 text-white font-bold rounded-2xl transition-all mt-6 cursor-pointer text-sm shadow-[0_10px_25px_rgba(30,58,138,0.4)] hover:shadow-[0_15px_30px_rgba(30,58,138,0.6)] hover:-translate-y-0.5 tracking-wide border border-blue-400/30">
-            Enter ERP Portal
+          <button type="submit" className="w-full py-4 bg-zinc-900 hover:bg-black text-white font-bold rounded-2xl transition-all mt-6 cursor-pointer text-sm shadow-[0_10px_20px_rgba(24,24,27,0.2)] hover:shadow-[0_15px_25px_rgba(24,24,27,0.3)] hover:-translate-y-1 tracking-wide">
+            Enter Portal
           </button>
         </form>
       </div>
