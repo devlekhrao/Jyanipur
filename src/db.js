@@ -429,6 +429,7 @@ export async function deleteIncomeRecord(id) {
     throw err;
   }
 }
+
 // ==========================================
 // INVENTORY & GODOWN MODULE
 // ==========================================
@@ -509,13 +510,47 @@ export async function recordInventoryMovement(movement) {
     throw err;
   }
 }
-CREATE TABLE IF NOT EXISTS material_rates (
-  id SERIAL PRIMARY KEY,
-  material_name VARCHAR(255) NOT NULL,
-  vendor_name VARCHAR(255) NOT NULL,
-  rate NUMERIC(10, 2) NOT NULL,
-  unit VARCHAR(50),
-  date DATE NOT NULL,
-  notes TEXT,
-  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
+
+// ==========================================
+// MATERIAL RATE BOOK (PROCUREMENT)
+// ==========================================
+export async function getMaterialRates() {
+  try {
+    const data = await sql`SELECT * FROM material_rates ORDER BY material_name ASC, rate ASC`;
+    return data.map(r => ({
+      id: r.id,
+      materialName: r.material_name,
+      vendorName: r.vendor_name,
+      rate: Number(r.rate),
+      unit: r.unit,
+      date: r.date ? new Date(r.date).toISOString().split('T')[0] : '',
+      notes: r.notes
+    }));
+  } catch (err) {
+    console.error('Error fetching material rates:', err);
+    return [];
+  }
+}
+
+export async function saveMaterialRate(rate) {
+  try {
+    const result = await sql`
+      INSERT INTO material_rates (material_name, vendor_name, rate, unit, date, notes)
+      VALUES (${rate.materialName}, ${rate.vendorName}, ${rate.rate}, ${rate.unit}, ${rate.date}, ${rate.notes})
+      RETURNING *;
+    `;
+    return result[0];
+  } catch (err) {
+    console.error('Error saving material rate:', err);
+    throw err;
+  }
+}
+
+export async function deleteMaterialRate(id) {
+  try {
+    await sql`DELETE FROM material_rates WHERE id = ${id}`;
+  } catch (err) {
+    console.error('Error deleting material rate:', err);
+    throw err;
+  }
+}

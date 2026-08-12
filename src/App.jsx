@@ -5,7 +5,7 @@ import Estimation from './Estimation';
 import EmployeeAttendance from './EmployeeAttendance';
 import Purchases from './Purchases';
 import Inventory from './Inventory';
-import RateBook from './RateBook'; // Added RateBook import
+import RateBook from './RateBook';
 import EmployeeExpenses from './EmployeeExpenses';
 import Salaries from './Salaries';
 import Income from './Income';
@@ -110,7 +110,7 @@ export default function App() {
                 'Tax Invoice',
                 'Purchases',
                 'Inventory',
-                'Rate Book', // Added Rate Book to Sidebar
+                'Rate Book', // THIS IS THE EXACT LINE THAT WAS MISSING IN YOUR UI
                 'Employee Attendance',
                 'Staff Expenses',     
                 'Salaries',
@@ -168,7 +168,7 @@ export default function App() {
                 ) : activePage === 'Inventory' ? (
                   <Inventory /> 
                 ) : activePage === 'Rate Book' ? (
-                  <RateBook /> // Added Rate Book Render Block
+                  <RateBook />
                 ) : activePage === 'Employee Attendance' ? (
                   <EmployeeAttendance companySettings={companySettings} />
                 ) : activePage === 'Staff Expenses' ? (
