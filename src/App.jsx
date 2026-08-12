@@ -4,7 +4,8 @@ import TaxInvoice from './TaxInvoice';
 import Estimation from './Estimation';
 import EmployeeAttendance from './EmployeeAttendance';
 import Purchases from './Purchases';
-import Inventory from './Inventory'; // Added Inventory import
+import Inventory from './Inventory';
+import RateBook from './RateBook'; // Added RateBook import
 import EmployeeExpenses from './EmployeeExpenses';
 import Salaries from './Salaries';
 import Income from './Income';
@@ -108,7 +109,8 @@ export default function App() {
                 'Estimation',
                 'Tax Invoice',
                 'Purchases',
-                'Inventory', // Added Inventory to Sidebar
+                'Inventory',
+                'Rate Book', // Added Rate Book to Sidebar
                 'Employee Attendance',
                 'Staff Expenses',     
                 'Salaries',
@@ -164,7 +166,9 @@ export default function App() {
                 ) : activePage === 'Purchases' ? (
                   <Purchases />
                 ) : activePage === 'Inventory' ? (
-                  <Inventory /> // Added Inventory Render Block
+                  <Inventory /> 
+                ) : activePage === 'Rate Book' ? (
+                  <RateBook /> // Added Rate Book Render Block
                 ) : activePage === 'Employee Attendance' ? (
                   <EmployeeAttendance companySettings={companySettings} />
                 ) : activePage === 'Staff Expenses' ? (

@@ -509,3 +509,13 @@ export async function recordInventoryMovement(movement) {
     throw err;
   }
 }
+CREATE TABLE IF NOT EXISTS material_rates (
+  id SERIAL PRIMARY KEY,
+  material_name VARCHAR(255) NOT NULL,
+  vendor_name VARCHAR(255) NOT NULL,
+  rate NUMERIC(10, 2) NOT NULL,
+  unit VARCHAR(50),
+  date DATE NOT NULL,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
