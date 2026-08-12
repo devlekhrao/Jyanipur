@@ -46,7 +46,7 @@ export default function Purchases() {
   });
   
   const [billItems, setBillItems] = useState([
-    { materialName: '', qty: '', rate: '', unit: 'Pcs', gstPercent: 18 }
+    { materialName: '', hsn: '', qty: '', rate: '', unit: 'Pcs', gstPercent: 18 }
   ]);
 
   const loadData = async () => {
@@ -119,7 +119,7 @@ export default function Purchases() {
   const liveTotalAmount = liveTaxable + liveGstAmount;
 
   const addItemRow = () => {
-    setBillItems([...billItems, { materialName: '', qty: '', rate: '', unit: 'Pcs', gstPercent: 18 }]);
+    setBillItems([...billItems, { materialName: '', hsn: '', qty: '', rate: '', unit: 'Pcs', gstPercent: 18 }]);
   };
 
   const updateItemRow = (index, field, value) => {
@@ -140,12 +140,14 @@ export default function Purchases() {
       return;
     }
 
+    const primaryHsn = enhancedItems.find(i => i.hsn)?.hsn || 'MIXED';
+
     const payload = {
       ...newBill,
       fy: getFinancialYear(newBill.invoiceDate),
-      hsn: 'MIXED', // Rolls up since items have their own details
+      hsn: primaryHsn,
       taxableAmount: liveTaxable,
-      gstPercent: 0, // Mixed
+      gstPercent: 0,
       gstAmount: liveGstAmount,
       totalAmount: liveTotalAmount,
       items: JSON.stringify(enhancedItems)
@@ -164,7 +166,7 @@ export default function Purchases() {
             rate: item.rate,
             unit: item.unit,
             date: newBill.invoiceDate,
-            notes: `Auto-logged from Bill ${newBill.invoiceNo || 'N/A'}`
+            notes: `Auto-logged from Bill ${newBill.invoiceNo || 'N/A'}${item.hsn ? ` (HSN: ${item.hsn})` : ''}`
           });
         }
       }
@@ -172,7 +174,7 @@ export default function Purchases() {
       await loadData();
       setIsModalOpen(false);
       setNewBill({ invoiceDate: currentDate.toISOString().split('T')[0], invoiceNo: '', vendorName: '', gstin: '', gstType: 'CGST/SGST', returnStatus: 'Pending' });
-      setBillItems([{ materialName: '', qty: '', rate: '', unit: 'Pcs', gstPercent: 18 }]);
+      setBillItems([{ materialName: '', hsn: '', qty: '', rate: '', unit: 'Pcs', gstPercent: 18 }]);
     } catch (err) {
       alert("Failed to save bill. Check DB connection.");
     }
@@ -199,7 +201,6 @@ export default function Purchases() {
     setExpandedRows(prev => prev.includes(id) ? prev.filter(rId => rId !== id) : [...prev, id]);
   };
 
-  const inputClass = "w-full px-3 py-2 bg-transparent border-b border-transparent hover:border-zinc-300 focus:border-zinc-900 focus:outline-none text-zinc-800 text-xs font-medium transition-all placeholder:text-zinc-400";
   const modalInputClass = "w-full px-3 py-2.5 rounded-xl border border-zinc-200 bg-zinc-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-zinc-900 text-zinc-900 text-xs font-medium transition-all shadow-inner";
   const labelClass = "block text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
 
@@ -219,7 +220,7 @@ export default function Purchases() {
             <span className="text-[10px] text-zinc-400">🔍</span>
             <input 
               type="text" 
-              placeholder="Search vendor, amt..." 
+              placeholder="Search vendor, HSN, amt..." 
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className="bg-transparent border-none text-xs font-medium text-zinc-800 outline-none px-2 w-full md:w-36 placeholder:text-zinc-400"
@@ -242,7 +243,7 @@ export default function Purchases() {
           <div className="relative" ref={exportRef}>
             <button 
               onClick={() => setIsModalOpen(true)} 
-              className="flex items-center justify-center h-9 bg-zinc-900 hover:bg-black text-white px-5 rounded-xl text-xs font-bold transition-all shadow-md gap-2"
+              className="flex items-center justify-center h-9 bg-zinc-900 hover:bg-black text-white px-5 rounded-xl text-xs font-bold transition-all shadow-md gap-2 cursor-pointer"
             >
               + Log Purchase Bill
             </button>
@@ -266,7 +267,7 @@ export default function Purchases() {
         </div>
       </div>
 
-      {/* Full Width Seamless Table */}
+      {/* Table */}
       <div className="w-full overflow-x-auto pb-8">
         <table className="w-full text-left border-collapse whitespace-nowrap min-w-[1000px]">
           <thead>
@@ -317,7 +318,7 @@ export default function Purchases() {
                       </select>
                     </td>
                     <td className="py-3 px-2 text-center opacity-0 group-hover:opacity-100 transition-opacity print:hidden" onClick={(e) => e.stopPropagation()}>
-                      <button onClick={() => handleDelete(p.id)} className="text-red-400 hover:text-red-600 font-semibold text-[10px] uppercase tracking-wider">Del</button>
+                      <button onClick={() => handleDelete(p.id)} className="text-red-400 hover:text-red-600 font-semibold text-[10px] uppercase tracking-wider cursor-pointer">Del</button>
                     </td>
                   </tr>
                   
@@ -333,6 +334,7 @@ export default function Purchases() {
                               <thead>
                                 <tr className="text-[9px] text-zinc-400 uppercase tracking-wider border-b border-zinc-100">
                                   <th className="pb-2 font-semibold">Material</th>
+                                  <th className="pb-2 font-semibold text-center w-24">HSN Code</th>
                                   <th className="pb-2 font-semibold text-right">Qty</th>
                                   <th className="pb-2 font-semibold text-right">Rate</th>
                                   <th className="pb-2 font-semibold text-right">Taxable</th>
@@ -344,6 +346,7 @@ export default function Purchases() {
                                 {p.items.map((item, idx) => (
                                   <tr key={idx} className="border-b border-zinc-50 last:border-0">
                                     <td className="py-2 font-medium text-zinc-700">{item.materialName}</td>
+                                    <td className="py-2 text-center font-mono text-[10px] text-zinc-500">{item.hsn || '-'}</td>
                                     <td className="py-2 text-right text-zinc-600">{item.qty} {item.unit}</td>
                                     <td className="py-2 text-right text-zinc-600">₹{item.rate}</td>
                                     <td className="py-2 text-right text-zinc-600">₹{item.taxable?.toFixed(2)}</td>
@@ -378,7 +381,7 @@ export default function Purchases() {
                 <h2 className="text-xl font-bold tracking-tight">Log Purchase Bill</h2>
                 <p className="text-[10px] text-zinc-400 uppercase tracking-widest font-medium mt-1">Items entered here automatically update your Material Rate Book.</p>
               </div>
-              <button onClick={() => setIsModalOpen(false)} className="text-zinc-400 hover:text-white text-2xl leading-none">&times;</button>
+              <button onClick={() => setIsModalOpen(false)} className="text-zinc-400 hover:text-white text-2xl leading-none cursor-pointer">&times;</button>
             </div>
 
             {/* Modal Body */}
@@ -418,17 +421,18 @@ export default function Purchases() {
               <div className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-[10px] font-black text-zinc-800 uppercase tracking-widest">2. Itemized Bill Details</h3>
-                  <button onClick={addItemRow} className="text-[10px] font-bold bg-zinc-100 hover:bg-zinc-200 text-zinc-700 px-3 py-1.5 rounded-lg transition-colors">+ Add Row</button>
+                  <button onClick={addItemRow} className="text-[10px] font-bold bg-zinc-100 hover:bg-zinc-200 text-zinc-700 px-3 py-1.5 rounded-lg transition-colors cursor-pointer">+ Add Row</button>
                 </div>
 
                 <div className="overflow-x-auto">
                   <table className="w-full text-left whitespace-nowrap">
                     <thead>
                       <tr className="text-[9px] text-zinc-400 uppercase tracking-widest border-b border-zinc-200">
-                        <th className="pb-2 font-semibold w-64">Material Name</th>
-                        <th className="pb-2 font-semibold w-24">Qty</th>
+                        <th className="pb-2 font-semibold w-56">Material Name</th>
+                        <th className="pb-2 font-semibold w-24">HSN Code</th>
+                        <th className="pb-2 font-semibold w-20">Qty</th>
                         <th className="pb-2 font-semibold w-20">Unit</th>
-                        <th className="pb-2 font-semibold w-28">Rate (₹)</th>
+                        <th className="pb-2 font-semibold w-24">Rate (₹)</th>
                         <th className="pb-2 font-semibold w-20">GST %</th>
                         <th className="pb-2 font-semibold text-right">Taxable</th>
                         <th className="pb-2 font-semibold text-right">Total</th>
@@ -439,6 +443,7 @@ export default function Purchases() {
                       {enhancedItems.map((item, index) => (
                         <tr key={index}>
                           <td className="py-2 pr-2"><input type="text" placeholder="e.g. 18mm Plywood" value={item.materialName} onChange={e => updateItemRow(index, 'materialName', e.target.value)} className={modalInputClass} /></td>
+                          <td className="py-2 pr-2"><input type="text" placeholder="e.g. 4412" value={item.hsn} onChange={e => updateItemRow(index, 'hsn', e.target.value)} className={`${modalInputClass} font-mono`} /></td>
                           <td className="py-2 pr-2"><input type="number" placeholder="0" value={item.qty} onChange={e => updateItemRow(index, 'qty', e.target.value)} className={modalInputClass} /></td>
                           <td className="py-2 pr-2">
                             <select value={item.unit} onChange={e => updateItemRow(index, 'unit', e.target.value)} className={modalInputClass}>
@@ -454,7 +459,7 @@ export default function Purchases() {
                           <td className="py-2 pr-2 text-right text-xs font-semibold text-zinc-600">₹{item.taxable.toFixed(2)}</td>
                           <td className="py-2 pr-2 text-right text-xs font-bold text-zinc-900">₹{item.total.toFixed(2)}</td>
                           <td className="py-2 text-center">
-                            <button onClick={() => removeItemRow(index)} className="text-red-400 hover:text-red-600 text-lg font-bold">&times;</button>
+                            <button onClick={() => removeItemRow(index)} className="text-red-400 hover:text-red-600 text-lg font-bold cursor-pointer">&times;</button>
                           </td>
                         </tr>
                       ))}
@@ -481,8 +486,8 @@ export default function Purchases() {
                 </div>
               </div>
               <div className="flex gap-3">
-                <button onClick={() => setIsModalOpen(false)} className="px-6 py-3 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 text-xs font-bold rounded-xl transition-colors uppercase tracking-wider">Cancel</button>
-                <button onClick={handleSaveBill} className="px-8 py-3 bg-zinc-900 hover:bg-black text-white text-xs font-bold rounded-xl shadow-lg transition-transform hover:-translate-y-0.5 uppercase tracking-wider">Save Bill</button>
+                <button onClick={() => setIsModalOpen(false)} className="px-6 py-3 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 text-xs font-bold rounded-xl transition-colors uppercase tracking-wider cursor-pointer">Cancel</button>
+                <button onClick={handleSaveBill} className="px-8 py-3 bg-zinc-900 hover:bg-black text-white text-xs font-bold rounded-xl shadow-lg transition-transform hover:-translate-y-0.5 uppercase tracking-wider cursor-pointer">Save Bill</button>
               </div>
             </div>
 
