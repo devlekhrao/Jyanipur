@@ -85,30 +85,30 @@ export default function App() {
 
   if (isLoggedIn) {
     return (
-      // FIXED INSET-0, 100DVH, OVERSCROLL-NONE added here
       <div className="fixed inset-0 w-screen h-[100dvh] font-['Poppins'] text-zinc-800 selection:bg-amber-100 overflow-hidden flex items-center justify-center p-4 lg:p-6 print:p-0 print:block overscroll-none bg-zinc-900">
         
-        {/* Background layer pinned exactly to the screen edges */}
         <div className="absolute inset-0 z-0 bg-[url('/background.png')] bg-cover bg-center bg-no-repeat print:hidden">
           <div className="absolute inset-0 bg-black/20"></div>
         </div>
 
         <div className="relative z-10 flex w-full h-full max-w-[1600px] bg-white/80 backdrop-blur-3xl rounded-[2.5rem] shadow-[0_30px_80px_rgba(0,0,0,0.3)] border border-white/60 overflow-hidden print:bg-white print:shadow-none print:border-none print:rounded-none">
           
-          <aside className="w-[260px] bg-white/40 border-r border-white/60 flex flex-col z-10 flex-shrink-0 print:hidden">
-            <div className="pt-10 pb-6 flex flex-col items-center justify-center">
-              <div className="bg-white/80 p-3 rounded-2xl shadow-sm mb-3">
-                <img src={companySettings.logoUrl} alt="Logo" className="h-8 w-auto object-contain" />
+          <aside className="w-[250px] bg-white/40 border-r border-white/60 flex flex-col z-10 flex-shrink-0 print:hidden">
+            
+            {/* UPDATED: Compact Horizontal Logo Layout */}
+            <div className="pt-8 pb-4 flex items-center justify-center gap-3">
+              <div className="bg-white/80 p-2 rounded-xl shadow-sm">
+                <img src={companySettings.logoUrl} alt="Logo" className="h-6 w-auto object-contain" />
               </div>
               <span className="font-bold text-sm tracking-[0.2em] text-zinc-900 uppercase">Jyanipur</span>
             </div>
 
-            <div className="px-8 py-2">
+            <div className="px-6 py-1">
               <div className="h-px w-full bg-zinc-300/40"></div>
             </div>
 
-            {/* Main Application Modules */}
-            <div className="flex-1 overflow-y-auto py-4 px-5 flex flex-col gap-2 custom-scrollbar">
+            {/* UPDATED: Tighter padding, gaps, and hidden scrollbar using Tailwind utilities */}
+            <div className="flex-1 overflow-y-auto py-3 px-4 flex flex-col gap-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               {[
                 'Dashboard',
                 'CRM',
@@ -130,7 +130,7 @@ export default function App() {
                 <button
                   key={page}
                   onClick={() => setActivePage(page)}
-                  className={`text-left px-5 py-3 rounded-xl text-xs transition-all duration-300 flex items-center ${
+                  className={`text-left px-4 py-2.5 rounded-xl text-xs transition-all duration-300 flex items-center ${
                     activePage === page 
                       ? 'bg-zinc-900 text-white font-semibold shadow-lg shadow-zinc-900/20 translate-x-1' 
                       : 'text-zinc-600 hover:bg-white/80 hover:text-zinc-900 font-medium'
@@ -141,11 +141,11 @@ export default function App() {
               ))}
             </div>
 
-            {/* Pinned Bottom Actions */}
-            <div className="p-5 flex flex-col gap-3 border-t border-zinc-300/40">
+            {/* UPDATED: Tighter Bottom Actions */}
+            <div className="p-4 flex flex-col gap-2 border-t border-zinc-300/40">
               <button
                 onClick={() => setActivePage('Settings')}
-                className={`w-full py-3 rounded-xl text-[10px] uppercase tracking-widest font-bold transition-all duration-300 cursor-pointer shadow-sm border ${
+                className={`w-full py-2.5 rounded-xl text-[10px] uppercase tracking-widest font-bold transition-all duration-300 cursor-pointer shadow-sm border ${
                   activePage === 'Settings' 
                     ? 'bg-zinc-900 text-white border-zinc-900 shadow-md' 
                     : 'bg-white/50 border-white/60 text-zinc-500 hover:bg-zinc-800 hover:text-white hover:border-zinc-800'
@@ -155,7 +155,7 @@ export default function App() {
               </button>
               <button 
                 onClick={handleLogout}
-                className="w-full bg-white/50 border border-white/60 text-zinc-500 hover:bg-red-500 hover:text-white hover:border-red-500 py-3 rounded-xl text-[10px] uppercase tracking-widest font-bold transition-all duration-300 cursor-pointer shadow-sm"
+                className="w-full bg-white/50 border border-white/60 text-zinc-500 hover:bg-red-500 hover:text-white hover:border-red-500 py-2.5 rounded-xl text-[10px] uppercase tracking-widest font-bold transition-all duration-300 cursor-pointer shadow-sm"
               >
                 Log Out
               </button>
@@ -381,7 +381,6 @@ export default function App() {
   }
 
   return (
-    // FIXED INSET-0 applied to login screen as well
     <div className="fixed inset-0 w-screen h-[100dvh] flex items-center justify-center bg-[url('/background.png')] bg-cover bg-center bg-no-repeat px-4 font-['Poppins'] overflow-hidden overscroll-none bg-zinc-900">
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
 
