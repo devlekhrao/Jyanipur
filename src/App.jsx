@@ -15,7 +15,7 @@ import Salaries from './Salaries';
 import Income from './Income';
 import GST from './GST';
 import Projects from './Projects';
-import TaskBoard from './TaskBoard'; // Added Task Board
+import TaskBoard from './TaskBoard'; // <-- TASK BOARD IMPORT
 import ProjectPnL from './ProjectPnL';
 import MeasurementSheet from './MeasurementSheet';
 import SiteManager from './SiteManager'; 
@@ -116,7 +116,7 @@ export default function App() {
                 'Dashboard',
                 'CRM',
                 'Projects',
-                'Task Board',       // <-- Added Task Board
+                'Task Board',       // <-- TASK BOARD ADDED TO MENU
                 'Project P&L',      
                 'Daily Report',     
                 'Petty Cash',       
@@ -180,8 +180,8 @@ export default function App() {
                   <CRM />
                 ) : activePage === 'Projects' ? (
                   <Projects />
-                ) : activePage === 'Task Board' ? ( // <-- RENDER TASK BOARD
-                  <TaskBoard />
+                ) : activePage === 'Task Board' ? ( 
+                  <TaskBoard /> // <-- TASK BOARD RENDER BLOCK
                 ) : activePage === 'Project P&L' ? ( 
                   <ProjectPnL />
                 ) : activePage === 'Daily Report' ? (  
