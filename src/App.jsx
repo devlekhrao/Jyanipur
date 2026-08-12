@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import Dashboard from './Dashboard';
-import CRM from './CRM'; // Added CRM import
+import CRM from './CRM'; // <-- CRM IMPORT
 import TaxInvoice from './TaxInvoice';
 import Estimation from './Estimation';
 import EmployeeAttendance from './EmployeeAttendance';
 import Purchases from './Purchases';
 import Inventory from './Inventory';
-import Tools from './Tools'; // Added Tools import
+import Tools from './Tools'; // <-- TOOLS IMPORT
 import RateBook from './RateBook';
 import Subcontractors from './Subcontractors';
 import EmployeeExpenses from './EmployeeExpenses';
@@ -109,14 +109,14 @@ export default function App() {
             <div className="flex-1 overflow-y-auto py-4 px-5 flex flex-col gap-2 custom-scrollbar">
               {[
                 'Dashboard',
-                'CRM', // Added CRM to the sidebar
+                'CRM',              // <-- CRM ADDED HERE
                 'Projects',
                 'Measurement Sheet',
                 'Estimation',
                 'Tax Invoice',
                 'Purchases',
                 'Inventory',
-                'Tools & Assets', // Added Tools to the sidebar
+                'Tools & Assets',   // <-- TOOLS ADDED HERE
                 'Rate Book', 
                 'Subcontractors',
                 'Employee Attendance',
@@ -168,7 +168,7 @@ export default function App() {
                 {activePage === 'Dashboard' ? (
                   <Dashboard setActivePage={setActivePage} />
                 ) : activePage === 'CRM' ? (
-                  <CRM /> // Added CRM Render Block
+                  <CRM /> // <-- CRM RENDER BLOCK
                 ) : activePage === 'Tax Invoice' ? (
                   <TaxInvoice companySettings={companySettings} />
                 ) : activePage === 'Estimation' ? (
@@ -178,7 +178,7 @@ export default function App() {
                 ) : activePage === 'Inventory' ? (
                   <Inventory /> 
                 ) : activePage === 'Tools & Assets' ? (
-                  <Tools /> // Added Tools Render Block
+                  <Tools /> // <-- TOOLS RENDER BLOCK
                 ) : activePage === 'Rate Book' ? (
                   <RateBook />
                 ) : activePage === 'Subcontractors' ? (
