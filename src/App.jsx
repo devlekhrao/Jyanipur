@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import Dashboard from './Dashboard';
-import CRM from './CRM'; // <-- CRM IMPORT
+import CRM from './CRM';
 import TaxInvoice from './TaxInvoice';
 import Estimation from './Estimation';
 import EmployeeAttendance from './EmployeeAttendance';
 import Purchases from './Purchases';
 import Inventory from './Inventory';
-import Tools from './Tools'; // <-- TOOLS IMPORT
+import Tools from './Tools';
 import RateBook from './RateBook';
 import Subcontractors from './Subcontractors';
 import EmployeeExpenses from './EmployeeExpenses';
@@ -85,9 +85,11 @@ export default function App() {
 
   if (isLoggedIn) {
     return (
-      <div className="relative h-screen w-full font-['Poppins'] text-zinc-800 selection:bg-amber-100 overflow-hidden flex items-center justify-center p-4 lg:p-6 print:p-0 print:block">
+      // FIXED INSET-0, 100DVH, OVERSCROLL-NONE added here
+      <div className="fixed inset-0 w-screen h-[100dvh] font-['Poppins'] text-zinc-800 selection:bg-amber-100 overflow-hidden flex items-center justify-center p-4 lg:p-6 print:p-0 print:block overscroll-none bg-zinc-900">
         
-        <div className="absolute inset-0 z-0 bg-[url('/background.png')] bg-cover bg-center print:hidden">
+        {/* Background layer pinned exactly to the screen edges */}
+        <div className="absolute inset-0 z-0 bg-[url('/background.png')] bg-cover bg-center bg-no-repeat print:hidden">
           <div className="absolute inset-0 bg-black/20"></div>
         </div>
 
@@ -109,14 +111,14 @@ export default function App() {
             <div className="flex-1 overflow-y-auto py-4 px-5 flex flex-col gap-2 custom-scrollbar">
               {[
                 'Dashboard',
-                'CRM',              // <-- CRM ADDED HERE
+                'CRM',
                 'Projects',
                 'Measurement Sheet',
                 'Estimation',
                 'Tax Invoice',
                 'Purchases',
                 'Inventory',
-                'Tools & Assets',   // <-- TOOLS ADDED HERE
+                'Tools & Assets',
                 'Rate Book', 
                 'Subcontractors',
                 'Employee Attendance',
@@ -168,7 +170,7 @@ export default function App() {
                 {activePage === 'Dashboard' ? (
                   <Dashboard setActivePage={setActivePage} />
                 ) : activePage === 'CRM' ? (
-                  <CRM /> // <-- CRM RENDER BLOCK
+                  <CRM />
                 ) : activePage === 'Tax Invoice' ? (
                   <TaxInvoice companySettings={companySettings} />
                 ) : activePage === 'Estimation' ? (
@@ -178,7 +180,7 @@ export default function App() {
                 ) : activePage === 'Inventory' ? (
                   <Inventory /> 
                 ) : activePage === 'Tools & Assets' ? (
-                  <Tools /> // <-- TOOLS RENDER BLOCK
+                  <Tools />
                 ) : activePage === 'Rate Book' ? (
                   <RateBook />
                 ) : activePage === 'Subcontractors' ? (
@@ -379,7 +381,8 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[url('/background.png')] bg-cover bg-center px-4 font-['Poppins'] relative overflow-hidden">
+    // FIXED INSET-0 applied to login screen as well
+    <div className="fixed inset-0 w-screen h-[100dvh] flex items-center justify-center bg-[url('/background.png')] bg-cover bg-center bg-no-repeat px-4 font-['Poppins'] overflow-hidden overscroll-none bg-zinc-900">
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
 
       <div className="max-w-md w-full bg-white/85 backdrop-blur-3xl rounded-[2.5rem] shadow-[0_40px_80px_rgba(0,0,0,0.3)] border border-white/60 p-10 relative z-10">
