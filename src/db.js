@@ -1183,3 +1183,153 @@ export async function deleteSnag(id) {
     console.error('Error deleting snag:', err);
   }
 }
+// ==========================================
+// SUBCONTRACTOR RA BILLS MODULE
+// ==========================================
+export async function getRaBills(projectId) {
+  try {
+    const data = await sql`
+      SELECT b.*, p.name as project_name, s.name as sub_name, s.trade
+      FROM subcontractor_ra_bills b
+      JOIN projects p ON b.project_id = p.id
+      JOIN subcontractors s ON b.subcontractor_id = s.id
+      WHERE (${projectId || null}::int IS NULL OR b.project_id = ${projectId})
+      ORDER BY b.id DESC
+    `;
+    return data.map(b => ({
+      id: b.id,
+      projectId: b.project_id,
+      projectName: b.project_name,
+      subcontractorId: b.subcontractor_id,
+      subName: b.sub_name,
+      trade: b.trade,
+      billNo: b.bill_no,
+      billDate: b.bill_date ? new Date(b.bill_date).toISOString().split('T')[0] : '',
+      workDoneDetails: typeof b.work_done_details === 'string' ? JSON.parse(b.work_done_details) : b.work_done_details,
+      grossAmount: Number(b.gross_amount),
+      retentionPercent: Number(b.retention_percent),
+      retentionAmount: Number(b.retention_amount),
+      previousPaid: Number(b.previous_paid),
+      netPayable: Number(b.net_payable),
+      status: b.status,
+      notes: b.notes
+    }));
+  } catch (err) {
+    console.error('Error fetching RA bills:', err);
+    return [];
+  }
+}
+
+export async function saveRaBill(bill) {
+  try {
+    const result = await sql`
+      INSERT INTO subcontractor_ra_bills (
+        project_id, subcontractor_id, bill_no, bill_date, work_done_details,
+        gross_amount, retention_percent, retention_amount, previous_paid, net_payable, status, notes
+      ) VALUES (
+        ${bill.projectId}, ${bill.subcontractorId}, ${bill.billNo}, ${bill.billDate}, ${JSON.stringify(bill.workDoneDetails)},
+        ${bill.grossAmount}, ${bill.retentionPercent}, ${bill.retentionAmount}, ${bill.previousPaid}, ${bill.netPayable}, ${bill.status || 'Approved'}, ${bill.notes}
+      )
+      RETURNING *;
+    `;
+    return result[0];
+  } catch (err) {
+    console.error('Error saving RA bill:', err);
+    throw err;
+  }
+}
+
+// ==========================================
+// CLIENT PAYMENT MILESTONES MODULE
+// ==========================================
+export async function getMilestones(projectId) {
+  try {
+    const data = await sql`
+      SELECT m.*, p.name as project_name
+      FROM client_milestones m
+      JOIN projects p ON m.project_id = p.id
+      WHERE (${projectId || null}::int IS NULL OR m.project_id = ${projectId})
+      ORDER BY m.id ASC
+    `;
+    return data.map(m => ({
+      id: m.id,
+      projectId: m.project_id,
+      projectName: m.project_name,
+      stageName: m.stage_name,
+      percentage: Number(m.percentage),
+      amount: Number(m.amount),
+      status: m.status,
+      dueDate: m.due_date ? new Date(m.due_date).toISOString().split('T')[0] : '',
+      notes: m.notes
+    }));
+  } catch (err) {
+    console.error('Error fetching milestones:', err);
+    return [];
+  }
+}
+
+export async function saveMilestone(m) {
+  try {
+    const result = await sql`
+      INSERT INTO client_milestones (project_id, stage_name, percentage, amount, status, due_date, notes)
+      VALUES (${m.projectId}, ${m.stageName}, ${m.percentage}, ${m.amount}, ${m.status || 'Pending'}, ${m.dueDate || null}, ${m.notes})
+      RETURNING *;
+    `;
+    return result[0];
+  } catch (err) {
+    console.error('Error saving milestone:', err);
+    throw err;
+  }
+}
+
+export async function updateMilestoneStatus(id, newStatus) {
+  try {
+    await sql`UPDATE client_milestones SET status = ${newStatus} WHERE id = ${id}`;
+  } catch (err) {
+    console.error('Error updating milestone status:', err);
+    throw err;
+  }
+}
+
+// ==========================================
+// PROJECT CHANGE ORDERS (VARIATIONS) MODULE
+// ==========================================
+export async function getChangeOrders(projectId) {
+  try {
+    const data = await sql`
+      SELECT c.*, p.name as project_name
+      FROM project_change_orders c
+      JOIN projects p ON c.project_id = p.id
+      WHERE (${projectId || null}::int IS NULL OR c.project_id = ${projectId})
+      ORDER BY c.id DESC
+    `;
+    return data.map(c => ({
+      id: c.id,
+      projectId: c.project_id,
+      projectName: c.project_name,
+      title: c.title,
+      description: c.description,
+      additionalCost: Number(c.additional_cost),
+      extraDays: Number(c.extra_days),
+      status: c.status,
+      date: c.date ? new Date(c.date).toISOString().split('T')[0] : ''
+    }));
+  } catch (err) {
+    console.error('Error fetching change orders:', err);
+    return [];
+  }
+}
+
+export async function saveChangeOrder(co) {
+  try {
+    const result = await sql`
+      INSERT INTO project_change_orders (project_id, title, description, additional_cost, extra_days, status, date)
+      VALUES (${co.projectId}, ${co.title}, ${co.description}, ${co.additionalCost}, ${co.extraDays}, ${co.status || 'Approved'}, ${co.date})
+      RETURNING *;
+    `;
+    return result[0];
+  } catch (err) {
+    console.error('Error saving change order:', err);
+    throw err;
+  }
+}
