@@ -556,3 +556,107 @@ export async function deleteMaterialRate(id) {
     throw err;
   }
 }
+// ==========================================
+// SUBCONTRACTORS & WORK ORDERS MODULE
+// ==========================================
+export async function getSubcontractors() {
+  try {
+    const data = await sql`SELECT * FROM subcontractors ORDER BY name ASC`;
+    return data.map(s => ({
+      id: s.id,
+      name: s.name,
+      trade: s.trade,
+      phone: s.phone
+    }));
+  } catch (err) {
+    console.error('Error fetching subcontractors:', err);
+    return [];
+  }
+}
+
+export async function saveSubcontractor(sub) {
+  try {
+    const result = await sql`
+      INSERT INTO subcontractors (name, trade, phone)
+      VALUES (${sub.name}, ${sub.trade}, ${sub.phone})
+      RETURNING *;
+    `;
+    return result[0];
+  } catch (err) {
+    console.error('Error saving subcontractor:', err);
+    throw err;
+  }
+}
+
+export async function getWorkOrders() {
+  try {
+    const data = await sql`
+      SELECT 
+        wo.id, wo.scope_of_work, wo.contract_value, wo.status,
+        s.name as sub_name, s.trade,
+        p.name as project_name,
+        COALESCE(SUM(pay.amount), 0) as total_paid,
+        (SELECT json_agg(json_build_object('id', pay2.id, 'date', pay2.date, 'amount', pay2.amount, 'mode', pay2.payment_mode, 'ref', pay2.reference_no, 'notes', pay2.notes))
+         FROM wo_payments pay2 WHERE pay2.work_order_id = wo.id) as payments
+      FROM work_orders wo
+      JOIN subcontractors s ON wo.subcontractor_id = s.id
+      JOIN projects p ON wo.project_id = p.id
+      LEFT JOIN wo_payments pay ON pay.work_order_id = wo.id
+      GROUP BY wo.id, s.name, s.trade, p.name
+      ORDER BY wo.id DESC
+    `;
+    
+    return data.map(wo => ({
+      id: wo.id,
+      subName: wo.sub_name,
+      trade: wo.trade,
+      projectName: wo.project_name,
+      scope: wo.scope_of_work,
+      contractValue: Number(wo.contract_value),
+      totalPaid: Number(wo.total_paid),
+      balance: Number(wo.contract_value) - Number(wo.total_paid),
+      status: wo.status,
+      payments: wo.payments ? wo.payments.sort((a, b) => new Date(b.date) - new Date(a.date)) : []
+    }));
+  } catch (err) {
+    console.error('Error fetching work orders:', err);
+    return [];
+  }
+}
+
+export async function saveWorkOrder(wo) {
+  try {
+    const result = await sql`
+      INSERT INTO work_orders (subcontractor_id, project_id, scope_of_work, contract_value, status)
+      VALUES (${wo.subcontractorId}, ${wo.projectId}, ${wo.scope}, ${wo.contractValue}, 'Ongoing')
+      RETURNING *;
+    `;
+    return result[0];
+  } catch (err) {
+    console.error('Error saving work order:', err);
+    throw err;
+  }
+}
+
+export async function updateWorkOrderStatus(id, newStatus) {
+  try {
+    await sql`UPDATE work_orders SET status = ${newStatus} WHERE id = ${id}`;
+  } catch (err) {
+    console.error('Error updating work order status:', err);
+    throw err;
+  }
+}
+
+export async function saveWoPayment(payment) {
+  try {
+    const result = await sql`
+      INSERT INTO wo_payments (work_order_id, date, amount, payment_mode, reference_no, notes)
+      VALUES (${payment.workOrderId}, ${payment.date}, ${payment.amount}, ${payment.mode}, ${payment.referenceNo}, ${payment.notes})
+      RETURNING *;
+    `;
+    return result[0];
+  } catch (err) {
+    console.error('Error saving payment:', err);
+    throw err;
+  }
+}
