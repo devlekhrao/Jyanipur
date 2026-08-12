@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getLeads, saveLead, updateLeadStatus, deleteLead } from './db';
+import { exportToCSV } from './utils'; // Imported the export utility
 
 export default function CRM() {
   const [loading, setLoading] = useState(true);
@@ -41,6 +42,19 @@ export default function CRM() {
     }
   };
 
+  // Added the handleExport function
+  const handleExport = () => {
+    const exportData = leads.map(l => ({
+      'Client Name': l.clientName,
+      'Phone': l.phone,
+      'Project Type': l.projectType,
+      'Status': l.status,
+      'Est. Value (INR)': l.estimatedValue,
+      'Notes': l.notes
+    }));
+    exportToCSV('Jyanipur_CRM_Leads', exportData);
+  };
+
   const columns = ['New Inquiry', 'Site Visited', 'Quote Sent', 'Won', 'Lost'];
 
   const inputClass = "w-full px-4 py-3 rounded-xl border-none bg-zinc-100 focus:bg-white focus:outline-none focus:ring-2 focus:ring-zinc-900 text-zinc-900 text-sm font-medium transition-all shadow-inner";
@@ -53,7 +67,13 @@ export default function CRM() {
           <h2 className="text-2xl font-bold text-zinc-800 tracking-tight">CRM Pipeline</h2>
           <p className="text-zinc-500 text-xs mt-1 font-medium">Track incoming inquiries and close more deals.</p>
         </div>
-        <button onClick={() => setIsModalOpen(true)} className="bg-zinc-900 hover:bg-black text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md">+ Add New Lead</button>
+        <div className="flex gap-2">
+           {/* Added Export Button */}
+          <button onClick={handleExport} className="bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm">
+            📥 Export CSV
+          </button>
+          <button onClick={() => setIsModalOpen(true)} className="bg-zinc-900 hover:bg-black text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md">+ Add New Lead</button>
+        </div>
       </div>
 
       {loading ? (
