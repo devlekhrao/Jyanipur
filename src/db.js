@@ -1128,3 +1128,68 @@ export async function deleteVaultDocument(id) {
     console.error('Error deleting vault doc:', err);
   }
 }
+// ==========================================
+// SITE SNAG & QUALITY PUNCH LIST MODULE
+// ==========================================
+export async function getSnags() {
+  try {
+    const data = await sql`
+      SELECT s.*, p.name as project_name 
+      FROM site_snags s
+      LEFT JOIN projects p ON s.project_id = p.id
+      ORDER BY s.id DESC
+    `;
+    return data.map(s => ({
+      id: s.id,
+      projectId: s.project_id,
+      projectName: s.project_name || 'General Site',
+      title: s.title,
+      description: s.description,
+      subcontractor: s.subcontractor,
+      priority: s.priority,
+      status: s.status,
+      photoUrl: s.photo_url,
+      createdAt: s.created_at ? new Date(s.created_at).toISOString().split('T')[0] : '',
+      resolvedAt: s.resolved_at ? new Date(s.resolved_at).toISOString().split('T')[0] : ''
+    }));
+  } catch (err) {
+    console.error('Error fetching snags:', err);
+    return [];
+  }
+}
+
+export async function saveSnag(snag) {
+  try {
+    const result = await sql`
+      INSERT INTO site_snags (project_id, title, description, subcontractor, priority, status, photo_url)
+      VALUES (${snag.projectId}, ${snag.title}, ${snag.description}, ${snag.subcontractor}, ${snag.priority}, ${snag.status || 'Open'}, ${snag.photoUrl})
+      RETURNING *;
+    `;
+    return result[0];
+  } catch (err) {
+    console.error('Error saving snag:', err);
+    throw err;
+  }
+}
+
+export async function updateSnagStatus(id, newStatus) {
+  try {
+    const resolvedAt = newStatus === 'Resolved' ? new Date().toISOString().split('T')[0] : null;
+    await sql`
+      UPDATE site_snags 
+      SET status = ${newStatus}, resolved_at = ${resolvedAt}
+      WHERE id = ${id}
+    `;
+  } catch (err) {
+    console.error('Error updating snag status:', err);
+    throw err;
+  }
+}
+
+export async function deleteSnag(id) {
+  try {
+    await sql`DELETE FROM site_snags WHERE id = ${id}`;
+  } catch (err) {
+    console.error('Error deleting snag:', err);
+  }
+}

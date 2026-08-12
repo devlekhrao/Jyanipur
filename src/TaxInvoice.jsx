@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getInvoices, saveInvoice, toggleCancelInvoice } from './db';
+import { sendWhatsAppMessage, buildInvoiceWhatsAppMsg } from './WhatsAppHelper';
 
 // Helper function to convert number to Indian Currency Words
 function numberToWords(num) {
@@ -212,6 +213,16 @@ export default function TaxInvoice({ companySettings = {} }) {
     setTimeout(() => window.print(), 150);
   };
 
+  const handleSendWhatsApp = (inv) => {
+    const msg = buildInvoiceWhatsAppMsg(
+      inv.client || 'Client',
+      inv.invoiceNo || 'INV',
+      inv.amount || '0',
+      companySettings.companyName || 'Jyanipur Interiors'
+    );
+    sendWhatsAppMessage(inv.phone || '', msg);
+  };
+
   const handleToggleCancel = async (inv) => {
     await toggleCancelInvoice(inv.id, inv.isCancelled);
     await loadInvoicesFromDb();
@@ -283,6 +294,7 @@ export default function TaxInvoice({ companySettings = {} }) {
                           <button onClick={() => handleEdit(inv)} className="text-zinc-600 hover:text-zinc-900 font-bold cursor-pointer text-[10px] uppercase tracking-wider">Edit</button>
                           <button onClick={() => handleView(inv)} className="text-zinc-600 hover:text-zinc-900 font-bold cursor-pointer text-[10px] uppercase tracking-wider">View</button>
                           <button onClick={() => handleDirectPrint(inv)} className="text-amber-600 hover:text-amber-700 font-bold cursor-pointer text-[10px] uppercase tracking-wider">Print</button>
+                          <button onClick={() => handleSendWhatsApp(inv)} className="text-emerald-600 hover:text-emerald-700 font-bold cursor-pointer text-[10px] uppercase tracking-wider">💬 WhatsApp</button>
                           <button onClick={() => handleToggleCancel(inv)} className="text-red-500 hover:text-red-700 font-bold cursor-pointer text-[10px] uppercase tracking-wider">Cancel</button>
                         </>
                       ) : (
@@ -321,9 +333,25 @@ export default function TaxInvoice({ companySettings = {} }) {
               &larr; Back
             </button>
             {isReadOnly && (
-              <button onClick={() => window.print()} className="bg-zinc-900 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md hover:-translate-y-0.5 transition-all">
-                🖨️ Print / Save PDF
-              </button>
+              <>
+                <button 
+                  onClick={() => {
+                    const msg = buildInvoiceWhatsAppMsg(
+                      invoiceDetails.partyName || 'Client',
+                      invoiceDetails.invoiceNo || 'INV',
+                      '₹ ' + (netPayable > 0 ? netPayable : 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+                      companySettings.companyName || 'Jyanipur Interiors'
+                    );
+                    sendWhatsAppMessage('', msg);
+                  }} 
+                  className="bg-emerald-600 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md hover:-translate-y-0.5 transition-all flex items-center gap-1"
+                >
+                  💬 WhatsApp
+                </button>
+                <button onClick={() => window.print()} className="bg-zinc-900 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md hover:-translate-y-0.5 transition-all">
+                  🖨️ Print / Save PDF
+                </button>
+              </>
             )}
           </div>
         </div>

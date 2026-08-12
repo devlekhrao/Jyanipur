@@ -16,7 +16,8 @@ import Income from './Income';
 import GST from './GST';
 import Projects from './Projects';
 import TaskBoard from './TaskBoard';
-import DocumentVault from './DocumentVault'; // <-- DOCUMENT VAULT IMPORT
+import DocumentVault from './DocumentVault';
+import SiteSnag from './SiteSnag'; // <-- IMPORT SITE SNAG
 import ProjectPnL from './ProjectPnL';
 import MeasurementSheet from './MeasurementSheet';
 import SiteManager from './SiteManager'; 
@@ -28,7 +29,7 @@ export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [error, setError] = useState('');
   
-  // DEFAULT ACTIVE PAGE IS DASHBOARD
+  // DEFAULT ACTIVE PAGE IS NOW DASHBOARD
   const [activePage, setActivePage] = useState('Dashboard');
 
   // --- GLOBAL COMPANY & PRINT SETTINGS ---
@@ -112,6 +113,18 @@ export default function App() {
           </button>
 
           <button 
+            onClick={() => setActivePage('Site Snags')}
+            className={`flex items-center gap-2 px-4 py-3 rounded-2xl font-bold text-xs shadow-2xl backdrop-blur-2xl border transition-all hover:scale-105 cursor-pointer ${
+              activePage === 'Site Snags' 
+                ? 'bg-zinc-900 text-white border-zinc-700 shadow-zinc-900/50' 
+                : 'bg-white/70 text-zinc-800 border-white/80 hover:bg-white'
+            }`}
+          >
+            <span>⚠️</span>
+            <span className="tracking-wider uppercase text-[10px]">Snags</span>
+          </button>
+
+          <button 
             onClick={() => setActivePage('Measurement Sheet')}
             className={`flex items-center gap-2 px-4 py-3 rounded-2xl font-bold text-xs shadow-2xl backdrop-blur-2xl border transition-all hover:scale-105 cursor-pointer ${
               activePage === 'Measurement Sheet' 
@@ -145,7 +158,8 @@ export default function App() {
                 'CRM',
                 'Projects',
                 'Task Board',
-                'Document Vault',    // <-- ADDED TO MENU
+                'Site Snags',        // <-- ADDED SITE SNAGS
+                'Document Vault',    
                 'Project P&L',      
                 'Daily Report',     
                 'Petty Cash',       
@@ -211,7 +225,9 @@ export default function App() {
                   <Projects />
                 ) : activePage === 'Task Board' ? ( 
                   <TaskBoard />
-                ) : activePage === 'Document Vault' ? ( // <-- RENDER BLOCK
+                ) : activePage === 'Site Snags' ? ( // <-- RENDER BLOCK
+                  <SiteSnag companySettings={companySettings} />
+                ) : activePage === 'Document Vault' ? ( 
                   <DocumentVault />
                 ) : activePage === 'Project P&L' ? ( 
                   <ProjectPnL />
