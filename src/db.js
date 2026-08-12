@@ -847,3 +847,82 @@ export async function deleteTool(id) {
     console.error('Error deleting tool:', err);
   }
 }
+// ==========================================
+// VENDOR LEDGER MODULE
+// ==========================================
+export async function getVendorLedgers() {
+  try {
+    const purchases = await sql`SELECT vendor_name, SUM(total_amount) as total_billed FROM purchases GROUP BY vendor_name`;
+    const payments = await sql`SELECT vendor_name, SUM(amount) as total_paid FROM vendor_payments GROUP BY vendor_name`;
+    const paymentList = await sql`SELECT * FROM vendor_payments ORDER BY date DESC`;
+
+    const ledgers = {};
+    purchases.forEach(p => ledgers[p.vendor_name] = { vendorName: p.vendor_name, totalBilled: Number(p.total_billed), totalPaid: 0, payments: [] });
+    payments.forEach(p => {
+      if (!ledgers[p.vendor_name]) ledgers[p.vendor_name] = { vendorName: p.vendor_name, totalBilled: 0, totalPaid: 0, payments: [] };
+      ledgers[p.vendor_name].totalPaid = Number(p.total_paid);
+    });
+    paymentList.forEach(p => {
+      if (ledgers[p.vendor_name]) {
+        ledgers[p.vendor_name].payments.push({
+          id: p.id, date: p.date ? new Date(p.date).toISOString().split('T')[0] : '', amount: Number(p.amount), mode: p.payment_mode, ref: p.reference_no, notes: p.notes
+        });
+      }
+    });
+
+    return Object.values(ledgers).map(l => ({ ...l, balance: l.totalBilled - l.totalPaid })).sort((a, b) => b.balance - a.balance);
+  } catch (err) {
+    console.error('Error fetching vendor ledgers:', err);
+    return [];
+  }
+}
+
+export async function saveVendorPayment(payment) {
+  try {
+    const result = await sql`
+      INSERT INTO vendor_payments (vendor_name, date, amount, payment_mode, reference_no, notes)
+      VALUES (${payment.vendorName}, ${payment.date}, ${payment.amount}, ${payment.mode}, ${payment.referenceNo}, ${payment.notes})
+      RETURNING *;
+    `;
+    return result[0];
+  } catch (err) {
+    console.error('Error saving vendor payment:', err);
+    throw err;
+  }
+}
+
+// ==========================================
+// SITE MANAGER (DPR, VAULT, SNAGS)
+// ==========================================
+export async function getSiteOperations(projectId) {
+  try {
+    const dprs = await sql`SELECT * FROM dpr_logs WHERE project_id = ${projectId} ORDER BY date DESC`;
+    const docs = await sql`SELECT * FROM documents WHERE project_id = ${projectId} ORDER BY uploaded_at DESC`;
+    const snags = await sql`SELECT * FROM snag_list WHERE project_id = ${projectId} ORDER BY status DESC, id DESC`;
+
+    return {
+      dprs: dprs.map(d => ({ ...d, date: d.date ? new Date(d.date).toISOString().split('T')[0] : '' })),
+      docs: docs.map(d => ({ ...d, uploaded_at: d.uploaded_at ? new Date(d.uploaded_at).toISOString().split('T')[0] : '' })),
+      snags: snags.map(s => ({ ...s, logged_date: s.logged_date ? new Date(s.logged_date).toISOString().split('T')[0] : '' }))
+    };
+  } catch (err) {
+    console.error('Error fetching site operations:', err);
+    return { dprs: [], docs: [], snags: [] };
+  }
+}
+
+export async function saveDPR(dpr) {
+  await sql`INSERT INTO dpr_logs (project_id, date, summary, materials_needed, photo_link, logged_by) VALUES (${dpr.projectId}, ${dpr.date}, ${dpr.summary}, ${dpr.materials}, ${dpr.photoLink}, ${dpr.loggedBy})`;
+}
+
+export async function saveDocument(doc) {
+  await sql`INSERT INTO documents (project_id, title, doc_type, file_link, uploaded_by) VALUES (${doc.projectId}, ${doc.title}, ${doc.docType}, ${doc.fileLink}, ${doc.uploadedBy})`;
+}
+
+export async function saveSnag(snag) {
+  await sql`INSERT INTO snag_list (project_id, description, assigned_to, photo_link) VALUES (${snag.projectId}, ${snag.description}, ${snag.assignedTo}, ${snag.photoLink})`;
+}
+
+export async function updateSnagStatus(id, status) {
+  await sql`UPDATE snag_list SET status = ${status} WHERE id = ${id}`;
+}

@@ -5,6 +5,7 @@ import TaxInvoice from './TaxInvoice';
 import Estimation from './Estimation';
 import EmployeeAttendance from './EmployeeAttendance';
 import Purchases from './Purchases';
+import VendorLedger from './VendorLedger';
 import Inventory from './Inventory';
 import Tools from './Tools';
 import RateBook from './RateBook';
@@ -15,6 +16,7 @@ import Income from './Income';
 import GST from './GST';
 import Projects from './Projects';
 import MeasurementSheet from './MeasurementSheet';
+import SiteManager from './SiteManager'; 
 
 export default function App() {
   const [email, setEmail] = useState('');
@@ -95,7 +97,6 @@ export default function App() {
           
           <aside className="w-[250px] bg-white/40 border-r border-white/60 flex flex-col z-10 flex-shrink-0 print:hidden">
             
-            {/* UPDATED: Compact Horizontal Logo Layout */}
             <div className="pt-8 pb-4 flex items-center justify-center gap-3">
               <div className="bg-white/80 p-2 rounded-xl shadow-sm">
                 <img src={companySettings.logoUrl} alt="Logo" className="h-6 w-auto object-contain" />
@@ -107,16 +108,17 @@ export default function App() {
               <div className="h-px w-full bg-zinc-300/40"></div>
             </div>
 
-            {/* UPDATED: Tighter padding, gaps, and hidden scrollbar using Tailwind utilities */}
             <div className="flex-1 overflow-y-auto py-3 px-4 flex flex-col gap-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               {[
                 'Dashboard',
                 'CRM',
                 'Projects',
+                'Daily Report',  // <--- RENAMED FROM "Site Manager"
                 'Measurement Sheet',
                 'Estimation',
                 'Tax Invoice',
                 'Purchases',
+                'Vendor Ledger',
                 'Inventory',
                 'Tools & Assets',
                 'Rate Book', 
@@ -141,7 +143,6 @@ export default function App() {
               ))}
             </div>
 
-            {/* UPDATED: Tighter Bottom Actions */}
             <div className="p-4 flex flex-col gap-2 border-t border-zinc-300/40">
               <button
                 onClick={() => setActivePage('Settings')}
@@ -171,12 +172,20 @@ export default function App() {
                   <Dashboard setActivePage={setActivePage} />
                 ) : activePage === 'CRM' ? (
                   <CRM />
+                ) : activePage === 'Projects' ? (
+                  <Projects />
+                ) : activePage === 'Daily Report' ? (  // <--- RENAMED RENDER BLOCK
+                  <SiteManager />
+                ) : activePage === 'Measurement Sheet' ? (
+                  <MeasurementSheet />
                 ) : activePage === 'Tax Invoice' ? (
                   <TaxInvoice companySettings={companySettings} />
                 ) : activePage === 'Estimation' ? (
                   <Estimation companySettings={companySettings} />
                 ) : activePage === 'Purchases' ? (
                   <Purchases />
+                ) : activePage === 'Vendor Ledger' ? (
+                  <VendorLedger />
                 ) : activePage === 'Inventory' ? (
                   <Inventory /> 
                 ) : activePage === 'Tools & Assets' ? (
@@ -195,10 +204,6 @@ export default function App() {
                   <Income />
                 ) : activePage === 'GST Filing' ? ( 
                   <GST />
-                ) : activePage === 'Projects' ? (
-                  <Projects />
-                ) : activePage === 'Measurement Sheet' ? (
-                  <MeasurementSheet />
                 ) : activePage === 'Settings' ? (
                   <div className="w-full pb-20">
                     <div className="flex justify-between items-end pb-4 border-b border-zinc-300/50 mb-6">
