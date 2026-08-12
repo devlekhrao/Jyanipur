@@ -209,7 +209,7 @@ export async function getPurchases() {
       gstAmount: Number(p.gst_amount),
       totalAmount: Number(p.total_amount),
       returnStatus: p.return_status,
-      items: p.items ? JSON.parse(p.items) : [] // Added items to fetch logic
+      items: p.items ? JSON.parse(p.items) : []
     }));
   } catch (err) {
     console.error('Error fetching purchases:', err);
@@ -350,7 +350,6 @@ export async function getProjects() {
 export async function saveProject(project) {
   try {
     if (project.id) {
-      // Update existing project
       const result = await sql`
         UPDATE projects 
         SET name = ${project.name}, client_name = ${project.clientName}, 
@@ -361,7 +360,6 @@ export async function saveProject(project) {
       `;
       return result[0];
     } else {
-      // Create new project
       const result = await sql`
         INSERT INTO projects (name, client_name, client_gstin, client_phone, po_date, budget, status)
         VALUES (${project.name}, ${project.clientName}, ${project.clientGstin}, ${project.clientPhone}, ${project.poDate || null}, ${project.budget}, ${project.status})
@@ -494,13 +492,11 @@ export async function getInventoryMovements() {
 
 export async function recordInventoryMovement(movement) {
   try {
-    // 1. Log the movement
     await sql`
       INSERT INTO inventory_movements (item_id, movement_type, quantity, project_id, date, notes)
       VALUES (${movement.itemId}, ${movement.type}, ${movement.quantity}, ${movement.projectId || null}, ${movement.date}, ${movement.notes})
     `;
 
-    // 2. Adjust the total stock in the master table
     const qtyChange = movement.type === 'IN' ? movement.quantity : -Math.abs(movement.quantity);
     await sql`
       UPDATE inventory_items 
@@ -556,6 +552,7 @@ export async function deleteMaterialRate(id) {
     throw err;
   }
 }
+
 // ==========================================
 // SUBCONTRACTORS & WORK ORDERS MODULE
 // ==========================================
@@ -660,6 +657,7 @@ export async function saveWoPayment(payment) {
     throw err;
   }
 }
+
 // ==========================================
 // MEASUREMENT SHEETS (JMS) MODULE
 // ==========================================
@@ -718,6 +716,7 @@ export async function deleteMeasurementSheet(id) {
     throw err;
   }
 }
+
 // ==========================================
 // CRM & LEADS MODULE
 // ==========================================
@@ -847,6 +846,7 @@ export async function deleteTool(id) {
     console.error('Error deleting tool:', err);
   }
 }
+
 // ==========================================
 // VENDOR LEDGER MODULE
 // ==========================================
@@ -892,22 +892,20 @@ export async function saveVendorPayment(payment) {
 }
 
 // ==========================================
-// SITE MANAGER (DPR, VAULT, SNAGS)
+// SITE MANAGER (DPR & DOCUMENTS)
 // ==========================================
 export async function getSiteOperations(projectId) {
   try {
     const dprs = await sql`SELECT * FROM dpr_logs WHERE project_id = ${projectId} ORDER BY date DESC`;
     const docs = await sql`SELECT * FROM documents WHERE project_id = ${projectId} ORDER BY uploaded_at DESC`;
-    const snags = await sql`SELECT * FROM snag_list WHERE project_id = ${projectId} ORDER BY status DESC, id DESC`;
 
     return {
       dprs: dprs.map(d => ({ ...d, date: d.date ? new Date(d.date).toISOString().split('T')[0] : '' })),
-      docs: docs.map(d => ({ ...d, uploaded_at: d.uploaded_at ? new Date(d.uploaded_at).toISOString().split('T')[0] : '' })),
-      snags: snags.map(s => ({ ...s, logged_date: s.logged_date ? new Date(s.logged_date).toISOString().split('T')[0] : '' }))
+      docs: docs.map(d => ({ ...d, uploaded_at: d.uploaded_at ? new Date(d.uploaded_at).toISOString().split('T')[0] : '' }))
     };
   } catch (err) {
     console.error('Error fetching site operations:', err);
-    return { dprs: [], docs: [], snags: [] };
+    return { dprs: [], docs: [] };
   }
 }
 
@@ -919,13 +917,6 @@ export async function saveDocument(doc) {
   await sql`INSERT INTO documents (project_id, title, doc_type, file_link, uploaded_by) VALUES (${doc.projectId}, ${doc.title}, ${doc.docType}, ${doc.fileLink}, ${doc.uploadedBy})`;
 }
 
-export async function saveSnag(snag) {
-  await sql`INSERT INTO snag_list (project_id, description, assigned_to, photo_link) VALUES (${snag.projectId}, ${snag.description}, ${snag.assignedTo}, ${snag.photoLink})`;
-}
-
-export async function updateSnagStatus(id, status) {
-  await sql`UPDATE snag_list SET status = ${status} WHERE id = ${id}`;
-}
 // ==========================================
 // PETTY CASH WALLET MODULE
 // ==========================================
@@ -974,21 +965,19 @@ export async function deletePettyCash(id) {
     console.error('Error deleting petty cash:', err);
   }
 }
+
 // ==========================================
 // PROJECT PROFIT & LOSS (P&L) MODULE
 // ==========================================
 export async function getProjectPnL(projectId) {
   try {
-    // 1. Get Project Details
     const projData = await sql`SELECT name, budget, status FROM projects WHERE id = ${projectId}`;
     if (!projData || projData.length === 0) return null;
     const project = projData[0];
 
-    // 2. Total Income Received
     const incomeData = await sql`SELECT COALESCE(SUM(amount), 0) as total FROM income_records WHERE project_id = ${projectId}`;
     const incomeReceived = Number(incomeData[0].total);
 
-    // 3. Subcontractor Payments (Advances & Cleared Bills)
     const subData = await sql`
       SELECT COALESCE(SUM(p.amount), 0) as total 
       FROM wo_payments p 
@@ -997,11 +986,9 @@ export async function getProjectPnL(projectId) {
     `;
     const subCost = Number(subData[0].total);
 
-    // 4. Petty Cash Spent
     const pettyData = await sql`SELECT COALESCE(SUM(amount), 0) as total FROM petty_cash WHERE project_id = ${projectId} AND type = 'Expense'`;
     const pettyCost = Number(pettyData[0].total);
 
-    // Final Calculations
     const totalCost = subCost + pettyCost;
     const netProfit = incomeReceived - totalCost;
     const profitMargin = incomeReceived > 0 ? ((netProfit / incomeReceived) * 100).toFixed(1) : 0;
@@ -1022,6 +1009,7 @@ export async function getProjectPnL(projectId) {
     return null;
   }
 }
+
 // ==========================================
 // PROJECT TASK BOARD MODULE
 // ==========================================
@@ -1079,6 +1067,7 @@ export async function deleteTask(id) {
     console.error('Error deleting task:', err);
   }
 }
+
 // ==========================================
 // DOCUMENT VAULT MODULE
 // ==========================================
@@ -1128,6 +1117,7 @@ export async function deleteVaultDocument(id) {
     console.error('Error deleting vault doc:', err);
   }
 }
+
 // ==========================================
 // SITE SNAG & QUALITY PUNCH LIST MODULE
 // ==========================================
