@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Dashboard from './Dashboard';
 import CRM from './CRM';
 import TaxInvoice from './TaxInvoice';
@@ -39,6 +39,15 @@ export default function App() {
   const [pendingPage, setPendingPage] = useState(null);
   const [showWarningModal, setShowWarningModal] = useState(false);
 
+  // --- SIDEBAR DROPDOWN STATE ---
+  const [expandedGroups, setExpandedGroups] = useState({
+    "Workspace": true,
+    "Site Execution": false,
+    "Finance & Sales": false,
+    "Supply Chain": false,
+    "Team & HR": false
+  });
+
   // Called by child components to let App know they have unsaved form data
   const updateDirtyState = (pageName, isDirty) => {
     setDirtyStates(prev => ({ ...prev, [pageName]: isDirty }));
@@ -63,13 +72,11 @@ export default function App() {
   };
 
   const handleSaveDraft = () => {
-    // Acknowledges the local storage draft, keeps the component mounted, and navigates
     setShowWarningModal(false);
     commitPageSwitch(pendingPage);
   };
 
   const handleDiscard = () => {
-    // 1. Wipe out local storage drafts for specific pages (e.g., TaxInvoice)
     if (activePage === 'TaxInvoice') {
       localStorage.removeItem('draft_invoiceDetails');
       localStorage.removeItem('draft_items');
@@ -78,17 +85,36 @@ export default function App() {
       localStorage.removeItem('draft_invoiceView');
     }
 
-    // 2. Unmount the component completely so it renders fresh next time
     setVisitedPages(prev => {
       const newSet = new Set(prev);
       newSet.delete(activePage);
       return newSet;
     });
 
-    // 3. Clear dirty state and navigate
     setDirtyStates(prev => ({ ...prev, [activePage]: false }));
     setShowWarningModal(false);
     commitPageSwitch(pendingPage);
+  };
+
+  // --- LOGICAL SIDEBAR CATEGORIZATION ---
+  const navigationGroups = [
+    { title: "Workspace", pages: ['Dashboard', 'CRM', 'Projects', 'Task Board', 'Document Vault'] },
+    { title: "Site Execution", pages: ['Project Control', 'Daily Report', 'Site Snags', 'Measurement Sheet'] },
+    { title: "Finance & Sales", pages: ['Estimation', 'Tax Invoice', 'Project P&L', 'Income', 'Petty Cash', 'GST Filing'] },
+    { title: "Supply Chain", pages: ['Purchases', 'Vendor Ledger', 'Inventory', 'Rate Book', 'Tools & Assets', 'Subcontractors'] },
+    { title: "Team & HR", pages: ['Employee Attendance', 'Staff Expenses', 'Salaries'] }
+  ];
+
+  // Auto-expand group when a page is selected via Quick Dock
+  useEffect(() => {
+    const activeGroup = navigationGroups.find(g => g.pages.includes(activePage));
+    if (activeGroup && !expandedGroups[activeGroup.title]) {
+      setExpandedGroups(prev => ({ ...prev, [activeGroup.title]: true }));
+    }
+  }, [activePage]);
+
+  const toggleGroup = (title) => {
+    setExpandedGroups(prev => ({ ...prev, [title]: !prev[title] }));
   };
 
   // --- GLOBAL COMPANY & PRINT SETTINGS ---
@@ -145,30 +171,6 @@ export default function App() {
 
   const inputClass = "w-full px-4 py-3 rounded-xl border-none bg-white/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] text-zinc-900 text-xs font-medium transition-all shadow-sm";
   const labelClass = "block text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
-
-  // --- LOGICAL SIDEBAR CATEGORIZATION ---
-  const navigationGroups = [
-    {
-      title: "Workspace",
-      pages: ['Dashboard', 'CRM', 'Projects', 'Task Board', 'Document Vault']
-    },
-    {
-      title: "Site Execution",
-      pages: ['Project Control', 'Daily Report', 'Site Snags', 'Measurement Sheet']
-    },
-    {
-      title: "Finance & Sales",
-      pages: ['Estimation', 'Tax Invoice', 'Project P&L', 'Income', 'Petty Cash', 'GST Filing']
-    },
-    {
-      title: "Supply Chain",
-      pages: ['Purchases', 'Vendor Ledger', 'Inventory', 'Rate Book', 'Tools & Assets', 'Subcontractors']
-    },
-    {
-      title: "Team & HR",
-      pages: ['Employee Attendance', 'Staff Expenses', 'Salaries']
-    }
-  ];
 
   if (isLoggedIn) {
     return (
@@ -241,26 +243,47 @@ export default function App() {
               <div className="h-px w-full bg-blue-400/20"></div>
             </div>
 
-            {/* CATEGORIZED NAVIGATION MENU */}
-            <div className="flex-1 overflow-y-auto py-3 px-3 flex flex-col gap-5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            {/* COLLAPSIBLE DROPDOWN NAVIGATION MENU */}
+            <div className="flex-1 overflow-y-auto py-3 px-3 flex flex-col gap-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               {navigationGroups.map((group) => (
-                <div key={group.title} className="flex flex-col gap-1">
-                  <span className="px-3 text-[9px] font-black text-blue-300/60 uppercase tracking-widest mb-1.5">{group.title}</span>
-                  {group.pages.map((page) => (
-                    <button
-                      key={page}
-                      onClick={() => handlePageSwitch(page)}
-                      className={`text-left px-3 py-2 rounded-xl text-xs transition-all duration-300 flex items-center ${
-                        activePage === page 
-                          ? 'bg-white/20 text-white font-bold shadow-md shadow-blue-950/40 ring-1 ring-white/30 translate-x-1' 
-                          : 'text-blue-100/70 hover:bg-white/10 hover:text-white font-medium cursor-pointer'
-                      }`}
+                <div key={group.title} className="flex flex-col mb-1">
+                  
+                  {/* Category Header Button */}
+                  <button
+                    onClick={() => toggleGroup(group.title)}
+                    className="flex items-center justify-between px-3 py-2.5 w-full text-left cursor-pointer group/nav rounded-lg hover:bg-white/5 transition-colors"
+                  >
+                    <span className="text-[10px] font-black text-blue-300/70 uppercase tracking-widest group-hover/nav:text-blue-200 transition-colors">
+                      {group.title}
+                    </span>
+                    <svg 
+                      className={`w-3.5 h-3.5 text-blue-300/50 transition-transform duration-200 ${expandedGroups[group.title] ? 'rotate-180' : ''}`} 
+                      fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}
                     >
-                      {page}
-                      {/* Amber indicator dot if the page has unsaved changes */}
-                      {dirtyStates[page] && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_5px_rgba(251,191,36,0.8)]"></span>}
-                    </button>
-                  ))}
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  
+                  {/* Expanded Pages */}
+                  {expandedGroups[group.title] && (
+                    <div className="flex flex-col gap-1 mt-1 mb-2">
+                      {group.pages.map((page) => (
+                        <button
+                          key={page}
+                          onClick={() => handlePageSwitch(page)}
+                          className={`text-left px-3 py-2 rounded-xl text-xs transition-all duration-300 flex items-center ${
+                            activePage === page 
+                              ? 'bg-white/20 text-white font-bold shadow-md shadow-blue-950/40 ring-1 ring-white/30 translate-x-1' 
+                              : 'text-blue-100/70 hover:bg-white/10 hover:text-white font-medium cursor-pointer'
+                          }`}
+                        >
+                          {page}
+                          {/* Amber indicator dot if the page has unsaved changes */}
+                          {dirtyStates[page] && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_5px_rgba(251,191,36,0.8)]"></span>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
