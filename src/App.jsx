@@ -79,7 +79,6 @@ export default function App() {
       localStorage.removeItem('draft_editingId');
       localStorage.removeItem('draft_invoiceView');
     }
-    // Add discard logic for POs
     if (activePage === 'Purchase Orders') {
       localStorage.removeItem('draft_poDetails');
       localStorage.removeItem('draft_poItems');
@@ -223,30 +222,10 @@ export default function App() {
           </div>
         )}
 
-        <div className="fixed right-6 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-3 print:hidden hidden xl:flex">
-          {[
-            { name: 'Document Vault', icon: '📁', label: 'Vault' },
-            { name: 'Project Control', icon: '⚖️', label: 'Control' },
-            { name: 'Site Snags', icon: '⚠️', label: 'Snags' },
-            { name: 'Measurement Sheet', icon: '📐', label: 'Calc' }
-          ].map((item) => (
-            <button 
-              key={item.name}
-              onClick={() => handlePageSwitch(item.name)}
-              className={`flex items-center gap-2 px-4 py-3 rounded-2xl font-bold text-xs shadow-xl backdrop-blur-md border transition-all hover:scale-105 cursor-pointer ${
-                activePage === item.name 
-                  ? 'bg-[#1E3A8A] text-white border-[#1E3A8A] shadow-blue-900/30' 
-                  : 'bg-white text-zinc-800 border-zinc-200 hover:bg-zinc-50'
-              }`}
-            >
-              <span>{item.icon}</span>
-              <span className="tracking-wider uppercase text-[10px]">{item.label}</span>
-            </button>
-          ))}
-        </div>
-
+        {/* FULL SCREEN MAIN CONTAINER */}
         <div className="relative z-10 flex w-full h-full bg-transparent overflow-hidden print:bg-white">
           
+          {/* SIDEBAR */}
           <aside className="w-[260px] bg-[#1E3A8A] text-white flex flex-col z-10 flex-shrink-0 print:hidden shadow-2xl">
             <div className="pt-8 pb-6 flex items-center justify-center gap-3">
               <div className="bg-white p-2 rounded-xl shadow-sm">
@@ -286,9 +265,10 @@ export default function App() {
             </div>
           </aside>
 
+          {/* MAIN CONTENT AREA */}
           <main className="flex-1 flex flex-col h-full overflow-hidden relative z-10 bg-zinc-50 print:bg-white print:overflow-visible">
             <div className="flex-1 p-8 lg:p-12 overflow-y-auto print:p-0 print:overflow-visible custom-scrollbar">
-              <div className="max-w-screen-2xl mx-auto print:max-w-none print:mx-0">
+              <div className="max-w-screen-2xl mx-auto w-full print:max-w-none print:mx-0">
                 
                 {visitedPages.has('Dashboard') && <div className={activePage === 'Dashboard' ? 'block' : 'hidden'}><Dashboard setActivePage={handlePageSwitch} /></div>}
                 {visitedPages.has('CRM') && <div className={activePage === 'CRM' ? 'block' : 'hidden'}><CRM /></div>}
@@ -331,14 +311,14 @@ export default function App() {
     );
   }
 
-  /* LOGIN PAGE */
+  /* LOGIN PAGE (Keeps the background image and glassmorphism!) */
   return (
     <div className="fixed inset-0 w-screen h-[100dvh] flex items-center justify-center bg-[url('/background.png')] bg-cover bg-center bg-no-repeat px-4 font-['Poppins'] overflow-hidden overscroll-none bg-zinc-900">
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
 
-      <div className="max-w-md w-full bg-white/85 backdrop-blur-3xl rounded-[2.5rem] shadow-[0_40px_80px_rgba(0,0,0,0.3)] border border-white/60 p-10 relative z-10">
+      <div className="max-w-md w-full bg-white/90 backdrop-blur-3xl rounded-[2.5rem] shadow-[0_40px_80px_rgba(0,0,0,0.4)] border border-white/40 p-10 relative z-10">
         <div className="mb-10 flex flex-col items-center text-center">
-          <div className="bg-white p-4 rounded-3xl mb-5 shadow-sm border border-white/50">
+          <div className="bg-white p-4 rounded-3xl mb-5 shadow-sm border border-zinc-100">
             <img src="/jyanipur.png" alt="Jyanipur Logo" className="h-12 w-auto object-contain" onError={(e) => { e.target.style.display='none'; }} />
           </div>
           <h1 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Jyanipur</h1>
@@ -354,13 +334,13 @@ export default function App() {
         <form onSubmit={handleLogin} className="space-y-5">
           <div>
             <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2 ml-1">Work Email</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-5 py-4 rounded-2xl border border-white/60 bg-white/70 focus:bg-white focus:outline-none focus:ring-2 focus:ring-zinc-900 text-zinc-900 text-sm font-medium transition-all shadow-inner" required />
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-5 py-4 rounded-2xl border border-zinc-200 bg-zinc-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] text-zinc-900 text-sm font-medium transition-all shadow-inner" required />
           </div>
           <div>
             <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2 ml-1">Passkey</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-5 py-4 rounded-2xl border border-white/60 bg-white/70 focus:bg-white focus:outline-none focus:ring-2 focus:ring-zinc-900 text-zinc-900 text-sm font-medium transition-all shadow-inner" required />
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-5 py-4 rounded-2xl border border-zinc-200 bg-zinc-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] text-zinc-900 text-sm font-medium transition-all shadow-inner" required />
           </div>
-          <button type="submit" className="w-full py-4 bg-zinc-900 hover:bg-black text-white font-bold rounded-2xl transition-all mt-6 cursor-pointer text-sm shadow-[0_10px_20px_rgba(24,24,27,0.2)] hover:shadow-[0_15px_25px_rgba(24,24,27,0.3)] hover:-translate-y-1 tracking-wide">
+          <button type="submit" className="w-full py-4 bg-[#1E3A8A] hover:bg-blue-900 text-white font-bold rounded-2xl transition-all mt-6 cursor-pointer text-sm shadow-[0_10px_20px_rgba(30,58,138,0.2)] hover:shadow-[0_15px_25px_rgba(30,58,138,0.3)] hover:-translate-y-1 tracking-wide">
             Enter Portal
           </button>
         </form>
