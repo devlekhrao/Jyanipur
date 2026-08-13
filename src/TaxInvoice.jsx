@@ -32,6 +32,23 @@ function numberToWords(num) {
   return result.trim() + ' Only';
 }
 
+// Indian GST State Codes Dictionary
+const gstStateCodes = {
+  '01': 'Jammu & Kashmir (01)', '02': 'Himachal Pradesh (02)', '03': 'Punjab (03)',
+  '04': 'Chandigarh (04)', '05': 'Uttarakhand (05)', '06': 'Haryana (06)',
+  '07': 'Delhi (07)', '08': 'Rajasthan (08)', '09': 'Uttar Pradesh (09)',
+  '10': 'Bihar (10)', '11': 'Sikkim (11)', '12': 'Arunachal Pradesh (12)',
+  '13': 'Nagaland (13)', '14': 'Manipur (14)', '15': 'Mizoram (15)',
+  '16': 'Tripura (16)', '17': 'Meghalaya (17)', '18': 'Assam (18)',
+  '19': 'West Bengal (19)', '20': 'Jharkhand (20)', '21': 'Odisha (21)',
+  '22': 'Chhattisgarh (22)', '23': 'Madhya Pradesh (23)', '24': 'Gujarat (24)',
+  '25': 'Daman & Diu (25)', '26': 'Dadra & Nagar Haveli (26)', '27': 'Maharashtra (27)',
+  '28': 'Andhra Pradesh (Old) (28)', '29': 'Karnataka (29)', '30': 'Goa (30)',
+  '31': 'Lakshadweep (31)', '32': 'Kerala (32)', '33': 'Tamil Nadu (33)',
+  '34': 'Puducherry (34)', '35': 'Andaman & Nicobar Islands (35)', '36': 'Telangana (36)',
+  '37': 'Andhra Pradesh (37)', '38': 'Ladakh (38)'
+};
+
 export default function TaxInvoice({ companySettings = {} }) {
   const [currentView, setCurrentView] = useState('list');
   const [editingId, setEditingId] = useState(null);
@@ -86,16 +103,26 @@ export default function TaxInvoice({ companySettings = {} }) {
     }
   }, [companySettings, editingId]);
 
+  // AUTO DETECT GST STATE CODE & UPDATE PLACE OF SUPPLY
   useEffect(() => {
     const clientStateCode = invoiceDetails.gstNo.trim().substring(0, 2);
-    if (clientStateCode.length === 2) {
+    if (clientStateCode.length === 2 && !isNaN(clientStateCode)) {
+      const detectedState = gstStateCodes[clientStateCode] || `State Code (${clientStateCode})`;
+      
       if (clientStateCode === '36') {
         setTaxMode('CGST_SGST');
       } else {
         setTaxMode('IGST');
       }
+
+      setInvoiceDetails(prev => {
+        if (prev.placeOfSupply !== detectedState && !editingId) {
+          return { ...prev, placeOfSupply: detectedState };
+        }
+        return prev;
+      });
     }
-  }, [invoiceDetails.gstNo]);
+  }, [invoiceDetails.gstNo, editingId]);
 
   const addItem = () => setItems([...items, { id: Date.now(), description: '', hsn: '', sizeL: '', sizeB: '', no: '', rate: '', gst: 18 }]);
   const updateItem = (id, field, value) => setItems(items.map(item => item.id === id ? { ...item, [field]: value } : item));
@@ -386,6 +413,10 @@ export default function TaxInvoice({ companySettings = {} }) {
               <option value="CGST_SGST">CGST + SGST (In State)</option>
               <option value="IGST">IGST (Out of State)</option>
             </select>
+          </div>
+          <div className="flex-1 min-w-[150px]">
+            <label className={labelClass}>Place of Supply</label>
+            <input disabled={isReadOnly} type="text" value={invoiceDetails.placeOfSupply} onChange={(e) => setInvoiceDetails({...invoiceDetails, placeOfSupply: e.target.value})} className={inputClass} />
           </div>
           <div className="flex-1 min-w-[100px]">
             <label className={labelClass}>PO No.</label>
