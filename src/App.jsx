@@ -30,15 +30,65 @@ export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [error, setError] = useState('');
   
-  // DEFAULT ACTIVE PAGE IS DASHBOARD
+  // NAVIGATION & STAGING STATE
   const [activePage, setActivePage] = useState('Dashboard');
-
-  // Track visited pages so we don't render all 25 modules on initial boot (Performance optimization)
   const [visitedPages, setVisitedPages] = useState(new Set(['Dashboard']));
 
+  // --- DIRTY STATE WARNING SYSTEM ---
+  const [dirtyStates, setDirtyStates] = useState({});
+  const [pendingPage, setPendingPage] = useState(null);
+  const [showWarningModal, setShowWarningModal] = useState(false);
+
+  // Called by child components to let App know they have unsaved form data
+  const updateDirtyState = (pageName, isDirty) => {
+    setDirtyStates(prev => ({ ...prev, [pageName]: isDirty }));
+  };
+
+  // Intercept Navigation
   const handlePageSwitch = (pageName) => {
+    if (activePage === pageName) return;
+    
+    // If the CURRENT page is marked as dirty, stop and warn
+    if (dirtyStates[activePage]) {
+      setPendingPage(pageName);
+      setShowWarningModal(true);
+    } else {
+      commitPageSwitch(pageName);
+    }
+  };
+
+  const commitPageSwitch = (pageName) => {
     setActivePage(pageName);
     setVisitedPages(prev => new Set(prev).add(pageName));
+  };
+
+  const handleSaveDraft = () => {
+    // Acknowledges the local storage draft, keeps the component mounted, and navigates
+    setShowWarningModal(false);
+    commitPageSwitch(pendingPage);
+  };
+
+  const handleDiscard = () => {
+    // 1. Wipe out local storage drafts for specific pages (e.g., TaxInvoice)
+    if (activePage === 'TaxInvoice') {
+      localStorage.removeItem('draft_invoiceDetails');
+      localStorage.removeItem('draft_items');
+      localStorage.removeItem('draft_taxMode');
+      localStorage.removeItem('draft_editingId');
+      localStorage.removeItem('draft_invoiceView');
+    }
+
+    // 2. Unmount the component completely so it renders fresh next time
+    setVisitedPages(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(activePage);
+      return newSet;
+    });
+
+    // 3. Clear dirty state and navigate
+    setDirtyStates(prev => ({ ...prev, [activePage]: false }));
+    setShowWarningModal(false);
+    commitPageSwitch(pendingPage);
   };
 
   // --- GLOBAL COMPANY & PRINT SETTINGS ---
@@ -53,12 +103,8 @@ export default function App() {
     accountNo: '437405000324',
     ifscCode: 'ICIC0004374',
     logoUrl: '/jyanipur.png',
-    
-    // Signature Settings
     signatureUrl: '',
     showSignatureImage: true,
-
-    // PDF Print Options
     showBankDetailsOnPdf: true,
     showTermsOnPdf: true,
     showRemarksOnPdf: true,
@@ -83,6 +129,7 @@ export default function App() {
     setPassword('');
     setActivePage('Dashboard');
     setVisitedPages(new Set(['Dashboard']));
+    setDirtyStates({});
   };
 
   const handleSignatureUpload = (e) => {
@@ -103,12 +150,37 @@ export default function App() {
     return (
       <div className="fixed inset-0 w-screen h-[100dvh] font-['Poppins'] text-zinc-800 selection:bg-blue-100 overflow-hidden flex items-center justify-center p-4 lg:p-6 print:p-0 print:block overscroll-none bg-zinc-900">
         
-        {/* Background Image */}
+        {/* --- GLOBAL WARNING MODAL --- */}
+        {showWarningModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 backdrop-blur-md px-4">
+            <div className="bg-slate-900 border border-white/10 p-8 rounded-[2rem] shadow-2xl max-w-sm w-full animate-in fade-in zoom-in-95 duration-200">
+              <div className="w-12 h-12 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center mb-5 border border-amber-500/30">
+                <span className="text-xl">⚠️</span>
+              </div>
+              <h3 className="text-xl font-extrabold text-white tracking-tight mb-2">Unsaved Progress</h3>
+              <p className="text-slate-400 text-[11px] leading-relaxed mb-8">
+                You have unsaved changes in <strong className="text-white">{activePage}</strong>. What would you like to do before navigating away?
+              </p>
+              
+              <div className="flex flex-col gap-3">
+                <button onClick={handleSaveDraft} className="w-full bg-[#1E3A8A] hover:bg-blue-900 text-white font-bold py-3.5 rounded-xl text-xs uppercase tracking-widest transition-all border border-blue-400/30 shadow-lg cursor-pointer">
+                  Save Draft & Switch
+                </button>
+                <button onClick={handleDiscard} className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold py-3.5 rounded-xl text-xs uppercase tracking-widest transition-all border border-red-500/30 cursor-pointer">
+                  Discard Changes
+                </button>
+                <button onClick={() => setShowWarningModal(false)} className="w-full bg-transparent hover:bg-white/5 text-slate-300 font-bold py-3.5 rounded-xl text-xs uppercase tracking-widest transition-all border border-white/10 mt-2 cursor-pointer">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="absolute inset-0 z-0 bg-[url('/background.png')] bg-cover bg-center bg-no-repeat print:hidden">
           <div className="absolute inset-0 bg-black/30"></div>
         </div>
 
-        {/* FLOATING QUICK DOCK BUTTONS */}
         <div className="fixed right-3 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-3 print:hidden hidden xl:flex">
           {[
             { name: 'Document Vault', icon: '📁', label: 'Vault' },
@@ -131,20 +203,12 @@ export default function App() {
           ))}
         </div>
 
-        {/* MAIN CANVAS CONTAINER */}
         <div className="relative z-10 flex w-full h-full max-w-[1600px] bg-white/80 backdrop-blur-3xl rounded-[2.5rem] shadow-[0_30px_80px_rgba(0,0,0,0.3)] border border-white/60 overflow-hidden print:bg-white print:shadow-none print:border-none print:rounded-none">
           
-          {/* INDIGO SIDEBAR */}
           <aside className="w-[250px] bg-[#1E3A8A] text-white border-r border-blue-900/50 flex flex-col z-10 flex-shrink-0 print:hidden shadow-xl">
-            
             <div className="pt-8 pb-4 flex items-center justify-center gap-3">
               <div className="bg-white p-2 rounded-xl shadow-sm">
-                <img 
-                  src={companySettings.logoUrl} 
-                  alt="Logo" 
-                  className="h-6 w-auto object-contain" 
-                  onError={(e) => { e.target.style.display='none'; }} 
-                />
+                <img src={companySettings.logoUrl} alt="Logo" className="h-6 w-auto object-contain" onError={(e) => { e.target.style.display='none'; }} />
               </div>
               <span className="font-bold text-sm tracking-[0.2em] text-white uppercase">Jyanipur</span>
             </div>
@@ -153,33 +217,9 @@ export default function App() {
               <div className="h-px w-full bg-blue-400/20"></div>
             </div>
 
-            {/* Navigation Menu */}
             <div className="flex-1 overflow-y-auto py-3 px-4 flex flex-col gap-1.5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               {[
-                'Dashboard',
-                'CRM',
-                'Projects',
-                'Task Board',
-                'Project Control',
-                'Site Snags',
-                'Document Vault',    
-                'Project P&L',      
-                'Daily Report',     
-                'Petty Cash',       
-                'Measurement Sheet',
-                'Estimation',
-                'Tax Invoice',
-                'Purchases',
-                'Vendor Ledger',
-                'Inventory',
-                'Tools & Assets',
-                'Rate Book', 
-                'Subcontractors',
-                'Employee Attendance',
-                'Staff Expenses',     
-                'Salaries',
-                'Income',
-                'GST Filing'
+                'Dashboard', 'CRM', 'Projects', 'Task Board', 'Project Control', 'Site Snags', 'Document Vault', 'Project P&L', 'Daily Report', 'Petty Cash', 'Measurement Sheet', 'Estimation', 'Tax Invoice', 'Purchases', 'Vendor Ledger', 'Inventory', 'Tools & Assets', 'Rate Book', 'Subcontractors', 'Employee Attendance', 'Staff Expenses', 'Salaries', 'Income', 'GST Filing'
               ].map((page) => (
                 <button
                   key={page}
@@ -187,191 +227,57 @@ export default function App() {
                   className={`text-left px-4 py-2.5 rounded-xl text-xs transition-all duration-300 flex items-center ${
                     activePage === page 
                       ? 'bg-white/20 text-white font-bold shadow-md shadow-blue-950/40 ring-1 ring-white/30 translate-x-1' 
-                      : 'text-blue-100/70 hover:bg-white/10 hover:text-white font-medium'
+                      : 'text-blue-100/70 hover:bg-white/10 hover:text-white font-medium cursor-pointer'
                   }`}
                 >
                   {page}
+                  {/* Amber indicator dot if the page has unsaved changes */}
+                  {dirtyStates[page] && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_5px_rgba(251,191,36,0.8)]"></span>}
                 </button>
               ))}
             </div>
 
-            {/* Bottom Actions */}
             <div className="p-4 flex flex-col gap-2 border-t border-blue-400/20 bg-[#172e6e]">
-              <button
-                onClick={() => handlePageSwitch('Settings')}
-                className={`w-full py-2.5 rounded-xl text-[10px] uppercase tracking-widest font-bold transition-all duration-300 cursor-pointer shadow-sm border ${
-                  activePage === 'Settings' 
-                    ? 'bg-white text-[#1E3A8A] border-white shadow-md' 
-                    : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
-                }`}
-              >
+              <button onClick={() => handlePageSwitch('Settings')} className={`w-full py-2.5 rounded-xl text-[10px] uppercase tracking-widest font-bold transition-all duration-300 cursor-pointer shadow-sm border ${activePage === 'Settings' ? 'bg-white text-[#1E3A8A] border-white shadow-md' : 'bg-white/10 border-white/20 text-white hover:bg-white/20'}`}>
                 Settings
               </button>
-              <button 
-                onClick={handleLogout}
-                className="w-full bg-white/10 border border-white/20 text-white hover:bg-red-500 hover:border-red-500 py-2.5 rounded-xl text-[10px] uppercase tracking-widest font-bold transition-all duration-300 cursor-pointer"
-              >
+              <button onClick={handleLogout} className="w-full bg-white/10 border border-white/20 text-white hover:bg-red-500 hover:border-red-500 py-2.5 rounded-xl text-[10px] uppercase tracking-widest font-bold transition-all duration-300 cursor-pointer">
                 Log Out
               </button>
             </div>
           </aside>
 
-          {/* MAIN CONTENT AREA - MULTI-STAGE PERSISTENT MOUNTING */}
           <main className="flex-1 flex flex-col h-full overflow-hidden relative z-10 print:overflow-visible">
             <div className="flex-1 p-8 lg:p-12 overflow-y-auto print:p-0 print:overflow-visible custom-scrollbar">
               <div className="max-w-7xl mx-auto print:max-w-none print:mx-0">
                 
-                {/* 
-                  ====================================================
-                  PERSISTENT MULTI-STAGE STACK (iPad Stage Manager style)
-                  Modules stay mounted in DOM once opened, preserving
-                  100% of active form inputs, checks, and state!
-                  ====================================================
-                */}
-
-                {visitedPages.has('Dashboard') && (
-                  <div className={activePage === 'Dashboard' ? 'block' : 'hidden'}>
-                    <Dashboard setActivePage={handlePageSwitch} />
-                  </div>
-                )}
-
-                {visitedPages.has('CRM') && (
-                  <div className={activePage === 'CRM' ? 'block' : 'hidden'}>
-                    <CRM />
-                  </div>
-                )}
-
-                {visitedPages.has('Projects') && (
-                  <div className={activePage === 'Projects' ? 'block' : 'hidden'}>
-                    <Projects />
-                  </div>
-                )}
-
-                {visitedPages.has('Task Board') && (
-                  <div className={activePage === 'Task Board' ? 'block' : 'hidden'}>
-                    <TaskBoard />
-                  </div>
-                )}
-
-                {visitedPages.has('Project Control') && (
-                  <div className={activePage === 'Project Control' ? 'block' : 'hidden'}>
-                    <ProjectControl />
-                  </div>
-                )}
-
-                {visitedPages.has('Site Snags') && (
-                  <div className={activePage === 'Site Snags' ? 'block' : 'hidden'}>
-                    <SiteSnag companySettings={companySettings} />
-                  </div>
-                )}
-
-                {visitedPages.has('Document Vault') && (
-                  <div className={activePage === 'Document Vault' ? 'block' : 'hidden'}>
-                    <DocumentVault />
-                  </div>
-                )}
-
-                {visitedPages.has('Project P&L') && (
-                  <div className={activePage === 'Project P&L' ? 'block' : 'hidden'}>
-                    <ProjectPnL />
-                  </div>
-                )}
-
-                {visitedPages.has('Daily Report') && (
-                  <div className={activePage === 'Daily Report' ? 'block' : 'hidden'}>
-                    <SiteManager />
-                  </div>
-                )}
-
-                {visitedPages.has('Petty Cash') && (
-                  <div className={activePage === 'Petty Cash' ? 'block' : 'hidden'}>
-                    <PettyCash />
-                  </div>
-                )}
-
-                {visitedPages.has('Measurement Sheet') && (
-                  <div className={activePage === 'Measurement Sheet' ? 'block' : 'hidden'}>
-                    <MeasurementSheet />
-                  </div>
-                )}
-
-                {visitedPages.has('Tax Invoice') && (
-                  <div className={activePage === 'Tax Invoice' ? 'block' : 'hidden'}>
-                    <TaxInvoice companySettings={companySettings} />
-                  </div>
-                )}
-
-                {visitedPages.has('Estimation') && (
-                  <div className={activePage === 'Estimation' ? 'block' : 'hidden'}>
-                    <Estimation companySettings={companySettings} />
-                  </div>
-                )}
-
-                {visitedPages.has('Purchases') && (
-                  <div className={activePage === 'Purchases' ? 'block' : 'hidden'}>
-                    <Purchases />
-                  </div>
-                )}
-
-                {visitedPages.has('Vendor Ledger') && (
-                  <div className={activePage === 'Vendor Ledger' ? 'block' : 'hidden'}>
-                    <VendorLedger />
-                  </div>
-                )}
-
-                {visitedPages.has('Inventory') && (
-                  <div className={activePage === 'Inventory' ? 'block' : 'hidden'}>
-                    <Inventory />
-                  </div>
-                )}
-
-                {visitedPages.has('Tools & Assets') && (
-                  <div className={activePage === 'Tools & Assets' ? 'block' : 'hidden'}>
-                    <Tools />
-                  </div>
-                )}
-
-                {visitedPages.has('Rate Book') && (
-                  <div className={activePage === 'Rate Book' ? 'block' : 'hidden'}>
-                    <RateBook />
-                  </div>
-                )}
-
-                {visitedPages.has('Subcontractors') && (
-                  <div className={activePage === 'Subcontractors' ? 'block' : 'hidden'}>
-                    <Subcontractors />
-                  </div>
-                )}
-
-                {visitedPages.has('Employee Attendance') && (
-                  <div className={activePage === 'Employee Attendance' ? 'block' : 'hidden'}>
-                    <EmployeeAttendance companySettings={companySettings} />
-                  </div>
-                )}
-
-                {visitedPages.has('Staff Expenses') && (
-                  <div className={activePage === 'Staff Expenses' ? 'block' : 'hidden'}>
-                    <EmployeeExpenses />
-                  </div>
-                )}
-
-                {visitedPages.has('Salaries') && (
-                  <div className={activePage === 'Salaries' ? 'block' : 'hidden'}>
-                    <Salaries />
-                  </div>
-                )}
-
-                {visitedPages.has('Income') && (
-                  <div className={activePage === 'Income' ? 'block' : 'hidden'}>
-                    <Income />
-                  </div>
-                )}
-
-                {visitedPages.has('GST Filing') && (
-                  <div className={activePage === 'GST Filing' ? 'block' : 'hidden'}>
-                    <GST />
-                  </div>
-                )}
+                {visitedPages.has('Dashboard') && <div className={activePage === 'Dashboard' ? 'block' : 'hidden'}><Dashboard setActivePage={handlePageSwitch} /></div>}
+                {visitedPages.has('CRM') && <div className={activePage === 'CRM' ? 'block' : 'hidden'}><CRM /></div>}
+                {visitedPages.has('Projects') && <div className={activePage === 'Projects' ? 'block' : 'hidden'}><Projects /></div>}
+                {visitedPages.has('Task Board') && <div className={activePage === 'Task Board' ? 'block' : 'hidden'}><TaskBoard /></div>}
+                {visitedPages.has('Project Control') && <div className={activePage === 'Project Control' ? 'block' : 'hidden'}><ProjectControl /></div>}
+                {visitedPages.has('Site Snags') && <div className={activePage === 'Site Snags' ? 'block' : 'hidden'}><SiteSnag companySettings={companySettings} /></div>}
+                {visitedPages.has('Document Vault') && <div className={activePage === 'Document Vault' ? 'block' : 'hidden'}><DocumentVault /></div>}
+                {visitedPages.has('Project P&L') && <div className={activePage === 'Project P&L' ? 'block' : 'hidden'}><ProjectPnL /></div>}
+                {visitedPages.has('Daily Report') && <div className={activePage === 'Daily Report' ? 'block' : 'hidden'}><SiteManager /></div>}
+                {visitedPages.has('Petty Cash') && <div className={activePage === 'Petty Cash' ? 'block' : 'hidden'}><PettyCash /></div>}
+                {visitedPages.has('Measurement Sheet') && <div className={activePage === 'Measurement Sheet' ? 'block' : 'hidden'}><MeasurementSheet /></div>}
+                
+                {/* INJECT UPDATE DIRTY STATE INTO MODULE */}
+                {visitedPages.has('Tax Invoice') && <div className={activePage === 'Tax Invoice' ? 'block' : 'hidden'}><TaxInvoice companySettings={companySettings} updateDirtyState={updateDirtyState} /></div>}
+                
+                {visitedPages.has('Estimation') && <div className={activePage === 'Estimation' ? 'block' : 'hidden'}><Estimation companySettings={companySettings} /></div>}
+                {visitedPages.has('Purchases') && <div className={activePage === 'Purchases' ? 'block' : 'hidden'}><Purchases /></div>}
+                {visitedPages.has('Vendor Ledger') && <div className={activePage === 'Vendor Ledger' ? 'block' : 'hidden'}><VendorLedger /></div>}
+                {visitedPages.has('Inventory') && <div className={activePage === 'Inventory' ? 'block' : 'hidden'}><Inventory /></div>}
+                {visitedPages.has('Tools & Assets') && <div className={activePage === 'Tools & Assets' ? 'block' : 'hidden'}><Tools /></div>}
+                {visitedPages.has('Rate Book') && <div className={activePage === 'Rate Book' ? 'block' : 'hidden'}><RateBook /></div>}
+                {visitedPages.has('Subcontractors') && <div className={activePage === 'Subcontractors' ? 'block' : 'hidden'}><Subcontractors /></div>}
+                {visitedPages.has('Employee Attendance') && <div className={activePage === 'Employee Attendance' ? 'block' : 'hidden'}><EmployeeAttendance companySettings={companySettings} /></div>}
+                {visitedPages.has('Staff Expenses') && <div className={activePage === 'Staff Expenses' ? 'block' : 'hidden'}><EmployeeExpenses /></div>}
+                {visitedPages.has('Salaries') && <div className={activePage === 'Salaries' ? 'block' : 'hidden'}><Salaries /></div>}
+                {visitedPages.has('Income') && <div className={activePage === 'Income' ? 'block' : 'hidden'}><Income /></div>}
+                {visitedPages.has('GST Filing') && <div className={activePage === 'GST Filing' ? 'block' : 'hidden'}><GST /></div>}
 
                 {visitedPages.has('Settings') && (
                   <div className={activePage === 'Settings' ? 'block' : 'hidden'}>
@@ -391,93 +297,40 @@ export default function App() {
                         <div className="space-y-6">
                           <div className="bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-white/60 shadow-xl space-y-4">
                             <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b border-zinc-200/50 pb-2">Company Profile</h3>
-                            <div>
-                              <label className={labelClass}>Company Name</label>
-                              <input type="text" value={companySettings.companyName} onChange={e => setCompanySettings({...companySettings, companyName: e.target.value})} className={inputClass} />
-                            </div>
-                            <div>
-                              <label className={labelClass}>Company GSTIN</label>
-                              <input type="text" value={companySettings.companyGst} onChange={e => setCompanySettings({...companySettings, companyGst: e.target.value})} className={inputClass} />
-                            </div>
+                            <div><label className={labelClass}>Company Name</label><input type="text" value={companySettings.companyName} onChange={e => setCompanySettings({...companySettings, companyName: e.target.value})} className={inputClass} /></div>
+                            <div><label className={labelClass}>Company GSTIN</label><input type="text" value={companySettings.companyGst} onChange={e => setCompanySettings({...companySettings, companyGst: e.target.value})} className={inputClass} /></div>
                             <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <label className={labelClass}>Email Address</label>
-                                <input type="text" value={companySettings.companyEmail} onChange={e => setCompanySettings({...companySettings, companyEmail: e.target.value})} className={inputClass} />
-                              </div>
-                              <div>
-                                <label className={labelClass}>Phone Number</label>
-                                <input type="text" value={companySettings.companyPhone} onChange={e => setCompanySettings({...companySettings, companyPhone: e.target.value})} className={inputClass} />
-                              </div>
+                              <div><label className={labelClass}>Email Address</label><input type="text" value={companySettings.companyEmail} onChange={e => setCompanySettings({...companySettings, companyEmail: e.target.value})} className={inputClass} /></div>
+                              <div><label className={labelClass}>Phone Number</label><input type="text" value={companySettings.companyPhone} onChange={e => setCompanySettings({...companySettings, companyPhone: e.target.value})} className={inputClass} /></div>
                             </div>
-                            <div>
-                              <label className={labelClass}>Company Address</label>
-                              <textarea value={companySettings.companyAddress} onChange={e => setCompanySettings({...companySettings, companyAddress: e.target.value})} className={`${inputClass} h-20 resize-none`}></textarea>
-                            </div>
-                            <div>
-                              <label className={labelClass}>Logo Path / URL</label>
-                              <input type="text" value={companySettings.logoUrl} onChange={e => setCompanySettings({...companySettings, logoUrl: e.target.value})} className={inputClass} />
-                            </div>
+                            <div><label className={labelClass}>Company Address</label><textarea value={companySettings.companyAddress} onChange={e => setCompanySettings({...companySettings, companyAddress: e.target.value})} className={`${inputClass} h-20 resize-none`}></textarea></div>
+                            <div><label className={labelClass}>Logo Path / URL</label><input type="text" value={companySettings.logoUrl} onChange={e => setCompanySettings({...companySettings, logoUrl: e.target.value})} className={inputClass} /></div>
                           </div>
 
                           <div className="bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-white/60 shadow-xl space-y-4">
                             <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b border-zinc-200/50 pb-2">Authorized Digital Signature / Stamp</h3>
-                            <div>
-                              <label className={labelClass}>Upload Signature Image (PNG recommended)</label>
-                              <input 
-                                type="file" 
-                                accept="image/*" 
-                                onChange={handleSignatureUpload} 
-                                className="w-full text-xs text-zinc-600 file:mr-4 file:py-2 px-1 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[#1E3A8A] file:text-white hover:file:bg-blue-900 cursor-pointer" 
-                              />
-                            </div>
-                            <div>
-                              <label className={labelClass}>Or Paste Signature Image URL / Base64</label>
-                              <input 
-                                type="text" 
-                                placeholder="https://example.com/signature.png" 
-                                value={companySettings.signatureUrl} 
-                                onChange={e => setCompanySettings({...companySettings, signatureUrl: e.target.value})} 
-                                className={inputClass} 
-                              />
-                            </div>
+                            <div><label className={labelClass}>Upload Signature Image (PNG recommended)</label><input type="file" accept="image/*" onChange={handleSignatureUpload} className="w-full text-xs text-zinc-600 file:mr-4 file:py-2 px-1 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[#1E3A8A] file:text-white hover:file:bg-blue-900 cursor-pointer" /></div>
+                            <div><label className={labelClass}>Or Paste Signature Image URL / Base64</label><input type="text" placeholder="https://example.com/signature.png" value={companySettings.signatureUrl} onChange={e => setCompanySettings({...companySettings, signatureUrl: e.target.value})} className={inputClass} /></div>
                             {companySettings.signatureUrl && (
                               <div className="mt-3 p-4 bg-white/50 rounded-2xl border border-zinc-200/60 inline-block">
                                 <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider mb-2">Signature Preview:</p>
                                 <img src={companySettings.signatureUrl} alt="Signature Preview" className="h-14 w-auto object-contain border-b border-zinc-300 pb-1" />
-                                <button 
-                                  onClick={() => setCompanySettings({...companySettings, signatureUrl: ''})}
-                                  className="text-[9px] text-red-500 font-bold hover:underline mt-2 block"
-                                >
-                                  Remove Signature
-                                </button>
+                                <button onClick={() => setCompanySettings({...companySettings, signatureUrl: ''})} className="text-[9px] text-red-500 font-bold hover:underline mt-2 block cursor-pointer">Remove Signature</button>
                               </div>
                             )}
                           </div>
 
                           <div className="bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-white/60 shadow-xl space-y-4">
                             <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b border-zinc-200/50 pb-2">Bank Details (PDF)</h3>
-                            <div>
-                              <label className={labelClass}>Bank Name</label>
-                              <input type="text" value={companySettings.bankName} onChange={e => setCompanySettings({...companySettings, bankName: e.target.value})} className={inputClass} />
-                            </div>
-                            <div>
-                              <label className={labelClass}>Account Name</label>
-                              <input type="text" value={companySettings.accountName} onChange={e => setCompanySettings({...companySettings, accountName: e.target.value})} className={inputClass} />
-                            </div>
+                            <div><label className={labelClass}>Bank Name</label><input type="text" value={companySettings.bankName} onChange={e => setCompanySettings({...companySettings, bankName: e.target.value})} className={inputClass} /></div>
+                            <div><label className={labelClass}>Account Name</label><input type="text" value={companySettings.accountName} onChange={e => setCompanySettings({...companySettings, accountName: e.target.value})} className={inputClass} /></div>
                             <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <label className={labelClass}>Account Number</label>
-                                <input type="text" value={companySettings.accountNo} onChange={e => setCompanySettings({...companySettings, accountNo: e.target.value})} className={inputClass} />
-                              </div>
-                              <div>
-                                <label className={labelClass}>IFSC Code</label>
-                                <input type="text" value={companySettings.ifscCode} onChange={e => setCompanySettings({...companySettings, ifscCode: e.target.value})} className={inputClass} />
-                              </div>
+                              <div><label className={labelClass}>Account Number</label><input type="text" value={companySettings.accountNo} onChange={e => setCompanySettings({...companySettings, accountNo: e.target.value})} className={inputClass} /></div>
+                              <div><label className={labelClass}>IFSC Code</label><input type="text" value={companySettings.ifscCode} onChange={e => setCompanySettings({...companySettings, ifscCode: e.target.value})} className={inputClass} /></div>
                             </div>
                           </div>
                         </div>
 
-                        {/* Settings PDF Options */}
                         <div className="space-y-6">
                           <div className="bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-white/60 shadow-xl space-y-5">
                             <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b border-zinc-200/50 pb-2">Print Layout Visibility</h3>
@@ -489,26 +342,15 @@ export default function App() {
                               { key: 'showSignatureImage', label: 'Render Signature Image on PDF', desc: 'Print the uploaded signature image above the Authorized Signatory text' }
                             ].map(item => (
                               <label key={item.key} className="flex items-center gap-3 cursor-pointer">
-                                <input 
-                                  type="checkbox" 
-                                  checked={companySettings[item.key]} 
-                                  onChange={e => setCompanySettings({...companySettings, [item.key]: e.target.checked})} 
-                                  className="w-5 h-5 rounded text-[#1E3A8A] border-zinc-300 focus:ring-[#1E3A8A]" 
-                                />
-                                <div>
-                                  <span className="text-xs font-bold text-zinc-800 block">{item.label}</span>
-                                  <span className="text-[10px] text-zinc-500">{item.desc}</span>
-                                </div>
+                                <input type="checkbox" checked={companySettings[item.key]} onChange={e => setCompanySettings({...companySettings, [item.key]: e.target.checked})} className="w-5 h-5 rounded text-[#1E3A8A] border-zinc-300 focus:ring-[#1E3A8A]" />
+                                <div><span className="text-xs font-bold text-zinc-800 block">{item.label}</span><span className="text-[10px] text-zinc-500">{item.desc}</span></div>
                               </label>
                             ))}
                           </div>
 
                           <div className="bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-white/60 shadow-xl space-y-4">
                             <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b border-zinc-200/50 pb-2">PDF Footer Note</h3>
-                            <div>
-                              <label className={labelClass}>Disclaimer / Note</label>
-                              <textarea value={companySettings.pdfFooterDisclaimer} onChange={e => setCompanySettings({...companySettings, pdfFooterDisclaimer: e.target.value})} className={`${inputClass} h-20 resize-none text-[11px]`}></textarea>
-                            </div>
+                            <div><label className={labelClass}>Disclaimer / Note</label><textarea value={companySettings.pdfFooterDisclaimer} onChange={e => setCompanySettings({...companySettings, pdfFooterDisclaimer: e.target.value})} className={`${inputClass} h-20 resize-none text-[11px]`}></textarea></div>
                           </div>
                         </div>
 
@@ -516,7 +358,6 @@ export default function App() {
                     </div>
                   </div>
                 )}
-
               </div>
             </div>
           </main>
