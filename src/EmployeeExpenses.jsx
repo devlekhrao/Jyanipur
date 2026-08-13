@@ -23,9 +23,15 @@ export default function EmployeeExpenses() {
 
   const loadData = async () => {
     setLoading(true);
-    const [expData, empData] = await Promise.all([getEmployeeExpenses(), getEmployees()]);
-    setExpenses(expData);
-    setEmployees(empData.filter(e => e.status === 'Active')); // Only show active employees in dropdown
+    try {
+      const [expData, empData] = await Promise.all([getEmployeeExpenses(), getEmployees()]);
+      setExpenses(expData || []);
+      setEmployees((empData || []).filter(e => e.status === 'Active'));
+    } catch (e) {
+      console.warn("Ensure employee expense functions exist in db.js");
+      setExpenses([]);
+      setEmployees([]);
+    }
     setLoading(false);
   };
 
@@ -81,7 +87,6 @@ export default function EmployeeExpenses() {
     try {
       await saveEmployeeExpense(payload);
       await loadData();
-      // Keep date and employee selected for rapid entry
       setNewExp({ ...newExp, description: '', amount: '' });
     } catch (err) {
       alert("Failed to save expense. Check DB connection.");
@@ -95,20 +100,19 @@ export default function EmployeeExpenses() {
     }
   };
 
-  // Seamless Inputs
-  const inputClass = "w-full px-1.5 py-2 bg-transparent border-b border-transparent hover:border-zinc-300 focus:border-zinc-900 focus:outline-none text-zinc-900 text-xs font-medium transition-all placeholder:text-zinc-400";
+  const inputClass = "w-full px-2 py-2 bg-transparent border-b border-zinc-200 focus:border-[#1E3A8A] focus:outline-none text-zinc-900 text-xs font-medium transition-all placeholder:text-zinc-400";
 
   return (
-    <div className="w-full font-['Poppins'] pb-12">
+    <div className="w-full h-full font-['Poppins'] flex flex-col">
       
       {/* Header & Filters */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end pb-4 border-b border-zinc-300/50 mb-6 gap-4 print:hidden">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end pb-4 border-b border-zinc-200 mb-6 gap-4 print:hidden shrink-0">
         <div>
           <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Staff Expenses</h2>
-          <p className="text-zinc-600 text-xs mt-1 font-medium">Track allowances, petty cash, and site purchases given to employees.</p>
+          <p className="text-zinc-500 text-xs mt-1 font-medium">Track allowances, petty cash, and site purchases given to employees.</p>
         </div>
 
-        <div className="flex items-center gap-1.5 h-9 bg-white/60 border border-zinc-200/60 rounded-xl px-2 shadow-sm">
+        <div className="flex items-center gap-1.5 h-10 bg-white border border-zinc-200 rounded-2xl px-3 shadow-sm">
           <select 
             value={selectedMonth} 
             onChange={(e) => setSelectedMonth(Number(e.target.value))} 
@@ -131,29 +135,29 @@ export default function EmployeeExpenses() {
       </div>
 
       {/* Dashboard Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 print:hidden">
-        <div className="bg-zinc-900 text-white p-5 rounded-2xl shadow-md flex flex-col justify-center">
-          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Total Given (This Month)</span>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 print:hidden shrink-0">
+        <div className="bg-zinc-900 text-white p-6 rounded-[2rem] shadow-lg flex flex-col justify-center">
+          <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1">Total Given (This Month)</span>
           <p className="text-2xl font-black">₹ {totalMonthExpense.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
         </div>
-        <div className="bg-amber-50/50 backdrop-blur-xl p-5 rounded-2xl border border-amber-200/60 shadow-sm flex flex-col justify-center">
-          <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest block mb-1">Total Given (Past 7 Days)</span>
-          <p className="text-xl font-black text-amber-700">₹ {totalWeekExpense.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+        <div className="bg-amber-50/70 p-6 rounded-[2rem] border border-amber-200/80 shadow-sm flex flex-col justify-center">
+          <span className="text-[9px] font-extrabold text-amber-600 uppercase tracking-widest block mb-1">Total Given (Past 7 Days)</span>
+          <p className="text-2xl font-black text-amber-700">₹ {totalWeekExpense.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
         </div>
         
         {/* Employee Breakdown Mini-Dashboard */}
-        <div className="bg-white/50 backdrop-blur-xl p-4 rounded-2xl border border-white/60 shadow-sm overflow-hidden flex flex-col justify-center">
-          <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block mb-2">Highest Spenders (This Month)</span>
-          <div className="space-y-2 max-h-[60px] overflow-y-auto pr-1 custom-scrollbar">
+        <div className="bg-white p-5 rounded-[2rem] border border-zinc-200 shadow-sm flex flex-col justify-center">
+          <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-2">Highest Spenders (This Month)</span>
+          <div className="space-y-2 max-h-[70px] overflow-y-auto pr-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {Object.keys(employeeTotals).length === 0 ? (
               <p className="text-[10px] text-zinc-400 font-medium">No expenses recorded yet.</p>
             ) : (
               Object.entries(employeeTotals)
                 .sort(([,a], [,b]) => b - a)
-                .slice(0, 3) // Top 3
+                .slice(0, 3)
                 .map(([empId, total]) => (
                   <div key={empId} className="flex justify-between items-center text-xs">
-                    <span className="font-bold text-zinc-700 truncate pr-2">{getEmpName(empId)}</span>
+                    <span className="font-bold text-zinc-800 truncate pr-2">{getEmpName(empId)}</span>
                     <span className="font-black text-red-500">₹{total.toLocaleString('en-IN')}</span>
                   </div>
                 ))
@@ -168,79 +172,81 @@ export default function EmployeeExpenses() {
         <p className="text-xs text-zinc-600">Period: {new Date(selectedYear, selectedMonth - 1).toLocaleString('en-US', { month: 'long', year: 'numeric' })}</p>
       </div>
 
-      {/* Full Width Seamless Entry Table */}
-      <div className="w-full overflow-x-auto pb-8">
-        <table className="w-full text-left border-collapse whitespace-nowrap min-w-[900px]">
-          <thead>
-            <tr className="text-zinc-400 text-[9px] uppercase tracking-widest border-b-2 border-zinc-200">
-              <th className="py-3 px-2 font-bold w-32">Date</th>
-              <th className="py-3 px-2 font-bold w-48">Employee</th>
-              <th className="py-3 px-2 font-bold w-40">Category</th>
-              <th className="py-3 px-2 font-bold min-w-[200px]">Description / Bill Ref</th>
-              <th className="py-3 px-2 font-bold text-right w-32">Amount</th>
-              <th className="py-3 px-2 font-bold text-center w-16 print:hidden">Action</th>
-            </tr>
-          </thead>
-          <tbody className="text-xs text-zinc-800">
-            
-            {/* INLINE ENTRY ROW (BORDERLESS) */}
-            <tr className="border-b border-zinc-200/60 bg-white/20 print:hidden">
-              <td className="py-1 px-1"><input type="date" value={newExp.date} onChange={e => setNewExp({...newExp, date: e.target.value})} className={inputClass} /></td>
-              <td className="py-1 px-1">
-                <select value={newExp.empId} onChange={e => setNewExp({...newExp, empId: e.target.value})} className={`${inputClass} cursor-pointer font-bold appearance-none`}>
-                  <option value="" disabled>Select Staff...</option>
-                  {employees.map(e => <option key={e.empId} value={e.empId}>{e.fullName} ({e.empId})</option>)}
-                </select>
-              </td>
-              <td className="py-1 px-1">
-                <select value={newExp.category} onChange={e => setNewExp({...newExp, category: e.target.value})} className={`${inputClass} cursor-pointer appearance-none`}>
-                  <option value="Material/Tools">Material / Tools</option>
-                  <option value="Travel/Fuel">Travel / Fuel</option>
-                  <option value="Food/Meals">Food / Meals</option>
-                  <option value="Salary Advance">Salary Advance</option>
-                  <option value="Miscellaneous">Miscellaneous</option>
-                </select>
-              </td>
-              <td className="py-1 px-1"><input type="text" placeholder="Bill no, item details..." value={newExp.description} onChange={e => setNewExp({...newExp, description: e.target.value})} className={inputClass} /></td>
-              <td className="py-1 px-1"><input type="number" step="any" placeholder="₹ 0.00" value={newExp.amount} onChange={e => setNewExp({...newExp, amount: e.target.value})} className={`${inputClass} text-right font-black text-red-500`} /></td>
-              <td className="py-1 px-1 text-center">
-                <button onClick={handleAddExpense} className="w-full bg-zinc-900 hover:bg-black text-white py-2 rounded-lg font-bold text-[9px] uppercase tracking-wider transition-all shadow-sm">Add</button>
-              </td>
-            </tr>
+      {/* Full Width Seamless Entry Table Container */}
+      <div className="bg-white border border-zinc-200 rounded-[2rem] p-6 shadow-sm flex-1 flex flex-col min-h-0 overflow-hidden">
+        <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <table className="w-full text-left border-collapse whitespace-nowrap min-w-[900px]">
+            <thead>
+              <tr className="text-zinc-400 text-[9px] uppercase tracking-widest border-b border-zinc-100 bg-zinc-50/50">
+                <th className="py-3.5 px-3 font-bold w-32">Date</th>
+                <th className="py-3.5 px-3 font-bold w-48">Employee</th>
+                <th className="py-3.5 px-3 font-bold w-40">Category</th>
+                <th className="py-3.5 px-3 font-bold min-w-[200px]">Description / Bill Ref</th>
+                <th className="py-3.5 px-3 font-bold text-right w-32">Amount</th>
+                <th className="py-3.5 px-3 font-bold text-center w-20 print:hidden">Action</th>
+              </tr>
+            </thead>
+            <tbody className="text-xs text-zinc-800">
+              
+              {/* INLINE ENTRY ROW */}
+              <tr className="border-b border-zinc-200 bg-zinc-50/50 print:hidden">
+                <td className="py-2 px-2"><input type="date" value={newExp.date} onChange={e => setNewExp({...newExp, date: e.target.value})} className={inputClass} /></td>
+                <td className="py-2 px-2">
+                  <select value={newExp.empId} onChange={e => setNewExp({...newExp, empId: e.target.value})} className={`${inputClass} cursor-pointer font-bold`}>
+                    <option value="" disabled>Select Staff...</option>
+                    {employees.map(e => <option key={e.empId} value={e.empId}>{e.fullName} ({e.empId})</option>)}
+                  </select>
+                </td>
+                <td className="py-2 px-2">
+                  <select value={newExp.category} onChange={e => setNewExp({...newExp, category: e.target.value})} className={`${inputClass} cursor-pointer`}>
+                    <option value="Material/Tools">Material / Tools</option>
+                    <option value="Travel/Fuel">Travel / Fuel</option>
+                    <option value="Food/Meals">Food / Meals</option>
+                    <option value="Salary Advance">Salary Advance</option>
+                    <option value="Miscellaneous">Miscellaneous</option>
+                  </select>
+                </td>
+                <td className="py-2 px-2"><input type="text" placeholder="Bill no, item details..." value={newExp.description} onChange={e => setNewExp({...newExp, description: e.target.value})} className={inputClass} /></td>
+                <td className="py-2 px-2"><input type="number" step="any" placeholder="₹ 0.00" value={newExp.amount} onChange={e => setNewExp({...newExp, amount: e.target.value})} className={`${inputClass} text-right font-black text-red-500`} /></td>
+                <td className="py-2 px-2 text-center">
+                  <button onClick={handleAddExpense} className="w-full bg-[#1E3A8A] hover:bg-blue-900 text-white py-2 rounded-xl font-bold text-[9px] uppercase tracking-wider transition-all shadow-sm cursor-pointer">Add</button>
+                </td>
+              </tr>
 
-            {/* SAVED RECORDS */}
-            {loading ? (
-              <tr><td colSpan="6" className="py-12 text-center text-zinc-500 font-medium">Loading records...</td></tr>
-            ) : monthlyExpenses.length === 0 ? (
-              <tr><td colSpan="6" className="py-12 text-center text-zinc-400 font-medium">No expenses found for this month. Type above to add one.</td></tr>
-            ) : (
-              monthlyExpenses.map(exp => (
-                <tr key={exp.id} className="border-b border-zinc-200/40 hover:bg-white/30 transition-colors group">
-                  <td className="py-3.5 px-2 font-medium">{exp.date}</td>
-                  <td className="py-3.5 px-2 font-extrabold text-zinc-900">{getEmpName(exp.empId)}</td>
-                  <td className="py-3.5 px-2 text-zinc-600 font-medium">
-                    <span className="bg-white/60 border border-zinc-200 px-2 py-0.5 rounded text-[10px] shadow-sm">
-                      {exp.category}
-                    </span>
-                  </td>
-                  <td className="py-3.5 px-2 text-zinc-500 truncate max-w-[250px]">{exp.description || '-'}</td>
-                  <td className="py-3.5 px-2 text-right font-black text-zinc-900">₹ {exp.amount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                  <td className="py-3.5 px-2 text-center opacity-0 group-hover:opacity-100 transition-opacity print:hidden">
-                    <button onClick={() => handleDelete(exp.id)} className="text-red-400 hover:text-red-600 font-bold text-[10px] uppercase tracking-wider">Del</button>
-                  </td>
-                </tr>
-              ))
-            )}
+              {/* SAVED RECORDS */}
+              {loading ? (
+                <tr><td colSpan="6" className="py-12 text-center text-zinc-400 font-medium">Loading records...</td></tr>
+              ) : monthlyExpenses.length === 0 ? (
+                <tr><td colSpan="6" className="py-12 text-center text-zinc-400 font-medium">No expenses found for this month. Type above to add one.</td></tr>
+              ) : (
+                monthlyExpenses.map(exp => (
+                  <tr key={exp.id} className="border-b border-zinc-100 hover:bg-zinc-50 transition-colors group">
+                    <td className="py-3.5 px-3 font-medium text-zinc-600">{exp.date}</td>
+                    <td className="py-3.5 px-3 font-extrabold text-zinc-900">{getEmpName(exp.empId)}</td>
+                    <td className="py-3.5 px-3 text-zinc-600 font-medium">
+                      <span className="bg-zinc-100 border border-zinc-200 px-2.5 py-1 rounded-lg text-[10px] font-bold text-zinc-700">
+                        {exp.category}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-3 text-zinc-500 truncate max-w-[250px]">{exp.description || '-'}</td>
+                    <td className="py-3.5 px-3 text-right font-black text-zinc-900">₹ {exp.amount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    <td className="py-3.5 px-3 text-center opacity-0 group-hover:opacity-100 transition-opacity print:hidden">
+                      <button onClick={() => handleDelete(exp.id)} className="text-red-400 hover:text-red-600 font-bold text-[10px] uppercase tracking-wider cursor-pointer">Del</button>
+                    </td>
+                  </tr>
+                ))
+              )}
 
-            {/* Total Footer */}
-            <tr className="font-black text-zinc-900 border-t-2 border-zinc-300">
-              <td colSpan="4" className="py-4 text-right">MONTHLY TOTAL:</td>
-              <td className="py-4 text-right">₹ {totalMonthExpense.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-              <td className="print:hidden"></td>
-            </tr>
+              {/* Total Footer */}
+              <tr className="font-black text-zinc-900 border-t-2 border-zinc-200 bg-zinc-50/50">
+                <td colSpan="4" className="py-4 px-3 text-right text-xs uppercase tracking-wider">MONTHLY TOTAL:</td>
+                <td className="py-4 px-3 text-right text-sm font-black text-[#1E3A8A]">₹ {totalMonthExpense.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                <td className="print:hidden"></td>
+              </tr>
 
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </div>
       </div>
 
     </div>

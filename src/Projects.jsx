@@ -24,33 +24,36 @@ export default function Projects() {
 
   const loadData = async () => {
     setLoading(true);
-    const data = await getProjects();
-    
-    // Simulating aggregated data (To be replaced with live DB links later)
-    const enhancedProjects = data.map(p => ({
-      ...p,
-      invoicesCount: Math.floor(Math.random() * 5) + 1,
-      totalBilled: p.budget * (Math.random() * 0.5 + 0.4), 
-      totalReceived: p.budget * (Math.random() * 0.4 + 0.3), 
-      materialCost: p.budget * (Math.random() * 0.3 + 0.2), 
-      laborCost: p.budget * (Math.random() * 0.15 + 0.1), 
-    }));
+    try {
+      const data = await getProjects();
+      
+      const enhancedProjects = (data || []).map(p => ({
+        ...p,
+        invoicesCount: Math.floor(Math.random() * 5) + 1,
+        totalBilled: p.budget * (Math.random() * 0.5 + 0.4), 
+        totalReceived: p.budget * (Math.random() * 0.4 + 0.3), 
+        materialCost: p.budget * (Math.random() * 0.3 + 0.2), 
+        laborCost: p.budget * (Math.random() * 0.15 + 0.1), 
+      }));
 
-    setProjects(enhancedProjects);
+      setProjects(enhancedProjects);
 
-    // Extract unique clients for the dropdown
-    const clientsMap = {};
-    data.forEach(p => {
-      if (p.clientName && !clientsMap[p.clientName]) {
-        clientsMap[p.clientName] = { 
-          name: p.clientName, 
-          gstin: p.clientGstin, 
-          phone: p.clientPhone 
-        };
-      }
-    });
-    setUniqueClients(Object.values(clientsMap));
-    
+      const clientsMap = {};
+      (data || []).forEach(p => {
+        if (p.clientName && !clientsMap[p.clientName]) {
+          clientsMap[p.clientName] = { 
+            name: p.clientName, 
+            gstin: p.clientGstin, 
+            phone: p.clientPhone 
+          };
+        }
+      });
+      setUniqueClients(Object.values(clientsMap));
+    } catch (e) {
+      console.warn("Ensure project functions exist in db.js");
+      setProjects([]);
+      setUniqueClients([]);
+    }
     setLoading(false);
   };
 
@@ -98,9 +101,9 @@ export default function Projects() {
       const selected = uniqueClients.find(c => c.name === val);
       setFormData(prev => ({ 
         ...prev, 
-        clientName: selected.name, 
-        clientGstin: selected.gstin || '', 
-        clientPhone: selected.phone || '' 
+        clientName: selected ? selected.name : '', 
+        clientGstin: selected ? selected.gstin || '' : '', 
+        clientPhone: selected ? selected.phone || '' : '' 
       }));
     }
   };
@@ -144,7 +147,6 @@ export default function Projects() {
     alert(`Detailed view for ${projName} is coming soon!`);
   };
 
-  // Group projects by Client Name and Sort by PO Date
   const clients = {};
   projects.forEach(p => {
     if (!clients[p.clientName]) {
@@ -164,7 +166,6 @@ export default function Projects() {
     clients[p.clientName].totalCost += (p.materialCost + p.laborCost);
   });
 
-  // Sort projects inside each client by PO Date (Oldest first)
   Object.values(clients).forEach(c => {
     c.projects.sort((a, b) => new Date(a.poDate || 0) - new Date(b.poDate || 0));
   });
@@ -179,33 +180,33 @@ export default function Projects() {
   const globalBilled = projects.reduce((sum, p) => sum + p.totalBilled, 0);
   const globalCost = projects.reduce((sum, p) => sum + p.materialCost + p.laborCost, 0);
 
-  const inputClass = "w-full px-4 py-3 rounded-xl border-none bg-zinc-100 focus:bg-white focus:outline-none focus:ring-2 focus:ring-zinc-900 text-zinc-900 text-sm font-medium transition-all shadow-inner";
-  const labelClass = "block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2 ml-1";
+  const inputClass = "w-full px-4 py-3 rounded-xl border border-zinc-200 bg-zinc-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] text-zinc-900 text-xs font-medium transition-all shadow-sm";
+  const labelClass = "block text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
 
   return (
-    <div className="w-full font-['Poppins'] pb-12 relative">
+    <div className="w-full h-full font-['Poppins'] flex flex-col">
       
       {/* Header & Controls */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end pb-4 border-b border-zinc-300/50 mb-6 gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end pb-4 border-b border-zinc-200 mb-6 gap-4 shrink-0">
         <div>
-          <h2 className="text-2xl font-bold text-zinc-800 tracking-tight">Project Board & Job Costing</h2>
+          <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Project Board & Job Costing</h2>
           <p className="text-zinc-500 text-xs mt-1 font-medium">Onboard clients and sequence multiple projects by PO Date.</p>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center h-9 bg-white/60 border border-zinc-200/60 rounded-xl px-3 shadow-sm">
-            <span className="text-[10px] text-zinc-400">🔍</span>
+          <div className="flex items-center h-10 bg-white border border-zinc-200 rounded-2xl px-3.5 shadow-sm">
+            <span className="text-xs text-zinc-400">🔍</span>
             <input 
               type="text" 
               placeholder="Search client or project..." 
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="bg-transparent border-none text-xs font-semibold text-zinc-700 outline-none px-2 w-48 placeholder:text-zinc-400"
+              className="bg-transparent border-none text-xs font-medium text-zinc-800 outline-none px-2 w-52 placeholder:text-zinc-400"
             />
           </div>
           <button 
             onClick={() => handleOpenModal()} 
-            className="h-9 bg-zinc-900 hover:bg-black text-white px-5 rounded-xl text-xs font-bold transition-all shadow-md"
+            className="bg-[#1E3A8A] hover:bg-blue-900 text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer"
           >
             + New Project
           </button>
@@ -213,53 +214,53 @@ export default function Projects() {
       </div>
 
       {/* Global Financial Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white/50 backdrop-blur-xl p-5 rounded-3xl border border-white/60 shadow-sm">
-          <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest block mb-1">Total Active PO Budgets</span>
-          <p className="text-xl font-bold text-zinc-800">₹ {globalBudget.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6 shrink-0">
+        <div className="bg-white p-6 rounded-[2rem] border border-zinc-200 shadow-sm">
+          <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1">Total Active PO Budgets</span>
+          <p className="text-2xl font-black text-zinc-900">₹ {globalBudget.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
         </div>
-        <div className="bg-white/50 backdrop-blur-xl p-5 rounded-3xl border border-white/60 shadow-sm">
-          <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest block mb-1">Total Billed (Invoices)</span>
-          <p className="text-xl font-bold text-zinc-600">₹ {globalBilled.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+        <div className="bg-white p-6 rounded-[2rem] border border-zinc-200 shadow-sm">
+          <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1">Total Billed (Invoices)</span>
+          <p className="text-2xl font-black text-zinc-800">₹ {globalBilled.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
         </div>
-        <div className="bg-white/50 backdrop-blur-xl p-5 rounded-3xl border border-white/60 shadow-sm">
-          <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest block mb-1">Total Cost (Mat + Labor)</span>
-          <p className="text-xl font-bold text-red-500">₹ {globalCost.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+        <div className="bg-white p-6 rounded-[2rem] border border-zinc-200 shadow-sm">
+          <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1">Total Cost (Mat + Labor)</span>
+          <p className="text-2xl font-black text-red-500">₹ {globalCost.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
         </div>
-        <div className="bg-emerald-50/50 backdrop-blur-xl p-5 rounded-3xl border border-emerald-100 shadow-sm">
-          <span className="text-[10px] font-semibold text-emerald-600 uppercase tracking-widest block mb-1">Estimated Net Margin</span>
-          <p className="text-xl font-bold text-emerald-700">₹ {(globalBilled - globalCost).toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+        <div className="bg-emerald-50/70 p-6 rounded-[2rem] border border-emerald-100 shadow-sm">
+          <span className="text-[9px] font-extrabold text-emerald-600 uppercase tracking-widest block mb-1">Estimated Net Margin</span>
+          <p className="text-2xl font-black text-emerald-700">₹ {(globalBilled - globalCost).toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
         </div>
       </div>
 
       {/* Client & Project Hierarchy */}
-      <div className="space-y-8">
+      <div className="flex-1 overflow-y-auto space-y-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {loading ? (
-          <div className="py-12 text-center text-zinc-500 font-medium">Loading project board...</div>
+          <div className="py-20 text-center text-zinc-400 font-medium text-xs">Loading project board...</div>
         ) : filteredClients.length === 0 ? (
-          <div className="py-12 text-center text-zinc-400 font-medium">No clients or projects found.</div>
+          <div className="py-20 text-center text-zinc-400 font-medium text-xs bg-white border border-dashed border-zinc-200 rounded-[2rem]">No clients or projects found.</div>
         ) : (
           filteredClients.map(client => (
-            <div key={client.name} className="bg-white/50 backdrop-blur-xl rounded-3xl border border-white/60 shadow-xl overflow-hidden">
+            <div key={client.name} className="bg-white rounded-[2rem] border border-zinc-200 shadow-sm overflow-hidden">
               
               {/* Client Header */}
-              <div className="bg-zinc-100/50 px-6 py-4 border-b border-zinc-200/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div className="bg-zinc-50/80 px-6 py-4 border-b border-zinc-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                  <h3 className="text-sm font-bold text-zinc-900 flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-full bg-zinc-800 text-white flex items-center justify-center text-[10px]">{client.name.charAt(0)}</span>
+                  <h3 className="text-sm font-extrabold text-zinc-900 flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-full bg-[#1E3A8A] text-white flex items-center justify-center text-[10px] font-black">{client.name.charAt(0)}</span>
                     {client.name}
                   </h3>
                   <div className="flex gap-4 mt-1.5 ml-8">
-                    {client.gstin && <p className="text-[9px] font-mono text-zinc-500 bg-white px-2 py-0.5 rounded border border-zinc-200 shadow-sm">GST: {client.gstin}</p>}
-                    {client.phone && <p className="text-[9px] font-mono text-zinc-500 bg-white px-2 py-0.5 rounded border border-zinc-200 shadow-sm">Ph: {client.phone}</p>}
-                    <p className="text-[9px] font-semibold text-zinc-400 uppercase tracking-widest py-0.5">
+                    {client.gstin && <p className="text-[9px] font-mono font-bold text-zinc-500 bg-white px-2 py-0.5 rounded border border-zinc-200 shadow-xs">GST: {client.gstin}</p>}
+                    {client.phone && <p className="text-[9px] font-mono font-bold text-zinc-500 bg-white px-2 py-0.5 rounded border border-zinc-200 shadow-xs">Ph: {client.phone}</p>}
+                    <p className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest py-0.5">
                       {client.projects.length} Project{client.projects.length > 1 ? 's' : ''}
                     </p>
                   </div>
                 </div>
                 <div className="text-right hidden sm:block">
-                  <p className="text-xs font-bold text-zinc-800">Client Budget: ₹{client.totalBudget.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
-                  <p className="text-[10px] font-semibold text-emerald-600 mt-0.5">Est. Margin: ₹{(client.totalBilled - client.totalCost).toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+                  <p className="text-xs font-black text-zinc-900">Client Budget: ₹{client.totalBudget.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+                  <p className="text-[10px] font-extrabold text-emerald-600 mt-0.5">Est. Margin: ₹{(client.totalBilled - client.totalCost).toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
                 </div>
               </div>
 
@@ -267,66 +268,66 @@ export default function Projects() {
               <div className="overflow-x-auto w-full">
                 <table className="w-full text-left border-collapse whitespace-nowrap min-w-[1000px]">
                   <thead>
-                    <tr className="text-zinc-400 text-[9px] uppercase tracking-widest border-b border-zinc-200/50 bg-white/30">
-                      <th className="py-3 px-6 font-semibold w-64">Project / Site Name</th>
-                      <th className="py-3 px-4 font-semibold w-28">PO Date</th>
-                      <th className="py-3 px-4 font-semibold text-center w-24">Status</th>
-                      <th className="py-3 px-4 font-semibold text-right w-32">PO Budget</th>
-                      <th className="py-3 px-4 font-semibold text-right w-32">Billed (Sales)</th>
-                      <th className="py-3 px-4 font-semibold text-right w-32">Costs (Mat + Labor)</th>
-                      <th className="py-3 px-4 font-semibold text-right w-32">Site Margin</th>
-                      <th className="py-3 px-6 font-semibold text-center w-20">Action</th>
+                    <tr className="text-zinc-400 text-[9px] uppercase tracking-widest border-b border-zinc-100 bg-zinc-50/30">
+                      <th className="py-3.5 px-6 font-bold w-64">Project / Site Name</th>
+                      <th className="py-3.5 px-4 font-bold w-28">PO Date</th>
+                      <th className="py-3.5 px-4 font-bold text-center w-24">Status</th>
+                      <th className="py-3.5 px-4 font-bold text-right w-32">PO Budget</th>
+                      <th className="py-3.5 px-4 font-bold text-right w-32">Billed (Sales)</th>
+                      <th className="py-3.5 px-4 font-bold text-right w-32">Costs (Mat + Labor)</th>
+                      <th className="py-3.5 px-4 font-bold text-right w-32">Site Margin</th>
+                      <th className="py-3.5 px-6 font-bold text-center w-20">Action</th>
                     </tr>
                   </thead>
-                  <tbody className="text-sm text-zinc-700 divide-y divide-zinc-200/30">
+                  <tbody className="text-xs text-zinc-800 divide-y divide-zinc-100">
                     {client.projects.map((proj, index) => {
                       const totalCost = proj.materialCost + proj.laborCost;
                       const margin = proj.totalBilled - totalCost;
                       
                       return (
-                        <tr key={proj.id} className="hover:bg-white/60 transition-colors">
+                        <tr key={proj.id} className="hover:bg-zinc-50 transition-colors">
                           <td className="py-4 px-6">
                             <div className="flex items-center gap-2">
                               <span className="text-[9px] font-black text-zinc-400">#{index + 1}</span>
                               <div>
-                                <p className="font-bold text-zinc-800">{proj.name}</p>
-                                <p className="text-[10px] text-zinc-500 font-medium mt-0.5">
+                                <p className="font-extrabold text-zinc-900">{proj.name}</p>
+                                <p className="text-[10px] text-zinc-400 font-medium mt-0.5">
                                   {proj.invoicesCount} Invoices Linked
                                 </p>
                               </div>
                             </div>
                           </td>
-                          <td className="py-4 px-4 text-zinc-600 font-medium text-xs">
+                          <td className="py-4 px-4 text-zinc-600 font-semibold text-xs">
                             {proj.poDate || '-'}
                           </td>
                           <td className="py-4 px-4 text-center">
-                            <span className={`inline-block px-2.5 py-1 rounded-md text-[9px] font-semibold uppercase tracking-wider ${
-                              proj.status === 'Ongoing' ? 'bg-blue-50 text-blue-600 border border-blue-100' :
+                            <span className={`inline-block px-2.5 py-1 rounded-md text-[9px] font-extrabold uppercase tracking-wider ${
+                              proj.status === 'Ongoing' ? 'bg-blue-50 text-[#1E3A8A] border border-blue-100' :
                               proj.status === 'Completed' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
                               'bg-amber-50 text-amber-600 border border-amber-100'
                             }`}>
                               {proj.status}
                             </span>
                           </td>
-                          <td className="py-4 px-4 text-right font-semibold text-zinc-800">
+                          <td className="py-4 px-4 text-right font-black text-zinc-900">
                             ₹{proj.budget.toLocaleString('en-IN', {maximumFractionDigits: 0})}
                           </td>
                           <td className="py-4 px-4 text-right">
-                            <p className="font-semibold text-zinc-700">₹{proj.totalBilled.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
-                            <p className="text-[9px] text-zinc-400 mt-0.5">₹{proj.totalReceived.toLocaleString('en-IN', {maximumFractionDigits: 0})} Recv</p>
+                            <p className="font-black text-zinc-800">₹{proj.totalBilled.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+                            <p className="text-[9px] text-zinc-400 font-medium mt-0.5">₹{proj.totalReceived.toLocaleString('en-IN', {maximumFractionDigits: 0})} Recv</p>
                           </td>
                           <td className="py-4 px-4 text-right">
-                            <p className="font-semibold text-red-500">₹{totalCost.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
-                            <p className="text-[9px] text-zinc-400 mt-0.5">Mat: ₹{proj.materialCost.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+                            <p className="font-black text-red-500">₹{totalCost.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+                            <p className="text-[9px] text-zinc-400 font-medium mt-0.5">Mat: ₹{proj.materialCost.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
                           </td>
                           <td className="py-4 px-4 text-right">
-                            <span className={`font-bold ${margin >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                            <span className={`font-black ${margin >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
                               ₹{margin.toLocaleString('en-IN', {maximumFractionDigits: 0})}
                             </span>
                           </td>
                           <td className="py-4 px-6 text-center space-x-3">
-                            <button onClick={() => handleOpenModal(proj)} className="text-[10px] font-bold text-zinc-400 hover:text-zinc-900 uppercase tracking-widest transition-colors">Edit</button>
-                            <button onClick={() => handleView(proj.name)} className="text-[10px] font-bold text-zinc-400 hover:text-zinc-900 uppercase tracking-widest transition-colors">View</button>
+                            <button onClick={() => handleOpenModal(proj)} className="text-[10px] font-bold text-[#1E3A8A] hover:text-blue-900 uppercase tracking-widest cursor-pointer">Edit</button>
+                            <button onClick={() => handleView(proj.name)} className="text-[10px] font-bold text-zinc-500 hover:text-zinc-900 uppercase tracking-widest cursor-pointer">View</button>
                           </td>
                         </tr>
                       );
@@ -341,30 +342,28 @@ export default function Projects() {
 
       {/* CREATE / EDIT MODAL */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/40 backdrop-blur-sm">
-          <div className="bg-white/90 backdrop-blur-3xl w-full max-w-lg rounded-[2rem] shadow-[0_40px_80px_rgba(0,0,0,0.2)] border border-white/60 p-8 relative overflow-hidden">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in-95 duration-200">
             
             <div className="mb-6">
               <h2 className="text-xl font-extrabold text-zinc-900 tracking-tight">
                 {formData.id ? 'Edit Project Details' : 'Create New Project'}
               </h2>
-              <p className="text-zinc-500 text-xs mt-1 font-medium">Link this project to a client to track budgets and sequence.</p>
+              <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-1">Link this project to a client to track budgets.</p>
             </div>
 
-            <form onSubmit={handleSaveProject} className="space-y-5 relative z-10 max-h-[70vh] overflow-y-auto px-1 hide-scrollbar">
+            <form onSubmit={handleSaveProject} className="space-y-4">
               
               {/* CLIENT SECTION */}
-              <div className="bg-zinc-50/80 p-4 rounded-2xl border border-zinc-200/60 space-y-4">
-                <div className="flex justify-between items-center mb-1">
-                  <h3 className="text-[10px] font-black text-zinc-800 uppercase tracking-widest">1. Client Details</h3>
-                </div>
+              <div className="bg-zinc-50 p-4 rounded-2xl border border-zinc-200/80 space-y-3">
+                <h3 className="text-[10px] font-extrabold text-zinc-800 uppercase tracking-widest">1. Client Details</h3>
 
                 {!formData.id && uniqueClients.length > 0 && (
                   <div>
                     <select 
                       value={isNewClient ? 'NEW' : formData.clientName} 
                       onChange={handleClientSelectChange} 
-                      className={`${inputClass} cursor-pointer appearance-none font-bold text-zinc-700`}
+                      className={`${inputClass} cursor-pointer font-bold text-zinc-800`}
                     >
                       {uniqueClients.map(c => (
                         <option key={c.name} value={c.name}>{c.name}</option>
@@ -377,7 +376,7 @@ export default function Projects() {
                 {(isNewClient || formData.id) && (
                   <>
                     <div>
-                      <label className={labelClass}>Client / Company Name *</label>
+                      <label className={labelClass}>Client / Company Name <span className="text-red-500">*</span></label>
                       <input 
                         type="text" 
                         required
@@ -418,11 +417,11 @@ export default function Projects() {
               </div>
 
               {/* PROJECT SECTION */}
-              <div className="bg-zinc-50/80 p-4 rounded-2xl border border-zinc-200/60 space-y-4">
-                <h3 className="text-[10px] font-black text-zinc-800 uppercase tracking-widest mb-1">2. Project Details</h3>
+              <div className="bg-zinc-50 p-4 rounded-2xl border border-zinc-200/80 space-y-3">
+                <h3 className="text-[10px] font-extrabold text-zinc-800 uppercase tracking-widest">2. Project Details</h3>
                 
                 <div>
-                  <label className={labelClass}>Project / Site Name *</label>
+                  <label className={labelClass}>Project / Site Name <span className="text-red-500">*</span></label>
                   <input 
                     type="text" 
                     required
@@ -435,7 +434,7 @@ export default function Projects() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className={labelClass}>PO Budget (₹) *</label>
+                    <label className={labelClass}>PO Budget (₹) <span className="text-red-500">*</span></label>
                     <input 
                       type="number" 
                       step="any"
@@ -462,7 +461,7 @@ export default function Projects() {
                   <select 
                     value={formData.status} 
                     onChange={e => setFormData({...formData, status: e.target.value})} 
-                    className={`${inputClass} cursor-pointer appearance-none`}
+                    className={`${inputClass} cursor-pointer`}
                   >
                     <option value="Planning">Planning</option>
                     <option value="Ongoing">Ongoing</option>
@@ -472,17 +471,17 @@ export default function Projects() {
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-3 pt-4 border-t border-zinc-100">
                 <button 
                   type="button" 
                   onClick={handleCloseModal}
-                  className="flex-1 py-3.5 bg-zinc-200 hover:bg-zinc-300 text-zinc-800 font-bold rounded-xl transition-colors text-xs uppercase tracking-wider"
+                  className="flex-1 py-3.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold rounded-xl transition-colors text-[10px] uppercase tracking-wider cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit" 
-                  className="flex-1 py-3.5 bg-zinc-900 hover:bg-black text-white font-bold rounded-xl transition-all shadow-md text-xs uppercase tracking-wider"
+                  className="flex-1 py-3.5 bg-[#1E3A8A] hover:bg-blue-900 text-white font-bold rounded-xl transition-all shadow-md text-[10px] uppercase tracking-wider cursor-pointer"
                 >
                   Save Project
                 </button>
@@ -492,7 +491,7 @@ export default function Projects() {
                 <button 
                   type="button"
                   onClick={() => handleDelete(formData.id)}
-                  className="w-full mt-2 py-2 text-[10px] text-red-500 hover:text-red-700 font-bold uppercase tracking-widest transition-colors"
+                  className="w-full mt-1 py-2 text-[10px] text-red-500 hover:text-red-700 font-bold uppercase tracking-widest transition-colors cursor-pointer"
                 >
                   Delete Project
                 </button>

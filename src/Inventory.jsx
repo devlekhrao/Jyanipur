@@ -21,12 +21,19 @@ export default function Inventory() {
 
   const loadData = async () => {
     setLoading(true);
-    const [fetchedItems, fetchedMovements, fetchedProjects] = await Promise.all([
-      getInventoryItems(), getInventoryMovements(), getProjects()
-    ]);
-    setItems(fetchedItems);
-    setMovements(fetchedMovements);
-    setProjects(fetchedProjects.filter(p => p.status !== 'Completed'));
+    try {
+      const [fetchedItems, fetchedMovements, fetchedProjects] = await Promise.all([
+        getInventoryItems(), getInventoryMovements(), getProjects()
+      ]);
+      setItems(fetchedItems || []);
+      setMovements(fetchedMovements || []);
+      setProjects((fetchedProjects || []).filter(p => p.status !== 'Completed'));
+    } catch (e) {
+      console.warn("Ensure inventory functions exist in db.js");
+      setItems([]);
+      setMovements([]);
+      setProjects([]);
+    }
     setLoading(false);
   };
 
@@ -52,7 +59,6 @@ export default function Inventory() {
     if (!movementForm.itemId || !movementForm.quantity) return alert("Item and Quantity required.");
     if (movementForm.type === 'OUT' && !movementForm.projectId) return alert("Project Site is required for dispatches.");
     
-    // Check if enough stock for dispatch
     if (movementForm.type === 'OUT') {
       const currentItem = items.find(i => i.id === parseInt(movementForm.itemId));
       if (currentItem && parseFloat(movementForm.quantity) > currentItem.totalStock) {
@@ -89,98 +95,98 @@ export default function Inventory() {
   const filteredItems = items.filter(i => i.name.toLowerCase().includes(searchQuery.toLowerCase()) || i.category.toLowerCase().includes(searchQuery.toLowerCase()));
   const filteredMovements = movements.filter(m => m.itemName.toLowerCase().includes(searchQuery.toLowerCase()) || (m.projectName && m.projectName.toLowerCase().includes(searchQuery.toLowerCase())));
 
-  const inputClass = "w-full px-4 py-3 rounded-xl border-none bg-zinc-100 focus:bg-white focus:outline-none focus:ring-2 focus:ring-zinc-900 text-zinc-900 text-sm font-medium transition-all shadow-inner";
-  const labelClass = "block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2 ml-1";
+  const inputClass = "w-full px-4 py-3 rounded-xl border border-zinc-200 bg-zinc-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] text-zinc-900 text-xs font-medium transition-all shadow-sm";
+  const labelClass = "block text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
 
   const lowStockCount = items.filter(i => i.totalStock <= 5 && i.totalStock > 0).length;
   const outOfStockCount = items.filter(i => i.totalStock === 0).length;
   const dispatchesThisMonth = movements.filter(m => m.type === 'OUT' && m.date.startsWith(new Date().toISOString().slice(0, 7))).length;
 
   return (
-    <div className="w-full font-['Poppins'] pb-12 relative">
+    <div className="w-full h-full font-['Poppins'] flex flex-col">
       
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end pb-4 border-b border-zinc-300/50 mb-6 gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end pb-4 border-b border-zinc-200 mb-6 gap-4 shrink-0">
         <div>
-          <h2 className="text-2xl font-bold text-zinc-800 tracking-tight">Material Inventory</h2>
+          <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Material Inventory</h2>
           <p className="text-zinc-500 text-xs mt-1 font-medium">Track godown stock and material dispatches to active sites.</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => setIsItemModalOpen(true)} className="bg-white border border-zinc-200 text-zinc-700 px-5 py-2.5 rounded-xl text-xs font-semibold transition-all shadow-sm hover:bg-zinc-50">+ Add Material Type</button>
-          <button onClick={() => openMovementModal(null, 'OUT')} className="bg-zinc-900 hover:bg-black text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md">Dispatch to Site</button>
+          <button onClick={() => setIsItemModalOpen(true)} className="bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer">+ Add Material Type</button>
+          <button onClick={() => openMovementModal(null, 'OUT')} className="bg-[#1E3A8A] hover:bg-blue-900 text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer">Dispatch to Site</button>
         </div>
       </div>
 
       {/* KPI STRIP */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white/80 backdrop-blur-xl border border-zinc-200/80 p-5 rounded-2xl shadow-sm">
-          <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-widest block mb-1">Total Unique Materials</span>
-          <p className="text-xl font-semibold text-zinc-800">{items.length}</p>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 shrink-0">
+        <div className="bg-white border border-zinc-200 p-6 rounded-[2rem] shadow-sm">
+          <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1">Total Unique Materials</span>
+          <p className="text-2xl font-black text-zinc-900">{items.length}</p>
         </div>
-        <div className="bg-white/80 backdrop-blur-xl border border-amber-200/60 p-5 rounded-2xl shadow-sm">
-          <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-widest block mb-1">Low Stock Alerts</span>
-          <p className="text-xl font-semibold text-amber-600">{lowStockCount}</p>
+        <div className="bg-white border border-amber-200/80 p-6 rounded-[2rem] shadow-sm">
+          <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1">Low Stock Alerts</span>
+          <p className="text-2xl font-black text-amber-600">{lowStockCount}</p>
         </div>
-        <div className="bg-white/80 backdrop-blur-xl border border-red-200/60 p-5 rounded-2xl shadow-sm">
-          <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-widest block mb-1">Out of Stock</span>
-          <p className="text-xl font-semibold text-red-500">{outOfStockCount}</p>
+        <div className="bg-white border border-red-200/80 p-6 rounded-[2rem] shadow-sm">
+          <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1">Out of Stock</span>
+          <p className="text-2xl font-black text-red-500">{outOfStockCount}</p>
         </div>
-        <div className="bg-white/80 backdrop-blur-xl border border-zinc-200/80 p-5 rounded-2xl shadow-sm">
-          <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-widest block mb-1">Dispatches This Month</span>
-          <p className="text-xl font-semibold text-emerald-600">{dispatchesThisMonth}</p>
+        <div className="bg-white border border-zinc-200 p-6 rounded-[2rem] shadow-sm">
+          <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1">Dispatches This Month</span>
+          <p className="text-2xl font-black text-emerald-600">{dispatchesThisMonth}</p>
         </div>
       </div>
 
       {/* TABS & SEARCH */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex gap-2 bg-zinc-200/50 p-1 rounded-xl">
-          <button onClick={() => setActiveTab('Godown')} className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'Godown' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-800'}`}>Godown Stock</button>
-          <button onClick={() => setActiveTab('Movements')} className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'Movements' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-800'}`}>Dispatch History</button>
+      <div className="flex justify-between items-center mb-6 shrink-0">
+        <div className="flex gap-2 bg-zinc-100 p-1.5 rounded-2xl">
+          <button onClick={() => setActiveTab('Godown')} className={`px-6 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTab === 'Godown' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-900'}`}>Godown Stock</button>
+          <button onClick={() => setActiveTab('Movements')} className={`px-6 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTab === 'Movements' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-900'}`}>Dispatch History</button>
         </div>
         
-        <div className="flex items-center h-9 bg-white/60 border border-zinc-200/60 rounded-xl px-3 shadow-sm">
-          <span className="text-[10px] text-zinc-400">🔍</span>
+        <div className="flex items-center h-10 bg-white border border-zinc-200 rounded-2xl px-3.5 shadow-sm">
+          <span className="text-xs text-zinc-400">🔍</span>
           <input 
             type="text" 
             placeholder="Search materials..." 
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="bg-transparent border-none text-xs font-medium text-zinc-700 outline-none px-2 w-48 placeholder:text-zinc-400"
+            className="bg-transparent border-none text-xs font-medium text-zinc-800 outline-none px-2 w-52 placeholder:text-zinc-400"
           />
         </div>
       </div>
 
       {/* CONTENT AREA */}
-      <div className="bg-white/60 backdrop-blur-2xl border border-white/80 rounded-[2rem] shadow-xl overflow-hidden min-h-[400px]">
+      <div className="bg-white border border-zinc-200 rounded-[2rem] shadow-sm flex-1 flex flex-col min-h-0 overflow-hidden">
         {loading ? (
-          <div className="py-20 text-center text-zinc-400 font-medium text-xs">Loading inventory...</div>
+          <div className="py-20 text-center text-zinc-400 font-medium text-xs flex-1">Loading inventory...</div>
         ) : activeTab === 'Godown' ? (
-          <div className="overflow-x-auto w-full">
+          <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <table className="w-full text-left border-collapse whitespace-nowrap">
               <thead>
-                <tr className="text-zinc-400 text-[9px] uppercase tracking-widest border-b border-zinc-200/80 bg-zinc-50/50">
-                  <th className="py-4 px-6 font-semibold w-1/3">Material Name</th>
-                  <th className="py-4 px-4 font-semibold">Category</th>
-                  <th className="py-4 px-4 font-semibold text-right">In Hand (Godown)</th>
-                  <th className="py-4 px-6 font-semibold text-center w-32">Quick Action</th>
+                <tr className="text-zinc-400 text-[9px] uppercase tracking-widest border-b border-zinc-100 bg-zinc-50/50 sticky top-0 bg-zinc-50 z-10">
+                  <th className="py-4 px-6 font-bold w-1/3">Material Name</th>
+                  <th className="py-4 px-4 font-bold">Category</th>
+                  <th className="py-4 px-4 font-bold text-right">In Hand (Godown)</th>
+                  <th className="py-4 px-6 font-bold text-center w-36">Quick Action</th>
                 </tr>
               </thead>
-              <tbody className="text-sm text-zinc-700 divide-y divide-zinc-100">
+              <tbody className="text-xs text-zinc-800 divide-y divide-zinc-100">
                 {filteredItems.length === 0 ? (
-                  <tr><td colSpan="4" className="py-12 text-center text-zinc-400 text-xs">No materials found. Add one above.</td></tr>
+                  <tr><td colSpan="4" className="py-12 text-center text-zinc-400 font-medium text-xs">No materials found. Add one above.</td></tr>
                 ) : filteredItems.map(item => (
-                  <tr key={item.id} className="hover:bg-white/60 transition-colors">
-                    <td className="py-4 px-6 font-semibold text-zinc-800">{item.name}</td>
-                    <td className="py-4 px-4"><span className="px-2.5 py-1 bg-zinc-100 text-zinc-600 rounded-md text-[10px] font-medium">{item.category}</span></td>
+                  <tr key={item.id} className="hover:bg-zinc-50 transition-colors">
+                    <td className="py-4 px-6 font-extrabold text-zinc-900">{item.name}</td>
+                    <td className="py-4 px-4"><span className="px-2.5 py-1 bg-zinc-100 text-zinc-700 rounded-md text-[10px] font-bold">{item.category}</span></td>
                     <td className="py-4 px-4 text-right">
-                      <span className={`font-bold text-lg ${item.totalStock === 0 ? 'text-red-500' : item.totalStock <= 5 ? 'text-amber-500' : 'text-emerald-600'}`}>
+                      <span className={`font-black text-sm ${item.totalStock === 0 ? 'text-red-500' : item.totalStock <= 5 ? 'text-amber-500' : 'text-emerald-600'}`}>
                         {item.totalStock}
                       </span>
-                      <span className="text-[10px] text-zinc-500 ml-1">{item.unit}</span>
+                      <span className="text-[10px] text-zinc-400 ml-1 font-semibold">{item.unit}</span>
                     </td>
                     <td className="py-4 px-6 text-center space-x-2">
-                      <button onClick={() => openMovementModal(item, 'IN')} className="text-[9px] font-bold text-emerald-600 hover:text-emerald-700 bg-emerald-50 px-2 py-1 rounded uppercase tracking-wider transition-colors">+ Stock</button>
-                      <button onClick={() => openMovementModal(item, 'OUT')} className="text-[9px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-2 py-1 rounded uppercase tracking-wider transition-colors">Send</button>
+                      <button onClick={() => openMovementModal(item, 'IN')} className="text-[9px] font-bold text-emerald-600 hover:text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md uppercase tracking-wider transition-colors cursor-pointer">+ Stock</button>
+                      <button onClick={() => openMovementModal(item, 'OUT')} className="text-[9px] font-bold text-[#1E3A8A] hover:text-blue-900 bg-blue-50 px-2.5 py-1 rounded-md uppercase tracking-wider transition-colors cursor-pointer">Send</button>
                     </td>
                   </tr>
                 ))}
@@ -188,32 +194,32 @@ export default function Inventory() {
             </table>
           </div>
         ) : (
-          <div className="overflow-x-auto w-full">
+          <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <table className="w-full text-left border-collapse whitespace-nowrap">
               <thead>
-                <tr className="text-zinc-400 text-[9px] uppercase tracking-widest border-b border-zinc-200/80 bg-zinc-50/50">
-                  <th className="py-4 px-6 font-semibold w-24">Date</th>
-                  <th className="py-4 px-4 font-semibold w-20 text-center">Type</th>
-                  <th className="py-4 px-4 font-semibold">Material</th>
-                  <th className="py-4 px-4 font-semibold text-right w-24">Qty</th>
-                  <th className="py-4 px-4 font-semibold w-1/4">Destination Site</th>
-                  <th className="py-4 px-6 font-semibold">Notes</th>
+                <tr className="text-zinc-400 text-[9px] uppercase tracking-widest border-b border-zinc-100 bg-zinc-50/50 sticky top-0 bg-zinc-50 z-10">
+                  <th className="py-4 px-6 font-bold w-24">Date</th>
+                  <th className="py-4 px-4 font-bold w-24 text-center">Type</th>
+                  <th className="py-4 px-4 font-bold">Material</th>
+                  <th className="py-4 px-4 font-bold text-right w-24">Qty</th>
+                  <th className="py-4 px-4 font-bold w-1/4">Destination Site</th>
+                  <th className="py-4 px-6 font-bold">Notes</th>
                 </tr>
               </thead>
-              <tbody className="text-sm text-zinc-700 divide-y divide-zinc-100">
+              <tbody className="text-xs text-zinc-800 divide-y divide-zinc-100">
                 {filteredMovements.length === 0 ? (
-                  <tr><td colSpan="6" className="py-12 text-center text-zinc-400 text-xs">No movement history found.</td></tr>
+                  <tr><td colSpan="6" className="py-12 text-center text-zinc-400 font-medium text-xs">No movement history found.</td></tr>
                 ) : filteredMovements.map(mov => (
-                  <tr key={mov.id} className="hover:bg-white/60 transition-colors">
+                  <tr key={mov.id} className="hover:bg-zinc-50 transition-colors">
                     <td className="py-4 px-6 text-xs text-zinc-500 font-medium">{mov.date}</td>
                     <td className="py-4 px-4 text-center">
-                      <span className={`px-2 py-1 rounded text-[9px] font-bold tracking-widest ${mov.type === 'IN' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>
+                      <span className={`px-2.5 py-1 rounded-md text-[9px] font-bold tracking-widest ${mov.type === 'IN' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-[#1E3A8A]'}`}>
                         {mov.type === 'IN' ? 'INWARD' : 'DISPATCH'}
                       </span>
                     </td>
-                    <td className="py-4 px-4 font-semibold text-zinc-800">{mov.itemName}</td>
-                    <td className="py-4 px-4 text-right font-bold text-zinc-700">{mov.quantity} <span className="text-[9px] text-zinc-400 font-normal">{mov.unit}</span></td>
-                    <td className="py-4 px-4 text-xs font-semibold text-zinc-600">{mov.projectName || <span className="text-zinc-400 italic">Central Godown</span>}</td>
+                    <td className="py-4 px-4 font-extrabold text-zinc-900">{mov.itemName}</td>
+                    <td className="py-4 px-4 text-right font-black text-zinc-900">{mov.quantity} <span className="text-[9px] text-zinc-400 font-normal">{mov.unit}</span></td>
+                    <td className="py-4 px-4 text-xs font-bold text-zinc-700">{mov.projectName || <span className="text-zinc-400 italic font-normal">Central Godown</span>}</td>
                     <td className="py-4 px-6 text-[10px] text-zinc-500 truncate max-w-[200px]">{mov.notes || '-'}</td>
                   </tr>
                 ))}
@@ -225,20 +231,20 @@ export default function Inventory() {
 
       {/* --- ADD NEW MATERIAL MODAL --- */}
       {isItemModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/40 backdrop-blur-sm">
-          <div className="bg-white/95 backdrop-blur-3xl w-full max-w-sm rounded-[2rem] shadow-2xl border border-white p-8">
-            <h2 className="text-xl font-bold text-zinc-900 mb-1">Add Material Type</h2>
-            <p className="text-zinc-500 text-[10px] font-medium mb-6 uppercase tracking-widest">Register a new item to the master list.</p>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-sm rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in-95 duration-200">
+            <h2 className="text-xl font-extrabold text-zinc-900 mb-1">Add Material Type</h2>
+            <p className="text-zinc-500 text-[10px] font-bold mb-6 uppercase tracking-widest">Register a new item to master list.</p>
 
             <form onSubmit={handleSaveItem} className="space-y-4">
               <div>
-                <label className={labelClass}>Material Name *</label>
+                <label className={labelClass}>Material Name <span className="text-red-500">*</span></label>
                 <input type="text" required placeholder="e.g., Plywood 18mm" value={itemForm.name} onChange={e => setItemForm({...itemForm, name: e.target.value})} className={inputClass} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className={labelClass}>Category</label>
-                  <select value={itemForm.category} onChange={e => setItemForm({...itemForm, category: e.target.value})} className={`${inputClass} cursor-pointer appearance-none`}>
+                  <select value={itemForm.category} onChange={e => setItemForm({...itemForm, category: e.target.value})} className={`${inputClass} cursor-pointer`}>
                     <option value="Hardware">Hardware</option>
                     <option value="Electrical">Electrical</option>
                     <option value="Plumbing">Plumbing</option>
@@ -249,7 +255,7 @@ export default function Inventory() {
                 </div>
                 <div>
                   <label className={labelClass}>Unit of Measure</label>
-                  <select value={itemForm.unit} onChange={e => setItemForm({...itemForm, unit: e.target.value})} className={`${inputClass} cursor-pointer appearance-none`}>
+                  <select value={itemForm.unit} onChange={e => setItemForm({...itemForm, unit: e.target.value})} className={`${inputClass} cursor-pointer`}>
                     <option value="Pcs">Pieces (Pcs)</option>
                     <option value="Bags">Bags</option>
                     <option value="SqFt">SqFt</option>
@@ -259,9 +265,9 @@ export default function Inventory() {
                   </select>
                 </div>
               </div>
-              <div className="flex gap-3 pt-4 border-t border-zinc-100">
-                <button type="button" onClick={() => setIsItemModalOpen(false)} className="flex-1 py-3 bg-zinc-100 text-zinc-600 font-bold rounded-xl text-xs">Cancel</button>
-                <button type="submit" className="flex-1 py-3 bg-zinc-900 text-white font-bold rounded-xl text-xs">Save Item</button>
+              <div className="flex gap-3 pt-6 border-t border-zinc-100 mt-2">
+                <button type="button" onClick={() => setIsItemModalOpen(false)} className="flex-1 py-3.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold rounded-xl text-[10px] uppercase tracking-wider transition-all cursor-pointer">Cancel</button>
+                <button type="submit" className="flex-1 py-3.5 bg-[#1E3A8A] hover:bg-blue-900 text-white font-bold rounded-xl text-[10px] uppercase tracking-wider transition-all shadow-md cursor-pointer">Save Item</button>
               </div>
             </form>
           </div>
@@ -270,25 +276,25 @@ export default function Inventory() {
 
       {/* --- RECORD MOVEMENT MODAL --- */}
       {isMovementModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/40 backdrop-blur-sm">
-          <div className="bg-white/95 backdrop-blur-3xl w-full max-w-md rounded-[2rem] shadow-2xl border border-white p-8">
-            <h2 className="text-xl font-bold text-zinc-900 mb-1">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in-95 duration-200">
+            <h2 className="text-xl font-extrabold text-zinc-900 mb-1">
               {movementForm.type === 'IN' ? 'Add Stock to Godown' : 'Dispatch Material to Site'}
             </h2>
-            <p className="text-zinc-500 text-[10px] font-medium mb-6 uppercase tracking-widest">
+            <p className="text-zinc-500 text-[10px] font-bold mb-6 uppercase tracking-widest">
               {movementForm.type === 'IN' ? 'Record materials received at central storage.' : 'Move materials from godown to an active project.'}
             </p>
 
             <form onSubmit={handleRecordMovement} className="space-y-4">
               
-              <div className="grid grid-cols-2 gap-2 p-1 bg-zinc-100 rounded-xl mb-2">
-                <button type="button" onClick={() => setMovementForm({...movementForm, type: 'IN', projectId: ''})} className={`py-2 rounded-lg text-xs font-bold transition-all ${movementForm.type === 'IN' ? 'bg-white text-emerald-600 shadow-sm' : 'text-zinc-400'}`}>INWARD</button>
-                <button type="button" onClick={() => setMovementForm({...movementForm, type: 'OUT'})} className={`py-2 rounded-lg text-xs font-bold transition-all ${movementForm.type === 'OUT' ? 'bg-white text-blue-600 shadow-sm' : 'text-zinc-400'}`}>DISPATCH</button>
+              <div className="grid grid-cols-2 gap-2 p-1.5 bg-zinc-100 rounded-2xl mb-2">
+                <button type="button" onClick={() => setMovementForm({...movementForm, type: 'IN', projectId: ''})} className={`py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${movementForm.type === 'IN' ? 'bg-white text-emerald-600 shadow-sm' : 'text-zinc-400'}`}>INWARD</button>
+                <button type="button" onClick={() => setMovementForm({...movementForm, type: 'OUT'})} className={`py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${movementForm.type === 'OUT' ? 'bg-white text-[#1E3A8A] shadow-sm' : 'text-zinc-400'}`}>DISPATCH</button>
               </div>
 
               <div>
-                <label className={labelClass}>Select Material *</label>
-                <select required value={movementForm.itemId} onChange={e => setMovementForm({...movementForm, itemId: e.target.value})} className={`${inputClass} cursor-pointer appearance-none`}>
+                <label className={labelClass}>Select Material <span className="text-red-500">*</span></label>
+                <select required value={movementForm.itemId} onChange={e => setMovementForm({...movementForm, itemId: e.target.value})} className={`${inputClass} cursor-pointer`}>
                   <option value="" disabled>Choose item...</option>
                   {items.map(i => <option key={i.id} value={i.id}>{i.name} (Available: {i.totalStock} {i.unit})</option>)}
                 </select>
@@ -296,7 +302,7 @@ export default function Inventory() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className={labelClass}>Quantity *</label>
+                  <label className={labelClass}>Quantity <span className="text-red-500">*</span></label>
                   <input type="number" step="any" required placeholder="0" value={movementForm.quantity} onChange={e => setMovementForm({...movementForm, quantity: e.target.value})} className={inputClass} />
                 </div>
                 <div>
@@ -307,8 +313,8 @@ export default function Inventory() {
 
               {movementForm.type === 'OUT' && (
                 <div>
-                  <label className={labelClass}>Destination Project Site *</label>
-                  <select required value={movementForm.projectId} onChange={e => setMovementForm({...movementForm, projectId: e.target.value})} className={`${inputClass} cursor-pointer appearance-none`}>
+                  <label className={labelClass}>Destination Project Site <span className="text-red-500">*</span></label>
+                  <select required value={movementForm.projectId} onChange={e => setMovementForm({...movementForm, projectId: e.target.value})} className={`${inputClass} cursor-pointer`}>
                     <option value="" disabled>Select active project...</option>
                     {projects.map(p => <option key={p.id} value={p.id}>{p.name} ({p.clientName})</option>)}
                   </select>
@@ -320,9 +326,9 @@ export default function Inventory() {
                 <input type="text" placeholder="Challan no, truck no, etc." value={movementForm.notes} onChange={e => setMovementForm({...movementForm, notes: e.target.value})} className={inputClass} />
               </div>
 
-              <div className="flex gap-3 pt-4 border-t border-zinc-100">
-                <button type="button" onClick={() => setIsMovementModalOpen(false)} className="flex-1 py-3 bg-zinc-100 text-zinc-600 font-bold rounded-xl text-xs">Cancel</button>
-                <button type="submit" className={`flex-1 py-3 text-white font-bold rounded-xl text-xs ${movementForm.type === 'IN' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-blue-600 hover:bg-blue-700'}`}>Confirm {movementForm.type === 'IN' ? 'Inward' : 'Dispatch'}</button>
+              <div className="flex gap-3 pt-6 border-t border-zinc-100 mt-2">
+                <button type="button" onClick={() => setIsMovementModalOpen(false)} className="flex-1 py-3.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold rounded-xl text-[10px] uppercase tracking-wider transition-all cursor-pointer">Cancel</button>
+                <button type="submit" className={`flex-1 py-3.5 text-white font-bold rounded-xl text-[10px] uppercase tracking-wider transition-all shadow-md cursor-pointer ${movementForm.type === 'IN' ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-[#1E3A8A] hover:bg-blue-900'}`}>Confirm {movementForm.type === 'IN' ? 'Inward' : 'Dispatch'}</button>
               </div>
             </form>
           </div>
