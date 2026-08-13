@@ -115,7 +115,6 @@ export default function App() {
     setExpandedGroups(prev => ({ ...prev, [title]: !prev[title] }));
   };
 
-  // --- GLOBAL COMPANY & PRINT SETTINGS (PERSISTENT) ---
   const defaultSettings = {
     companyName: 'Jyanipur Interiors & Construction',
     companyAddress: '302 Amrutha lakshmi residency, Raja rajeshwari nagar, Kondapur, Hyderabad, Telangana, 500084',
@@ -135,27 +134,22 @@ export default function App() {
     showSignatoryOnPdf: true,
     showGstBreakdownOnPdf: true,
     pdfFooterDisclaimer: 'Thank you for choosing Jyanipur Interiors. For any query, contact accounts@jyanipur.in',
-    
     invoicePrefix: 'JIC/FY26-27/',
     poPrefix: 'PO/',
     woPrefix: 'WO/',
     defaultGstRate: '18',
     defaultTdsRate: '2',
     defaultHsnSac: '9954',
-    
     defaultInvoiceTerms: '1. Payment due within 15 days of invoice date.\n2. Goods/Services once rendered cannot be returned.',
     defaultEstimateTerms: '1. Validity of this estimate is 30 days.\n2. 50% advance required to commence work.',
     defaultPOTerms: '1. Material must match approved specifications.\n2. Delivery delayed beyond 7 days will attract a 5% penalty.',
-    
     waInvoiceTemplate: 'Hello! Attached is your latest invoice from Jyanipur Interiors. Please let us know if you have any questions.',
     waPoTemplate: 'Hello, please find our official Purchase Order attached. Kindly confirm receipt and delivery schedule.',
-
     defaultWorkStartTime: '09:30',
     defaultWorkEndTime: '18:30',
     overtimeMultiplier: '1.5',
     skilledLaborRate: '1200',
     unskilledLaborRate: '800',
-
     crmStages: 'New Inquiry, Site Visit, Design Proposed, Negotiation, Contract Signed, Closed Won, Closed Lost',
     projectStatuses: 'Planning, Civil Work, False Ceiling, Flooring, Painting, Carpentry, Handover'
   };
@@ -188,60 +182,54 @@ export default function App() {
   };
 
   // ==========================================
-  // LOGGED IN: FULL SCREEN EDGE-TO-EDGE LAYOUT
+  // LOGGED IN: STRICT FULL SCREEN LAYOUT
   // ==========================================
   if (isLoggedIn) {
     return (
-      <div className="fixed inset-0 w-screen h-screen font-['Poppins'] text-zinc-800 selection:bg-blue-100 flex bg-zinc-50 overflow-hidden print:block print:bg-white overscroll-none">
+      <div className="flex w-screen h-screen overflow-hidden bg-zinc-50 font-['Poppins'] text-zinc-900 selection:bg-blue-100">
         
         {/* WARNING MODAL */}
         {showWarningModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 backdrop-blur-md px-4 print:hidden">
-            <div className="bg-slate-900 border border-white/10 p-8 rounded-[2rem] shadow-2xl max-w-sm w-full animate-in fade-in zoom-in-95 duration-200">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 backdrop-blur-sm px-4">
+            <div className="bg-slate-900 border border-white/10 p-8 rounded-2xl shadow-2xl max-w-sm w-full">
               <div className="w-12 h-12 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center mb-5 border border-amber-500/30">
                 <span className="text-xl">⚠️</span>
               </div>
-              <h3 className="text-xl font-extrabold text-white tracking-tight mb-2">Unsaved Progress</h3>
-              <p className="text-slate-400 text-[11px] leading-relaxed mb-8">
-                You have unsaved changes in <strong className="text-white">{activePage}</strong>. What would you like to do before navigating away?
+              <h3 className="text-xl font-extrabold text-white mb-2">Unsaved Progress</h3>
+              <p className="text-slate-400 text-xs mb-8">
+                You have unsaved changes in <strong className="text-white">{activePage}</strong>.
               </p>
               <div className="flex flex-col gap-3">
-                <button onClick={handleSaveDraft} className="w-full bg-[#1E3A8A] hover:bg-blue-900 text-white font-bold py-3.5 rounded-xl text-xs uppercase tracking-widest transition-all border border-blue-400/30 shadow-lg cursor-pointer">
-                  Save Draft & Switch
-                </button>
-                <button onClick={handleDiscard} className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold py-3.5 rounded-xl text-xs uppercase tracking-widest transition-all border border-red-500/30 cursor-pointer">
-                  Discard Changes
-                </button>
-                <button onClick={() => setShowWarningModal(false)} className="w-full bg-transparent hover:bg-white/5 text-slate-300 font-bold py-3.5 rounded-xl text-xs uppercase tracking-widest transition-all border border-white/10 mt-2 cursor-pointer">
-                  Cancel
-                </button>
+                <button onClick={handleSaveDraft} className="w-full bg-[#1E3A8A] text-white font-bold py-3 rounded-xl text-xs uppercase cursor-pointer">Save Draft & Switch</button>
+                <button onClick={handleDiscard} className="w-full bg-red-500/10 text-red-400 font-bold py-3 rounded-xl text-xs uppercase border border-red-500/30 cursor-pointer">Discard Changes</button>
+                <button onClick={() => setShowWarningModal(false)} className="w-full text-slate-300 font-bold py-3 rounded-xl text-xs uppercase cursor-pointer">Cancel</button>
               </div>
             </div>
           </div>
         )}
 
-        {/* SIDEBAR - 100% Height, Flush Left */}
-        <aside className="w-[260px] h-full bg-[#1E3A8A] text-white flex flex-col flex-shrink-0 z-20 shadow-2xl print:hidden">
-          <div className="pt-8 pb-6 flex items-center justify-center gap-3">
+        {/* EDGE-TO-EDGE SIDEBAR */}
+        <aside className="w-[260px] h-full bg-[#1E3A8A] text-white flex flex-col flex-shrink-0 z-20 shadow-2xl">
+          <div className="p-6 flex items-center justify-center gap-3">
             <div className="bg-white p-2 rounded-xl shadow-sm">
               <img src={companySettings.logoUrl} alt="Logo" className="h-6 w-auto object-contain" onError={(e) => { e.target.style.display='none'; }} />
             </div>
-            <span className="font-bold text-sm tracking-[0.2em] text-white uppercase">Jyanipur</span>
+            <span className="font-bold text-sm tracking-[0.2em] uppercase">Jyanipur</span>
           </div>
 
-          <div className="flex-1 overflow-y-auto py-3 px-4 flex flex-col gap-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <div className="flex-1 overflow-y-auto px-4 pb-4 flex flex-col gap-2 [&::-webkit-scrollbar]:hidden">
             {navigationGroups.map((group) => (
               <div key={group.title} className="flex flex-col mb-2">
-                <button onClick={() => toggleGroup(group.title)} className="flex items-center justify-between px-3 py-2 w-full text-left cursor-pointer group/nav rounded-lg hover:bg-white/5 transition-colors">
-                  <span className="text-[10px] font-black text-blue-300/70 uppercase tracking-widest group-hover/nav:text-blue-200 transition-colors">{group.title}</span>
-                  <svg className={`w-3.5 h-3.5 text-blue-300/50 transition-transform duration-200 ${expandedGroups[group.title] ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                <button onClick={() => toggleGroup(group.title)} className="flex items-center justify-between px-3 py-2 w-full text-left cursor-pointer group/nav rounded-lg hover:bg-white/10 transition-colors">
+                  <span className="text-[10px] font-black text-blue-300/70 uppercase tracking-widest">{group.title}</span>
+                  <svg className={`w-3.5 h-3.5 text-blue-300/50 transition-transform ${expandedGroups[group.title] ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
                 </button>
                 {expandedGroups[group.title] && (
-                  <div className="flex flex-col gap-1 mt-1 mb-1">
+                  <div className="flex flex-col gap-1 mt-1">
                     {group.pages.map((page) => (
-                      <button key={page} onClick={() => handlePageSwitch(page)} className={`text-left px-3 py-2.5 rounded-xl text-xs transition-all duration-300 flex items-center ${activePage === page ? 'bg-white/20 text-white font-bold shadow-md shadow-blue-950/40 ring-1 ring-white/30 translate-x-1' : 'text-blue-100/70 hover:bg-white/10 hover:text-white font-medium cursor-pointer'}`}>
+                      <button key={page} onClick={() => handlePageSwitch(page)} className={`text-left px-3 py-2.5 rounded-xl text-xs transition-all duration-200 flex items-center ${activePage === page ? 'bg-white/20 text-white font-bold translate-x-1' : 'text-blue-100/70 hover:bg-white/10 hover:text-white cursor-pointer'}`}>
                         {page}
-                        {dirtyStates[page] && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_5px_rgba(251,191,36,0.8)]"></span>}
+                        {dirtyStates[page] && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-amber-400"></span>}
                       </button>
                     ))}
                   </div>
@@ -250,21 +238,16 @@ export default function App() {
             ))}
           </div>
 
-          <div className="p-5 flex flex-col gap-3 bg-[#172e6e]">
-            <button onClick={() => handlePageSwitch('Settings')} className={`w-full py-3 rounded-xl text-[10px] uppercase tracking-widest font-bold transition-all duration-300 cursor-pointer shadow-sm border ${activePage === 'Settings' ? 'bg-white text-[#1E3A8A] border-white shadow-md' : 'bg-white/10 border-white/20 text-white hover:bg-white/20'}`}>
-              Settings
-            </button>
-            <button onClick={handleLogout} className="w-full bg-white/10 border border-white/20 text-white hover:bg-red-500 hover:border-red-500 py-3 rounded-xl text-[10px] uppercase tracking-widest font-bold transition-all duration-300 cursor-pointer">
-              Log Out
-            </button>
+          <div className="p-4 bg-[#172e6e] flex flex-col gap-2">
+            <button onClick={() => handlePageSwitch('Settings')} className={`w-full py-3 rounded-xl text-[10px] uppercase font-bold cursor-pointer ${activePage === 'Settings' ? 'bg-white text-[#1E3A8A]' : 'bg-white/10 text-white hover:bg-white/20'}`}>Settings</button>
+            <button onClick={handleLogout} className="w-full bg-white/10 text-white hover:bg-red-500 py-3 rounded-xl text-[10px] uppercase font-bold cursor-pointer">Log Out</button>
           </div>
         </aside>
 
-        {/* MAIN CONTENT AREA - 100% Height, fills remaining width */}
-        <main className="flex-1 h-full flex flex-col bg-zinc-50 relative z-10 overflow-hidden print:overflow-visible print:bg-white">
-          <div className="flex-1 overflow-y-auto p-8 lg:p-12 custom-scrollbar print:p-0">
-            <div className="max-w-screen-2xl mx-auto w-full print:max-w-none print:mx-0">
-              
+        {/* EDGE-TO-EDGE MAIN CONTENT AREA */}
+        <main className="flex-1 h-full overflow-hidden flex flex-col relative bg-zinc-50">
+          <div className="flex-1 overflow-y-auto p-8 lg:p-12 custom-scrollbar">
+            <div className="max-w-7xl mx-auto w-full">
               {visitedPages.has('Dashboard') && <div className={activePage === 'Dashboard' ? 'block' : 'hidden'}><Dashboard setActivePage={handlePageSwitch} /></div>}
               {visitedPages.has('CRM') && <div className={activePage === 'CRM' ? 'block' : 'hidden'}><CRM /></div>}
               {visitedPages.has('Projects') && <div className={activePage === 'Projects' ? 'block' : 'hidden'}><Projects /></div>}
@@ -290,7 +273,6 @@ export default function App() {
               {visitedPages.has('Salaries') && <div className={activePage === 'Salaries' ? 'block' : 'hidden'}><Salaries /></div>}
               {visitedPages.has('Income') && <div className={activePage === 'Income' ? 'block' : 'hidden'}><Income /></div>}
               {visitedPages.has('GST Filing') && <div className={activePage === 'GST Filing' ? 'block' : 'hidden'}><GST /></div>}
-              
               {visitedPages.has('Settings') && (
                 <div className={activePage === 'Settings' ? 'block' : 'hidden'}>
                   <Settings companySettings={companySettings} setCompanySettings={setCompanySettings} />
@@ -304,38 +286,32 @@ export default function App() {
   }
 
   // ==========================================
-  // LOGGED OUT: LOGIN SCREEN (Retains Glassmorphism & Background Image)
+  // LOGGED OUT: CLEAN FULL SCREEN LOGIN
   // ==========================================
   return (
-    <div className="fixed inset-0 w-screen h-[100dvh] flex items-center justify-center bg-[url('/background.png')] bg-cover bg-center bg-no-repeat px-4 font-['Poppins'] overflow-hidden overscroll-none bg-zinc-900">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
-
-      <div className="max-w-md w-full bg-white/90 backdrop-blur-3xl rounded-[2.5rem] shadow-[0_40px_80px_rgba(0,0,0,0.4)] border border-white/40 p-10 relative z-10">
-        <div className="mb-10 flex flex-col items-center text-center">
-          <div className="bg-white p-4 rounded-3xl mb-5 shadow-sm border border-zinc-100">
-            <img src="/jyanipur.png" alt="Jyanipur Logo" className="h-12 w-auto object-contain" onError={(e) => { e.target.style.display='none'; }} />
+    <div className="flex w-screen h-screen bg-zinc-50 items-center justify-center font-['Poppins']">
+      <div className="w-full max-w-md bg-white p-10 rounded-2xl shadow-xl border border-zinc-200">
+        <div className="mb-8 text-center">
+          <div className="flex justify-center mb-4">
+            <img src="/jyanipur.png" alt="Jyanipur" className="h-12 w-auto" onError={(e) => { e.target.style.display='none'; }} />
           </div>
           <h1 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Jyanipur</h1>
-          <p className="text-zinc-500 text-xs uppercase tracking-widest mt-2 font-bold">Portal Access</p>
+          <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest mt-1">Portal Access</p>
         </div>
 
-        {error && (
-          <div className="mb-6 p-4 bg-red-50/90 text-red-600 text-xs rounded-2xl border border-red-200 text-center font-bold tracking-wide">
-            {error}
-          </div>
-        )}
+        {error && <div className="mb-6 p-3 bg-red-50 text-red-600 text-xs rounded-xl font-bold text-center">{error}</div>}
 
-        <form onSubmit={handleLogin} className="space-y-5">
+        <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2 ml-1">Work Email</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-5 py-4 rounded-2xl border border-zinc-200 bg-zinc-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] text-zinc-900 text-sm font-medium transition-all shadow-inner" required />
+            <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1">Email</label>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]" required />
           </div>
           <div>
-            <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2 ml-1">Passkey</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-5 py-4 rounded-2xl border border-zinc-200 bg-zinc-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] text-zinc-900 text-sm font-medium transition-all shadow-inner" required />
+            <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1">Password</label>
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]" required />
           </div>
-          <button type="submit" className="w-full py-4 bg-[#1E3A8A] hover:bg-blue-900 text-white font-bold rounded-2xl transition-all mt-6 cursor-pointer text-sm shadow-[0_10px_20px_rgba(30,58,138,0.2)] hover:shadow-[0_15px_25px_rgba(30,58,138,0.3)] hover:-translate-y-1 tracking-wide">
-            Enter Portal
+          <button type="submit" className="w-full py-3.5 bg-[#1E3A8A] hover:bg-blue-900 text-white font-bold rounded-xl text-sm mt-4 transition-colors cursor-pointer">
+            Sign In
           </button>
         </form>
       </div>
