@@ -104,6 +104,7 @@ export default function TaxInvoice({ companySettings = {} }) {
   }, [companySettings, editingId]);
 
   // AUTO DETECT GST STATE CODE & UPDATE PLACE OF SUPPLY
+  // REMOVED !editingId restriction so it force-updates existing saved invoices too
   useEffect(() => {
     const clientStateCode = invoiceDetails.gstNo.trim().substring(0, 2);
     if (clientStateCode.length === 2 && !isNaN(clientStateCode)) {
@@ -116,13 +117,13 @@ export default function TaxInvoice({ companySettings = {} }) {
       }
 
       setInvoiceDetails(prev => {
-        if (prev.placeOfSupply !== detectedState && !editingId) {
+        if (prev.placeOfSupply !== detectedState) {
           return { ...prev, placeOfSupply: detectedState };
         }
         return prev;
       });
     }
-  }, [invoiceDetails.gstNo, editingId]);
+  }, [invoiceDetails.gstNo]);
 
   const addItem = () => setItems([...items, { id: Date.now(), description: '', hsn: '', sizeL: '', sizeB: '', no: '', rate: '', gst: 18 }]);
   const updateItem = (id, field, value) => setItems(items.map(item => item.id === id ? { ...item, [field]: value } : item));
