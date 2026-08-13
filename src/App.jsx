@@ -4,6 +4,7 @@ import CRM from './CRM';
 import TaxInvoice from './TaxInvoice';
 import Estimation from './Estimation';
 import EmployeeAttendance from './EmployeeAttendance';
+import PurchaseOrders from './PurchaseOrders';
 import Purchases from './Purchases';
 import VendorLedger from './VendorLedger';
 import Inventory from './Inventory';
@@ -78,6 +79,14 @@ export default function App() {
       localStorage.removeItem('draft_editingId');
       localStorage.removeItem('draft_invoiceView');
     }
+    // Add discard logic for POs
+    if (activePage === 'Purchase Orders') {
+      localStorage.removeItem('draft_poDetails');
+      localStorage.removeItem('draft_poItems');
+      localStorage.removeItem('draft_poEditingId');
+      localStorage.removeItem('draft_poView');
+    }
+    
     setVisitedPages(prev => {
       const newSet = new Set(prev);
       newSet.delete(activePage);
@@ -92,7 +101,7 @@ export default function App() {
     { title: "Workspace", pages: ['Dashboard', 'CRM', 'Projects', 'Task Board', 'Document Vault'] },
     { title: "Site Execution", pages: ['Project Control', 'Daily Report', 'Site Snags', 'Measurement Sheet'] },
     { title: "Finance & Sales", pages: ['Estimation', 'Tax Invoice', 'Project P&L', 'Income', 'Petty Cash', 'GST Filing'] },
-    { title: "Supply Chain", pages: ['Purchases', 'Vendor Ledger', 'Inventory', 'Rate Book', 'Tools & Assets', 'Subcontractors'] },
+    { title: "Supply Chain", pages: ['Purchase Orders', 'Purchases', 'Vendor Ledger', 'Inventory', 'Rate Book', 'Tools & Assets', 'Subcontractors'] },
     { title: "Team & HR", pages: ['Employee Attendance', 'Staff Expenses', 'Salaries'] }
   ];
 
@@ -186,7 +195,7 @@ export default function App() {
 
   if (isLoggedIn) {
     return (
-      <div className="fixed inset-0 w-screen h-[100dvh] font-['Poppins'] text-zinc-800 selection:bg-blue-100 overflow-hidden flex items-center justify-center p-4 lg:p-6 print:p-0 print:block overscroll-none bg-zinc-900">
+      <div className="fixed inset-0 w-screen h-[100dvh] font-['Poppins'] text-zinc-800 selection:bg-blue-100 overflow-hidden flex bg-zinc-50 print:bg-white print:block overscroll-none">
         
         {showWarningModal && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 backdrop-blur-md px-4">
@@ -214,11 +223,7 @@ export default function App() {
           </div>
         )}
 
-        <div className="absolute inset-0 z-0 bg-[url('/background.png')] bg-cover bg-center bg-no-repeat print:hidden">
-          <div className="absolute inset-0 bg-black/30"></div>
-        </div>
-
-        <div className="fixed right-3 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-3 print:hidden hidden xl:flex">
+        <div className="fixed right-6 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-3 print:hidden hidden xl:flex">
           {[
             { name: 'Document Vault', icon: '📁', label: 'Vault' },
             { name: 'Project Control', icon: '⚖️', label: 'Control' },
@@ -228,10 +233,10 @@ export default function App() {
             <button 
               key={item.name}
               onClick={() => handlePageSwitch(item.name)}
-              className={`flex items-center gap-2 px-4 py-3 rounded-2xl font-bold text-xs shadow-2xl backdrop-blur-2xl border transition-all hover:scale-105 cursor-pointer ${
+              className={`flex items-center gap-2 px-4 py-3 rounded-2xl font-bold text-xs shadow-xl backdrop-blur-md border transition-all hover:scale-105 cursor-pointer ${
                 activePage === item.name 
-                  ? 'bg-[#1E3A8A] text-white border-[#1E3A8A] shadow-blue-900/50' 
-                  : 'bg-white/70 text-zinc-800 border-white/80 hover:bg-white'
+                  ? 'bg-[#1E3A8A] text-white border-[#1E3A8A] shadow-blue-900/30' 
+                  : 'bg-white text-zinc-800 border-zinc-200 hover:bg-zinc-50'
               }`}
             >
               <span>{item.icon}</span>
@@ -240,31 +245,27 @@ export default function App() {
           ))}
         </div>
 
-        <div className="relative z-10 flex w-full h-full max-w-[1600px] bg-white/80 backdrop-blur-3xl rounded-[2.5rem] shadow-[0_30px_80px_rgba(0,0,0,0.3)] border border-white/60 overflow-hidden print:bg-white print:shadow-none print:border-none print:rounded-none">
+        <div className="relative z-10 flex w-full h-full bg-transparent overflow-hidden print:bg-white">
           
-          <aside className="w-[250px] bg-[#1E3A8A] text-white border-r border-blue-900/50 flex flex-col z-10 flex-shrink-0 print:hidden shadow-xl">
-            <div className="pt-8 pb-4 flex items-center justify-center gap-3">
+          <aside className="w-[260px] bg-[#1E3A8A] text-white flex flex-col z-10 flex-shrink-0 print:hidden shadow-2xl">
+            <div className="pt-8 pb-6 flex items-center justify-center gap-3">
               <div className="bg-white p-2 rounded-xl shadow-sm">
                 <img src={companySettings.logoUrl} alt="Logo" className="h-6 w-auto object-contain" onError={(e) => { e.target.style.display='none'; }} />
               </div>
               <span className="font-bold text-sm tracking-[0.2em] text-white uppercase">Jyanipur</span>
             </div>
 
-            <div className="px-6 py-1">
-              <div className="h-px w-full bg-blue-400/20"></div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto py-3 px-3 flex flex-col gap-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <div className="flex-1 overflow-y-auto py-3 px-4 flex flex-col gap-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               {navigationGroups.map((group) => (
-                <div key={group.title} className="flex flex-col mb-1">
-                  <button onClick={() => toggleGroup(group.title)} className="flex items-center justify-between px-3 py-2.5 w-full text-left cursor-pointer group/nav rounded-lg hover:bg-white/5 transition-colors">
+                <div key={group.title} className="flex flex-col mb-2">
+                  <button onClick={() => toggleGroup(group.title)} className="flex items-center justify-between px-3 py-2 w-full text-left cursor-pointer group/nav rounded-lg hover:bg-white/5 transition-colors">
                     <span className="text-[10px] font-black text-blue-300/70 uppercase tracking-widest group-hover/nav:text-blue-200 transition-colors">{group.title}</span>
                     <svg className={`w-3.5 h-3.5 text-blue-300/50 transition-transform duration-200 ${expandedGroups[group.title] ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
                   </button>
                   {expandedGroups[group.title] && (
-                    <div className="flex flex-col gap-1 mt-1 mb-2">
+                    <div className="flex flex-col gap-1 mt-1 mb-1">
                       {group.pages.map((page) => (
-                        <button key={page} onClick={() => handlePageSwitch(page)} className={`text-left px-3 py-2 rounded-xl text-xs transition-all duration-300 flex items-center ${activePage === page ? 'bg-white/20 text-white font-bold shadow-md shadow-blue-950/40 ring-1 ring-white/30 translate-x-1' : 'text-blue-100/70 hover:bg-white/10 hover:text-white font-medium cursor-pointer'}`}>
+                        <button key={page} onClick={() => handlePageSwitch(page)} className={`text-left px-3 py-2.5 rounded-xl text-xs transition-all duration-300 flex items-center ${activePage === page ? 'bg-white/20 text-white font-bold shadow-md shadow-blue-950/40 ring-1 ring-white/30 translate-x-1' : 'text-blue-100/70 hover:bg-white/10 hover:text-white font-medium cursor-pointer'}`}>
                           {page}
                           {dirtyStates[page] && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_5px_rgba(251,191,36,0.8)]"></span>}
                         </button>
@@ -275,19 +276,19 @@ export default function App() {
               ))}
             </div>
 
-            <div className="p-4 flex flex-col gap-2 border-t border-blue-400/20 bg-[#172e6e]">
-              <button onClick={() => handlePageSwitch('Settings')} className={`w-full py-2.5 rounded-xl text-[10px] uppercase tracking-widest font-bold transition-all duration-300 cursor-pointer shadow-sm border ${activePage === 'Settings' ? 'bg-white text-[#1E3A8A] border-white shadow-md' : 'bg-white/10 border-white/20 text-white hover:bg-white/20'}`}>
+            <div className="p-5 flex flex-col gap-3 bg-[#172e6e]">
+              <button onClick={() => handlePageSwitch('Settings')} className={`w-full py-3 rounded-xl text-[10px] uppercase tracking-widest font-bold transition-all duration-300 cursor-pointer shadow-sm border ${activePage === 'Settings' ? 'bg-white text-[#1E3A8A] border-white shadow-md' : 'bg-white/10 border-white/20 text-white hover:bg-white/20'}`}>
                 Settings
               </button>
-              <button onClick={handleLogout} className="w-full bg-white/10 border border-white/20 text-white hover:bg-red-500 hover:border-red-500 py-2.5 rounded-xl text-[10px] uppercase tracking-widest font-bold transition-all duration-300 cursor-pointer">
+              <button onClick={handleLogout} className="w-full bg-white/10 border border-white/20 text-white hover:bg-red-500 hover:border-red-500 py-3 rounded-xl text-[10px] uppercase tracking-widest font-bold transition-all duration-300 cursor-pointer">
                 Log Out
               </button>
             </div>
           </aside>
 
-          <main className="flex-1 flex flex-col h-full overflow-hidden relative z-10 print:overflow-visible">
+          <main className="flex-1 flex flex-col h-full overflow-hidden relative z-10 bg-zinc-50 print:bg-white print:overflow-visible">
             <div className="flex-1 p-8 lg:p-12 overflow-y-auto print:p-0 print:overflow-visible custom-scrollbar">
-              <div className="max-w-7xl mx-auto print:max-w-none print:mx-0">
+              <div className="max-w-screen-2xl mx-auto print:max-w-none print:mx-0">
                 
                 {visitedPages.has('Dashboard') && <div className={activePage === 'Dashboard' ? 'block' : 'hidden'}><Dashboard setActivePage={handlePageSwitch} /></div>}
                 {visitedPages.has('CRM') && <div className={activePage === 'CRM' ? 'block' : 'hidden'}><CRM /></div>}
@@ -300,6 +301,9 @@ export default function App() {
                 {visitedPages.has('Daily Report') && <div className={activePage === 'Daily Report' ? 'block' : 'hidden'}><SiteManager /></div>}
                 {visitedPages.has('Petty Cash') && <div className={activePage === 'Petty Cash' ? 'block' : 'hidden'}><PettyCash /></div>}
                 {visitedPages.has('Measurement Sheet') && <div className={activePage === 'Measurement Sheet' ? 'block' : 'hidden'}><MeasurementSheet /></div>}
+                
+                {visitedPages.has('Purchase Orders') && <div className={activePage === 'Purchase Orders' ? 'block' : 'hidden'}><PurchaseOrders companySettings={companySettings} updateDirtyState={updateDirtyState} /></div>}
+                
                 {visitedPages.has('Tax Invoice') && <div className={activePage === 'Tax Invoice' ? 'block' : 'hidden'}><TaxInvoice companySettings={companySettings} updateDirtyState={updateDirtyState} /></div>}
                 {visitedPages.has('Estimation') && <div className={activePage === 'Estimation' ? 'block' : 'hidden'}><Estimation companySettings={companySettings} /></div>}
                 {visitedPages.has('Purchases') && <div className={activePage === 'Purchases' ? 'block' : 'hidden'}><Purchases /></div>}
