@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getInvoices, saveInvoice, toggleCancelInvoice } from './db';
-import { sendWhatsAppMessage, buildInvoiceWhatsAppMsg } from './WhatsAppHelper';
+import { sendWhatsAppMessage } from './WhatsAppHelper';
 
 // Helper function to convert number to Indian Currency Words
 function numberToWords(num) {
@@ -32,7 +32,6 @@ function numberToWords(num) {
   return result.trim() + ' Only';
 }
 
-// Indian GST State Codes Dictionary
 const gstStateCodes = {
   '01': 'Jammu & Kashmir (01)', '02': 'Himachal Pradesh (02)', '03': 'Punjab (03)',
   '04': 'Chandigarh (04)', '05': 'Uttarakhand (05)', '06': 'Haryana (06)',
@@ -49,8 +48,7 @@ const gstStateCodes = {
   '37': 'Andhra Pradesh (37)', '38': 'Ladakh (38)'
 };
 
-export default function TaxInvoice({ companySettings = {} }) {
-  // LOAD FROM LOCAL STORAGE ON INITIAL MOUNT
+export default function TaxInvoice({ companySettings = {}, updateDirtyState }) {
   const [currentView, setCurrentView] = useState(() => localStorage.getItem('draft_invoiceView') || 'list');
   
   const [editingId, setEditingId] = useState(() => {
@@ -68,23 +66,15 @@ export default function TaxInvoice({ companySettings = {} }) {
     if (saved && saved !== 'undefined') {
       try { return JSON.parse(saved); } catch (e) {}
     }
+    // APPLY SETTINGS DEFAULTS ON FIRST LOAD
     return {
-      partyName: '', 
-      partyAddress: '', 
-      gstNo: '', 
-      placeOfSupply: 'Telangana (36)',
+      partyName: '', partyAddress: '', gstNo: '', placeOfSupply: 'Telangana (36)',
       date: new Date().toISOString().split('T')[0], 
-      invoiceNo: '', 
-      poNumber: '', 
-      poDate: '', 
-      description: '', 
-      terms: '1. Payment due within 15 days of invoice date.\n2. Goods/Services once rendered cannot be returned.', 
-      bankName: companySettings.bankName || '', 
-      accountName: companySettings.accountName || '', 
-      accountNo: companySettings.accountNo || '', 
-      ifscCode: companySettings.ifscCode || '', 
-      advanceReceived: '', 
-      discount: ''
+      invoiceNo: companySettings.invoicePrefix || '', 
+      poNumber: '', poDate: '', description: '', 
+      terms: companySettings.defaultInvoiceTerms || '', 
+      bankName: companySettings.bankName || '', accountName: companySettings.accountName || '', 
+      accountNo: companySettings.accountNo || '', ifscCode: companySettings.ifscCode || '', advanceReceived: '', discount: ''
     };
   });
 
@@ -93,12 +83,13 @@ export default function TaxInvoice({ companySettings = {} }) {
     if (saved && saved !== 'undefined') {
       try { return JSON.parse(saved); } catch (e) {}
     }
-    return [{ id: 1, description: '', hsn: '', sizeL: '', sizeB: '', no: '', rate: '', gst: 18 }];
+    // APPLY SETTINGS DEFAULTS ON FIRST LOAD
+    return [{ id: 1, description: '', hsn: companySettings.defaultHsnSac || '', sizeL: '', sizeB: '', no: '', rate: '', gst: companySettings.defaultGstRate || 18 }];
   });
 
   const [errors, setErrors] = useState({});
 
-  // AUTO-SAVE DRAFT TO LOCAL STORAGE WHENEVER STATE CHANGES
+  // 1. AUTO-SAVE LOCALLY
   useEffect(() => {
     localStorage.setItem('draft_invoiceView', currentView);
     localStorage.setItem('draft_editingId', JSON.stringify(editingId));
@@ -106,6 +97,21 @@ export default function TaxInvoice({ companySettings = {} }) {
     localStorage.setItem('draft_invoiceDetails', JSON.stringify(invoiceDetails));
     localStorage.setItem('draft_items', JSON.stringify(items));
   }, [currentView, editingId, taxMode, invoiceDetails, items]);
+
+  // 2. TRIGGER DIRTY WARNING TO PARENT APP IF USER TYPES
+  useEffect(() => {
+    if (updateDirtyState) {
+      if (currentView === 'form') {
+        const isDirty = invoiceDetails.partyName !== '' || 
+                        (invoiceDetails.invoiceNo !== '' && invoiceDetails.invoiceNo !== companySettings.invoicePrefix) || 
+                        items.length > 1 || 
+                        items[0].description !== '';
+        updateDirtyState('TaxInvoice', isDirty);
+      } else {
+        updateDirtyState('TaxInvoice', false);
+      }
+    }
+  }, [currentView, invoiceDetails, items, updateDirtyState, companySettings.invoicePrefix]);
 
   const loadInvoicesFromDb = async () => {
     setLoading(true);
@@ -116,19 +122,22 @@ export default function TaxInvoice({ companySettings = {} }) {
 
   useEffect(() => { loadInvoicesFromDb(); }, []);
 
+  // APPLY SETTINGS DYNAMICALLY IF THEY CHANGE IN SETTINGS PAGE
   useEffect(() => {
-    if (!editingId) {
+    if (!editingId && currentView === 'form') {
       setInvoiceDetails(prev => ({
         ...prev,
         bankName: companySettings.bankName || prev.bankName,
         accountName: companySettings.accountName || prev.accountName,
         accountNo: companySettings.accountNo || prev.accountNo,
         ifscCode: companySettings.ifscCode || prev.ifscCode,
+        // Only override prefix/terms if they are currently blank to prevent wiping out draft typing
+        invoiceNo: prev.invoiceNo === '' ? (companySettings.invoicePrefix || '') : prev.invoiceNo,
+        terms: prev.terms === '' ? (companySettings.defaultInvoiceTerms || '') : prev.terms
       }));
     }
-  }, [companySettings, editingId]);
+  }, [companySettings, editingId, currentView]);
 
-  // AUTO DETECT GST STATE CODE & UPDATE PLACE OF SUPPLY
   useEffect(() => {
     const clientStateCode = invoiceDetails.gstNo.trim().substring(0, 2);
     if (clientStateCode.length === 2 && !isNaN(clientStateCode)) {
@@ -149,7 +158,15 @@ export default function TaxInvoice({ companySettings = {} }) {
     }
   }, [invoiceDetails.gstNo]);
 
-  const addItem = () => setItems([...items, { id: Date.now(), description: '', hsn: '', sizeL: '', sizeB: '', no: '', rate: '', gst: 18 }]);
+  // APPLY DEFAULT HSN & GST TO NEW ROWS
+  const addItem = () => setItems([...items, { 
+    id: Date.now(), 
+    description: '', 
+    hsn: companySettings.defaultHsnSac || '', 
+    sizeL: '', sizeB: '', no: '', rate: '', 
+    gst: companySettings.defaultGstRate || 18 
+  }]);
+  
   const updateItem = (id, field, value) => setItems(items.map(item => item.id === id ? { ...item, [field]: value } : item));
   const removeItem = (id) => setItems(items.filter(item => item.id !== id));
 
@@ -219,8 +236,8 @@ export default function TaxInvoice({ companySettings = {} }) {
   const handleSaveOnly = async () => {
     if (await saveInvoiceToState()) {
       alert(`Invoice ${invoiceDetails.invoiceNo} saved!`);
-      setCurrentView('list');
       handleClear(false);
+      setCurrentView('list');
     }
   };
 
@@ -251,7 +268,7 @@ export default function TaxInvoice({ companySettings = {} }) {
       advanceReceived: inv.advanceReceived || '',
       discount: inv.discount || ''
     });
-    setItems(inv.items && inv.items.length > 0 ? inv.items : [{ id: 1, description: '', hsn: '', sizeL: '', sizeB: '', no: '', rate: '', gst: 18 }]);
+    setItems(inv.items && inv.items.length > 0 ? inv.items : [{ id: 1, description: '', hsn: companySettings.defaultHsnSac || '', sizeL: '', sizeB: '', no: '', rate: '', gst: companySettings.defaultGstRate || 18 }]);
     setCurrentView('form');
   };
 
@@ -265,14 +282,11 @@ export default function TaxInvoice({ companySettings = {} }) {
     setTimeout(() => window.print(), 150);
   };
 
+  // USE SETTINGS WHATSAPP TEMPLATE
   const handleSendWhatsApp = (inv) => {
-    const msg = buildInvoiceWhatsAppMsg(
-      inv.client || 'Client',
-      inv.invoiceNo || 'INV',
-      inv.amount || '0',
-      companySettings.companyName || 'Jyanipur Interiors'
-    );
-    sendWhatsAppMessage(inv.phone || '', msg);
+    const template = companySettings.waInvoiceTemplate || 'Hello! Attached is your latest invoice.';
+    const finalMessage = `${template}\n\n*Invoice No:* ${inv.invoiceNo || 'INV'}\n*Amount:* ${inv.amount || '0'}\n*Company:* ${companySettings.companyName || 'Jyanipur Interiors'}`;
+    sendWhatsAppMessage(inv.phone || '', finalMessage);
   };
 
   const handleToggleCancel = async (inv) => {
@@ -283,12 +297,23 @@ export default function TaxInvoice({ companySettings = {} }) {
   const handleClear = (askConfirm = true) => {
     if (!askConfirm || window.confirm('Clear the entire invoice?')) {
       setEditingId(null);
+      
+      // INJECT DEFAULTS ON CLEAR
       setInvoiceDetails({ 
-        partyName: '', partyAddress: '', gstNo: '', placeOfSupply: 'Telangana (36)', date: new Date().toISOString().split('T')[0], invoiceNo: '', poNumber: '', poDate: '', description: '', terms: '1. Payment due within 15 days of invoice date.\n2. Goods/Services once rendered cannot be returned.', 
+        partyName: '', partyAddress: '', gstNo: '', placeOfSupply: 'Telangana (36)', date: new Date().toISOString().split('T')[0], 
+        invoiceNo: companySettings.invoicePrefix || '', 
+        poNumber: '', poDate: '', description: '', 
+        terms: companySettings.defaultInvoiceTerms || '', 
         bankName: companySettings.bankName || '', accountName: companySettings.accountName || '', accountNo: companySettings.accountNo || '', ifscCode: companySettings.ifscCode || '', advanceReceived: '', discount: '' 
       });
-      setItems([{ id: 1, description: '', hsn: '', sizeL: '', sizeB: '', no: '', rate: '', gst: 18 }]);
+      setItems([{ id: 1, description: '', hsn: companySettings.defaultHsnSac || '', sizeL: '', sizeB: '', no: '', rate: '', gst: companySettings.defaultGstRate || 18 }]);
       setErrors({});
+      
+      localStorage.removeItem('draft_invoiceDetails');
+      localStorage.removeItem('draft_items');
+      localStorage.removeItem('draft_taxMode');
+      localStorage.removeItem('draft_editingId');
+      if (updateDirtyState) updateDirtyState('TaxInvoice', false);
     }
   };
 
@@ -388,19 +413,15 @@ export default function TaxInvoice({ companySettings = {} }) {
               <>
                 <button 
                   onClick={() => {
-                    const msg = buildInvoiceWhatsAppMsg(
-                      invoiceDetails.partyName || 'Client',
-                      invoiceDetails.invoiceNo || 'INV',
-                      '₹ ' + (netPayable > 0 ? netPayable : 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-                      companySettings.companyName || 'Jyanipur Interiors'
-                    );
+                    const template = companySettings.waInvoiceTemplate || 'Hello! Attached is your latest invoice.';
+                    const msg = `${template}\n\n*Invoice No:* ${invoiceDetails.invoiceNo || 'INV'}\n*Amount:* ₹ ${(netPayable > 0 ? netPayable : 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\n*Company:* ${companySettings.companyName || 'Jyanipur Interiors'}`;
                     sendWhatsAppMessage('', msg);
                   }} 
-                  className="bg-emerald-600 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md hover:-translate-y-0.5 transition-all flex items-center gap-1"
+                  className="bg-emerald-600 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md hover:-translate-y-0.5 transition-all flex items-center gap-1 cursor-pointer"
                 >
                   💬 WhatsApp
                 </button>
-                <button onClick={() => window.print()} className="bg-zinc-900 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md hover:-translate-y-0.5 transition-all">
+                <button onClick={() => window.print()} className="bg-zinc-900 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md hover:-translate-y-0.5 transition-all cursor-pointer">
                   🖨️ Print / Save PDF
                 </button>
               </>
@@ -490,7 +511,7 @@ export default function TaxInvoice({ companySettings = {} }) {
                     <td className="py-2 px-2 text-right text-xs font-bold text-zinc-900">{rowCalc.totalAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
                     {!isReadOnly && (
                       <td className="py-2 pl-2 text-center">
-                        <button onClick={() => removeItem(item.id)} className="text-zinc-400 hover:text-red-500 font-bold opacity-0 group-hover:opacity-100 transition-all">&times;</button>
+                        <button onClick={() => removeItem(item.id)} className="text-zinc-400 hover:text-red-500 font-bold opacity-0 group-hover:opacity-100 transition-all cursor-pointer">&times;</button>
                       </td>
                     )}
                   </tr>
@@ -557,8 +578,8 @@ export default function TaxInvoice({ companySettings = {} }) {
 
             {!isReadOnly && (
               <div className="flex gap-2 mt-4">
-                <button onClick={handleSaveOnly} className="flex-1 py-3.5 bg-zinc-900 hover:bg-black text-white rounded-2xl font-bold text-[10px] uppercase tracking-wider transition-all shadow-md">Save</button>
-                <button onClick={handleSaveAndPrint} className="flex-[2] py-3.5 bg-emerald-500 hover:bg-emerald-400 text-zinc-900 rounded-2xl font-bold text-[10px] uppercase tracking-wider transition-all shadow-[0_8px_16px_rgba(16,185,129,0.2)]">Save & Print PDF</button>
+                <button onClick={handleSaveOnly} className="flex-1 py-3.5 bg-zinc-900 hover:bg-black text-white rounded-2xl font-bold text-[10px] uppercase tracking-wider transition-all shadow-md cursor-pointer">Save</button>
+                <button onClick={handleSaveAndPrint} className="flex-[2] py-3.5 bg-emerald-500 hover:bg-emerald-400 text-zinc-900 rounded-2xl font-bold text-[10px] uppercase tracking-wider transition-all shadow-[0_8px_16px_rgba(16,185,129,0.2)] cursor-pointer">Save & Print PDF</button>
               </div>
             )}
           </div>
