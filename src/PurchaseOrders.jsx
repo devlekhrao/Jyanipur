@@ -233,90 +233,92 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
     }
   };
 
-  const inputClass = "w-full px-3 py-2.5 rounded-xl border border-white/30 bg-white/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] text-zinc-900 text-xs font-medium transition-all shadow-sm disabled:opacity-75 disabled:cursor-not-allowed";
+  const inputClass = "w-full px-3 py-2.5 rounded-xl border border-zinc-200 bg-zinc-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] text-zinc-900 text-xs font-medium transition-all shadow-sm disabled:opacity-75 disabled:cursor-not-allowed";
   const labelClass = "block text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
 
   const isReadOnly = currentView === 'view';
 
   if (currentView === 'list') {
     return (
-      <div className="w-full font-['Poppins'] print:hidden">
-        <div className="flex justify-between items-end pb-4 border-b border-zinc-300/50 mb-6">
+      <div className="w-full h-full font-['Poppins'] flex flex-col print:hidden">
+        <div className="flex justify-between items-end pb-4 border-b border-zinc-200 mb-6 shrink-0">
           <div>
             <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Purchase Orders</h2>
-            <p className="text-zinc-600 text-xs mt-1 font-medium">Generate official material procurements requests.</p>
+            <p className="text-zinc-500 text-xs mt-1 font-medium">Generate official material procurements requests.</p>
           </div>
-          <button onClick={() => { handleClear(false); setCurrentView('form'); }} className="bg-[#1E3A8A] hover:bg-blue-900 text-white px-5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer shadow-lg hover:-translate-y-0.5">
+          <button onClick={() => { handleClear(false); setCurrentView('form'); }} className="bg-[#1E3A8A] hover:bg-blue-900 text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-md">
             + Create PO
           </button>
         </div>
 
-        <div className="bg-white/60 backdrop-blur-xl border border-zinc-200 rounded-3xl shadow-sm overflow-hidden">
-          <table className="w-full text-left border-collapse whitespace-nowrap">
-            <thead>
-              <tr className="bg-zinc-50/50 text-zinc-400 text-[10px] uppercase tracking-[0.15em] border-b border-zinc-200/80">
-                <th className="py-4 px-6 font-semibold">Date</th>
-                <th className="py-4 px-6 font-semibold">PO No.</th>
-                <th className="py-4 px-6 font-semibold">Vendor</th>
-                <th className="py-4 px-6 font-semibold text-right">Total Amount</th>
-                <th className="py-4 px-6 font-semibold text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-100 text-sm">
-              {loading ? (
-                <tr><td colSpan="5" className="py-12 text-center text-zinc-500 text-xs">Loading Purchase Orders...</td></tr>
-              ) : poList.length === 0 ? (
-                <tr><td colSpan="5" className="py-12 text-center text-zinc-500 text-xs">No POs created yet. Click "+ Create PO" above.</td></tr>
-              ) : (
-                poList.map((po) => (
-                  <tr key={po.id} className={`transition-all ${po.isCancelled ? 'bg-red-50/20 opacity-60' : 'hover:bg-zinc-50'}`}>
-                    <td className={`py-4 px-6 text-xs font-medium ${po.isCancelled ? 'line-through text-zinc-400' : 'text-zinc-600'}`}>{po.date}</td>
-                    <td className={`py-4 px-6 font-bold text-xs ${po.isCancelled ? 'line-through text-zinc-400' : 'text-[#1E3A8A]'}`}>{po.poNo}</td>
-                    <td className={`py-4 px-6 text-xs font-semibold ${po.isCancelled ? 'line-through text-zinc-400' : 'text-zinc-800'}`}>{po.vendorName}</td>
-                    <td className={`py-4 px-6 text-right font-bold text-xs ${po.isCancelled ? 'line-through text-zinc-400' : 'text-emerald-600'}`}>{po.amount}</td>
-                    <td className="py-4 px-6 text-center space-x-3">
-                      {!po.isCancelled ? (
-                        <>
-                          <button onClick={() => handleEdit(po)} className="text-[#1E3A8A] hover:text-blue-900 font-bold cursor-pointer text-[10px] uppercase tracking-wider">Edit</button>
-                          <button onClick={() => handleView(po)} className="text-zinc-600 hover:text-zinc-900 font-bold cursor-pointer text-[10px] uppercase tracking-wider">View</button>
-                          <button onClick={() => handleDirectPrint(po)} className="text-amber-600 hover:text-amber-700 font-bold cursor-pointer text-[10px] uppercase tracking-wider">Print</button>
-                          <button onClick={() => handleSendWhatsApp(po)} className="text-emerald-600 hover:text-emerald-700 font-bold cursor-pointer text-[10px] uppercase tracking-wider">💬 WhatsApp</button>
-                          <button onClick={() => handleToggleCancel(po)} className="text-red-500 hover:text-red-700 font-bold cursor-pointer text-[10px] uppercase tracking-wider">Cancel</button>
-                        </>
-                      ) : (
-                        <>
-                          <button onClick={() => handleView(po)} className="text-zinc-500 hover:text-zinc-900 font-bold cursor-pointer text-[10px] uppercase tracking-wider">View</button>
-                          <button onClick={() => handleToggleCancel(po)} className="text-emerald-600 hover:text-emerald-700 font-bold cursor-pointer text-[10px] uppercase tracking-wider">Restore</button>
-                        </>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+        <div className="bg-white border border-zinc-200 rounded-[2rem] shadow-sm overflow-hidden flex-1 flex flex-col min-h-0">
+          <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <table className="w-full text-left border-collapse whitespace-nowrap">
+              <thead>
+                <tr className="bg-zinc-50/50 text-zinc-400 text-[10px] uppercase tracking-[0.15em] border-b border-zinc-100">
+                  <th className="py-4 px-6 font-semibold">Date</th>
+                  <th className="py-4 px-6 font-semibold">PO No.</th>
+                  <th className="py-4 px-6 font-semibold">Vendor</th>
+                  <th className="py-4 px-6 font-semibold text-right">Total Amount</th>
+                  <th className="py-4 px-6 font-semibold text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100 text-sm">
+                {loading ? (
+                  <tr><td colSpan="5" className="py-12 text-center text-zinc-400 font-medium text-xs">Loading Purchase Orders...</td></tr>
+                ) : poList.length === 0 ? (
+                  <tr><td colSpan="5" className="py-12 text-center text-zinc-400 font-medium text-xs">No POs created yet. Click "+ Create PO" above.</td></tr>
+                ) : (
+                  poList.map((po) => (
+                    <tr key={po.id} className={`transition-all ${po.isCancelled ? 'bg-red-50/20 opacity-60' : 'hover:bg-zinc-50'}`}>
+                      <td className={`py-4 px-6 text-xs font-medium ${po.isCancelled ? 'line-through text-zinc-400' : 'text-zinc-600'}`}>{po.date}</td>
+                      <td className={`py-4 px-6 font-extrabold text-xs ${po.isCancelled ? 'line-through text-zinc-400' : 'text-[#1E3A8A]'}`}>{po.poNo}</td>
+                      <td className={`py-4 px-6 text-xs font-semibold ${po.isCancelled ? 'line-through text-zinc-400' : 'text-zinc-800'}`}>{po.vendorName}</td>
+                      <td className={`py-4 px-6 text-right font-black text-xs ${po.isCancelled ? 'line-through text-zinc-400' : 'text-emerald-600'}`}>{po.amount}</td>
+                      <td className="py-4 px-6 text-center space-x-3">
+                        {!po.isCancelled ? (
+                          <>
+                            <button onClick={() => handleEdit(po)} className="text-[#1E3A8A] hover:text-blue-900 font-bold cursor-pointer text-[10px] uppercase tracking-wider">Edit</button>
+                            <button onClick={() => handleView(po)} className="text-zinc-600 hover:text-zinc-900 font-bold cursor-pointer text-[10px] uppercase tracking-wider">View</button>
+                            <button onClick={() => handleDirectPrint(po)} className="text-amber-600 hover:text-amber-700 font-bold cursor-pointer text-[10px] uppercase tracking-wider">Print</button>
+                            <button onClick={() => handleSendWhatsApp(po)} className="text-emerald-600 hover:text-emerald-700 font-bold cursor-pointer text-[10px] uppercase tracking-wider">💬 WhatsApp</button>
+                            <button onClick={() => handleToggleCancel(po)} className="text-red-500 hover:text-red-700 font-bold cursor-pointer text-[10px] uppercase tracking-wider">Cancel</button>
+                          </>
+                        ) : (
+                          <>
+                            <button onClick={() => handleView(po)} className="text-zinc-500 hover:text-zinc-900 font-bold cursor-pointer text-[10px] uppercase tracking-wider">View</button>
+                            <button onClick={() => handleToggleCancel(po)} className="text-emerald-600 hover:text-emerald-700 font-bold cursor-pointer text-[10px] uppercase tracking-wider">Restore</button>
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full font-['Poppins']">
-      <div className="print:hidden pb-12">
-        <div className="flex items-center justify-between border-b border-zinc-300/50 pb-4 mb-6">
+    <div className="w-full h-full font-['Poppins'] flex flex-col">
+      <div className="print:hidden flex-1 flex flex-col min-h-0 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <div className="flex items-center justify-between border-b border-zinc-200 pb-4 mb-6 shrink-0">
           <h2 className="text-xl font-extrabold text-zinc-900 tracking-tight">
             {isReadOnly ? `Viewing PO ${poDetails.poNo}` : editingId ? `Edit PO ${poDetails.poNo}` : 'Create Purchase Order'}
           </h2>
           <div className="flex gap-2">
-            <button onClick={() => { setCurrentView('list'); handleClear(false); }} className="text-zinc-600 hover:text-zinc-900 text-[10px] font-bold uppercase tracking-[0.15em] transition-colors cursor-pointer bg-white/40 px-4 py-2 rounded-xl shadow-sm border border-white/50">
+            <button onClick={() => { setCurrentView('list'); handleClear(false); }} className="text-zinc-600 hover:text-zinc-900 text-[10px] font-bold uppercase tracking-[0.15em] transition-colors cursor-pointer bg-white px-4 py-2 rounded-xl shadow-sm border border-zinc-200">
               &larr; Back
             </button>
             {isReadOnly && (
               <>
-                <button onClick={() => handleSendWhatsApp(poDetails)} className="bg-emerald-600 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md hover:-translate-y-0.5 transition-all flex items-center gap-1 cursor-pointer">
+                <button onClick={() => handleSendWhatsApp(poDetails)} className="bg-emerald-600 text-white px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider shadow-md hover:bg-emerald-500 transition-all flex items-center gap-1 cursor-pointer">
                   💬 WhatsApp
                 </button>
-                <button onClick={() => window.print()} className="bg-[#1E3A8A] text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md hover:-translate-y-0.5 transition-all cursor-pointer">
+                <button onClick={() => window.print()} className="bg-[#1E3A8A] text-white px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider shadow-md hover:bg-blue-900 transition-all cursor-pointer">
                   🖨️ Print / Save PDF
                 </button>
               </>
@@ -324,10 +326,10 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-4 mb-4">
+        <div className="flex flex-wrap gap-4 mb-4 shrink-0">
           <div className="flex-[2] min-w-[200px]">
             <label className={labelClass}>Vendor / Supplier Name <span className="text-red-500">*</span></label>
-            <input disabled={isReadOnly} type="text" value={poDetails.vendorName} onChange={(e) => { setPoDetails({...poDetails, vendorName: e.target.value}); if(errors.vendorName) setErrors({...errors, vendorName: false}); }} className={`${inputClass} ${errors.vendorName ? 'ring-1 ring-red-400 bg-red-50/50' : ''}`} />
+            <input disabled={isReadOnly} type="text" value={poDetails.vendorName} onChange={(e) => { setPoDetails({...poDetails, vendorName: e.target.value}); if(errors.vendorName) setErrors({...errors, vendorName: false}); }} className={`${inputClass} ${errors.vendorName ? 'ring-1 ring-red-400 bg-red-50' : ''}`} />
           </div>
           <div className="flex-1 min-w-[150px]">
             <label className={labelClass}>Vendor GSTIN</label>
@@ -339,10 +341,10 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-4 mb-8">
+        <div className="flex flex-wrap gap-4 mb-8 shrink-0">
           <div className="flex-1 min-w-[120px]">
             <label className={labelClass}>PO No. <span className="text-red-500">*</span></label>
-            <input disabled={isReadOnly} type="text" value={poDetails.poNo} onChange={(e) => { setPoDetails({...poDetails, poNo: e.target.value}); if(errors.poNo) setErrors({...errors, poNo: false}); }} className={`${inputClass} ${errors.poNo ? 'ring-1 ring-red-400 bg-red-50/50' : ''}`} />
+            <input disabled={isReadOnly} type="text" value={poDetails.poNo} onChange={(e) => { setPoDetails({...poDetails, poNo: e.target.value}); if(errors.poNo) setErrors({...errors, poNo: false}); }} className={`${inputClass} ${errors.poNo ? 'ring-1 ring-red-400 bg-red-50' : ''}`} />
           </div>
           <div className="flex-1 min-w-[120px]">
             <label className={labelClass}>PO Date</label>
@@ -358,10 +360,10 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
           </div>
         </div>
 
-        <div className="mb-4 overflow-x-auto bg-white/60 backdrop-blur-xl border border-zinc-200 rounded-3xl p-4 shadow-sm">
+        <div className="mb-6 overflow-x-auto bg-white border border-zinc-200 rounded-[2rem] p-5 shadow-sm shrink-0">
           <table className="w-full text-left border-collapse whitespace-nowrap">
             <thead>
-              <tr className="text-zinc-500 text-[9px] uppercase tracking-widest border-b border-zinc-200">
+              <tr className="text-zinc-400 text-[9px] uppercase tracking-widest border-b border-zinc-100">
                 <th className="py-3 pr-4 font-bold">Item Description (Material)</th>
                 <th className="py-3 px-2 font-bold w-20 text-center">UOM</th>
                 <th className="py-3 px-2 font-bold w-20 text-center">Qty</th>
@@ -404,13 +406,13 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
             </tbody>
           </table>
           {!isReadOnly && (
-            <button onClick={addItem} className="mt-4 px-4 py-2 bg-[#1E3A8A]/10 hover:bg-[#1E3A8A]/20 text-[#1E3A8A] text-[10px] font-bold uppercase tracking-[0.15em] rounded-xl transition-all cursor-pointer">
+            <button onClick={addItem} className="mt-4 px-4 py-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 text-[10px] font-bold uppercase tracking-[0.15em] rounded-xl transition-all cursor-pointer">
               + Add Material
             </button>
           )}
         </div>
 
-        <div className="flex flex-col lg:flex-row justify-between gap-6">
+        <div className="flex flex-col lg:flex-row justify-between gap-6 pb-8 shrink-0">
           <div className="flex-1 space-y-5">
             <div>
               <label className={labelClass}>Shipping / Delivery Address</label>

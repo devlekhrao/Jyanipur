@@ -17,28 +17,35 @@ export default function Salaries() {
 
   const loadData = async () => {
     setLoading(true);
-    const [emps, att, pays, allExpenses] = await Promise.all([
-      getEmployees(),
-      getMonthlyAttendance(selectedYear, selectedMonth),
-      getMonthlyPayouts(selectedYear, selectedMonth),
-      getEmployeeExpenses()
-    ]);
-    
-    // Filter expenses for "Salary Advance" in the selected month/year
-    const monthlyAdvances = {};
-    allExpenses.forEach(exp => {
-      if (!exp.date) return;
-      const d = new Date(exp.date);
-      if (d.getMonth() + 1 === selectedMonth && d.getFullYear() === selectedYear && exp.category === 'Salary Advance') {
-        monthlyAdvances[exp.empId] = (monthlyAdvances[exp.empId] || 0) + exp.amount;
-      }
-    });
+    try {
+      const [emps, att, pays, allExpenses] = await Promise.all([
+        getEmployees(),
+        getMonthlyAttendance(selectedYear, selectedMonth),
+        getMonthlyPayouts(selectedYear, selectedMonth),
+        getEmployeeExpenses()
+      ]);
+      
+      const monthlyAdvances = {};
+      (allExpenses || []).forEach(exp => {
+        if (!exp.date) return;
+        const d = new Date(exp.date);
+        if (d.getMonth() + 1 === selectedMonth && d.getFullYear() === selectedYear && exp.category === 'Salary Advance') {
+          monthlyAdvances[exp.empId] = (monthlyAdvances[exp.empId] || 0) + exp.amount;
+        }
+      });
 
-    setEmployees(emps.filter(e => e.status === 'Active'));
-    setAttendance(att);
-    setPayouts(pays);
-    setAdvances(monthlyAdvances);
-    setSelectedEmps(new Set()); 
+      setEmployees((emps || []).filter(e => e.status === 'Active'));
+      setAttendance(att || {});
+      setPayouts(pays || {});
+      setAdvances(monthlyAdvances);
+      setSelectedEmps(new Set()); 
+    } catch (e) {
+      console.warn("Ensure salary and payroll functions exist in db.js");
+      setEmployees([]);
+      setAttendance({});
+      setPayouts({});
+      setAdvances({});
+    }
     setLoading(false);
   };
 
@@ -65,7 +72,6 @@ export default function Salaries() {
     const payoutStatus = payouts[emp.id];
     const isPaidOrPending = !!payoutStatus;
 
-    // Math: Gross - Advance = Net Payable (Cannot go below 0 for ICICI transfer)
     const rawNet = Math.round(grossPay) - advanceDeduction;
     const netPayable = isPaidOrPending ? 0 : Math.max(0, rawNet);
     
@@ -116,7 +122,7 @@ export default function Salaries() {
     if (selectedEmps.size === 0) return;
 
     if (projectedBalance < 0) {
-      alert("Insufficient funds in the simulated bank account to process this batch.");
+      alert("Insufficient funds in the bank account to process this batch.");
       return;
     }
 
@@ -149,22 +155,22 @@ export default function Salaries() {
   const isAllSelected = allSelectableCount > 0 && selectedEmps.size === allSelectableCount;
 
   return (
-    <div className="w-full font-['Poppins'] pb-12">
+    <div className="w-full h-full font-['Poppins'] flex flex-col">
       
       {/* Header & Filters */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end pb-4 border-b border-zinc-300/50 mb-6 gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end pb-4 border-b border-zinc-200 mb-6 gap-4 shrink-0">
         <div>
-          <h2 className="text-2xl font-bold text-zinc-800 tracking-tight">Payroll & Disbursements</h2>
+          <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Payroll & Disbursements</h2>
           <p className="text-zinc-500 text-xs mt-1 font-medium">Advances are automatically deducted. Select employees to calculate payout projection.</p>
         </div>
 
-        <div className="flex items-center gap-1.5 h-9 bg-white/60 border border-zinc-200/60 rounded-xl px-2 shadow-sm">
-          <select value={selectedMonth} onChange={(e) => setSelectedMonth(Number(e.target.value))} className="bg-transparent border-none text-xs font-semibold text-zinc-700 outline-none cursor-pointer px-1">
+        <div className="flex items-center gap-1.5 h-10 bg-white border border-zinc-200 rounded-2xl px-3 shadow-sm">
+          <select value={selectedMonth} onChange={(e) => setSelectedMonth(Number(e.target.value))} className="bg-transparent border-none text-xs font-bold text-zinc-800 outline-none cursor-pointer px-1">
             {Array.from({length: 12}, (_, i) => (
               <option key={i+1} value={i+1}>{new Date(2000, i).toLocaleString('en-US', { month: 'long' })}</option>
             ))}
           </select>
-          <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))} className="bg-transparent border-none text-xs font-semibold text-zinc-700 outline-none cursor-pointer pr-1">
+          <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))} className="bg-transparent border-none text-xs font-bold text-zinc-800 outline-none cursor-pointer pr-1">
             <option value={currentDate.getFullYear() - 1}>{currentDate.getFullYear() - 1}</option>
             <option value={currentDate.getFullYear()}>{currentDate.getFullYear()}</option>
           </select>
@@ -172,69 +178,69 @@ export default function Salaries() {
       </div>
 
       {/* Projection Dashboard */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white/50 backdrop-blur-xl p-5 rounded-3xl border border-white/60 shadow-sm">
-          <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest block mb-1">Current Bank Balance</span>
-          <p className="text-xl font-bold text-zinc-800">₹ {currentBankBalance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6 shrink-0">
+        <div className="bg-white p-6 rounded-[2rem] border border-zinc-200 shadow-sm">
+          <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1">Current Bank Balance</span>
+          <p className="text-2xl font-black text-zinc-900">₹ {currentBankBalance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
         </div>
-        <div className="bg-white/50 backdrop-blur-xl p-5 rounded-3xl border border-white/60 shadow-sm">
-          <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest block mb-1">Total Due Payroll</span>
-          <p className="text-xl font-bold text-zinc-600">₹ {totalPayrollAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+        <div className="bg-white p-6 rounded-[2rem] border border-zinc-200 shadow-sm">
+          <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1">Total Due Payroll</span>
+          <p className="text-2xl font-black text-zinc-800">₹ {totalPayrollAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
         </div>
-        <div className="bg-amber-50/50 backdrop-blur-xl p-5 rounded-3xl border border-amber-200/60 shadow-sm">
-          <span className="text-[10px] font-semibold text-amber-600 uppercase tracking-widest block mb-1">Selected Payout Total</span>
-          <p className="text-xl font-bold text-amber-700">₹ {selectedPayrollAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+        <div className="bg-amber-50/70 p-6 rounded-[2rem] border border-amber-200/80 shadow-sm">
+          <span className="text-[9px] font-extrabold text-amber-600 uppercase tracking-widest block mb-1">Selected Payout Total</span>
+          <p className="text-2xl font-black text-amber-700">₹ {selectedPayrollAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
         </div>
-        <div className={`p-5 rounded-3xl shadow-md ${projectedBalance < 0 ? 'bg-red-500 text-white' : 'bg-zinc-800 text-white'}`}>
-          <span className="text-[10px] font-semibold uppercase tracking-widest block mb-1 opacity-80">Projected Balance</span>
-          <p className="text-xl font-bold">₹ {projectedBalance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+        <div className={`p-6 rounded-[2rem] shadow-lg border ${projectedBalance < 0 ? 'bg-red-600 border-red-600 text-white' : 'bg-zinc-900 border-zinc-900 text-white'}`}>
+          <span className="text-[9px] font-extrabold uppercase tracking-widest block mb-1 opacity-80">Projected Balance</span>
+          <p className="text-2xl font-black">₹ {projectedBalance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
         </div>
       </div>
 
       {/* Action Bar */}
-      <div className={`mb-6 p-4 rounded-3xl flex justify-between items-center transition-all ${selectedEmps.size > 0 ? 'bg-orange-50 border border-orange-200 opacity-100 shadow-sm' : 'opacity-0 pointer-events-none h-0 p-0 m-0 overflow-hidden'}`}>
+      <div className={`mb-6 p-4 rounded-2xl flex justify-between items-center transition-all shrink-0 ${selectedEmps.size > 0 ? 'bg-amber-500 text-zinc-900 shadow-md opacity-100' : 'opacity-0 pointer-events-none h-0 p-0 m-0 overflow-hidden'}`}>
         <div>
-          <span className="text-sm font-bold text-orange-800">{selectedEmps.size} Employees Selected</span>
-          <p className="text-[10px] font-semibold text-orange-600 uppercase tracking-widest mt-0.5">Totaling ₹ {selectedPayrollAmount.toLocaleString('en-IN')}</p>
+          <span className="text-sm font-extrabold">{selectedEmps.size} Employees Selected</span>
+          <p className="text-[10px] font-bold uppercase tracking-widest mt-0.5 opacity-90">Totaling ₹ {selectedPayrollAmount.toLocaleString('en-IN')}</p>
         </div>
         <button 
           onClick={handleBatchDisburse}
           disabled={projectedBalance < 0}
-          className={`px-6 py-3 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all shadow-md flex items-center gap-2 ${
+          className={`px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-sm flex items-center gap-2 cursor-pointer ${
             projectedBalance < 0 
-            ? 'bg-red-100 text-red-500 cursor-not-allowed border border-red-200' 
-            : 'bg-orange-500 hover:bg-orange-600 text-white hover:-translate-y-0.5'
+            ? 'bg-red-100 text-red-600 cursor-not-allowed border border-red-200' 
+            : 'bg-zinc-900 hover:bg-black text-white'
           }`}
         >
           <span>⚡</span> {projectedBalance < 0 ? 'Insufficient Funds' : 'Initiate Batch Payout'}
         </button>
       </div>
 
-      {/* Modern Payroll Ledger (Card Layout instead of Table) */}
-      <div className="w-full">
+      {/* Modern Payroll Ledger */}
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         {/* Header Row for Select All */}
-        <div className="flex items-center px-4 py-2 mb-2">
+        <div className="flex items-center px-4 py-2 mb-2 shrink-0">
           <input 
             type="checkbox" 
             checked={isAllSelected}
             onChange={handleSelectAll}
             disabled={allSelectableCount === 0}
-            className="w-4 h-4 rounded text-orange-500 focus:ring-orange-500 cursor-pointer border-zinc-300 mr-4"
+            className="w-4 h-4 rounded text-[#1E3A8A] focus:ring-[#1E3A8A] cursor-pointer border-zinc-300 mr-4"
           />
-          <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest">Select All Payables</span>
+          <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest">Select All Payables</span>
         </div>
 
         {loading ? (
-          <div className="py-12 text-center text-zinc-500 font-medium">Calculating payroll...</div>
+          <div className="py-20 text-center text-zinc-400 font-medium text-xs flex-1">Calculating payroll...</div>
         ) : payrollData.length === 0 ? (
-          <div className="py-12 text-center text-zinc-400 font-medium">No active employees found.</div>
+          <div className="py-20 text-center text-zinc-400 font-medium text-xs bg-white border border-dashed border-zinc-200 rounded-[2rem] flex-1 flex items-center justify-center">No active employees found.</div>
         ) : (
-          <div className="space-y-3">
+          <div className="flex-1 overflow-y-auto space-y-3 pr-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {payrollData.map(emp => (
               <div 
                 key={emp.id} 
-                className={`flex flex-col xl:flex-row items-center justify-between p-4 rounded-3xl border transition-all ${
-                  selectedEmps.has(emp.id) ? 'bg-orange-50/40 border-orange-200 shadow-sm' : 'bg-white/60 border-white/80 hover:bg-white hover:shadow-md'
+                className={`flex flex-col xl:flex-row items-center justify-between p-5 rounded-2xl border transition-all ${
+                  selectedEmps.has(emp.id) ? 'bg-amber-50/60 border-amber-300 shadow-sm' : 'bg-white border-zinc-200 hover:shadow-sm'
                 }`}
               >
                 
@@ -245,46 +251,46 @@ export default function Salaries() {
                     checked={selectedEmps.has(emp.id)}
                     onChange={() => handleSelectOne(emp.id)}
                     disabled={!emp.canBePaid}
-                    className="w-4 h-4 rounded text-orange-500 focus:ring-orange-500 cursor-pointer border-zinc-300 disabled:opacity-30 disabled:cursor-not-allowed mr-4"
+                    className="w-4 h-4 rounded text-[#1E3A8A] focus:ring-[#1E3A8A] cursor-pointer border-zinc-300 disabled:opacity-30 disabled:cursor-not-allowed mr-4"
                   />
-                  <div className="w-10 h-10 rounded-full bg-zinc-900 text-white flex items-center justify-center font-bold text-sm mr-3 shadow-sm flex-shrink-0">
+                  <div className="w-10 h-10 rounded-2xl bg-[#1E3A8A] text-amber-400 flex items-center justify-center font-black text-sm mr-3 shadow-sm flex-shrink-0">
                     {emp.fullName.substring(0, 1).toUpperCase()}
                   </div>
                   <div>
-                    <h4 className={`text-sm font-bold ${selectedEmps.has(emp.id) ? 'text-orange-900' : 'text-zinc-800'}`}>{emp.fullName}</h4>
-                    <p className={`text-[10px] ${!emp.accountNo ? 'text-red-400 font-medium' : 'text-zinc-500 font-mono'}`}>
+                    <h4 className="text-sm font-extrabold text-zinc-900">{emp.fullName}</h4>
+                    <p className={`text-[10px] ${!emp.accountNo ? 'text-red-500 font-bold' : 'text-zinc-400 font-mono font-medium'}`}>
                       {emp.accountNo ? `A/c: ${emp.accountNo.slice(-4)} | ${emp.ifscCode}` : '⚠️ Bank Details Missing'}
                     </p>
                   </div>
                 </div>
 
                 {/* 2. Middle: Visual Math Breakdown */}
-                <div className="flex items-center gap-2 xl:gap-4 w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0 hide-scrollbar">
+                <div className="flex items-center gap-2 xl:gap-4 w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                   
                   {/* Gross Block */}
-                  <div className="flex flex-col items-center bg-zinc-100/50 px-4 py-2 rounded-2xl min-w-[110px]">
-                    <span className="text-[9px] font-semibold text-zinc-400 uppercase tracking-widest">Gross Pay</span>
-                    <span className="text-xs font-bold text-zinc-700">₹{emp.grossPay.toLocaleString('en-IN')}</span>
-                    <span className="text-[8px] text-zinc-400 mt-0.5">{emp.totalDays} Days @ {emp.payType}</span>
+                  <div className="flex flex-col items-center bg-zinc-50 border border-zinc-200/80 px-4 py-2 rounded-xl min-w-[110px]">
+                    <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest">Gross Pay</span>
+                    <span className="text-xs font-black text-zinc-900">₹{emp.grossPay.toLocaleString('en-IN')}</span>
+                    <span className="text-[8px] text-zinc-500 mt-0.5 font-medium">{emp.totalDays} Days @ {emp.payType}</span>
                   </div>
 
-                  <span className="text-zinc-300 font-bold">-</span>
+                  <span className="text-zinc-400 font-black">-</span>
 
                   {/* Advance Block */}
-                  <div className={`flex flex-col items-center px-4 py-2 rounded-2xl min-w-[110px] ${emp.advanceDeduction > 0 ? 'bg-red-50/50' : 'bg-zinc-100/50'}`}>
-                    <span className="text-[9px] font-semibold text-zinc-400 uppercase tracking-widest">Advances</span>
-                    <span className={`text-xs font-bold ${emp.advanceDeduction > 0 ? 'text-red-500' : 'text-zinc-400'}`}>
+                  <div className={`flex flex-col items-center px-4 py-2 rounded-xl min-w-[110px] border ${emp.advanceDeduction > 0 ? 'bg-red-50/70 border-red-100' : 'bg-zinc-50 border-zinc-200/80'}`}>
+                    <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest">Advances</span>
+                    <span className={`text-xs font-black ${emp.advanceDeduction > 0 ? 'text-red-500' : 'text-zinc-400'}`}>
                       ₹{emp.advanceDeduction.toLocaleString('en-IN')}
                     </span>
-                    <span className="text-[8px] text-zinc-400 mt-0.5">From Staff Exp</span>
+                    <span className="text-[8px] text-zinc-500 mt-0.5 font-medium">From Staff Exp</span>
                   </div>
 
-                  <span className="text-zinc-300 font-bold">=</span>
+                  <span className="text-zinc-400 font-black">=</span>
 
                   {/* Net Block */}
-                  <div className={`flex flex-col items-center px-4 py-2 rounded-2xl min-w-[110px] shadow-inner ${emp.netPayable > 0 && !emp.isPaidOrPending ? 'bg-emerald-50/50 border border-emerald-100' : 'bg-zinc-100/50'}`}>
-                    <span className="text-[9px] font-semibold text-zinc-500 uppercase tracking-widest">Net Payable</span>
-                    <span className={`text-sm font-bold ${emp.netPayable > 0 && !emp.isPaidOrPending ? 'text-emerald-700' : 'text-zinc-800'}`}>
+                  <div className={`flex flex-col items-center px-4 py-2 rounded-xl min-w-[110px] border ${emp.netPayable > 0 && !emp.isPaidOrPending ? 'bg-emerald-50/70 border-emerald-100' : 'bg-zinc-50 border-zinc-200/80'}`}>
+                    <span className="text-[9px] font-extrabold text-zinc-500 uppercase tracking-widest">Net Payable</span>
+                    <span className={`text-sm font-black ${emp.netPayable > 0 && !emp.isPaidOrPending ? 'text-emerald-700' : 'text-zinc-900'}`}>
                       ₹{emp.netPayable.toLocaleString('en-IN')}
                     </span>
                   </div>
@@ -294,17 +300,17 @@ export default function Salaries() {
                 {/* 3. Right: Status */}
                 <div className="w-full xl:w-1/6 flex justify-end items-center mt-4 xl:mt-0">
                   {emp.isPaidOrPending ? (
-                    <span className={`px-3 py-1.5 rounded-xl text-[10px] font-semibold uppercase tracking-wider ${
+                    <span className={`px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider ${
                       emp.payoutStatus.status === 'API_PENDING' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
                     }`}>
                       {emp.payoutStatus.status === 'API_PENDING' ? 'Syncing ICICI...' : 'Paid'}
                     </span>
                   ) : emp.netPayable === 0 ? (
-                    <span className="px-3 py-1.5 rounded-xl text-[10px] font-medium text-zinc-400 bg-zinc-100 uppercase tracking-wider">No Dues</span>
+                    <span className="px-3 py-1.5 rounded-xl text-[10px] font-bold text-zinc-400 bg-zinc-100 uppercase tracking-wider">No Dues</span>
                   ) : !emp.accountNo ? (
-                    <span className="px-3 py-1.5 rounded-xl text-[10px] font-medium text-red-500 bg-red-50 border border-red-100 uppercase tracking-wider">Setup Reqd</span>
+                    <span className="px-3 py-1.5 rounded-xl text-[10px] font-bold text-red-500 bg-red-50 border border-red-100 uppercase tracking-wider">Setup Reqd</span>
                   ) : (
-                    <span className="px-3 py-1.5 rounded-xl text-[10px] font-medium text-zinc-500 bg-white border border-zinc-200 shadow-sm uppercase tracking-wider">Unpaid</span>
+                    <span className="px-3 py-1.5 rounded-xl text-[10px] font-bold text-zinc-600 bg-zinc-100 border border-zinc-200 uppercase tracking-wider">Unpaid</span>
                   )}
                 </div>
 
