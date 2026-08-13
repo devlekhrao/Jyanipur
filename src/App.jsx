@@ -286,32 +286,38 @@ export default function App() {
   }
 
   // ==========================================
-  // LOGGED OUT: CLEAN FULL SCREEN LOGIN
+  // LOGGED OUT: LOGIN SCREEN (Restored Background & Glassmorphism)
   // ==========================================
   return (
-    <div className="flex w-screen h-screen bg-zinc-50 items-center justify-center font-['Poppins']">
-      <div className="w-full max-w-md bg-white p-10 rounded-2xl shadow-xl border border-zinc-200">
-        <div className="mb-8 text-center">
-          <div className="flex justify-center mb-4">
-            <img src="/jyanipur.png" alt="Jyanipur" className="h-12 w-auto" onError={(e) => { e.target.style.display='none'; }} />
+    <div className="fixed inset-0 w-screen h-[100dvh] flex items-center justify-center bg-[url('/background.png')] bg-cover bg-center bg-no-repeat px-4 font-['Poppins'] overflow-hidden overscroll-none bg-zinc-900">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+
+      <div className="max-w-md w-full bg-white/90 backdrop-blur-3xl rounded-[2.5rem] shadow-[0_40px_80px_rgba(0,0,0,0.4)] border border-white/40 p-10 relative z-10">
+        <div className="mb-10 flex flex-col items-center text-center">
+          <div className="bg-white p-4 rounded-3xl mb-5 shadow-sm border border-zinc-100">
+            <img src="/jyanipur.png" alt="Jyanipur Logo" className="h-12 w-auto object-contain" onError={(e) => { e.target.style.display='none'; }} />
           </div>
           <h1 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Jyanipur</h1>
-          <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest mt-1">Portal Access</p>
+          <p className="text-zinc-500 text-xs uppercase tracking-widest mt-2 font-bold">Portal Access</p>
         </div>
 
-        {error && <div className="mb-6 p-3 bg-red-50 text-red-600 text-xs rounded-xl font-bold text-center">{error}</div>}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50/90 text-red-600 text-xs rounded-2xl border border-red-200 text-center font-bold tracking-wide">
+            {error}
+          </div>
+        )}
 
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={handleLogin} className="space-y-5">
           <div>
-            <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1">Email</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]" required />
+            <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2 ml-1">Work Email</label>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-5 py-4 rounded-2xl border border-zinc-200 bg-zinc-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] text-zinc-900 text-sm font-medium transition-all shadow-inner" required />
           </div>
           <div>
-            <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1">Password</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]" required />
+            <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2 ml-1">Passkey</label>
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-5 py-4 rounded-2xl border border-zinc-200 bg-zinc-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] text-zinc-900 text-sm font-medium transition-all shadow-inner" required />
           </div>
-          <button type="submit" className="w-full py-3.5 bg-[#1E3A8A] hover:bg-blue-900 text-white font-bold rounded-xl text-sm mt-4 transition-colors cursor-pointer">
-            Sign In
+          <button type="submit" className="w-full py-4 bg-[#1E3A8A] hover:bg-blue-900 text-white font-bold rounded-2xl transition-all mt-6 cursor-pointer text-sm shadow-[0_10px_20px_rgba(30,58,138,0.2)] hover:shadow-[0_15px_25px_rgba(30,58,138,0.3)] hover:-translate-y-1 tracking-wide">
+            Enter Portal
           </button>
         </form>
       </div>
