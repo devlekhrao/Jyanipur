@@ -129,7 +129,20 @@ export default function App() {
     showRemarksOnPdf: true,
     showSignatoryOnPdf: true,
     showGstBreakdownOnPdf: true,
-    pdfFooterDisclaimer: 'Thank you for choosing Jyanipur Interiors. For any query, contact accounts@jyanipur.in'
+    pdfFooterDisclaimer: 'Thank you for choosing Jyanipur Interiors. For any query, contact accounts@jyanipur.in',
+    
+    // NEW SETTINGS ADDED BELOW
+    invoicePrefix: 'JIC/FY26-27/',
+    poPrefix: 'PO/',
+    woPrefix: 'WO/',
+    defaultGstRate: '18',
+    defaultTdsRate: '2',
+    defaultHsnSac: '9954',
+    defaultInvoiceTerms: '1. Payment due within 15 days of invoice date.\n2. Goods/Services once rendered cannot be returned.',
+    defaultEstimateTerms: '1. Validity of this estimate is 30 days.\n2. 50% advance required to commence work.',
+    defaultPOTerms: '1. Material must match approved specifications.\n2. Delivery delayed beyond 7 days will attract a 5% penalty.',
+    waInvoiceTemplate: 'Hello! Attached is your latest invoice from Jyanipur Interiors. Please let us know if you have any questions.',
+    waPoTemplate: 'Hello, please find our official Purchase Order attached. Kindly confirm receipt and delivery schedule.'
   };
 
   const [companySettings, setCompanySettings] = useState(() => {
