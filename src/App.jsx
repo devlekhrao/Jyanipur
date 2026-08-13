@@ -146,6 +146,30 @@ export default function App() {
   const inputClass = "w-full px-4 py-3 rounded-xl border-none bg-white/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] text-zinc-900 text-xs font-medium transition-all shadow-sm";
   const labelClass = "block text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
 
+  // --- LOGICAL SIDEBAR CATEGORIZATION ---
+  const navigationGroups = [
+    {
+      title: "Workspace",
+      pages: ['Dashboard', 'CRM', 'Projects', 'Task Board', 'Document Vault']
+    },
+    {
+      title: "Site Execution",
+      pages: ['Project Control', 'Daily Report', 'Site Snags', 'Measurement Sheet']
+    },
+    {
+      title: "Finance & Sales",
+      pages: ['Estimation', 'Tax Invoice', 'Project P&L', 'Income', 'Petty Cash', 'GST Filing']
+    },
+    {
+      title: "Supply Chain",
+      pages: ['Purchases', 'Vendor Ledger', 'Inventory', 'Rate Book', 'Tools & Assets', 'Subcontractors']
+    },
+    {
+      title: "Team & HR",
+      pages: ['Employee Attendance', 'Staff Expenses', 'Salaries']
+    }
+  ];
+
   if (isLoggedIn) {
     return (
       <div className="fixed inset-0 w-screen h-[100dvh] font-['Poppins'] text-zinc-800 selection:bg-blue-100 overflow-hidden flex items-center justify-center p-4 lg:p-6 print:p-0 print:block overscroll-none bg-zinc-900">
@@ -217,23 +241,27 @@ export default function App() {
               <div className="h-px w-full bg-blue-400/20"></div>
             </div>
 
-            <div className="flex-1 overflow-y-auto py-3 px-4 flex flex-col gap-1.5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-              {[
-                'Dashboard', 'CRM', 'Projects', 'Task Board', 'Project Control', 'Site Snags', 'Document Vault', 'Project P&L', 'Daily Report', 'Petty Cash', 'Measurement Sheet', 'Estimation', 'Tax Invoice', 'Purchases', 'Vendor Ledger', 'Inventory', 'Tools & Assets', 'Rate Book', 'Subcontractors', 'Employee Attendance', 'Staff Expenses', 'Salaries', 'Income', 'GST Filing'
-              ].map((page) => (
-                <button
-                  key={page}
-                  onClick={() => handlePageSwitch(page)}
-                  className={`text-left px-4 py-2.5 rounded-xl text-xs transition-all duration-300 flex items-center ${
-                    activePage === page 
-                      ? 'bg-white/20 text-white font-bold shadow-md shadow-blue-950/40 ring-1 ring-white/30 translate-x-1' 
-                      : 'text-blue-100/70 hover:bg-white/10 hover:text-white font-medium cursor-pointer'
-                  }`}
-                >
-                  {page}
-                  {/* Amber indicator dot if the page has unsaved changes */}
-                  {dirtyStates[page] && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_5px_rgba(251,191,36,0.8)]"></span>}
-                </button>
+            {/* CATEGORIZED NAVIGATION MENU */}
+            <div className="flex-1 overflow-y-auto py-3 px-3 flex flex-col gap-5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              {navigationGroups.map((group) => (
+                <div key={group.title} className="flex flex-col gap-1">
+                  <span className="px-3 text-[9px] font-black text-blue-300/60 uppercase tracking-widest mb-1.5">{group.title}</span>
+                  {group.pages.map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => handlePageSwitch(page)}
+                      className={`text-left px-3 py-2 rounded-xl text-xs transition-all duration-300 flex items-center ${
+                        activePage === page 
+                          ? 'bg-white/20 text-white font-bold shadow-md shadow-blue-950/40 ring-1 ring-white/30 translate-x-1' 
+                          : 'text-blue-100/70 hover:bg-white/10 hover:text-white font-medium cursor-pointer'
+                      }`}
+                    >
+                      {page}
+                      {/* Amber indicator dot if the page has unsaved changes */}
+                      {dirtyStates[page] && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_5px_rgba(251,191,36,0.8)]"></span>}
+                    </button>
+                  ))}
+                </div>
               ))}
             </div>
 
