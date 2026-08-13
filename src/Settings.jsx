@@ -2,13 +2,11 @@ import React from 'react';
 
 export default function Settings({ companySettings, setCompanySettings }) {
   
-  // Save to Local Storage
   const handleSaveSettings = () => {
     localStorage.setItem('jyanipur_companySettings', JSON.stringify(companySettings));
     alert('Settings Saved Successfully!');
   };
 
-  // Handle Signature Image Upload
   const handleSignatureUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -42,7 +40,6 @@ export default function Settings({ companySettings, setCompanySettings }) {
         {/* ============================================================== */}
         <div className="space-y-6">
           
-          {/* Company Profile */}
           <div className="bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-white/60 shadow-xl space-y-4">
             <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b border-zinc-200/50 pb-2">Company Profile</h3>
             <div><label className={labelClass}>Company Name</label><input type="text" value={companySettings.companyName || ''} onChange={e => setCompanySettings({...companySettings, companyName: e.target.value})} className={inputClass} /></div>
@@ -55,17 +52,20 @@ export default function Settings({ companySettings, setCompanySettings }) {
             <div><label className={labelClass}>Logo Path / URL</label><input type="text" value={companySettings.logoUrl || ''} onChange={e => setCompanySettings({...companySettings, logoUrl: e.target.value})} className={inputClass} /></div>
           </div>
 
-          {/* Taxation & Compliance Defaults */}
+          {/* HR & Site Labor Rules */}
           <div className="bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-white/60 shadow-xl space-y-4">
-            <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b border-zinc-200/50 pb-2">Taxation & Compliance Defaults</h3>
-            <div className="grid grid-cols-3 gap-4">
-              <div><label className={labelClass}>Default GST (%)</label><input type="number" value={companySettings.defaultGstRate || ''} onChange={e => setCompanySettings({...companySettings, defaultGstRate: e.target.value})} className={inputClass} /></div>
-              <div><label className={labelClass}>Default TDS (%)</label><input type="number" value={companySettings.defaultTdsRate || ''} onChange={e => setCompanySettings({...companySettings, defaultTdsRate: e.target.value})} className={inputClass} /></div>
-              <div><label className={labelClass}>Default HSN/SAC</label><input type="text" value={companySettings.defaultHsnSac || ''} onChange={e => setCompanySettings({...companySettings, defaultHsnSac: e.target.value})} className={inputClass} /></div>
+            <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b border-zinc-200/50 pb-2">HR & Site Labor Rules</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div><label className={labelClass}>Standard Start Time</label><input type="time" value={companySettings.defaultWorkStartTime || ''} onChange={e => setCompanySettings({...companySettings, defaultWorkStartTime: e.target.value})} className={inputClass} /></div>
+              <div><label className={labelClass}>Standard End Time</label><input type="time" value={companySettings.defaultWorkEndTime || ''} onChange={e => setCompanySettings({...companySettings, defaultWorkEndTime: e.target.value})} className={inputClass} /></div>
+            </div>
+            <div><label className={labelClass}>Overtime Multiplier (e.g., 1.5x)</label><input type="number" step="0.1" value={companySettings.overtimeMultiplier || ''} onChange={e => setCompanySettings({...companySettings, overtimeMultiplier: e.target.value})} className={inputClass} /></div>
+            <div className="grid grid-cols-2 gap-4">
+              <div><label className={labelClass}>Skilled Labor Rate (₹/day)</label><input type="number" value={companySettings.skilledLaborRate || ''} onChange={e => setCompanySettings({...companySettings, skilledLaborRate: e.target.value})} className={inputClass} /></div>
+              <div><label className={labelClass}>Unskilled Labor Rate (₹/day)</label><input type="number" value={companySettings.unskilledLaborRate || ''} onChange={e => setCompanySettings({...companySettings, unskilledLaborRate: e.target.value})} className={inputClass} /></div>
             </div>
           </div>
 
-          {/* Digital Signature */}
           <div className="bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-white/60 shadow-xl space-y-4">
             <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b border-zinc-200/50 pb-2">Authorized Digital Signature</h3>
             <div><label className={labelClass}>Upload Signature Image (PNG recommended)</label><input type="file" accept="image/*" onChange={handleSignatureUpload} className="w-full text-xs text-zinc-600 file:mr-4 file:py-2 px-1 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[#1E3A8A] file:text-white hover:file:bg-blue-900 cursor-pointer" /></div>
@@ -79,7 +79,6 @@ export default function Settings({ companySettings, setCompanySettings }) {
             )}
           </div>
 
-          {/* Bank Details */}
           <div className="bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-white/60 shadow-xl space-y-4">
             <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b border-zinc-200/50 pb-2">Bank Details (Printed on PDF)</h3>
             <div><label className={labelClass}>Bank Name</label><input type="text" value={companySettings.bankName || ''} onChange={e => setCompanySettings({...companySettings, bankName: e.target.value})} className={inputClass} /></div>
@@ -97,7 +96,6 @@ export default function Settings({ companySettings, setCompanySettings }) {
         {/* ============================================================== */}
         <div className="space-y-6">
           
-          {/* Document Numbering Prefixes */}
           <div className="bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-white/60 shadow-xl space-y-4">
             <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b border-zinc-200/50 pb-2">Document Numbering Prefixes</h3>
             <div className="grid grid-cols-3 gap-4">
@@ -107,7 +105,30 @@ export default function Settings({ companySettings, setCompanySettings }) {
             </div>
           </div>
 
-          {/* Terms & Conditions Library */}
+          <div className="bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-white/60 shadow-xl space-y-4">
+            <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b border-zinc-200/50 pb-2">Taxation & Compliance Defaults</h3>
+            <div className="grid grid-cols-3 gap-4">
+              <div><label className={labelClass}>Default GST (%)</label><input type="number" value={companySettings.defaultGstRate || ''} onChange={e => setCompanySettings({...companySettings, defaultGstRate: e.target.value})} className={inputClass} /></div>
+              <div><label className={labelClass}>Default TDS (%)</label><input type="number" value={companySettings.defaultTdsRate || ''} onChange={e => setCompanySettings({...companySettings, defaultTdsRate: e.target.value})} className={inputClass} /></div>
+              <div><label className={labelClass}>Default HSN/SAC</label><input type="text" value={companySettings.defaultHsnSac || ''} onChange={e => setCompanySettings({...companySettings, defaultHsnSac: e.target.value})} className={inputClass} /></div>
+            </div>
+          </div>
+
+          {/* Workflow & CRM Customization */}
+          <div className="bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-white/60 shadow-xl space-y-4">
+            <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b border-zinc-200/50 pb-2">Workflow & Status Customization</h3>
+            <div>
+              <label className={labelClass}>CRM Lead Stages (Comma Separated)</label>
+              <textarea value={companySettings.crmStages || ''} onChange={e => setCompanySettings({...companySettings, crmStages: e.target.value})} className={`${inputClass} h-20 resize-y text-[11px]`}></textarea>
+              <p className="text-[9px] text-zinc-500 mt-1">Example: New Inquiry, Site Visit, Design Proposed, Contract Signed</p>
+            </div>
+            <div>
+              <label className={labelClass}>Project Execution Statuses (Comma Separated)</label>
+              <textarea value={companySettings.projectStatuses || ''} onChange={e => setCompanySettings({...companySettings, projectStatuses: e.target.value})} className={`${inputClass} h-20 resize-y text-[11px]`}></textarea>
+              <p className="text-[9px] text-zinc-500 mt-1">Example: Planning, Civil Work, False Ceiling, Painting, Handover</p>
+            </div>
+          </div>
+
           <div className="bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-white/60 shadow-xl space-y-4">
             <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b border-zinc-200/50 pb-2">Default Terms & Conditions</h3>
             <div><label className={labelClass}>Tax Invoice Terms</label><textarea value={companySettings.defaultInvoiceTerms || ''} onChange={e => setCompanySettings({...companySettings, defaultInvoiceTerms: e.target.value})} className={`${inputClass} h-16 resize-y text-[11px]`}></textarea></div>
@@ -115,14 +136,12 @@ export default function Settings({ companySettings, setCompanySettings }) {
             <div><label className={labelClass}>Purchase & Work Order Terms</label><textarea value={companySettings.defaultPOTerms || ''} onChange={e => setCompanySettings({...companySettings, defaultPOTerms: e.target.value})} className={`${inputClass} h-16 resize-y text-[11px]`}></textarea></div>
           </div>
 
-          {/* WhatsApp Templates */}
           <div className="bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-white/60 shadow-xl space-y-4">
             <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b border-zinc-200/50 pb-2">WhatsApp Custom Templates</h3>
             <div><label className={labelClass}>Invoice Sent Message</label><textarea value={companySettings.waInvoiceTemplate || ''} onChange={e => setCompanySettings({...companySettings, waInvoiceTemplate: e.target.value})} className={`${inputClass} h-16 resize-y text-[11px]`}></textarea></div>
             <div><label className={labelClass}>Purchase Order Sent Message</label><textarea value={companySettings.waPoTemplate || ''} onChange={e => setCompanySettings({...companySettings, waPoTemplate: e.target.value})} className={`${inputClass} h-16 resize-y text-[11px]`}></textarea></div>
           </div>
 
-          {/* PDF Layout Toggles */}
           <div className="bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-white/60 shadow-xl space-y-5">
             <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b border-zinc-200/50 pb-2">Print Layout Visibility</h3>
             {[
@@ -139,7 +158,6 @@ export default function Settings({ companySettings, setCompanySettings }) {
             ))}
           </div>
 
-          {/* PDF Footer Note */}
           <div className="bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-white/60 shadow-xl space-y-4">
             <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b border-zinc-200/50 pb-2">PDF Footer Note</h3>
             <div><label className={labelClass}>Disclaimer / Note</label><textarea value={companySettings.pdfFooterDisclaimer || ''} onChange={e => setCompanySettings({...companySettings, pdfFooterDisclaimer: e.target.value})} className={`${inputClass} h-20 resize-none text-[11px]`}></textarea></div>

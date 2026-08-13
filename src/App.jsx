@@ -23,7 +23,7 @@ import ProjectPnL from './ProjectPnL';
 import MeasurementSheet from './MeasurementSheet';
 import SiteManager from './SiteManager'; 
 import PettyCash from './PettyCash';
-import Settings from './Settings'; // <-- IMPORTED NEW COMPONENT
+import Settings from './Settings';
 
 export default function App() {
   const [email, setEmail] = useState('');
@@ -31,16 +31,13 @@ export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [error, setError] = useState('');
   
-  // NAVIGATION & STAGING STATE
   const [activePage, setActivePage] = useState('Dashboard');
   const [visitedPages, setVisitedPages] = useState(new Set(['Dashboard']));
 
-  // --- DIRTY STATE WARNING SYSTEM ---
   const [dirtyStates, setDirtyStates] = useState({});
   const [pendingPage, setPendingPage] = useState(null);
   const [showWarningModal, setShowWarningModal] = useState(false);
 
-  // --- SIDEBAR DROPDOWN STATE ---
   const [expandedGroups, setExpandedGroups] = useState({
     "Workspace": true,
     "Site Execution": false,
@@ -131,18 +128,33 @@ export default function App() {
     showGstBreakdownOnPdf: true,
     pdfFooterDisclaimer: 'Thank you for choosing Jyanipur Interiors. For any query, contact accounts@jyanipur.in',
     
-    // NEW SETTINGS ADDED BELOW
+    // Formatting & Taxes
     invoicePrefix: 'JIC/FY26-27/',
     poPrefix: 'PO/',
     woPrefix: 'WO/',
     defaultGstRate: '18',
     defaultTdsRate: '2',
     defaultHsnSac: '9954',
+    
+    // Default Terms
     defaultInvoiceTerms: '1. Payment due within 15 days of invoice date.\n2. Goods/Services once rendered cannot be returned.',
     defaultEstimateTerms: '1. Validity of this estimate is 30 days.\n2. 50% advance required to commence work.',
     defaultPOTerms: '1. Material must match approved specifications.\n2. Delivery delayed beyond 7 days will attract a 5% penalty.',
+    
+    // WhatsApp
     waInvoiceTemplate: 'Hello! Attached is your latest invoice from Jyanipur Interiors. Please let us know if you have any questions.',
-    waPoTemplate: 'Hello, please find our official Purchase Order attached. Kindly confirm receipt and delivery schedule.'
+    waPoTemplate: 'Hello, please find our official Purchase Order attached. Kindly confirm receipt and delivery schedule.',
+
+    // HR & Site Labor Rules
+    defaultWorkStartTime: '09:30',
+    defaultWorkEndTime: '18:30',
+    overtimeMultiplier: '1.5',
+    skilledLaborRate: '1200',
+    unskilledLaborRate: '800',
+
+    // Workflow & CRM Customization
+    crmStages: 'New Inquiry, Site Visit, Design Proposed, Negotiation, Contract Signed, Closed Won, Closed Lost',
+    projectStatuses: 'Planning, Civil Work, False Ceiling, Flooring, Painting, Carpentry, Handover'
   };
 
   const [companySettings, setCompanySettings] = useState(() => {
@@ -176,7 +188,6 @@ export default function App() {
     return (
       <div className="fixed inset-0 w-screen h-[100dvh] font-['Poppins'] text-zinc-800 selection:bg-blue-100 overflow-hidden flex items-center justify-center p-4 lg:p-6 print:p-0 print:block overscroll-none bg-zinc-900">
         
-        {/* --- GLOBAL WARNING MODAL --- */}
         {showWarningModal && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 backdrop-blur-md px-4">
             <div className="bg-slate-900 border border-white/10 p-8 rounded-[2rem] shadow-2xl max-w-sm w-full animate-in fade-in zoom-in-95 duration-200">
@@ -305,7 +316,6 @@ export default function App() {
                 
                 {visitedPages.has('Settings') && (
                   <div className={activePage === 'Settings' ? 'block' : 'hidden'}>
-                    {/* NEW ISOLATED SETTINGS COMPONENT */}
                     <Settings companySettings={companySettings} setCompanySettings={setCompanySettings} />
                   </div>
                 )}
