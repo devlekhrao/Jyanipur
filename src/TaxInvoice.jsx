@@ -50,37 +50,62 @@ const gstStateCodes = {
 };
 
 export default function TaxInvoice({ companySettings = {} }) {
-  const [currentView, setCurrentView] = useState('list');
-  const [editingId, setEditingId] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  const [invoiceList, setInvoiceList] = useState([]);
-  const [taxMode, setTaxMode] = useState('CGST_SGST');
-
-  const [invoiceDetails, setInvoiceDetails] = useState({
-    partyName: '', 
-    partyAddress: '', 
-    gstNo: '', 
-    placeOfSupply: 'Telangana (36)',
-    date: new Date().toISOString().split('T')[0], 
-    invoiceNo: '', 
-    poNumber: '', 
-    poDate: '', 
-    description: '', 
-    terms: '1. Payment due within 15 days of invoice date.\n2. Goods/Services once rendered cannot be returned.', 
-    bankName: companySettings.bankName || '', 
-    accountName: companySettings.accountName || '', 
-    accountNo: companySettings.accountNo || '', 
-    ifscCode: companySettings.ifscCode || '', 
-    advanceReceived: '', 
-    discount: ''
+  // LOAD FROM LOCAL STORAGE ON INITIAL MOUNT
+  const [currentView, setCurrentView] = useState(() => localStorage.getItem('draft_invoiceView') || 'list');
+  
+  const [editingId, setEditingId] = useState(() => {
+    const saved = localStorage.getItem('draft_editingId');
+    return saved && saved !== 'undefined' ? JSON.parse(saved) : null;
   });
 
-  const [items, setItems] = useState([
-    { id: 1, description: '', hsn: '', sizeL: '', sizeB: '', no: '', rate: '', gst: 18 },
-  ]);
+  const [loading, setLoading] = useState(true);
+  const [invoiceList, setInvoiceList] = useState([]);
+  
+  const [taxMode, setTaxMode] = useState(() => localStorage.getItem('draft_taxMode') || 'CGST_SGST');
+
+  const [invoiceDetails, setInvoiceDetails] = useState(() => {
+    const saved = localStorage.getItem('draft_invoiceDetails');
+    if (saved && saved !== 'undefined') {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return {
+      partyName: '', 
+      partyAddress: '', 
+      gstNo: '', 
+      placeOfSupply: 'Telangana (36)',
+      date: new Date().toISOString().split('T')[0], 
+      invoiceNo: '', 
+      poNumber: '', 
+      poDate: '', 
+      description: '', 
+      terms: '1. Payment due within 15 days of invoice date.\n2. Goods/Services once rendered cannot be returned.', 
+      bankName: companySettings.bankName || '', 
+      accountName: companySettings.accountName || '', 
+      accountNo: companySettings.accountNo || '', 
+      ifscCode: companySettings.ifscCode || '', 
+      advanceReceived: '', 
+      discount: ''
+    };
+  });
+
+  const [items, setItems] = useState(() => {
+    const saved = localStorage.getItem('draft_items');
+    if (saved && saved !== 'undefined') {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return [{ id: 1, description: '', hsn: '', sizeL: '', sizeB: '', no: '', rate: '', gst: 18 }];
+  });
 
   const [errors, setErrors] = useState({});
+
+  // AUTO-SAVE DRAFT TO LOCAL STORAGE WHENEVER STATE CHANGES
+  useEffect(() => {
+    localStorage.setItem('draft_invoiceView', currentView);
+    localStorage.setItem('draft_editingId', JSON.stringify(editingId));
+    localStorage.setItem('draft_taxMode', taxMode);
+    localStorage.setItem('draft_invoiceDetails', JSON.stringify(invoiceDetails));
+    localStorage.setItem('draft_items', JSON.stringify(items));
+  }, [currentView, editingId, taxMode, invoiceDetails, items]);
 
   const loadInvoicesFromDb = async () => {
     setLoading(true);
@@ -104,7 +129,6 @@ export default function TaxInvoice({ companySettings = {} }) {
   }, [companySettings, editingId]);
 
   // AUTO DETECT GST STATE CODE & UPDATE PLACE OF SUPPLY
-  // REMOVED !editingId restriction so it force-updates existing saved invoices too
   useEffect(() => {
     const clientStateCode = invoiceDetails.gstNo.trim().substring(0, 2);
     if (clientStateCode.length === 2 && !isNaN(clientStateCode)) {
@@ -187,7 +211,7 @@ export default function TaxInvoice({ companySettings = {} }) {
       await loadInvoicesFromDb();
       return true;
     } catch (err) {
-      alert('Failed to save to Neon Database. Check connection.');
+      alert('Failed to save to Database. Check connection.');
       return false;
     }
   };

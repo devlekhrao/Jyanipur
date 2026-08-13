@@ -33,6 +33,14 @@ export default function App() {
   // DEFAULT ACTIVE PAGE IS DASHBOARD
   const [activePage, setActivePage] = useState('Dashboard');
 
+  // Track visited pages so we don't render all 25 modules on initial boot (Performance optimization)
+  const [visitedPages, setVisitedPages] = useState(new Set(['Dashboard']));
+
+  const handlePageSwitch = (pageName) => {
+    setActivePage(pageName);
+    setVisitedPages(prev => new Set(prev).add(pageName));
+  };
+
   // --- GLOBAL COMPANY & PRINT SETTINGS ---
   const [companySettings, setCompanySettings] = useState({
     companyName: 'Jyanipur Interiors & Construction',
@@ -73,10 +81,10 @@ export default function App() {
     setIsLoggedIn(false);
     setEmail('');
     setPassword('');
-    setActivePage('Dashboard'); 
+    setActivePage('Dashboard');
+    setVisitedPages(new Set(['Dashboard']));
   };
 
-  // Handle signature file upload
   const handleSignatureUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -91,9 +99,6 @@ export default function App() {
   const inputClass = "w-full px-4 py-3 rounded-xl border-none bg-white/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] text-zinc-900 text-xs font-medium transition-all shadow-sm";
   const labelClass = "block text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
 
-  /* ========================================================================
-     1. AFTER LOGIN PAGE: INDIGO SIDEBAR WITH WHITE TEXT + GLASS CANVAS
-     ======================================================================== */
   if (isLoggedIn) {
     return (
       <div className="fixed inset-0 w-screen h-[100dvh] font-['Poppins'] text-zinc-800 selection:bg-blue-100 overflow-hidden flex items-center justify-center p-4 lg:p-6 print:p-0 print:block overscroll-none bg-zinc-900">
@@ -113,7 +118,7 @@ export default function App() {
           ].map((item) => (
             <button 
               key={item.name}
-              onClick={() => setActivePage(item.name)}
+              onClick={() => handlePageSwitch(item.name)}
               className={`flex items-center gap-2 px-4 py-3 rounded-2xl font-bold text-xs shadow-2xl backdrop-blur-2xl border transition-all hover:scale-105 cursor-pointer ${
                 activePage === item.name 
                   ? 'bg-[#1E3A8A] text-white border-[#1E3A8A] shadow-blue-900/50' 
@@ -129,12 +134,9 @@ export default function App() {
         {/* MAIN CANVAS CONTAINER */}
         <div className="relative z-10 flex w-full h-full max-w-[1600px] bg-white/80 backdrop-blur-3xl rounded-[2.5rem] shadow-[0_30px_80px_rgba(0,0,0,0.3)] border border-white/60 overflow-hidden print:bg-white print:shadow-none print:border-none print:rounded-none">
           
-          {/* ==========================================================
-              STRICTLY INDIGO SIDEBAR WITH WHITE TEXT & LOGO
-              ========================================================== */}
+          {/* INDIGO SIDEBAR */}
           <aside className="w-[250px] bg-[#1E3A8A] text-white border-r border-blue-900/50 flex flex-col z-10 flex-shrink-0 print:hidden shadow-xl">
             
-            {/* Header / Logo */}
             <div className="pt-8 pb-4 flex items-center justify-center gap-3">
               <div className="bg-white p-2 rounded-xl shadow-sm">
                 <img 
@@ -181,7 +183,7 @@ export default function App() {
               ].map((page) => (
                 <button
                   key={page}
-                  onClick={() => setActivePage(page)}
+                  onClick={() => handlePageSwitch(page)}
                   className={`text-left px-4 py-2.5 rounded-xl text-xs transition-all duration-300 flex items-center ${
                     activePage === page 
                       ? 'bg-white/20 text-white font-bold shadow-md shadow-blue-950/40 ring-1 ring-white/30 translate-x-1' 
@@ -196,7 +198,7 @@ export default function App() {
             {/* Bottom Actions */}
             <div className="p-4 flex flex-col gap-2 border-t border-blue-400/20 bg-[#172e6e]">
               <button
-                onClick={() => setActivePage('Settings')}
+                onClick={() => handlePageSwitch('Settings')}
                 className={`w-full py-2.5 rounded-xl text-[10px] uppercase tracking-widest font-bold transition-all duration-300 cursor-pointer shadow-sm border ${
                   activePage === 'Settings' 
                     ? 'bg-white text-[#1E3A8A] border-white shadow-md' 
@@ -214,214 +216,307 @@ export default function App() {
             </div>
           </aside>
 
-          {/* MAIN CONTENT AREA */}
+          {/* MAIN CONTENT AREA - MULTI-STAGE PERSISTENT MOUNTING */}
           <main className="flex-1 flex flex-col h-full overflow-hidden relative z-10 print:overflow-visible">
             <div className="flex-1 p-8 lg:p-12 overflow-y-auto print:p-0 print:overflow-visible custom-scrollbar">
               <div className="max-w-7xl mx-auto print:max-w-none print:mx-0">
                 
-                {/* RENDER MODULES */}
-                {activePage === 'Dashboard' ? (
-                  <Dashboard setActivePage={setActivePage} />
-                ) : activePage === 'CRM' ? (
-                  <CRM />
-                ) : activePage === 'Projects' ? (
-                  <Projects />
-                ) : activePage === 'Task Board' ? ( 
-                  <TaskBoard />
-                ) : activePage === 'Project Control' ? (
-                  <ProjectControl />
-                ) : activePage === 'Site Snags' ? (
-                  <SiteSnag companySettings={companySettings} />
-                ) : activePage === 'Document Vault' ? ( 
-                  <DocumentVault />
-                ) : activePage === 'Project P&L' ? ( 
-                  <ProjectPnL />
-                ) : activePage === 'Daily Report' ? (  
-                  <SiteManager />
-                ) : activePage === 'Petty Cash' ? ( 
-                  <PettyCash />
-                ) : activePage === 'Measurement Sheet' ? (
-                  <MeasurementSheet />
-                ) : activePage === 'Tax Invoice' ? (
-                  <TaxInvoice companySettings={companySettings} />
-                ) : activePage === 'Estimation' ? (
-                  <Estimation companySettings={companySettings} />
-                ) : activePage === 'Purchases' ? (
-                  <Purchases />
-                ) : activePage === 'Vendor Ledger' ? (
-                  <VendorLedger />
-                ) : activePage === 'Inventory' ? (
-                  <Inventory /> 
-                ) : activePage === 'Tools & Assets' ? (
-                  <Tools />
-                ) : activePage === 'Rate Book' ? (
-                  <RateBook />
-                ) : activePage === 'Subcontractors' ? (
-                  <Subcontractors />
-                ) : activePage === 'Employee Attendance' ? (
-                  <EmployeeAttendance companySettings={companySettings} />
-                ) : activePage === 'Staff Expenses' ? (
-                  <EmployeeExpenses />
-                ) : activePage === 'Salaries' ? (
-                  <Salaries />
-                ) : activePage === 'Income' ? (
-                  <Income />
-                ) : activePage === 'GST Filing' ? ( 
-                  <GST />
-                ) : activePage === 'Settings' ? (
-                  <div className="w-full pb-20">
-                    <div className="flex justify-between items-end pb-4 border-b border-zinc-300/50 mb-6">
-                      <div>
-                        <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Portal & Print Settings</h2>
-                        <p className="text-zinc-600 text-xs mt-1 font-medium">Configure company branding, digital signature, and PDF print preferences.</p>
-                      </div>
-                      <button onClick={() => alert('Settings Saved!')} className="bg-[#1E3A8A] text-white px-6 py-3 rounded-xl text-xs font-semibold shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer">
-                        Save Preferences
-                      </button>
-                    </div>
+                {/* 
+                  ====================================================
+                  PERSISTENT MULTI-STAGE STACK (iPad Stage Manager style)
+                  Modules stay mounted in DOM once opened, preserving
+                  100% of active form inputs, checks, and state!
+                  ====================================================
+                */}
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                      
-                      {/* Left Side: Profile & Banking */}
-                      <div className="space-y-6">
-                        <div className="bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-white/60 shadow-xl space-y-4">
-                          <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b border-zinc-200/50 pb-2">Company Profile</h3>
-                          <div>
-                            <label className={labelClass}>Company Name</label>
-                            <input type="text" value={companySettings.companyName} onChange={e => setCompanySettings({...companySettings, companyName: e.target.value})} className={inputClass} />
-                          </div>
-                          <div>
-                            <label className={labelClass}>Company GSTIN</label>
-                            <input type="text" value={companySettings.companyGst} onChange={e => setCompanySettings({...companySettings, companyGst: e.target.value})} className={inputClass} />
-                          </div>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <label className={labelClass}>Email Address</label>
-                              <input type="text" value={companySettings.companyEmail} onChange={e => setCompanySettings({...companySettings, companyEmail: e.target.value})} className={inputClass} />
-                            </div>
-                            <div>
-                              <label className={labelClass}>Phone Number</label>
-                              <input type="text" value={companySettings.companyPhone} onChange={e => setCompanySettings({...companySettings, companyPhone: e.target.value})} className={inputClass} />
-                            </div>
-                          </div>
-                          <div>
-                            <label className={labelClass}>Company Address</label>
-                            <textarea value={companySettings.companyAddress} onChange={e => setCompanySettings({...companySettings, companyAddress: e.target.value})} className={`${inputClass} h-20 resize-none`}></textarea>
-                          </div>
-                          <div>
-                            <label className={labelClass}>Logo Path / URL</label>
-                            <input type="text" value={companySettings.logoUrl} onChange={e => setCompanySettings({...companySettings, logoUrl: e.target.value})} className={inputClass} />
-                          </div>
-                        </div>
-
-                        {/* DIGITAL SIGNATURE UPLOAD BLOCK */}
-                        <div className="bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-white/60 shadow-xl space-y-4">
-                          <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b border-zinc-200/50 pb-2">Authorized Digital Signature / Stamp</h3>
-                          
-                          <div>
-                            <label className={labelClass}>Upload Signature Image (PNG recommended)</label>
-                            <input 
-                              type="file" 
-                              accept="image/*" 
-                              onChange={handleSignatureUpload} 
-                              className="w-full text-xs text-zinc-600 file:mr-4 file:py-2 px-1 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[#1E3A8A] file:text-white hover:file:bg-blue-900 cursor-pointer" 
-                            />
-                          </div>
-
-                          <div>
-                            <label className={labelClass}>Or Paste Signature Image URL / Base64</label>
-                            <input 
-                              type="text" 
-                              placeholder="https://example.com/signature.png" 
-                              value={companySettings.signatureUrl} 
-                              onChange={e => setCompanySettings({...companySettings, signatureUrl: e.target.value})} 
-                              className={inputClass} 
-                            />
-                          </div>
-
-                          {companySettings.signatureUrl && (
-                            <div className="mt-3 p-4 bg-white/50 rounded-2xl border border-zinc-200/60 inline-block">
-                              <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider mb-2">Signature Preview:</p>
-                              <img src={companySettings.signatureUrl} alt="Signature Preview" className="h-14 w-auto object-contain border-b border-zinc-300 pb-1" />
-                              <button 
-                                onClick={() => setCompanySettings({...companySettings, signatureUrl: ''})}
-                                className="text-[9px] text-red-500 font-bold hover:underline mt-2 block"
-                              >
-                                Remove Signature
-                              </button>
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-white/60 shadow-xl space-y-4">
-                          <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b border-zinc-200/50 pb-2">Bank Details (PDF)</h3>
-                          <div>
-                            <label className={labelClass}>Bank Name</label>
-                            <input type="text" value={companySettings.bankName} onChange={e => setCompanySettings({...companySettings, bankName: e.target.value})} className={inputClass} />
-                          </div>
-                          <div>
-                            <label className={labelClass}>Account Name</label>
-                            <input type="text" value={companySettings.accountName} onChange={e => setCompanySettings({...companySettings, accountName: e.target.value})} className={inputClass} />
-                          </div>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <label className={labelClass}>Account Number</label>
-                              <input type="text" value={companySettings.accountNo} onChange={e => setCompanySettings({...companySettings, accountNo: e.target.value})} className={inputClass} />
-                            </div>
-                            <div>
-                              <label className={labelClass}>IFSC Code</label>
-                              <input type="text" value={companySettings.ifscCode} onChange={e => setCompanySettings({...companySettings, ifscCode: e.target.value})} className={inputClass} />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Right Side: PDF Structure Controls */}
-                      <div className="space-y-6">
-                        <div className="bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-white/60 shadow-xl space-y-5">
-                          <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b border-zinc-200/50 pb-2">Print Layout Visibility</h3>
-                          
-                          {[
-                            { key: 'showBankDetailsOnPdf', label: 'Show Bank Details Box', desc: 'Include bank name, account number, and IFSC on printed PDFs' },
-                            { key: 'showTermsOnPdf', label: 'Show Terms & Conditions', desc: 'Display payment schedules and terms on printed PDFs' },
-                            { key: 'showRemarksOnPdf', label: 'Show Remarks Section', desc: 'Include project specific notes on printed PDFs' },
-                            { key: 'showSignatoryOnPdf', label: 'Show Authorized Signatory Block', desc: 'Include signature block at the bottom right of PDFs' },
-                            { key: 'showSignatureImage', label: 'Render Signature Image on PDF', desc: 'Print the uploaded signature image above the Authorized Signatory text' }
-                          ].map(item => (
-                            <label key={item.key} className="flex items-center gap-3 cursor-pointer">
-                              <input 
-                                type="checkbox" 
-                                checked={companySettings[item.key]} 
-                                onChange={e => setCompanySettings({...companySettings, [item.key]: e.target.checked})} 
-                                className="w-5 h-5 rounded text-[#1E3A8A] border-zinc-300 focus:ring-[#1E3A8A]" 
-                              />
-                              <div>
-                                <span className="text-xs font-bold text-zinc-800 block">{item.label}</span>
-                                <span className="text-[10px] text-zinc-500">{item.desc}</span>
-                              </div>
-                            </label>
-                          ))}
-                        </div>
-
-                        <div className="bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-white/60 shadow-xl space-y-4">
-                          <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b border-zinc-200/50 pb-2">PDF Footer Note</h3>
-                          <div>
-                            <label className={labelClass}>Disclaimer / Note</label>
-                            <textarea value={companySettings.pdfFooterDisclaimer} onChange={e => setCompanySettings({...companySettings, pdfFooterDisclaimer: e.target.value})} className={`${inputClass} h-20 resize-none text-[11px]`}></textarea>
-                          </div>
-                        </div>
-                      </div>
-
-                    </div>
+                {visitedPages.has('Dashboard') && (
+                  <div className={activePage === 'Dashboard' ? 'block' : 'hidden'}>
+                    <Dashboard setActivePage={handlePageSwitch} />
                   </div>
-                ) : (
-                  <div className="h-[60vh] flex flex-col items-center justify-center text-center print:hidden">
-                    <div className="bg-white/40 backdrop-blur-xl p-10 rounded-[2rem] border border-white/60 shadow-lg max-w-sm w-full">
-                      <h2 className="text-xl font-extrabold text-zinc-900 mb-2">{activePage}</h2>
-                      <p className="text-zinc-600 text-xs font-medium">This module is currently being constructed.</p>
+                )}
+
+                {visitedPages.has('CRM') && (
+                  <div className={activePage === 'CRM' ? 'block' : 'hidden'}>
+                    <CRM />
+                  </div>
+                )}
+
+                {visitedPages.has('Projects') && (
+                  <div className={activePage === 'Projects' ? 'block' : 'hidden'}>
+                    <Projects />
+                  </div>
+                )}
+
+                {visitedPages.has('Task Board') && (
+                  <div className={activePage === 'Task Board' ? 'block' : 'hidden'}>
+                    <TaskBoard />
+                  </div>
+                )}
+
+                {visitedPages.has('Project Control') && (
+                  <div className={activePage === 'Project Control' ? 'block' : 'hidden'}>
+                    <ProjectControl />
+                  </div>
+                )}
+
+                {visitedPages.has('Site Snags') && (
+                  <div className={activePage === 'Site Snags' ? 'block' : 'hidden'}>
+                    <SiteSnag companySettings={companySettings} />
+                  </div>
+                )}
+
+                {visitedPages.has('Document Vault') && (
+                  <div className={activePage === 'Document Vault' ? 'block' : 'hidden'}>
+                    <DocumentVault />
+                  </div>
+                )}
+
+                {visitedPages.has('Project P&L') && (
+                  <div className={activePage === 'Project P&L' ? 'block' : 'hidden'}>
+                    <ProjectPnL />
+                  </div>
+                )}
+
+                {visitedPages.has('Daily Report') && (
+                  <div className={activePage === 'Daily Report' ? 'block' : 'hidden'}>
+                    <SiteManager />
+                  </div>
+                )}
+
+                {visitedPages.has('Petty Cash') && (
+                  <div className={activePage === 'Petty Cash' ? 'block' : 'hidden'}>
+                    <PettyCash />
+                  </div>
+                )}
+
+                {visitedPages.has('Measurement Sheet') && (
+                  <div className={activePage === 'Measurement Sheet' ? 'block' : 'hidden'}>
+                    <MeasurementSheet />
+                  </div>
+                )}
+
+                {visitedPages.has('Tax Invoice') && (
+                  <div className={activePage === 'Tax Invoice' ? 'block' : 'hidden'}>
+                    <TaxInvoice companySettings={companySettings} />
+                  </div>
+                )}
+
+                {visitedPages.has('Estimation') && (
+                  <div className={activePage === 'Estimation' ? 'block' : 'hidden'}>
+                    <Estimation companySettings={companySettings} />
+                  </div>
+                )}
+
+                {visitedPages.has('Purchases') && (
+                  <div className={activePage === 'Purchases' ? 'block' : 'hidden'}>
+                    <Purchases />
+                  </div>
+                )}
+
+                {visitedPages.has('Vendor Ledger') && (
+                  <div className={activePage === 'Vendor Ledger' ? 'block' : 'hidden'}>
+                    <VendorLedger />
+                  </div>
+                )}
+
+                {visitedPages.has('Inventory') && (
+                  <div className={activePage === 'Inventory' ? 'block' : 'hidden'}>
+                    <Inventory />
+                  </div>
+                )}
+
+                {visitedPages.has('Tools & Assets') && (
+                  <div className={activePage === 'Tools & Assets' ? 'block' : 'hidden'}>
+                    <Tools />
+                  </div>
+                )}
+
+                {visitedPages.has('Rate Book') && (
+                  <div className={activePage === 'Rate Book' ? 'block' : 'hidden'}>
+                    <RateBook />
+                  </div>
+                )}
+
+                {visitedPages.has('Subcontractors') && (
+                  <div className={activePage === 'Subcontractors' ? 'block' : 'hidden'}>
+                    <Subcontractors />
+                  </div>
+                )}
+
+                {visitedPages.has('Employee Attendance') && (
+                  <div className={activePage === 'Employee Attendance' ? 'block' : 'hidden'}>
+                    <EmployeeAttendance companySettings={companySettings} />
+                  </div>
+                )}
+
+                {visitedPages.has('Staff Expenses') && (
+                  <div className={activePage === 'Staff Expenses' ? 'block' : 'hidden'}>
+                    <EmployeeExpenses />
+                  </div>
+                )}
+
+                {visitedPages.has('Salaries') && (
+                  <div className={activePage === 'Salaries' ? 'block' : 'hidden'}>
+                    <Salaries />
+                  </div>
+                )}
+
+                {visitedPages.has('Income') && (
+                  <div className={activePage === 'Income' ? 'block' : 'hidden'}>
+                    <Income />
+                  </div>
+                )}
+
+                {visitedPages.has('GST Filing') && (
+                  <div className={activePage === 'GST Filing' ? 'block' : 'hidden'}>
+                    <GST />
+                  </div>
+                )}
+
+                {visitedPages.has('Settings') && (
+                  <div className={activePage === 'Settings' ? 'block' : 'hidden'}>
+                    <div className="w-full pb-20">
+                      <div className="flex justify-between items-end pb-4 border-b border-zinc-300/50 mb-6">
+                        <div>
+                          <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Portal & Print Settings</h2>
+                          <p className="text-zinc-600 text-xs mt-1 font-medium">Configure company branding, digital signature, and PDF print preferences.</p>
+                        </div>
+                        <button onClick={() => alert('Settings Saved!')} className="bg-[#1E3A8A] text-white px-6 py-3 rounded-xl text-xs font-semibold shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer">
+                          Save Preferences
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        {/* Settings Profile & Bank */}
+                        <div className="space-y-6">
+                          <div className="bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-white/60 shadow-xl space-y-4">
+                            <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b border-zinc-200/50 pb-2">Company Profile</h3>
+                            <div>
+                              <label className={labelClass}>Company Name</label>
+                              <input type="text" value={companySettings.companyName} onChange={e => setCompanySettings({...companySettings, companyName: e.target.value})} className={inputClass} />
+                            </div>
+                            <div>
+                              <label className={labelClass}>Company GSTIN</label>
+                              <input type="text" value={companySettings.companyGst} onChange={e => setCompanySettings({...companySettings, companyGst: e.target.value})} className={inputClass} />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <label className={labelClass}>Email Address</label>
+                                <input type="text" value={companySettings.companyEmail} onChange={e => setCompanySettings({...companySettings, companyEmail: e.target.value})} className={inputClass} />
+                              </div>
+                              <div>
+                                <label className={labelClass}>Phone Number</label>
+                                <input type="text" value={companySettings.companyPhone} onChange={e => setCompanySettings({...companySettings, companyPhone: e.target.value})} className={inputClass} />
+                              </div>
+                            </div>
+                            <div>
+                              <label className={labelClass}>Company Address</label>
+                              <textarea value={companySettings.companyAddress} onChange={e => setCompanySettings({...companySettings, companyAddress: e.target.value})} className={`${inputClass} h-20 resize-none`}></textarea>
+                            </div>
+                            <div>
+                              <label className={labelClass}>Logo Path / URL</label>
+                              <input type="text" value={companySettings.logoUrl} onChange={e => setCompanySettings({...companySettings, logoUrl: e.target.value})} className={inputClass} />
+                            </div>
+                          </div>
+
+                          <div className="bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-white/60 shadow-xl space-y-4">
+                            <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b border-zinc-200/50 pb-2">Authorized Digital Signature / Stamp</h3>
+                            <div>
+                              <label className={labelClass}>Upload Signature Image (PNG recommended)</label>
+                              <input 
+                                type="file" 
+                                accept="image/*" 
+                                onChange={handleSignatureUpload} 
+                                className="w-full text-xs text-zinc-600 file:mr-4 file:py-2 px-1 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[#1E3A8A] file:text-white hover:file:bg-blue-900 cursor-pointer" 
+                              />
+                            </div>
+                            <div>
+                              <label className={labelClass}>Or Paste Signature Image URL / Base64</label>
+                              <input 
+                                type="text" 
+                                placeholder="https://example.com/signature.png" 
+                                value={companySettings.signatureUrl} 
+                                onChange={e => setCompanySettings({...companySettings, signatureUrl: e.target.value})} 
+                                className={inputClass} 
+                              />
+                            </div>
+                            {companySettings.signatureUrl && (
+                              <div className="mt-3 p-4 bg-white/50 rounded-2xl border border-zinc-200/60 inline-block">
+                                <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider mb-2">Signature Preview:</p>
+                                <img src={companySettings.signatureUrl} alt="Signature Preview" className="h-14 w-auto object-contain border-b border-zinc-300 pb-1" />
+                                <button 
+                                  onClick={() => setCompanySettings({...companySettings, signatureUrl: ''})}
+                                  className="text-[9px] text-red-500 font-bold hover:underline mt-2 block"
+                                >
+                                  Remove Signature
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-white/60 shadow-xl space-y-4">
+                            <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b border-zinc-200/50 pb-2">Bank Details (PDF)</h3>
+                            <div>
+                              <label className={labelClass}>Bank Name</label>
+                              <input type="text" value={companySettings.bankName} onChange={e => setCompanySettings({...companySettings, bankName: e.target.value})} className={inputClass} />
+                            </div>
+                            <div>
+                              <label className={labelClass}>Account Name</label>
+                              <input type="text" value={companySettings.accountName} onChange={e => setCompanySettings({...companySettings, accountName: e.target.value})} className={inputClass} />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <label className={labelClass}>Account Number</label>
+                                <input type="text" value={companySettings.accountNo} onChange={e => setCompanySettings({...companySettings, accountNo: e.target.value})} className={inputClass} />
+                              </div>
+                              <div>
+                                <label className={labelClass}>IFSC Code</label>
+                                <input type="text" value={companySettings.ifscCode} onChange={e => setCompanySettings({...companySettings, ifscCode: e.target.value})} className={inputClass} />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Settings PDF Options */}
+                        <div className="space-y-6">
+                          <div className="bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-white/60 shadow-xl space-y-5">
+                            <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b border-zinc-200/50 pb-2">Print Layout Visibility</h3>
+                            {[
+                              { key: 'showBankDetailsOnPdf', label: 'Show Bank Details Box', desc: 'Include bank name, account number, and IFSC on printed PDFs' },
+                              { key: 'showTermsOnPdf', label: 'Show Terms & Conditions', desc: 'Display payment schedules and terms on printed PDFs' },
+                              { key: 'showRemarksOnPdf', label: 'Show Remarks Section', desc: 'Include project specific notes on printed PDFs' },
+                              { key: 'showSignatoryOnPdf', label: 'Show Authorized Signatory Block', desc: 'Include signature block at the bottom right of PDFs' },
+                              { key: 'showSignatureImage', label: 'Render Signature Image on PDF', desc: 'Print the uploaded signature image above the Authorized Signatory text' }
+                            ].map(item => (
+                              <label key={item.key} className="flex items-center gap-3 cursor-pointer">
+                                <input 
+                                  type="checkbox" 
+                                  checked={companySettings[item.key]} 
+                                  onChange={e => setCompanySettings({...companySettings, [item.key]: e.target.checked})} 
+                                  className="w-5 h-5 rounded text-[#1E3A8A] border-zinc-300 focus:ring-[#1E3A8A]" 
+                                />
+                                <div>
+                                  <span className="text-xs font-bold text-zinc-800 block">{item.label}</span>
+                                  <span className="text-[10px] text-zinc-500">{item.desc}</span>
+                                </div>
+                              </label>
+                            ))}
+                          </div>
+
+                          <div className="bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-white/60 shadow-xl space-y-4">
+                            <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b border-zinc-200/50 pb-2">PDF Footer Note</h3>
+                            <div>
+                              <label className={labelClass}>Disclaimer / Note</label>
+                              <textarea value={companySettings.pdfFooterDisclaimer} onChange={e => setCompanySettings({...companySettings, pdfFooterDisclaimer: e.target.value})} className={`${inputClass} h-20 resize-none text-[11px]`}></textarea>
+                            </div>
+                          </div>
+                        </div>
+
+                      </div>
                     </div>
                   </div>
                 )}
+
               </div>
             </div>
           </main>
@@ -430,9 +525,7 @@ export default function App() {
     );
   }
 
-  /* ========================================================================
-     2. ORIGINAL LOGIN PAGE
-     ======================================================================== */
+  /* LOGIN PAGE */
   return (
     <div className="fixed inset-0 w-screen h-[100dvh] flex items-center justify-center bg-[url('/background.png')] bg-cover bg-center bg-no-repeat px-4 font-['Poppins'] overflow-hidden overscroll-none bg-zinc-900">
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
