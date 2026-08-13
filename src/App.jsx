@@ -181,9 +181,6 @@ export default function App() {
     setDirtyStates({});
   };
 
-  // ==========================================
-  // LOGGED IN: STRICT FULL SCREEN LAYOUT
-  // ==========================================
   if (isLoggedIn) {
     return (
       <div className="flex w-screen h-screen overflow-hidden bg-zinc-50 font-['Poppins'] text-zinc-900 selection:bg-blue-100">
@@ -244,10 +241,11 @@ export default function App() {
           </div>
         </aside>
 
-        {/* EDGE-TO-EDGE MAIN CONTENT AREA */}
+        {/* FULL WIDTH MAIN CONTENT AREA */}
         <main className="flex-1 h-full overflow-hidden flex flex-col relative bg-zinc-50">
-          <div className="flex-1 overflow-y-auto p-8 lg:p-12 custom-scrollbar">
-            <div className="max-w-7xl mx-auto w-full">
+          <div className="flex-1 overflow-y-auto p-6 lg:p-8 custom-scrollbar">
+            {/* The constraint 'max-w-7xl mx-auto' was removed here so it flows edge-to-edge */}
+            <div className="w-full h-full">
               {visitedPages.has('Dashboard') && <div className={activePage === 'Dashboard' ? 'block' : 'hidden'}><Dashboard setActivePage={handlePageSwitch} /></div>}
               {visitedPages.has('CRM') && <div className={activePage === 'CRM' ? 'block' : 'hidden'}><CRM /></div>}
               {visitedPages.has('Projects') && <div className={activePage === 'Projects' ? 'block' : 'hidden'}><Projects /></div>}
