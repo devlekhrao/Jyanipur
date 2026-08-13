@@ -1333,3 +1333,43 @@ export async function saveChangeOrder(co) {
     throw err;
   }
 }
+// ==========================================
+// PURCHASE ORDER ENGINE FUNCTIONS
+// ==========================================
+
+export async function getPurchaseOrders() {
+  try {
+    // Fallback for local testing:
+    const saved = localStorage.getItem('jyanipur_pos');
+    return saved ? JSON.parse(saved) : [];
+  } catch (error) {
+    console.error("Error fetching POs:", error);
+    return [];
+  }
+}
+
+export async function savePurchaseOrder(record) {
+  try {
+    // Fallback for local testing:
+    const existing = await getPurchaseOrders();
+    const newRecord = { ...record, id: Date.now(), isCancelled: false };
+    localStorage.setItem('jyanipur_pos', JSON.stringify([newRecord, ...existing]));
+    return true;
+  } catch (error) {
+    console.error("Error saving PO:", error);
+    throw error;
+  }
+}
+
+export async function toggleCancelPurchaseOrder(id, currentStatus) {
+  try {
+    // Fallback for local testing:
+    let existing = await getPurchaseOrders();
+    existing = existing.map(po => po.id === id ? { ...po, isCancelled: !currentStatus } : po);
+    localStorage.setItem('jyanipur_pos', JSON.stringify(existing));
+    return true;
+  } catch (error) {
+    console.error("Error toggling PO status:", error);
+    throw error;
+  }
+}
