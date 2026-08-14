@@ -71,9 +71,20 @@ export default function App() {
   // Detect Platform (Native Mobile App vs Desktop Web)
   useEffect(() => {
     const checkPlatform = () => {
-      const isCapacitorNative = Capacitor.isNativePlatform();
-      const isSmallScreen = window.innerWidth < 768;
-      setIsMobile(isCapacitorNative || isSmallScreen);
+      // 1. Safe Capacitor check (prevents silent crashes)
+      let isNative = false;
+      try {
+        isNative = Capacitor?.isNativePlatform?.() || false;
+      } catch (e) {}
+
+      // 2. Strict User Agent Check (Forces mobile layout for "Add to Home Screen" devices on iOS/Android)
+      const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      
+      // 3. Standard screen width fallback
+      const isSmallScreen = window.innerWidth < 850;
+
+      // If ANY of these are true, trigger the MobileLayout
+      setIsMobile(isNative || isMobileUA || isSmallScreen);
     };
 
     checkPlatform();
