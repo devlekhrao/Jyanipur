@@ -3,7 +3,7 @@ import { neon } from '@neondatabase/serverless';
 const sql = neon(import.meta.env.VITE_DATABASE_URL);
 
 // ==========================================
-// INVOICE MODULE
+// 1. INVOICE MODULE
 // ==========================================
 export async function getInvoices() {
   try {
@@ -26,8 +26,8 @@ export async function getInvoices() {
       ifscCode: inv.ifsc_code,
       terms: inv.terms,
       description: inv.description,
-      discount: Number(inv.discount),
-      advanceReceived: Number(inv.advance_received),
+      discount: Number(inv.discount || 0),
+      advanceReceived: Number(inv.advance_received || 0),
       amount: inv.amount,
       isCancelled: inv.is_cancelled
     }));
@@ -73,7 +73,68 @@ export async function toggleCancelInvoice(id, currentStatus) {
 }
 
 // ==========================================
-// EMPLOYEE & ATTENDANCE MODULE
+// 2. PURCHASE ORDERS MODULE (NEON POSTGRES)
+// ==========================================
+export async function getPurchaseOrders() {
+  try {
+    const data = await sql`SELECT * FROM purchase_orders ORDER BY id DESC`;
+    return data.map(po => ({
+      id: po.id,
+      poNo: po.po_no,
+      date: po.date ? new Date(po.date).toISOString().split('T')[0] : '',
+      expectedDelivery: po.expected_delivery ? new Date(po.expected_delivery).toISOString().split('T')[0] : '',
+      vendorName: po.vendor_name,
+      vendorAddress: po.vendor_address,
+      vendorGst: po.vendor_gst,
+      projectName: po.project_name,
+      shippingAddress: po.shipping_address,
+      items: typeof po.items === 'string' ? JSON.parse(po.items) : (po.items || []),
+      terms: po.terms,
+      description: po.description,
+      amount: po.amount,
+      isCancelled: po.is_cancelled
+    }));
+  } catch (err) {
+    console.error('Error fetching purchase orders:', err);
+    return [];
+  }
+}
+
+export async function savePurchaseOrder(po) {
+  try {
+    const result = await sql`
+      INSERT INTO purchase_orders (
+        po_no, date, expected_delivery, vendor_name, vendor_address, vendor_gst,
+        project_name, shipping_address, items, terms, description, amount, is_cancelled
+      ) VALUES (
+        ${po.poNo}, ${po.date}, ${po.expectedDelivery || null}, ${po.vendorName}, ${po.vendorAddress}, ${po.vendorGst},
+        ${po.projectName}, ${po.shippingAddress}, ${JSON.stringify(po.items)}, ${po.terms}, ${po.description}, ${po.amount}, false
+      )
+      ON CONFLICT (po_no) DO UPDATE SET
+        date = EXCLUDED.date, expected_delivery = EXCLUDED.expected_delivery, vendor_name = EXCLUDED.vendor_name,
+        vendor_address = EXCLUDED.vendor_address, vendor_gst = EXCLUDED.vendor_gst, project_name = EXCLUDED.project_name,
+        shipping_address = EXCLUDED.shipping_address, items = EXCLUDED.items, terms = EXCLUDED.terms,
+        description = EXCLUDED.description, amount = EXCLUDED.amount
+      RETURNING id;
+    `;
+    return result[0];
+  } catch (err) {
+    console.error('Error saving purchase order:', err);
+    throw err;
+  }
+}
+
+export async function toggleCancelPurchaseOrder(id, currentStatus) {
+  try {
+    await sql`UPDATE purchase_orders SET is_cancelled = ${!currentStatus} WHERE id = ${id}`;
+  } catch (err) {
+    console.error('Error toggling PO status:', err);
+    throw err;
+  }
+}
+
+// ==========================================
+// 3. EMPLOYEE & ATTENDANCE MODULE
 // ==========================================
 export async function getEmployees() {
   try {
@@ -85,7 +146,7 @@ export async function getEmployees() {
       role: emp.role,
       phone: emp.phone,
       payType: emp.pay_type,
-      payRate: Number(emp.pay_rate),
+      payRate: Number(emp.pay_rate || 0),
       joiningDate: emp.joining_date ? new Date(emp.joining_date).toISOString().split('T')[0] : '',
       bankName: emp.bank_name,
       accountNo: emp.account_no,
@@ -168,7 +229,7 @@ export async function getMonthlyAttendance(year, month) {
 }
 
 // ==========================================
-// EXPENSES & REPORTS MODULE
+// 4. EXPENSES & REPORTS MODULE
 // ==========================================
 export async function getExpenses() {
   try {
@@ -190,7 +251,7 @@ export async function getExpenses() {
 }
 
 // ==========================================
-// PURCHASES & INWARD SUPPLIES MODULE
+// 5. PURCHASES & INWARD SUPPLIES MODULE
 // ==========================================
 export async function getPurchases() {
   try {
@@ -203,13 +264,13 @@ export async function getPurchases() {
       vendorName: p.vendor_name,
       gstin: p.gstin,
       hsn: p.hsn,
-      taxableAmount: Number(p.taxable_amount),
+      taxableAmount: Number(p.taxable_amount || 0),
       gstPercent: Number(p.gst_percent || 18),
       gstType: p.gst_type || 'CGST/SGST',
-      gstAmount: Number(p.gst_amount),
-      totalAmount: Number(p.total_amount),
+      gstAmount: Number(p.gst_amount || 0),
+      totalAmount: Number(p.total_amount || 0),
       returnStatus: p.return_status,
-      items: p.items ? JSON.parse(p.items) : []
+      items: p.items ? (typeof p.items === 'string' ? JSON.parse(p.items) : p.items) : []
     }));
   } catch (err) {
     console.error('Error fetching purchases:', err);
@@ -254,7 +315,7 @@ export async function updatePurchaseStatus(id, newStatus) {
 }
 
 // ==========================================
-// EMPLOYEE EXPENSES MODULE
+// 6. EMPLOYEE EXPENSES MODULE
 // ==========================================
 export async function getEmployeeExpenses() {
   try {
@@ -265,7 +326,7 @@ export async function getEmployeeExpenses() {
       date: e.date ? new Date(e.date).toISOString().split('T')[0] : '',
       category: e.category,
       description: e.description,
-      amount: Number(e.amount)
+      amount: Number(e.amount || 0)
     }));
   } catch (err) {
     console.error('Error fetching employee expenses:', err);
@@ -296,7 +357,7 @@ export async function deleteEmployeeExpense(id) {
 }
 
 // ==========================================
-// SALARIES MODULE
+// 7. SALARIES & PAYROLL MODULE
 // ==========================================
 export async function getMonthlyPayouts(year, month) {
   try {
@@ -326,7 +387,7 @@ export async function initiatePayout(empId, month, year, amount) {
 }
 
 // ==========================================
-// PROJECTS & INCOME MODULE
+// 8. PROJECTS & CLIENT INCOME MODULE
 // ==========================================
 export async function getProjects() {
   try {
@@ -338,7 +399,7 @@ export async function getProjects() {
       clientGstin: p.client_gstin || '',
       clientPhone: p.client_phone || '',
       poDate: p.po_date ? new Date(p.po_date).toISOString().split('T')[0] : '',
-      budget: Number(p.budget),
+      budget: Number(p.budget || 0),
       status: p.status
     }));
   } catch (err) {
@@ -396,7 +457,7 @@ export async function getIncomeRecords() {
       projectName: i.project_name,
       clientName: i.client_name,
       date: i.date ? new Date(i.date).toISOString().split('T')[0] : '',
-      amount: Number(i.amount),
+      amount: Number(i.amount || 0),
       paymentMode: i.payment_mode,
       referenceNo: i.reference_no,
       notes: i.notes
@@ -431,7 +492,7 @@ export async function deleteIncomeRecord(id) {
 }
 
 // ==========================================
-// INVENTORY & GODOWN MODULE
+// 9. INVENTORY & GODOWN MODULE
 // ==========================================
 export async function getInventoryItems() {
   try {
@@ -441,7 +502,7 @@ export async function getInventoryItems() {
       name: item.name,
       category: item.category,
       unit: item.unit,
-      totalStock: Number(item.total_stock)
+      totalStock: Number(item.total_stock || 0)
     }));
   } catch (err) {
     console.error('Error fetching inventory items:', err);
@@ -478,7 +539,7 @@ export async function getInventoryMovements() {
       itemName: m.item_name,
       unit: m.unit,
       type: m.movement_type,
-      quantity: Number(m.quantity),
+      quantity: Number(m.quantity || 0),
       projectId: m.project_id,
       projectName: m.project_name,
       date: m.date ? new Date(m.date).toISOString().split('T')[0] : '',
@@ -510,7 +571,7 @@ export async function recordInventoryMovement(movement) {
 }
 
 // ==========================================
-// MATERIAL RATE BOOK (PROCUREMENT)
+// 10. MATERIAL RATE BOOK (PROCUREMENT)
 // ==========================================
 export async function getMaterialRates() {
   try {
@@ -519,7 +580,7 @@ export async function getMaterialRates() {
       id: r.id,
       materialName: r.material_name,
       vendorName: r.vendor_name,
-      rate: Number(r.rate),
+      rate: Number(r.rate || 0),
       unit: r.unit,
       date: r.date ? new Date(r.date).toISOString().split('T')[0] : '',
       notes: r.notes
@@ -554,7 +615,7 @@ export async function deleteMaterialRate(id) {
 }
 
 // ==========================================
-// SUBCONTRACTORS & WORK ORDERS MODULE
+// 11. SUBCONTRACTORS & WORK ORDERS MODULE
 // ==========================================
 export async function getSubcontractors() {
   try {
@@ -609,9 +670,9 @@ export async function getWorkOrders() {
       trade: wo.trade,
       projectName: wo.project_name,
       scope: wo.scope_of_work,
-      contractValue: Number(wo.contract_value),
-      totalPaid: Number(wo.total_paid),
-      balance: Number(wo.contract_value) - Number(wo.total_paid),
+      contractValue: Number(wo.contract_value || 0),
+      totalPaid: Number(wo.total_paid || 0),
+      balance: Number(wo.contract_value || 0) - Number(wo.total_paid || 0),
       status: wo.status,
       payments: wo.payments ? wo.payments.sort((a, b) => new Date(b.date) - new Date(a.date)) : []
     }));
@@ -659,7 +720,7 @@ export async function saveWoPayment(payment) {
 }
 
 // ==========================================
-// MEASUREMENT SHEETS (JMS) MODULE
+// 12. MEASUREMENT SHEETS (JMS) MODULE
 // ==========================================
 export async function getMeasurementSheets() {
   try {
@@ -676,7 +737,7 @@ export async function getMeasurementSheets() {
       clientName: m.client_name,
       title: m.title,
       date: m.date ? new Date(m.date).toISOString().split('T')[0] : '',
-      data: m.data ? JSON.parse(m.data) : []
+      data: m.data ? (typeof m.data === 'string' ? JSON.parse(m.data) : m.data) : []
     }));
   } catch (err) {
     console.error('Error fetching measurement sheets:', err);
@@ -718,7 +779,7 @@ export async function deleteMeasurementSheet(id) {
 }
 
 // ==========================================
-// CRM & LEADS MODULE
+// 13. CRM & LEADS MODULE
 // ==========================================
 export async function getLeads() {
   try {
@@ -728,7 +789,7 @@ export async function getLeads() {
       clientName: l.client_name,
       phone: l.phone,
       projectType: l.project_type,
-      estimatedValue: Number(l.estimated_value),
+      estimatedValue: Number(l.estimated_value || 0),
       status: l.status,
       notes: l.notes
     }));
@@ -780,7 +841,7 @@ export async function deleteLead(id) {
 }
 
 // ==========================================
-// TOOLS & ASSET MANAGEMENT MODULE
+// 14. TOOLS & ASSET MANAGEMENT MODULE
 // ==========================================
 export async function getTools() {
   try {
@@ -793,7 +854,7 @@ export async function getTools() {
       status: t.status,
       assignedTo: t.assigned_to,
       location: t.location,
-      purchasePrice: Number(t.purchase_price),
+      purchasePrice: Number(t.purchase_price || 0),
       purchaseDate: t.purchase_date ? new Date(t.purchase_date).toISOString().split('T')[0] : ''
     }));
   } catch (err) {
@@ -848,7 +909,7 @@ export async function deleteTool(id) {
 }
 
 // ==========================================
-// VENDOR LEDGER MODULE
+// 15. VENDOR LEDGER MODULE
 // ==========================================
 export async function getVendorLedgers() {
   try {
@@ -857,15 +918,15 @@ export async function getVendorLedgers() {
     const paymentList = await sql`SELECT * FROM vendor_payments ORDER BY date DESC`;
 
     const ledgers = {};
-    purchases.forEach(p => ledgers[p.vendor_name] = { vendorName: p.vendor_name, totalBilled: Number(p.total_billed), totalPaid: 0, payments: [] });
+    purchases.forEach(p => ledgers[p.vendor_name] = { vendorName: p.vendor_name, totalBilled: Number(p.total_billed || 0), totalPaid: 0, payments: [] });
     payments.forEach(p => {
       if (!ledgers[p.vendor_name]) ledgers[p.vendor_name] = { vendorName: p.vendor_name, totalBilled: 0, totalPaid: 0, payments: [] };
-      ledgers[p.vendor_name].totalPaid = Number(p.total_paid);
+      ledgers[p.vendor_name].totalPaid = Number(p.total_paid || 0);
     });
     paymentList.forEach(p => {
       if (ledgers[p.vendor_name]) {
         ledgers[p.vendor_name].payments.push({
-          id: p.id, date: p.date ? new Date(p.date).toISOString().split('T')[0] : '', amount: Number(p.amount), mode: p.payment_mode, ref: p.reference_no, notes: p.notes
+          id: p.id, date: p.date ? new Date(p.date).toISOString().split('T')[0] : '', amount: Number(p.amount || 0), mode: p.payment_mode, ref: p.reference_no, notes: p.notes
         });
       }
     });
@@ -892,7 +953,7 @@ export async function saveVendorPayment(payment) {
 }
 
 // ==========================================
-// SITE MANAGER (DPR & DOCUMENTS)
+// 16. SITE MANAGER (DPR & DOCUMENTS)
 // ==========================================
 export async function getSiteOperations(projectId) {
   try {
@@ -910,15 +971,25 @@ export async function getSiteOperations(projectId) {
 }
 
 export async function saveDPR(dpr) {
-  await sql`INSERT INTO dpr_logs (project_id, date, summary, materials_needed, photo_link, logged_by) VALUES (${dpr.projectId}, ${dpr.date}, ${dpr.summary}, ${dpr.materials}, ${dpr.photoLink}, ${dpr.loggedBy})`;
+  try {
+    await sql`INSERT INTO dpr_logs (project_id, date, summary, materials_needed, photo_link, logged_by) VALUES (${dpr.projectId}, ${dpr.date}, ${dpr.summary}, ${dpr.materials}, ${dpr.photoLink}, ${dpr.loggedBy})`;
+  } catch (err) {
+    console.error('Error saving DPR:', err);
+    throw err;
+  }
 }
 
 export async function saveDocument(doc) {
-  await sql`INSERT INTO documents (project_id, title, doc_type, file_link, uploaded_by) VALUES (${doc.projectId}, ${doc.title}, ${doc.docType}, ${doc.fileLink}, ${doc.uploadedBy})`;
+  try {
+    await sql`INSERT INTO documents (project_id, title, doc_type, file_link, uploaded_by) VALUES (${doc.projectId}, ${doc.title}, ${doc.docType}, ${doc.fileLink}, ${doc.uploadedBy})`;
+  } catch (err) {
+    console.error('Error saving document:', err);
+    throw err;
+  }
 }
 
 // ==========================================
-// PETTY CASH WALLET MODULE
+// 17. PETTY CASH WALLET MODULE
 // ==========================================
 export async function getPettyCash() {
   try {
@@ -934,7 +1005,7 @@ export async function getPettyCash() {
       projectName: row.project_name || 'Office / Unassigned',
       date: row.date ? new Date(row.date).toISOString().split('T')[0] : '',
       type: row.type,
-      amount: Number(row.amount),
+      amount: Number(row.amount || 0),
       description: row.description,
       loggedBy: row.logged_by
     }));
@@ -967,7 +1038,7 @@ export async function deletePettyCash(id) {
 }
 
 // ==========================================
-// PROJECT PROFIT & LOSS (P&L) MODULE
+// 18. PROJECT PROFIT & LOSS (P&L) MODULE
 // ==========================================
 export async function getProjectPnL(projectId) {
   try {
@@ -996,7 +1067,7 @@ export async function getProjectPnL(projectId) {
     return {
       name: project.name,
       status: project.status,
-      budget: Number(project.budget),
+      budget: Number(project.budget || 0),
       incomeReceived,
       subCost,
       pettyCost,
@@ -1011,7 +1082,7 @@ export async function getProjectPnL(projectId) {
 }
 
 // ==========================================
-// PROJECT TASK BOARD MODULE
+// 19. PROJECT TASK BOARD MODULE
 // ==========================================
 export async function getTasks() {
   try {
@@ -1069,7 +1140,7 @@ export async function deleteTask(id) {
 }
 
 // ==========================================
-// DOCUMENT VAULT MODULE
+// 20. DOCUMENT VAULT MODULE
 // ==========================================
 export async function getVaultDocuments() {
   try {
@@ -1119,7 +1190,7 @@ export async function deleteVaultDocument(id) {
 }
 
 // ==========================================
-// SITE SNAG & QUALITY PUNCH LIST MODULE
+// 21. SITE SNAG & QUALITY PUNCH LIST MODULE
 // ==========================================
 export async function getSnags() {
   try {
@@ -1183,8 +1254,9 @@ export async function deleteSnag(id) {
     console.error('Error deleting snag:', err);
   }
 }
+
 // ==========================================
-// SUBCONTRACTOR RA BILLS MODULE
+// 22. SUBCONTRACTOR RA BILLS MODULE
 // ==========================================
 export async function getRaBills(projectId) {
   try {
@@ -1206,11 +1278,11 @@ export async function getRaBills(projectId) {
       billNo: b.bill_no,
       billDate: b.bill_date ? new Date(b.bill_date).toISOString().split('T')[0] : '',
       workDoneDetails: typeof b.work_done_details === 'string' ? JSON.parse(b.work_done_details) : b.work_done_details,
-      grossAmount: Number(b.gross_amount),
-      retentionPercent: Number(b.retention_percent),
-      retentionAmount: Number(b.retention_amount),
-      previousPaid: Number(b.previous_paid),
-      netPayable: Number(b.net_payable),
+      grossAmount: Number(b.gross_amount || 0),
+      retentionPercent: Number(b.retention_percent || 0),
+      retentionAmount: Number(b.retention_amount || 0),
+      previousPaid: Number(b.previous_paid || 0),
+      netPayable: Number(b.net_payable || 0),
       status: b.status,
       notes: b.notes
     }));
@@ -1240,7 +1312,7 @@ export async function saveRaBill(bill) {
 }
 
 // ==========================================
-// CLIENT PAYMENT MILESTONES MODULE
+// 23. CLIENT PAYMENT MILESTONES MODULE
 // ==========================================
 export async function getMilestones(projectId) {
   try {
@@ -1256,8 +1328,8 @@ export async function getMilestones(projectId) {
       projectId: m.project_id,
       projectName: m.project_name,
       stageName: m.stage_name,
-      percentage: Number(m.percentage),
-      amount: Number(m.amount),
+      percentage: Number(m.percentage || 0),
+      amount: Number(m.amount || 0),
       status: m.status,
       dueDate: m.due_date ? new Date(m.due_date).toISOString().split('T')[0] : '',
       notes: m.notes
@@ -1292,7 +1364,7 @@ export async function updateMilestoneStatus(id, newStatus) {
 }
 
 // ==========================================
-// PROJECT CHANGE ORDERS (VARIATIONS) MODULE
+// 24. PROJECT CHANGE ORDERS (VARIATIONS) MODULE
 // ==========================================
 export async function getChangeOrders(projectId) {
   try {
@@ -1309,8 +1381,8 @@ export async function getChangeOrders(projectId) {
       projectName: c.project_name,
       title: c.title,
       description: c.description,
-      additionalCost: Number(c.additional_cost),
-      extraDays: Number(c.extra_days),
+      additionalCost: Number(c.additional_cost || 0),
+      extraDays: Number(c.extra_days || 0),
       status: c.status,
       date: c.date ? new Date(c.date).toISOString().split('T')[0] : ''
     }));
@@ -1331,45 +1403,5 @@ export async function saveChangeOrder(co) {
   } catch (err) {
     console.error('Error saving change order:', err);
     throw err;
-  }
-}
-// ==========================================
-// PURCHASE ORDER ENGINE FUNCTIONS
-// ==========================================
-
-export async function getPurchaseOrders() {
-  try {
-    // Fallback for local testing:
-    const saved = localStorage.getItem('jyanipur_pos');
-    return saved ? JSON.parse(saved) : [];
-  } catch (error) {
-    console.error("Error fetching POs:", error);
-    return [];
-  }
-}
-
-export async function savePurchaseOrder(record) {
-  try {
-    // Fallback for local testing:
-    const existing = await getPurchaseOrders();
-    const newRecord = { ...record, id: Date.now(), isCancelled: false };
-    localStorage.setItem('jyanipur_pos', JSON.stringify([newRecord, ...existing]));
-    return true;
-  } catch (error) {
-    console.error("Error saving PO:", error);
-    throw error;
-  }
-}
-
-export async function toggleCancelPurchaseOrder(id, currentStatus) {
-  try {
-    // Fallback for local testing:
-    let existing = await getPurchaseOrders();
-    existing = existing.map(po => po.id === id ? { ...po, isCancelled: !currentStatus } : po);
-    localStorage.setItem('jyanipur_pos', JSON.stringify(existing));
-    return true;
-  } catch (error) {
-    console.error("Error toggling PO status:", error);
-    throw error;
   }
 }

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Jyanipur ERP</string>
+    <string name="title_activity_main">Jyanipur ERP</string>
+    <string name="package_name">com.jyanipur.erp</string>
+    <string name="custom_url_scheme">com.jyanipur.erp</string>
+</resources>
