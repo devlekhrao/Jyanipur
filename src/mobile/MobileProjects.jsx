@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getProjects, saveProject, deleteProject } from '../db';
+import { getProjects, saveProject, deleteProject } from '.../db';
 
 export default function MobileProjects() {
   const [loading, setLoading] = useState(true);

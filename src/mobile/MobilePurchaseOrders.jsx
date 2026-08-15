@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { sendWhatsAppMessage } from '../WhatsAppHelper';
-import { getPurchaseOrders, savePurchaseOrder, toggleCancelPurchaseOrder } from '../db';
+import { getPurchaseOrders, savePurchaseOrder, toggleCancelPurchaseOrder } from '.../db';
 
 export default function MobilePurchaseOrders({ companySettings = {}, updateDirtyState }) {
   const [currentView, setCurrentView] = useState(() => localStorage.getItem('draft_poView') || 'list');

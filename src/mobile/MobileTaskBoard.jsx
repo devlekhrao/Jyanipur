@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getTasks, saveTask, updateTaskStatus, deleteTask, getProjects, getEmployees } from '../db';
+import { getTasks, saveTask, updateTaskStatus, deleteTask, getProjects, getEmployees } from '.../db';
 import { exportToCSV } from '../utils';
 
 export default function MobileTaskBoard() {

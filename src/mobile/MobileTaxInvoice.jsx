@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getInvoices, saveInvoice, toggleCancelInvoice } from '../db';
+import { getInvoices, saveInvoice, toggleCancelInvoice } from '.../db';
 import { sendWhatsAppMessage } from '../WhatsAppHelper';
 
 const gstStateCodes = {

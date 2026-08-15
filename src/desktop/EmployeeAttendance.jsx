@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getEmployees, saveEmployee, getTodayAttendance, saveAttendance, getMonthlyAttendance } from './db';
+import { getEmployees, saveEmployee, getTodayAttendance, saveAttendance, getMonthlyAttendance } from '.../db';
 
 export default function EmployeeAttendance({ companySettings = {} }) {
   const [currentView, setCurrentView] = useState('monthly');
@@ -511,8 +511,8 @@ export default function EmployeeAttendance({ companySettings = {} }) {
               <h4 className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest mb-3">3. ID & Banking</h4>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
-                  <label className={labelClass}>Aadhaar / PAN ID</label>
-                  <input type="text" placeholder="Aadhaar Number" value={newEmp.idNumber} onChange={e => setNewEmp({...newEmp, idNumber: e.target.value})} className={inputClass} />
+                  <label className={labelClass}>ID Number [OMITTED]</label>
+                  <input type="text" placeholder="Government ID" value={newEmp.idNumber} onChange={e => setNewEmp({...newEmp, idNumber: e.target.value})} className={inputClass} />
                 </div>
                 <div>
                   <label className={labelClass}>Bank Name</label>

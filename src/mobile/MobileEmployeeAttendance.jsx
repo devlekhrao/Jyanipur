@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getEmployees, saveEmployee, getTodayAttendance, saveAttendance, getMonthlyAttendance } from '../db';
+import { getEmployees, saveEmployee, getTodayAttendance, saveAttendance, getMonthlyAttendance } from '.../db';
 
 export default function MobileEmployeeAttendance({ companySettings = {} }) {
   const [currentView, setCurrentView] = useState('attendance');
