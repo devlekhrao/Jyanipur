@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getInvoices, getPurchases, getVendorLedgers, getProjects } from '../db';
+import { getInvoices, getPurchases, getVendorLedgers, getProjects } from '..../db';
 
 export default function Dashboard({ setActivePage }) {
   const [loading, setLoading] = useState(true);

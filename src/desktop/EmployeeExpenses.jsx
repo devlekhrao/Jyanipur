@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getEmployeeExpenses, saveEmployeeExpense, deleteEmployeeExpense, getEmployees } from './db';
+import { getEmployeeExpenses, saveEmployeeExpense, deleteEmployeeExpense, getEmployees } from '.../db';
 
 export default function EmployeeExpenses() {
   const [loading, setLoading] = useState(true);

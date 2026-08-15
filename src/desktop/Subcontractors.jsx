@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   getProjects, getSubcontractors, saveSubcontractor, 
   getWorkOrders, saveWorkOrder, saveWoPayment, updateWorkOrderStatus 
-} from './db';
+} from '.../db';
 
 export default function Subcontractors() {
   const [loading, setLoading] = useState(true);

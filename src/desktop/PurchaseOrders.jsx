@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { sendWhatsAppMessage } from './WhatsAppHelper';
-import { getPurchaseOrders, savePurchaseOrder, toggleCancelPurchaseOrder } from './db';
+import { sendWhatsAppMessage } from '../WhatsAppHelper';
+import { getPurchaseOrders, savePurchaseOrder, toggleCancelPurchaseOrder } from '.../db';
 
 // Helper function to convert number to Words
 function numberToWords(num) {

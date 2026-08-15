@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getInvoices, saveInvoice, toggleCancelInvoice } from '.../db';
-import { sendWhatsAppMessage } from '../WhatsAppHelper';
+import { getInvoices, saveInvoice, toggleCancelInvoice } from '..../db';
+import { sendWhatsAppMessage } from '.../WhatsAppHelper';
 
 const gstStateCodes = {
   '01': 'Jammu & Kashmir (01)', '02': 'Himachal Pradesh (02)', '03': 'Punjab (03)',

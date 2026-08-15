@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getVaultDocuments, saveVaultDocument, deleteVaultDocument, getProjects } from '.../db';
+import { getVaultDocuments, saveVaultDocument, deleteVaultDocument, getProjects } from '..../db';
 
 export default function MobileDocumentVault() {
   const [loading, setLoading] = useState(true);

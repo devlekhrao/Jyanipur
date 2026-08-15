@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getVendorLedgers, saveVendorPayment } from '.../db';
+import { getVendorLedgers, saveVendorPayment } from '..../db';
 
 export default function MobileVendorLedger() {
   const [loading, setLoading] = useState(true);

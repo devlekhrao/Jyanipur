@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getLeads, saveLead, updateLeadStatus, deleteLead } from '.../db';
-import { exportToCSV } from '../utils';
+import { getLeads, saveLead, updateLeadStatus, deleteLead } from '..../db';
+import { exportToCSV } from '.../utils';
 
 export default function MobileCRM() {
   const [loading, setLoading] = useState(true);

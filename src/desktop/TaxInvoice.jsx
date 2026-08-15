@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getInvoices, saveInvoice, toggleCancelInvoice } from './db';
-import { sendWhatsAppMessage } from './WhatsAppHelper';
+import { getInvoices, saveInvoice, toggleCancelInvoice } from '.../db';
+import { sendWhatsAppMessage } from '../WhatsAppHelper';
 
 // Helper function to convert number to Indian Currency Words
 function numberToWords(num) {
