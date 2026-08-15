@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getProjects, getSiteOperations, saveDPR, saveDocument, saveSnag, updateSnagStatus } from '.../db';
+import { getProjects, getSiteOperations, saveDPR, saveDocument, saveSnag, updateSnagStatus } from '../db';
 
 export default function SiteManager() {
   const [projects, setProjects] = useState([]);

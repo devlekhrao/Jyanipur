@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getProjects, getMeasurementSheets, saveMeasurementSheet, deleteMeasurementSheet } from '.../db';
+import { getProjects, getMeasurementSheets, saveMeasurementSheet, deleteMeasurementSheet } from '../db';
 
 export default function MeasurementSheet() {
   const [loading, setLoading] = useState(true);

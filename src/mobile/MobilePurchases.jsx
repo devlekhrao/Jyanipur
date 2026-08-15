@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getPurchases, savePurchase, deletePurchase, updatePurchaseStatus, saveMaterialRate } from '..../db';
+import { getPurchases, savePurchase, deletePurchase, updatePurchaseStatus, saveMaterialRate } from '../db';
 
 function getFinancialYear(dateStr) {
   if (!dateStr) return '';

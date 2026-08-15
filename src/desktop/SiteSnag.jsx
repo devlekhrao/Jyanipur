@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getSnags, saveSnag, updateSnagStatus, deleteSnag, getProjects, getSubcontractors } from '.../db';
+import { getSnags, saveSnag, updateSnagStatus, deleteSnag, getProjects, getSubcontractors } from '../db';
 import { sendWhatsAppMessage } from '../WhatsAppHelper';
 
 export default function SiteSnag({ companySettings = {} }) {

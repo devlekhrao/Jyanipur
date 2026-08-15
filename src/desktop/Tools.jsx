@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getTools, saveTool, updateToolStatus, deleteTool, getEmployees, getProjects } from '.../db';
+import { getTools, saveTool, updateToolStatus, deleteTool, getEmployees, getProjects } from '../db';
 
 export default function Tools() {
   const [loading, setLoading] = useState(true);

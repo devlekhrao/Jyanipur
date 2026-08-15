@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getTasks, saveTask, updateTaskStatus, deleteTask, getProjects, getEmployees } from '..../db';
-import { exportToCSV } from '.../utils';
+import { getTasks, saveTask, updateTaskStatus, deleteTask, getProjects, getEmployees } from '../db';
+import { exportToCSV } from '../utils';
 
 export default function MobileTaskBoard() {
   const [loading, setLoading] = useState(true);

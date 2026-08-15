@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getPettyCash, savePettyCash, deletePettyCash, getProjects } from '..../db';
+import { getPettyCash, savePettyCash, deletePettyCash, getProjects } from '../db';
 
 export default function MobilePettyCash() {
   const [loading, setLoading] = useState(true);

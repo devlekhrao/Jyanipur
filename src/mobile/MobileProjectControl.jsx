@@ -4,7 +4,7 @@ import {
   getRaBills, saveRaBill,
   getMilestones, saveMilestone, updateMilestoneStatus,
   getChangeOrders, saveChangeOrder 
-} from '..../db';
+} from '../db';
 
 export default function MobileProjectControl() {
   const [activeTab, setActiveTab] = useState('RA Bills');

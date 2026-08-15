@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getProjects, getProjectPnL } from '.../db';
+import { getProjects, getProjectPnL } from '../db';
 
 export default function ProjectPnL() {
   const [projects, setProjects] = useState([]);

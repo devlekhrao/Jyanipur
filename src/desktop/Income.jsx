@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getProjects, getIncomeRecords, saveIncomeRecord, deleteIncomeRecord } from '.../db';
+import { getProjects, getIncomeRecords, saveIncomeRecord, deleteIncomeRecord } from '../db';
 
 export default function Income() {
   const [loading, setLoading] = useState(true);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getMaterialRates, saveMaterialRate, deleteMaterialRate } from '..../db';
+import { getMaterialRates, saveMaterialRate, deleteMaterialRate } from '../db';
 
 export default function MobileRateBook() {
   const [loading, setLoading] = useState(true);

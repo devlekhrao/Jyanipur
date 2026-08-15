@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getProjects, getInventoryItems, getInventoryMovements, saveInventoryItem, recordInventoryMovement } from '.../db';
+import { getProjects, getInventoryItems, getInventoryMovements, saveInventoryItem, recordInventoryMovement } from '../db';
 
 export default function Inventory() {
   const [loading, setLoading] = useState(true);
