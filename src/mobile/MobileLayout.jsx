@@ -136,10 +136,10 @@ export default function MobileLayout({
   };
 
   return (
-    <div className="w-screen h-[100dvh] flex flex-col bg-zinc-100 font-['Poppins'] overflow-hidden">
+    <div className="w-full h-[100dvh] flex flex-col bg-zinc-100 font-['Poppins'] overflow-hidden">
       
-      {/* TOP APP HEADER */}
-      <header className="px-4 pt-3 pb-2 bg-white border-b border-zinc-200 flex justify-between items-center shrink-0">
+      {/* TOP APP HEADER - Added safe-area-inset-top */}
+      <header className="px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-2 bg-white border-b border-zinc-200 flex justify-between items-center shrink-0">
         <div className="flex items-center gap-2">
           <img 
             src={companySettings.logoUrl || "/jyanipur.png"} 
@@ -164,8 +164,8 @@ export default function MobileLayout({
         {renderActiveView()}
       </main>
 
-      {/* BOTTOM TAB NAVIGATION */}
-      <nav className="bg-white border-t border-zinc-200 flex justify-around py-2 px-1 shrink-0 pb-[calc(env(safe-area-inset-bottom,8px)+8px)]">
+      {/* BOTTOM TAB NAVIGATION - Added safe-area-inset-bottom */}
+      <nav className="bg-white border-t border-zinc-200 flex justify-around pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] px-1 shrink-0">
         {mainTabs.map(tab => (
           <button
             key={tab.id}
