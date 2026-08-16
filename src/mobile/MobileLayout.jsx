@@ -1,6 +1,16 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { triggerLightHaptic } from '../utils/haptics'; // <-- Added Haptics Import
+import { triggerLightHaptic } from '../utils/haptics';
+
+// 2D Vector Icons
+import { 
+  LayoutDashboard, Receipt, Building2, HardHat, LayoutGrid, 
+  Users, Ruler, ShoppingCart, Package, AlertTriangle, 
+  Briefcase, DraftingCompass, Warehouse, Tag, Wallet, 
+  IndianRupee, Banknote, CalendarCheck, CreditCard, PenTool, 
+  ClipboardList, Store, Landmark, TrendingUp, SlidersHorizontal, 
+  FolderClosed, Settings 
+} from 'lucide-react';
 
 // Import All Mobile View Modules
 import MobileDashboard from './MobileDashboard';
@@ -39,101 +49,74 @@ export default function MobileLayout({
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  // Quick-access bottom bar items
+  // Quick-access bottom bar items with 2D Icons
   const mainTabs = [
-    { id: 'Dashboard', label: 'Home', icon: '📊' },
-    { id: 'Tax Invoice', label: 'Invoices', icon: '🧾' },
-    { id: 'Projects', label: 'Projects', icon: '🏗️' },
-    { id: 'Site Operations', label: 'Site', icon: '👷' },
-    { id: 'Menu', label: 'All Apps', icon: '☰' },
+    { id: 'Dashboard', label: 'Home', icon: LayoutDashboard },
+    { id: 'Tax Invoice', label: 'Invoices', icon: Receipt },
+    { id: 'Projects', label: 'Projects', icon: Building2 },
+    { id: 'Site Operations', label: 'Site', icon: HardHat },
+    { id: 'Menu', label: 'All Apps', icon: LayoutGrid },
   ];
 
-  // Full module list for the slide-up menu drawer
+  // Full module list for the slide-up menu drawer with 2D Icons
   const allApps = [
-    { id: 'Dashboard', label: 'Dashboard', icon: '📊' },
-    { id: 'CRM Leads', label: 'CRM & Leads', icon: '📇' },
-    { id: 'Projects', label: 'Projects & Jobs', icon: '🏗️' },
-    { id: 'Estimation', label: 'BOQ Estimations', icon: '📐' },
-    { id: 'Tax Invoice', label: 'Tax Invoices', icon: '🧾' },
-    { id: 'Purchase Orders', label: 'Purchase Orders', icon: '🛍️' },
-    { id: 'Purchases', label: 'Inward Purchases', icon: '📦' },
-    { id: 'Site Operations', label: 'Site Operations', icon: '👷' },
-    { id: 'Site Snag', label: 'Quality Snags', icon: '🛠️' },
-    { id: 'Subcontractors', label: 'Subcontractors', icon: '👷‍♂️' },
-    { id: 'Measurement Sheet', label: 'Measurement Sheets', icon: '📏' },
-    { id: 'Inventory', label: 'Godown Inventory', icon: '🏬' },
-    { id: 'Rate Book', label: 'Material RateBook', icon: '🏷️' },
-    { id: 'Petty Cash', label: 'Site Petty Cash', icon: '👛' },
-    { id: 'Income', label: 'Client Income', icon: '💰' },
-    { id: 'Salaries', label: 'Payroll & Salaries', icon: '💼' },
-    { id: 'Employee Attendance', label: 'Staff Attendance', icon: '📅' },
-    { id: 'Employee Expenses', label: 'Staff Expenses', icon: '💳' },
-    { id: 'Tools', label: 'Tools & Assets', icon: '🧰' },
-    { id: 'Task Board', label: 'Task Kanban', icon: '📋' },
-    { id: 'Vendors', label: 'Vendor Ledgers', icon: '🏪' },
-    { id: 'GST Filing', label: 'GST Compliance', icon: '🏛️' },
-    { id: 'Project P&L', label: 'Project P&L', icon: '📈' },
-    { id: 'Project Control', label: 'Project Control', icon: '📑' },
-    { id: 'Document Vault', label: 'Document Vault', icon: '📁' },
-    { id: 'Settings', label: 'System Settings', icon: '⚙️' },
+    { id: 'Dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'CRM Leads', label: 'CRM & Leads', icon: Users },
+    { id: 'Projects', label: 'Projects & Jobs', icon: Building2 },
+    { id: 'Estimation', label: 'BOQ Estimations', icon: Ruler },
+    { id: 'Tax Invoice', label: 'Tax Invoices', icon: Receipt },
+    { id: 'Purchase Orders', label: 'Purchase Orders', icon: ShoppingCart },
+    { id: 'Purchases', label: 'Inward Purchases', icon: Package },
+    { id: 'Site Operations', label: 'Site Operations', icon: HardHat },
+    { id: 'Site Snag', label: 'Quality Snags', icon: AlertTriangle },
+    { id: 'Subcontractors', label: 'Subcontractors', icon: Briefcase },
+    { id: 'Measurement Sheet', label: 'Measurement Sheets', icon: DraftingCompass },
+    { id: 'Inventory', label: 'Godown Inventory', icon: Warehouse },
+    { id: 'Rate Book', label: 'Material RateBook', icon: Tag },
+    { id: 'Petty Cash', label: 'Site Petty Cash', icon: Wallet },
+    { id: 'Income', label: 'Client Income', icon: IndianRupee },
+    { id: 'Salaries', label: 'Payroll & Salaries', icon: Banknote },
+    { id: 'Employee Attendance', label: 'Staff Attendance', icon: CalendarCheck },
+    { id: 'Employee Expenses', label: 'Staff Expenses', icon: CreditCard },
+    { id: 'Tools', label: 'Tools & Assets', icon: PenTool },
+    { id: 'Task Board', label: 'Task Kanban', icon: ClipboardList },
+    { id: 'Vendors', label: 'Vendor Ledgers', icon: Store },
+    { id: 'GST Filing', label: 'GST Compliance', icon: Landmark },
+    { id: 'Project P&L', label: 'Project P&L', icon: TrendingUp },
+    { id: 'Project Control', label: 'Project Control', icon: SlidersHorizontal },
+    { id: 'Document Vault', label: 'Document Vault', icon: FolderClosed },
+    { id: 'Settings', label: 'System Settings', icon: Settings },
   ];
 
   const renderActiveView = () => {
     switch (activeTab) {
-      case 'Dashboard': 
-        return <MobileDashboard companySettings={companySettings} setActiveTab={setActiveTab} />;
-      case 'CRM Leads': 
-        return <MobileCRM />;
-      case 'Projects': 
-        return <MobileProjects />;
-      case 'Estimation': 
-        return <MobileEstimation companySettings={companySettings} />;
-      case 'Tax Invoice': 
-        return <MobileTaxInvoice companySettings={companySettings} updateDirtyState={updateDirtyState} />;
-      case 'Purchase Orders': 
-        return <MobilePurchaseOrders companySettings={companySettings} updateDirtyState={updateDirtyState} />;
-      case 'Purchases': 
-        return <MobilePurchases />;
-      case 'Site Operations': 
-        return <MobileSiteManager />;
-      case 'Site Snag': 
-        return <MobileSiteSnag companySettings={companySettings} />;
-      case 'Subcontractors': 
-        return <MobileSubcontractors />;
-      case 'Measurement Sheet': 
-        return <MobileMeasurementSheet />;
-      case 'Inventory': 
-        return <MobileInventory />;
-      case 'Rate Book': 
-        return <MobileRateBook />;
-      case 'Petty Cash': 
-        return <MobilePettyCash />;
-      case 'Income': 
-        return <MobileIncome />;
-      case 'Salaries': 
-        return <MobileSalaries />;
-      case 'Employee Attendance': 
-        return <MobileEmployeeAttendance />;
-      case 'Employee Expenses': 
-        return <MobileEmployeeExpenses />;
-      case 'Tools': 
-        return <MobileTools />;
-      case 'Task Board': 
-        return <MobileTaskBoard />;
-      case 'Vendors': 
-        return <MobileVendorLedger />;
-      case 'GST Filing': 
-        return <MobileGST />;
-      case 'Project P&L': 
-        return <MobileProjectPnL />;
-      case 'Project Control': 
-        return <MobileProjectControl />;
-      case 'Document Vault': 
-        return <MobileDocumentVault />;
-      case 'Settings': 
-        return <MobileSettings companySettings={companySettings} setCompanySettings={setCompanySettings} />;
-      default: 
-        return <MobileDashboard companySettings={companySettings} setActiveTab={setActiveTab} />;
+      case 'Dashboard': return <MobileDashboard companySettings={companySettings} setActiveTab={setActiveTab} />;
+      case 'CRM Leads': return <MobileCRM />;
+      case 'Projects': return <MobileProjects />;
+      case 'Estimation': return <MobileEstimation companySettings={companySettings} />;
+      case 'Tax Invoice': return <MobileTaxInvoice companySettings={companySettings} updateDirtyState={updateDirtyState} />;
+      case 'Purchase Orders': return <MobilePurchaseOrders companySettings={companySettings} updateDirtyState={updateDirtyState} />;
+      case 'Purchases': return <MobilePurchases />;
+      case 'Site Operations': return <MobileSiteManager />;
+      case 'Site Snag': return <MobileSiteSnag companySettings={companySettings} />;
+      case 'Subcontractors': return <MobileSubcontractors />;
+      case 'Measurement Sheet': return <MobileMeasurementSheet />;
+      case 'Inventory': return <MobileInventory />;
+      case 'Rate Book': return <MobileRateBook />;
+      case 'Petty Cash': return <MobilePettyCash />;
+      case 'Income': return <MobileIncome />;
+      case 'Salaries': return <MobileSalaries />;
+      case 'Employee Attendance': return <MobileEmployeeAttendance />;
+      case 'Employee Expenses': return <MobileEmployeeExpenses />;
+      case 'Tools': return <MobileTools />;
+      case 'Task Board': return <MobileTaskBoard />;
+      case 'Vendors': return <MobileVendorLedger />;
+      case 'GST Filing': return <MobileGST />;
+      case 'Project P&L': return <MobileProjectPnL />;
+      case 'Project Control': return <MobileProjectControl />;
+      case 'Document Vault': return <MobileDocumentVault />;
+      case 'Settings': return <MobileSettings companySettings={companySettings} setCompanySettings={setCompanySettings} />;
+      default: return <MobileDashboard companySettings={companySettings} setActiveTab={setActiveTab} />;
     }
   };
 
@@ -182,27 +165,32 @@ export default function MobileLayout({
 
       {/* BOTTOM TAB NAVIGATION */}
       <nav className="bg-white border-t border-zinc-200 flex justify-around pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] px-1 shrink-0 z-30">
-        {mainTabs.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => {
-              triggerLightHaptic(); // <-- Added Haptic Trigger
-              if (tab.id === 'Menu') {
-                setIsDrawerOpen(true);
-              } else {
-                setActiveTab(tab.id);
-              }
-            }}
-            className={`flex flex-col items-center py-1 px-3 rounded-xl transition-all active:scale-90 ${
-              activeTab === tab.id && tab.id !== 'Menu' 
-                ? 'text-[#1E3A8A] font-black scale-105' 
-                : 'text-zinc-400 font-bold'
-            }`}
-          >
-            <span className="text-lg">{tab.icon}</span>
-            <span className="text-[9px] mt-0.5">{tab.label}</span>
-          </button>
-        ))}
+        {mainTabs.map(tab => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id && tab.id !== 'Menu';
+          return (
+            <button
+              key={tab.id}
+              onClick={() => {
+                triggerLightHaptic(); 
+                if (tab.id === 'Menu') {
+                  setIsDrawerOpen(true);
+                } else {
+                  setActiveTab(tab.id);
+                }
+              }}
+              className={`flex flex-col items-center py-1 px-3 rounded-xl transition-all active:scale-90 ${
+                isActive ? 'text-[#1E3A8A] font-black scale-105' : 'text-zinc-400 font-bold'
+              }`}
+            >
+              <Icon 
+                strokeWidth={isActive ? 2.5 : 2} 
+                className={`w-[22px] h-[22px] transition-colors ${isActive ? 'stroke-[#1E3A8A]' : 'stroke-zinc-400'}`} 
+              />
+              <span className="text-[9px] mt-1">{tab.label}</span>
+            </button>
+          );
+        })}
       </nav>
 
       {/* ALL APPS SLIDE-UP DRAWER WITH SPRING ANIMATION */}
@@ -230,7 +218,7 @@ export default function MobileLayout({
                 </div>
                 <button 
                   onClick={() => {
-                    triggerLightHaptic(); // <-- Added Haptic Trigger
+                    triggerLightHaptic(); 
                     setIsDrawerOpen(false);
                   }}
                   className="w-8 h-8 flex items-center justify-center bg-zinc-100 text-zinc-600 rounded-full font-bold active:scale-90 transition-transform"
@@ -241,24 +229,31 @@ export default function MobileLayout({
 
               {/* Apps Grid */}
               <div className="flex-1 overflow-y-auto grid grid-cols-3 gap-3 pb-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                {allApps.map(app => (
-                  <button
-                    key={app.id}
-                    onClick={() => {
-                      triggerLightHaptic(); // <-- Added Haptic Trigger
-                      setActiveTab(app.id);
-                      setIsDrawerOpen(false);
-                    }}
-                    className={`p-3 rounded-2xl flex flex-col items-center justify-center text-center border transition-all active:scale-90 ${
-                      activeTab === app.id 
-                        ? 'bg-blue-50 border-[#1E3A8A] text-[#1E3A8A]' 
-                        : 'bg-zinc-50 border-zinc-200/80 text-zinc-800'
-                    }`}
-                  >
-                    <span className="text-2xl mb-1">{app.icon}</span>
-                    <span className="text-[10px] font-extrabold leading-tight">{app.label}</span>
-                  </button>
-                ))}
+                {allApps.map(app => {
+                  const Icon = app.icon;
+                  const isActive = activeTab === app.id;
+                  return (
+                    <button
+                      key={app.id}
+                      onClick={() => {
+                        triggerLightHaptic();
+                        setActiveTab(app.id);
+                        setIsDrawerOpen(false);
+                      }}
+                      className={`p-3 rounded-2xl flex flex-col items-center justify-center text-center border transition-all active:scale-90 ${
+                        isActive 
+                          ? 'bg-blue-50 border-[#1E3A8A] text-[#1E3A8A]' 
+                          : 'bg-zinc-50 border-zinc-200/80 text-zinc-600 hover:bg-zinc-100'
+                      }`}
+                    >
+                      <Icon 
+                        strokeWidth={isActive ? 2.5 : 2} 
+                        className={`w-6 h-6 mb-2 transition-colors ${isActive ? 'stroke-[#1E3A8A]' : 'stroke-zinc-500'}`} 
+                      />
+                      <span className="text-[10px] font-extrabold leading-tight text-zinc-800">{app.label}</span>
+                    </button>
+                  );
+                })}
               </div>
 
             </motion.div>
