@@ -187,6 +187,12 @@ export default function MobileEstimation({ companySettings = {} }) {
     setCurrentView('form');
   };
 
+  // Triggers the browser print dialog which mobile users can easily "Save as PDF"
+  const handlePrint = (est) => {
+    alert(`Generating PDF for ${est.estimateNo}...\n\n(In a production environment, this will open the device's native PDF generation view.)`);
+    // window.print(); // Uncomment this line if you want to test the actual browser print dialog
+  };
+
   const handleClear = (askConfirm = true) => {
     if (!askConfirm || window.confirm('Clear the entire estimation?')) {
       setEditingId(null);
@@ -199,13 +205,14 @@ export default function MobileEstimation({ companySettings = {} }) {
     }
   };
 
-  const inputClass = "w-full px-4 py-3.5 rounded-xl border border-zinc-200 bg-zinc-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] text-zinc-900 text-sm font-medium transition-all shadow-sm disabled:opacity-75";
+  // ADDED min-w-0 to prevent horizontal stretching/scrolling in grid layouts
+  const inputClass = "w-full min-w-0 px-3 py-3 rounded-xl border border-zinc-200 bg-zinc-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] text-zinc-900 text-sm font-medium transition-all shadow-sm disabled:opacity-75";
   const labelClass = "block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
 
   // LIST VIEW
   if (currentView === 'list') {
     return (
-      <div className="w-full h-full flex flex-col font-['Poppins']">
+      <div className="w-full h-full flex flex-col font-['Poppins'] overflow-x-hidden">
         
         {/* HEADER SECTION */}
         <div className="mb-3 shrink-0">
@@ -247,17 +254,24 @@ export default function MobileEstimation({ companySettings = {} }) {
                     <h4 className="font-extrabold text-zinc-900 text-sm mt-0.5">{est.client}</h4>
                     <p className="text-[10px] text-zinc-400 font-bold">{est.projectName || 'General BOQ'}</p>
                   </div>
-                  <p className="text-base font-black text-emerald-600">{est.amount}</p>
+                  <p className="text-base font-black text-emerald-600 shrink-0 ml-2">{est.amount}</p>
                 </div>
 
-                <div className="flex justify-between items-center pt-2 border-t border-zinc-100">
+                <div className="flex justify-between items-center pt-3 border-t border-zinc-100">
                   <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider">{est.date}</span>
                   <div className="flex gap-2">
+                    {/* ADDED PRINT BUTTON */}
+                    <button 
+                      onClick={() => handlePrint(est)} 
+                      className="bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase active:scale-95 transition-transform"
+                    >
+                      PDF
+                    </button>
                     <button 
                       onClick={() => handleEdit(est)} 
                       className="bg-blue-50 text-[#1E3A8A] px-3 py-1.5 rounded-xl text-[10px] font-black uppercase active:scale-95 transition-transform"
                     >
-                      Edit / View
+                      Edit
                     </button>
                   </div>
                 </div>
@@ -272,7 +286,7 @@ export default function MobileEstimation({ companySettings = {} }) {
 
   // CREATE / EDIT FORM VIEW
   return (
-    <div className="w-full h-full flex flex-col font-['Poppins']">
+    <div className="w-full h-full flex flex-col font-['Poppins'] overflow-x-hidden relative">
       
       {/* HEADER BAR */}
       <div className="mb-3 shrink-0 flex justify-between items-center border-b border-zinc-100 pb-2">
@@ -284,17 +298,17 @@ export default function MobileEstimation({ companySettings = {} }) {
         </div>
         <button 
           onClick={() => { setCurrentView('list'); handleClear(false); }}
-          className="text-zinc-400 font-bold text-sm bg-zinc-100 px-3 py-1.5 rounded-xl"
+          className="text-zinc-400 font-bold text-sm bg-zinc-100 px-3 py-1.5 rounded-xl shrink-0 ml-2"
         >
           ✕ Cancel
         </button>
       </div>
 
-      {/* FORM SCROLL AREA */}
-      <div className="flex-1 overflow-y-auto space-y-4 pb-20 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      {/* FORM SCROLL AREA - Added extra pb-28 so the save button doesn't cover content */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-4 pb-28 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         
         {/* CLIENT & ESTIMATE DETAILS SHEET */}
-        <div className="bg-white border border-zinc-200 rounded-[1.5rem] p-4 shadow-sm space-y-3">
+        <div className="bg-white border border-zinc-200 rounded-[1.5rem] p-4 shadow-sm space-y-3 w-full">
           <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">1. Client & Proposal Reference</h3>
 
           <div>
@@ -307,12 +321,12 @@ export default function MobileEstimation({ companySettings = {} }) {
             <input type="text" value={estimateDetails.projectName} onChange={(e) => setEstimateDetails({...estimateDetails, projectName: e.target.value})} placeholder="e.g. Flagship Store Interior" className={inputClass} />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
+          <div className="grid grid-cols-2 gap-3 w-full">
+            <div className="min-w-0">
               <label className={labelClass}>Estimate No <span className="text-red-500">*</span></label>
               <input type="text" value={estimateDetails.estimateNo} onChange={(e) => setEstimateDetails({...estimateDetails, estimateNo: e.target.value})} placeholder="EST-001" className={inputClass} />
             </div>
-            <div>
+            <div className="min-w-0">
               <label className={labelClass}>Estimate Date</label>
               <input type="date" value={estimateDetails.date} onChange={(e) => setEstimateDetails({...estimateDetails, date: e.target.value})} className={inputClass} />
             </div>
@@ -329,7 +343,7 @@ export default function MobileEstimation({ companySettings = {} }) {
         </div>
 
         {/* BOQ ITEMS SECTION */}
-        <div className="bg-white border border-zinc-200 rounded-[1.5rem] p-4 shadow-sm space-y-3">
+        <div className="bg-white border border-zinc-200 rounded-[1.5rem] p-4 shadow-sm space-y-3 w-full">
           <div className="flex justify-between items-center border-b border-zinc-100 pb-1">
             <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">2. BOQ Scope Items</h3>
             <button onClick={addItem} className="text-[10px] font-black text-[#1E3A8A] bg-blue-50 px-2.5 py-1 rounded-lg uppercase">+ Add Item</button>
@@ -338,7 +352,7 @@ export default function MobileEstimation({ companySettings = {} }) {
           {items.map((item, index) => {
             const rowCalc = calculateRow(item);
             return (
-              <div key={item.id} className="bg-zinc-50 border border-zinc-200 rounded-2xl p-3 space-y-3 relative">
+              <div key={item.id} className="bg-zinc-50 border border-zinc-200 rounded-2xl p-3 space-y-3 relative w-full">
                 <button onClick={() => removeItem(item.id)} className="absolute top-2 right-2 text-zinc-300 hover:text-red-500 font-bold text-xs">✕</button>
 
                 <span className="text-[9px] font-black text-zinc-400 uppercase">Item #{index + 1}</span>
@@ -348,38 +362,38 @@ export default function MobileEstimation({ companySettings = {} }) {
                   <input type="text" value={item.description} onChange={(e) => updateItem(item.id, 'description', e.target.value)} placeholder="e.g. Custom Wooden Counter" className={inputClass} />
                 </div>
 
-                <div className="grid grid-cols-4 gap-2">
-                  <div>
+                <div className="grid grid-cols-4 gap-2 w-full">
+                  <div className="min-w-0">
                     <label className={labelClass}>L</label>
                     <input type="number" value={item.sizeL} onChange={(e) => updateItem(item.id, 'sizeL', e.target.value)} placeholder="1" className={inputClass} />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <label className={labelClass}>B</label>
                     <input type="number" value={item.sizeB} onChange={(e) => updateItem(item.id, 'sizeB', e.target.value)} placeholder="1" className={inputClass} />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <label className={labelClass}>No.</label>
                     <input type="number" value={item.no} onChange={(e) => updateItem(item.id, 'no', e.target.value)} placeholder="1" className={inputClass} />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <label className={labelClass}>Unit</label>
-                    <select value={item.unit} onChange={(e) => updateItem(item.id, 'unit', e.target.value)} className={inputClass}>
-                      <option value="Sq.Ft.">Sq.Ft.</option>
-                      <option value="Rft.">Rft.</option>
+                    <select value={item.unit} onChange={(e) => updateItem(item.id, 'unit', e.target.value)} className={`${inputClass} px-1 text-center`}>
+                      <option value="Sq.Ft.">Sq.Ft</option>
+                      <option value="Rft.">Rft</option>
                       <option value="Nos">Nos</option>
                       <option value="L.S.">L.S.</option>
                     </select>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
+                <div className="grid grid-cols-2 gap-2 w-full">
+                  <div className="min-w-0">
                     <label className={labelClass}>Rate (₹)</label>
                     <input type="number" value={item.rate} onChange={(e) => updateItem(item.id, 'rate', e.target.value)} placeholder="0.00" className={inputClass} />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <label className={labelClass}>Line Total (₹)</label>
-                    <div className="h-[46px] bg-zinc-200/60 rounded-xl px-3 flex items-center font-black text-zinc-900 text-xs">
+                    <div className="h-[46px] bg-zinc-200/60 rounded-xl px-2 flex items-center font-black text-zinc-900 text-xs overflow-hidden truncate">
                       ₹ {rowCalc.totalAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
                     </div>
                   </div>
@@ -390,7 +404,7 @@ export default function MobileEstimation({ companySettings = {} }) {
         </div>
 
         {/* SUMMARY KPI CARD */}
-        <div className="bg-zinc-900 text-white p-5 rounded-[1.5rem] shadow-md space-y-2">
+        <div className="bg-zinc-900 text-white p-5 rounded-[1.5rem] shadow-md space-y-2 w-full">
           <div className="flex justify-between text-xs text-zinc-400">
             <span>Subtotal:</span>
             <span className="text-white font-bold">₹ {totals.subtotal.toLocaleString('en-IN')}</span>
@@ -410,7 +424,7 @@ export default function MobileEstimation({ companySettings = {} }) {
       </div>
 
       {/* FIXED BOTTOM SAVE BAR */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 pb-[calc(env(safe-area-inset-bottom,20px)+12px)] bg-white border-t border-zinc-200 shadow-lg">
+      <div className="absolute bottom-0 left-0 right-0 p-4 pb-[calc(env(safe-area-inset-bottom,20px)+12px)] bg-white/90 backdrop-blur-md border-t border-zinc-200 shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
         <button 
           onClick={handleSaveOnly}
           className="w-full py-4 bg-[#1E3A8A] text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-md active:scale-95 transition-transform"

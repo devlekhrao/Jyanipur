@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Import All Mobile View Modules
 import MobileDashboard from './MobileDashboard';
@@ -138,8 +139,8 @@ export default function MobileLayout({
   return (
     <div className="w-full h-[100dvh] flex flex-col bg-zinc-100 font-['Poppins'] overflow-hidden">
       
-      {/* TOP APP HEADER - Added safe-area-inset-top */}
-      <header className="px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-2 bg-white border-b border-zinc-200 flex justify-between items-center shrink-0">
+      {/* TOP APP HEADER */}
+      <header className="px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-2 bg-white border-b border-zinc-200 flex justify-between items-center shrink-0 z-30">
         <div className="flex items-center gap-2">
           <img 
             src={companySettings.logoUrl || "/jyanipur.png"} 
@@ -159,13 +160,24 @@ export default function MobileLayout({
         </button>
       </header>
 
-      {/* ACTIVE VIEW CONTENT AREA */}
-      <main className="flex-1 p-3 overflow-hidden min-h-0">
-        {renderActiveView()}
+      {/* ANIMATED ACTIVE VIEW AREA */}
+      <main className="flex-1 overflow-hidden min-h-0 relative bg-zinc-100">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.22, ease: [0.25, 0.1, 0.25, 1.0] }}
+            className="w-full h-full p-3 overflow-hidden"
+          >
+            {renderActiveView()}
+          </motion.div>
+        </AnimatePresence>
       </main>
 
-      {/* BOTTOM TAB NAVIGATION - Added safe-area-inset-bottom */}
-      <nav className="bg-white border-t border-zinc-200 flex justify-around pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] px-1 shrink-0">
+      {/* BOTTOM TAB NAVIGATION */}
+      <nav className="bg-white border-t border-zinc-200 flex justify-around pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] px-1 shrink-0 z-30">
         {mainTabs.map(tab => (
           <button
             key={tab.id}
@@ -176,9 +188,9 @@ export default function MobileLayout({
                 setActiveTab(tab.id);
               }
             }}
-            className={`flex flex-col items-center py-1 px-3 rounded-xl transition-all active:scale-95 ${
+            className={`flex flex-col items-center py-1 px-3 rounded-xl transition-all active:scale-90 ${
               activeTab === tab.id && tab.id !== 'Menu' 
-                ? 'text-[#1E3A8A] font-black' 
+                ? 'text-[#1E3A8A] font-black scale-105' 
                 : 'text-zinc-400 font-bold'
             }`}
           >
@@ -188,49 +200,62 @@ export default function MobileLayout({
         ))}
       </nav>
 
-      {/* ALL APPS SLIDE-UP DRAWER */}
-      {isDrawerOpen && (
-        <div className="fixed inset-0 z-[200] flex flex-col justify-end bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white w-full h-[85vh] rounded-t-[2.5rem] p-6 flex flex-col animate-in slide-in-from-bottom-full duration-300 shadow-2xl">
-            
-            {/* Drawer Header */}
-            <div className="flex justify-between items-center border-b border-zinc-100 pb-3 mb-4 shrink-0">
-              <div>
-                <h3 className="text-xl font-extrabold text-zinc-900">All Modules</h3>
-                <p className="text-zinc-400 text-[10px] font-bold uppercase tracking-widest">Jyanipur Business Suite</p>
-              </div>
-              <button 
-                onClick={() => setIsDrawerOpen(false)}
-                className="w-8 h-8 flex items-center justify-center bg-zinc-100 text-zinc-600 rounded-full font-bold active:bg-zinc-200"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Apps Grid */}
-            <div className="flex-1 overflow-y-auto grid grid-cols-3 gap-3 pb-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-              {allApps.map(app => (
-                <button
-                  key={app.id}
-                  onClick={() => {
-                    setActiveTab(app.id);
-                    setIsDrawerOpen(false);
-                  }}
-                  className={`p-3 rounded-2xl flex flex-col items-center justify-center text-center border transition-all active:scale-95 ${
-                    activeTab === app.id 
-                      ? 'bg-blue-50 border-[#1E3A8A] text-[#1E3A8A]' 
-                      : 'bg-zinc-50 border-zinc-200/80 text-zinc-800'
-                  }`}
+      {/* ALL APPS SLIDE-UP DRAWER WITH SPRING ANIMATION */}
+      <AnimatePresence>
+        {isDrawerOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex flex-col justify-end bg-slate-950/60 backdrop-blur-sm"
+          >
+            <motion.div 
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+              className="bg-white w-full h-[85vh] rounded-t-[2.5rem] p-6 flex flex-col shadow-2xl"
+            >
+              
+              {/* Drawer Header */}
+              <div className="flex justify-between items-center border-b border-zinc-100 pb-3 mb-4 shrink-0">
+                <div>
+                  <h3 className="text-xl font-extrabold text-zinc-900">All Modules</h3>
+                  <p className="text-zinc-400 text-[10px] font-bold uppercase tracking-widest">Jyanipur Business Suite</p>
+                </div>
+                <button 
+                  onClick={() => setIsDrawerOpen(false)}
+                  className="w-8 h-8 flex items-center justify-center bg-zinc-100 text-zinc-600 rounded-full font-bold active:scale-90 transition-transform"
                 >
-                  <span className="text-2xl mb-1">{app.icon}</span>
-                  <span className="text-[10px] font-extrabold leading-tight">{app.label}</span>
+                  ✕
                 </button>
-              ))}
-            </div>
+              </div>
 
-          </div>
-        </div>
-      )}
+              {/* Apps Grid */}
+              <div className="flex-1 overflow-y-auto grid grid-cols-3 gap-3 pb-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                {allApps.map(app => (
+                  <button
+                    key={app.id}
+                    onClick={() => {
+                      setActiveTab(app.id);
+                      setIsDrawerOpen(false);
+                    }}
+                    className={`p-3 rounded-2xl flex flex-col items-center justify-center text-center border transition-all active:scale-90 ${
+                      activeTab === app.id 
+                        ? 'bg-blue-50 border-[#1E3A8A] text-[#1E3A8A]' 
+                        : 'bg-zinc-50 border-zinc-200/80 text-zinc-800'
+                    }`}
+                  >
+                    <span className="text-2xl mb-1">{app.icon}</span>
+                    <span className="text-[10px] font-extrabold leading-tight">{app.label}</span>
+                  </button>
+                ))}
+              </div>
+
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </div>
   );
