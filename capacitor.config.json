@@ -1,5 +1,6 @@
 {
   "appId": "in.org.jyanipur.app",
   "appName": "Jyanipur",
-  "webDir": "dist"
+  "webDir": "dist",
+  "bundledWebRuntime": false
 }

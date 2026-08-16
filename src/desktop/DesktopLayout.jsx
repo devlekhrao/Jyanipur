@@ -206,8 +206,9 @@ export default function App() {
         )}
 
         {/* EDGE-TO-EDGE SIDEBAR */}
-        <aside className="w-[260px] h-full bg-[#1E3A8A] text-white flex flex-col flex-shrink-0 z-20 shadow-2xl">
-          <div className="p-6 flex items-center justify-center gap-3">
+{/* EDGE-TO-EDGE SIDEBAR */}
+{/* EDGE-TO-EDGE SIDEBAR */}
+<aside className="print:hidden w-[260px] h-full bg-[#1E3A8A] text-white flex flex-col flex-shrink-0 z-20 shadow-2xl">            <div className="p-6 flex items-center justify-center gap-3">
             <div className="bg-white p-2 rounded-xl shadow-sm">
               <img src={companySettings.logoUrl} alt="Logo" className="h-6 w-auto object-contain" onError={(e) => { e.target.style.display='none'; }} />
             </div>
@@ -242,8 +243,9 @@ export default function App() {
         </aside>
 
         {/* FULL WIDTH MAIN CONTENT AREA */}
-        <main className="flex-1 h-full overflow-hidden flex flex-col relative bg-zinc-50">
-          <div className="flex-1 overflow-y-auto p-6 lg:p-8 custom-scrollbar">
+        {/* FULL WIDTH MAIN CONTENT AREA */}
+<main className="print:w-full print:ml-0 print:block flex-1 h-full overflow-hidden flex flex-col relative bg-zinc-50">
+  <div className="print:p-0 print:overflow-visible flex-1 overflow-y-auto p-6 lg:p-8 custom-scrollbar">
             {/* The constraint 'max-w-7xl mx-auto' was removed here so it flows edge-to-edge */}
             <div className="w-full h-full">
               {visitedPages.has('Dashboard') && <div className={activePage === 'Dashboard' ? 'block' : 'hidden'}><Dashboard setActivePage={handlePageSwitch} /></div>}
