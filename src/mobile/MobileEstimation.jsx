@@ -424,7 +424,7 @@ export default function MobileEstimation({ companySettings = {} }) {
       </div>
 
       {/* FIXED BOTTOM SAVE BAR */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 pb-[calc(env(safe-area-inset-bottom,20px)+12px)] bg-white/90 backdrop-blur-md border-t border-zinc-200 shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
+      <div className="absolute bottom-0 left-0 right-0 p-4 pb-4 bg-white/90 backdrop-blur-md border-t border-zinc-200 shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
         <button 
           onClick={handleSaveOnly}
           className="w-full py-4 bg-[#1E3A8A] text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-md active:scale-95 transition-transform"

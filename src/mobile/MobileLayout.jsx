@@ -123,8 +123,8 @@ export default function MobileLayout({
   return (
     <div className="w-full h-[100dvh] flex flex-col bg-zinc-100 font-['Poppins'] overflow-hidden">
       
-      {/* TOP APP HEADER - BULLETPROOF 48px FALLBACK FOR NOTCH */}
-      <header className="px-4 pt-[max(48px,env(safe-area-inset-top))] pb-3 bg-white border-b border-zinc-200 flex justify-between items-center shrink-0 z-30 shadow-sm">
+      {/* FLUID SAFE AREA HEADER */}
+      <header className="px-4 pt-[calc(env(safe-area-inset-top,0px)+12px)] pb-3 bg-white border-b border-zinc-200 flex justify-between items-center shrink-0 z-30 shadow-sm">
         <div className="flex items-center gap-2">
           <img 
             src={companySettings.logoUrl || "/jyanipur.png"} 
@@ -147,7 +147,7 @@ export default function MobileLayout({
         </button>
       </header>
 
-      {/* ANIMATED ACTIVE VIEW AREA - NOW RELATIVE */}
+      {/* ANIMATED ACTIVE VIEW AREA */}
       <main className="flex-1 overflow-hidden min-h-0 relative bg-zinc-100">
         <AnimatePresence mode="wait">
           <motion.div
@@ -163,8 +163,8 @@ export default function MobileLayout({
         </AnimatePresence>
       </main>
 
-      {/* BOTTOM TAB NAVIGATION - BULLETPROOF 34px FALLBACK FOR HOME BAR */}
-      <nav className="bg-white border-t border-zinc-200 flex justify-around pt-2 pb-[max(34px,env(safe-area-inset-bottom))] px-1 shrink-0 z-30">
+      {/* FLUID SAFE AREA BOTTOM NAVIGATION */}
+      <nav className="bg-white border-t border-zinc-200 flex justify-around pt-2 pb-[calc(env(safe-area-inset-bottom,0px)+8px)] px-1 shrink-0 z-30">
         {mainTabs.map(tab => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id && tab.id !== 'Menu';
@@ -207,7 +207,7 @@ export default function MobileLayout({
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-              className="bg-white w-full h-[85vh] rounded-t-[2.5rem] p-6 pb-[max(34px,env(safe-area-inset-bottom))] flex flex-col shadow-2xl"
+              className="bg-white w-full h-[85vh] rounded-t-[2.5rem] p-6 pb-[calc(env(safe-area-inset-bottom,0px)+24px)] flex flex-col shadow-2xl"
             >
               
               {/* Drawer Header */}
