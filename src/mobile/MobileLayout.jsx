@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { triggerLightHaptic } from '../utils/haptics'; // <-- Added Haptics Import
 
 // Import All Mobile View Modules
 import MobileDashboard from './MobileDashboard';
@@ -153,7 +154,10 @@ export default function MobileLayout({
           </span>
         </div>
         <button 
-          onClick={handleLogout}
+          onClick={() => {
+            triggerLightHaptic();
+            handleLogout();
+          }}
           className="text-[9px] font-black text-red-500 bg-red-50 px-2.5 py-1 rounded-lg uppercase tracking-wider active:scale-95 transition-transform"
         >
           Logout
@@ -182,6 +186,7 @@ export default function MobileLayout({
           <button
             key={tab.id}
             onClick={() => {
+              triggerLightHaptic(); // <-- Added Haptic Trigger
               if (tab.id === 'Menu') {
                 setIsDrawerOpen(true);
               } else {
@@ -224,7 +229,10 @@ export default function MobileLayout({
                   <p className="text-zinc-400 text-[10px] font-bold uppercase tracking-widest">Jyanipur Business Suite</p>
                 </div>
                 <button 
-                  onClick={() => setIsDrawerOpen(false)}
+                  onClick={() => {
+                    triggerLightHaptic(); // <-- Added Haptic Trigger
+                    setIsDrawerOpen(false);
+                  }}
                   className="w-8 h-8 flex items-center justify-center bg-zinc-100 text-zinc-600 rounded-full font-bold active:scale-90 transition-transform"
                 >
                   ✕
@@ -237,6 +245,7 @@ export default function MobileLayout({
                   <button
                     key={app.id}
                     onClick={() => {
+                      triggerLightHaptic(); // <-- Added Haptic Trigger
                       setActiveTab(app.id);
                       setIsDrawerOpen(false);
                     }}
