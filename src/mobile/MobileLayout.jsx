@@ -123,8 +123,8 @@ export default function MobileLayout({
   return (
     <div className="w-full h-[100dvh] flex flex-col bg-zinc-100 font-['Poppins'] overflow-hidden">
       
-      {/* TOP APP HEADER */}
-      <header className="px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-2 bg-white border-b border-zinc-200 flex justify-between items-center shrink-0 z-30">
+      {/* TOP APP HEADER - BULLETPROOF 48px FALLBACK FOR NOTCH */}
+      <header className="px-4 pt-[max(48px,env(safe-area-inset-top))] pb-3 bg-white border-b border-zinc-200 flex justify-between items-center shrink-0 z-30 shadow-sm">
         <div className="flex items-center gap-2">
           <img 
             src={companySettings.logoUrl || "/jyanipur.png"} 
@@ -147,7 +147,7 @@ export default function MobileLayout({
         </button>
       </header>
 
-      {/* ANIMATED ACTIVE VIEW AREA */}
+      {/* ANIMATED ACTIVE VIEW AREA - NOW RELATIVE */}
       <main className="flex-1 overflow-hidden min-h-0 relative bg-zinc-100">
         <AnimatePresence mode="wait">
           <motion.div
@@ -156,15 +156,15 @@ export default function MobileLayout({
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.22, ease: [0.25, 0.1, 0.25, 1.0] }}
-            className="w-full h-full p-3 overflow-hidden"
+            className="w-full h-full p-3 overflow-hidden relative"
           >
             {renderActiveView()}
           </motion.div>
         </AnimatePresence>
       </main>
 
-      {/* BOTTOM TAB NAVIGATION */}
-      <nav className="bg-white border-t border-zinc-200 flex justify-around pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] px-1 shrink-0 z-30">
+      {/* BOTTOM TAB NAVIGATION - BULLETPROOF 34px FALLBACK FOR HOME BAR */}
+      <nav className="bg-white border-t border-zinc-200 flex justify-around pt-2 pb-[max(34px,env(safe-area-inset-bottom))] px-1 shrink-0 z-30">
         {mainTabs.map(tab => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id && tab.id !== 'Menu';
@@ -193,7 +193,7 @@ export default function MobileLayout({
         })}
       </nav>
 
-      {/* ALL APPS SLIDE-UP DRAWER WITH SPRING ANIMATION */}
+      {/* ALL APPS SLIDE-UP DRAWER */}
       <AnimatePresence>
         {isDrawerOpen && (
           <motion.div 
@@ -207,7 +207,7 @@ export default function MobileLayout({
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-              className="bg-white w-full h-[85vh] rounded-t-[2.5rem] p-6 flex flex-col shadow-2xl"
+              className="bg-white w-full h-[85vh] rounded-t-[2.5rem] p-6 pb-[max(34px,env(safe-area-inset-bottom))] flex flex-col shadow-2xl"
             >
               
               {/* Drawer Header */}

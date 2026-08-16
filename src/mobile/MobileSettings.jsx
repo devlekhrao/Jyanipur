@@ -341,7 +341,7 @@ export default function MobileSettings({ companySettings = {}, setCompanySetting
       </div>
 
       {/* FIXED BOTTOM SAVE BAR */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 pb-[calc(env(safe-area-inset-bottom,20px)+12px)] bg-white border-t border-zinc-200 shadow-lg z-50">
+      <div className="absolute bottom-0 left-0 right-0 p-4 pb-[calc(env(safe-area-inset-bottom,20px)+12px)] bg-white border-t border-zinc-200 shadow-lg z-50">
         <button 
           onClick={handleSaveSettings}
           className="w-full py-4 bg-[#1E3A8A] text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-md active:scale-95 transition-transform"

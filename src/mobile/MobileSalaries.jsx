@@ -318,7 +318,7 @@ export default function MobileSalaries() {
 
       {/* FIXED BOTTOM DISBURSEMENT ACTION BAR */}
       {selectedEmps.size > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 pb-[calc(env(safe-area-inset-bottom,20px)+12px)] bg-amber-500 border-t border-amber-600 shadow-2xl flex items-center justify-between z-50 animate-in slide-in-from-bottom duration-200">
+        <div className="absolute bottom-0 left-0 right-0 p-4 pb-[calc(env(safe-area-inset-bottom,20px)+12px)] bg-amber-500 border-t border-amber-600 shadow-2xl flex items-center justify-between z-50 animate-in slide-in-from-bottom duration-200">
           <div>
             <span className="text-xs font-black text-zinc-900 block">{selectedEmps.size} Staff Selected</span>
             <span className="text-[10px] font-black text-zinc-900 uppercase">

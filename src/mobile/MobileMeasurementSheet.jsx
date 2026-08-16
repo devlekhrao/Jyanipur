@@ -312,7 +312,7 @@ export default function MobileMeasurementSheet() {
         </div>
 
         {/* FIXED BOTTOM SAVE BAR */}
-        <div className="fixed bottom-0 left-0 right-0 p-4 pb-[calc(env(safe-area-inset-bottom,20px)+12px)] bg-white border-t border-zinc-200 shadow-lg flex gap-2">
+        <div className="absolute bottom-0 left-0 right-0 p-4 pb-[calc(env(safe-area-inset-bottom,20px)+12px)] bg-white border-t border-zinc-200 shadow-lg flex gap-2">
           <button 
             onClick={() => addRows(3)}
             className="w-1/3 py-4 bg-zinc-100 text-zinc-700 font-extrabold rounded-xl text-xs uppercase tracking-wider active:scale-95 transition-transform"
