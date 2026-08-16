@@ -7,8 +7,11 @@ export default function Dashboard({ setActivePage }) {
     totalReceived: 0,
     pendingInvoices: 0,
     unpaidPurchases: 0,
-    availableFunds: 499700,
-    urgentPayables: []
+    availableFunds: 0,
+    urgentPayables: [],
+    chartData: [],
+    cashDistribution: { avail: 100, exp: 0, pend: 0, gradient: '' },
+    activeProjects: []
   });
 
   useEffect(() => {
@@ -19,32 +22,96 @@ export default function Dashboard({ setActivePage }) {
           getInvoices(), getPurchases(), getVendorLedgers(), getProjects()
         ]);
 
-        const received = invoices.filter(i => !i.isCancelled).reduce((sum, i) => sum + (Number(i.advanceReceived) || 0), 0);
+        // Helper to safely extract numbers from formatted currency strings (e.g., "₹ 24,190.00" -> 24190)
+        const parseAmt = (val) => Number(val?.toString().replace(/[^0-9.-]+/g, "")) || 0;
+
+        // --- 1. KPI CALCULATIONS ---
+        const received = invoices.filter(i => !i.isCancelled).reduce((sum, i) => sum + parseAmt(i.advanceReceived), 0);
         
         const pendingInv = invoices.filter(i => !i.isCancelled).reduce((sum, i) => {
-          const total = Number(i.amount) || 0;
-          const adv = Number(i.advanceReceived) || 0;
+          const total = parseAmt(i.amount);
+          const adv = parseAmt(i.advanceReceived);
           return sum + (total > adv ? total - adv : 0);
         }, 0);
 
-        const unpaid = vendors.reduce((sum, v) => sum + (v.balance > 0 ? v.balance : 0), 0);
+        const unpaid = vendors.reduce((sum, v) => sum + (parseAmt(v.balance) > 0 ? parseAmt(v.balance) : 0), 0);
+
+        // Assume paid purchases (either from amountPaid field, or totalAmount if no balance)
+        const paidPurchases = purchases.reduce((sum, p) => sum + parseAmt(p.amountPaid || p.paidAmount || 0), 0);
+        
+        const funds = Math.max(received - paidPurchases, 0); // Basic cash-on-hand formula
+
+        // --- 2. BAR CHART (Last 6 Months Dynamic) ---
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const last6Months = [];
+        const rawChartData = [];
+        const d = new Date();
+        d.setMonth(d.getMonth() - 5); // Go back 5 months + current month = 6
+        
+        for(let i = 0; i < 6; i++) {
+          last6Months.push({ month: d.getMonth(), year: d.getFullYear(), label: monthNames[d.getMonth()] });
+          d.setMonth(d.getMonth() + 1);
+        }
+
+        last6Months.forEach(m => {
+          const mInvs = invoices.filter(inv => {
+            if (!inv.date || inv.isCancelled) return false;
+            const idate = new Date(inv.date);
+            return idate.getMonth() === m.month && idate.getFullYear() === m.year;
+          });
+          const mPur = purchases.filter(p => {
+            if (!p.date) return false;
+            const pdate = new Date(p.date);
+            return pdate.getMonth() === m.month && pdate.getFullYear() === m.year;
+          });
+
+          const rev = mInvs.reduce((sum, inv) => sum + parseAmt(inv.amount), 0);
+          const cost = mPur.reduce((sum, p) => sum + parseAmt(p.totalAmount || p.amount), 0);
+          rawChartData.push({ label: m.label, rev, cost });
+        });
+
+        // Normalize bar heights relative to the highest value in the 6-month period
+        const maxVal = Math.max(...rawChartData.map(d => Math.max(d.rev, d.cost)), 1); 
+        const chartData = rawChartData.map(d => ({
+          ...d,
+          revHeight: (d.rev / maxVal) * 100,
+          costHeight: (d.cost / maxVal) * 100
+        }));
+
+        // --- 3. CASH DISTRIBUTION (Doughnut Chart) ---
+        const totalCashFlow = (funds + paidPurchases + unpaid) || 1; // Prevent div by 0
+        const pctAvail = Math.round((funds / totalCashFlow) * 100);
+        const pctExp = Math.round((paidPurchases / totalCashFlow) * 100);
+        const pctPend = 100 - pctAvail - pctExp; 
+        
+        const gradient = `conic-gradient(#34d399 0% ${pctAvail}%, #fbbf24 ${pctAvail}% ${pctAvail + pctExp}%, #f87171 ${pctAvail + pctExp}% 100%)`;
+
+        // --- 4. TOP ACTIVE PROJECTS ---
+        const activeProjects = projects.slice(0, 3).map(p => ({
+          name: p.projectName || 'Unnamed Project',
+          budget: parseAmt(p.budget),
+          cost: parseAmt(p.actualCost || 0)
+        }));
 
         setMetrics({
           totalReceived: received,
           pendingInvoices: pendingInv,
           unpaidPurchases: unpaid,
-          availableFunds: 499700,
-          urgentPayables: vendors.filter(v => v.balance > 0).sort((a,b) => b.balance - a.balance).slice(0, 3)
+          availableFunds: funds,
+          urgentPayables: vendors.filter(v => parseAmt(v.balance) > 0).sort((a,b) => parseAmt(b.balance) - parseAmt(a.balance)).slice(0, 3),
+          chartData,
+          cashDistribution: { avail: pctAvail, exp: pctExp, pend: pctPend, gradient },
+          activeProjects
         });
       } catch (e) {
-        console.warn("Dashboard data loaded with fallback defaults.");
+        console.warn("Dashboard data loaded with fallback defaults.", e);
       }
       setLoading(false);
     }
     loadDashboard();
   }, []);
 
-  if (loading) return <div className="py-20 text-center text-zinc-400 font-medium text-xs">Loading Command Center...</div>;
+  if (loading) return <div className="py-20 text-center text-zinc-400 font-medium text-xs">Syncing real-time financials...</div>;
 
   const cardClass = "bg-white border border-zinc-200 p-6 rounded-[2rem] shadow-sm";
 
@@ -80,7 +147,7 @@ export default function Dashboard({ setActivePage }) {
         
         {/* BAR CHART */}
         <div className={`lg:col-span-2 ${cardClass} flex flex-col`}>
-          <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-widest mb-6">Revenue vs Cost Analysis</h3>
+          <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-widest mb-6">Revenue vs Cost (Last 6 Months)</h3>
           <div className="flex-1 relative flex items-end justify-around pb-6 pt-8 border-b border-zinc-100">
             {/* Grid Lines */}
             <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
@@ -90,17 +157,22 @@ export default function Dashboard({ setActivePage }) {
               <div className="border-b border-dashed border-zinc-200 w-full h-0"></div>
             </div>
             
-            {/* Mock Data Bars */}
-            {[
-              { month: 'Apr', rev: 40, cost: 20 },
-              { month: 'May', rev: 60, cost: 35 },
-              { month: 'Jun', rev: 30, cost: 50 },
-              { month: 'Jul', rev: 80, cost: 45 },
-              { month: 'Aug', rev: 95, cost: 60 },
-            ].map((d, i) => (
-              <div key={i} className="flex gap-3 items-end z-10 h-48">
-                <div className="w-5 bg-zinc-800 rounded-t-md transition-all duration-300 hover:opacity-80" style={{ height: `${d.cost}%` }}></div>
-                <div className="w-5 bg-emerald-400 rounded-t-md transition-all duration-300 hover:opacity-80" style={{ height: `${d.rev}%` }}></div>
+            {/* Dynamic Data Bars */}
+            {metrics.chartData.map((d, i) => (
+              <div key={i} className="flex flex-col items-center gap-2 z-10 h-48 justify-end group">
+                <div className="flex gap-2 items-end h-full">
+                  <div 
+                    title={`Cost: ₹${d.cost.toLocaleString('en-IN')}`}
+                    className="w-4 sm:w-6 bg-zinc-800 rounded-t-md transition-all duration-300 hover:opacity-80" 
+                    style={{ height: `${Math.max(d.costHeight, 2)}%` }}
+                  ></div>
+                  <div 
+                    title={`Revenue: ₹${d.rev.toLocaleString('en-IN')}`}
+                    className="w-4 sm:w-6 bg-emerald-400 rounded-t-md transition-all duration-300 hover:opacity-80" 
+                    style={{ height: `${Math.max(d.revHeight, 2)}%` }}
+                  ></div>
+                </div>
+                <span className="text-[10px] font-bold text-zinc-500 uppercase">{d.label}</span>
               </div>
             ))}
           </div>
@@ -114,26 +186,26 @@ export default function Dashboard({ setActivePage }) {
         <div className={`${cardClass} flex flex-col items-center justify-between`}>
           <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-widest w-full text-left mb-6">Cash Distribution</h3>
           
-          <div className="relative w-48 h-48 rounded-full flex items-center justify-center my-4 shadow-inner" 
-               style={{ background: 'conic-gradient(#34d399 0% 65%, #fbbf24 65% 85%, #f87171 85% 100%)' }}>
+          <div className="relative w-48 h-48 rounded-full flex items-center justify-center my-4 shadow-inner transition-all duration-500" 
+               style={{ background: metrics.cashDistribution.gradient }}>
             <div className="w-32 h-32 bg-white rounded-full flex flex-col items-center justify-center shadow-md">
-              <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Ratio</span>
-              <span className="text-sm font-black text-zinc-900">100%</span>
+              <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Health</span>
+              <span className="text-sm font-black text-emerald-500">{metrics.cashDistribution.avail}%</span>
             </div>
           </div>
 
           <div className="w-full space-y-3 pt-4 border-t border-zinc-100">
             <div className="flex justify-between items-center text-xs">
               <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-emerald-400"></span><span className="font-semibold text-zinc-600">Funds Available</span></div>
-              <span className="font-extrabold text-zinc-900">65%</span>
+              <span className="font-extrabold text-zinc-900">{metrics.cashDistribution.avail}%</span>
             </div>
             <div className="flex justify-between items-center text-xs">
               <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-amber-400"></span><span className="font-semibold text-zinc-600">Expenses Paid</span></div>
-              <span className="font-extrabold text-zinc-900">20%</span>
+              <span className="font-extrabold text-zinc-900">{metrics.cashDistribution.exp}%</span>
             </div>
             <div className="flex justify-between items-center text-xs">
               <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-red-400"></span><span className="font-semibold text-zinc-600">Pending Dues</span></div>
-              <span className="font-extrabold text-zinc-900">15%</span>
+              <span className="font-extrabold text-zinc-900">{metrics.cashDistribution.pend}%</span>
             </div>
           </div>
         </div>
@@ -141,12 +213,35 @@ export default function Dashboard({ setActivePage }) {
 
       {/* BOTTOM SECTION */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
         <div className={`lg:col-span-2 ${cardClass}`}>
-          <div className="flex justify-between items-center mb-3">
-            <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-widest">Site Costing vs Budget</h3>
-            <button onClick={() => setActivePage('Project P&L')} className="text-[10px] font-bold text-[#1E3A8A] hover:underline uppercase tracking-wider cursor-pointer">View All &rarr;</button>
+          <div className="flex justify-between items-center mb-5">
+            <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-widest">Active Projects Snapshot</h3>
+            <button onClick={() => setActivePage('Projects')} className="text-[10px] font-bold text-[#1E3A8A] hover:underline uppercase tracking-wider cursor-pointer">All Projects &rarr;</button>
           </div>
-          <p className="text-xs text-zinc-500 font-medium">Navigate to the <span className="font-bold text-zinc-800">Project P&L</span> tab for detailed breakdown of budget vs actuals.</p>
+          
+          {metrics.activeProjects.length === 0 ? (
+            <p className="text-xs text-zinc-500 font-medium">No active projects found. Start creating projects to track costs.</p>
+          ) : (
+            <div className="space-y-4">
+              {metrics.activeProjects.map((p, idx) => (
+                <div key={idx} className="flex justify-between items-center border-b border-zinc-100 pb-3 last:border-0 last:pb-0">
+                  <div className="flex-1">
+                    <p className="text-xs font-bold text-zinc-900 truncate pr-4">{p.name}</p>
+                    <p className="text-[10px] text-zinc-500 font-medium mt-0.5">
+                      Cost: <span className="text-amber-600 font-bold">₹{p.cost.toLocaleString('en-IN')}</span> / Budget: ₹{p.budget.toLocaleString('en-IN')}
+                    </p>
+                  </div>
+                  <div className="w-24 bg-zinc-100 h-2.5 rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full rounded-full ${p.cost > p.budget ? 'bg-red-500' : 'bg-emerald-400'}`} 
+                      style={{ width: `${Math.min((p.cost / (p.budget || 1)) * 100, 100)}%` }}
+                    ></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className={cardClass}>
@@ -155,21 +250,22 @@ export default function Dashboard({ setActivePage }) {
             <span className="bg-red-100 text-red-600 text-[10px] font-bold px-2.5 py-0.5 rounded-full">{metrics.urgentPayables.length}</span>
           </div>
           {metrics.urgentPayables.length === 0 ? (
-            <p className="text-xs text-zinc-500 font-medium">No urgent vendor dues.</p>
+            <p className="text-xs text-zinc-500 font-medium pt-2">No urgent vendor dues. You're all clear!</p>
           ) : (
             <div className="space-y-3">
               {metrics.urgentPayables.map((v, idx) => (
                 <div key={idx} className="flex justify-between items-center border-b border-zinc-100 pb-2.5 last:border-0 last:pb-0">
                   <div>
-                    <p className="text-xs font-bold text-zinc-900">{v.vendorName}</p>
+                    <p className="text-xs font-bold text-zinc-900 max-w-[140px] truncate">{v.vendorName || v.name}</p>
                     <button onClick={() => setActivePage('Vendor Ledger')} className="text-[9px] font-bold text-[#1E3A8A] uppercase hover:underline mt-0.5 block cursor-pointer">Resolve &rarr;</button>
                   </div>
-                  <span className="text-xs font-black text-red-500">₹{v.balance.toLocaleString('en-IN')}</span>
+                  <span className="text-xs font-black text-red-500">₹{Number(v.balance).toLocaleString('en-IN')}</span>
                 </div>
               ))}
             </div>
           )}
         </div>
+        
       </div>
     </div>
   );
