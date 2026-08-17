@@ -155,13 +155,13 @@ export default function MobileSalaries() {
   const isAllSelected = allSelectableCount > 0 && selectedEmps.size === allSelectableCount;
 
   return (
-    <div className="w-full h-full flex flex-col font-['Poppins']">
+    <div className="w-full h-full flex flex-col font-sans">
       
       {/* HEADER SECTION */}
       <div className="mb-3 shrink-0">
         <div className="flex justify-between items-center mb-2">
           <div>
-            <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Payroll & Salary</h2>
+            <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Payroll & Salary</h2>
             <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-0.5">Disbursements & Wages</p>
           </div>
 
@@ -170,7 +170,7 @@ export default function MobileSalaries() {
             <select 
               value={selectedMonth} 
               onChange={(e) => setSelectedMonth(Number(e.target.value))} 
-              className="bg-transparent text-[11px] font-extrabold text-zinc-800 outline-none"
+              className="bg-transparent text-[11px] font-bold text-zinc-800 outline-none"
             >
               {Array.from({length: 12}, (_, i) => (
                 <option key={i+1} value={i+1}>{new Date(2000, i).toLocaleString('en-US', { month: 'short' })}</option>
@@ -179,7 +179,7 @@ export default function MobileSalaries() {
             <select 
               value={selectedYear} 
               onChange={(e) => setSelectedYear(Number(e.target.value))} 
-              className="bg-transparent text-[11px] font-extrabold text-zinc-800 outline-none"
+              className="bg-transparent text-[11px] font-bold text-zinc-800 outline-none"
             >
               <option value={currentDate.getFullYear() - 1}>{currentDate.getFullYear() - 1}</option>
               <option value={currentDate.getFullYear()}>{currentDate.getFullYear()}</option>
@@ -189,7 +189,7 @@ export default function MobileSalaries() {
 
         {/* SELECT ALL ROW */}
         <div className="bg-white border border-zinc-200 rounded-2xl px-3 py-2 shadow-sm flex items-center justify-between">
-          <label className="flex items-center gap-2 text-xs font-black text-zinc-800 cursor-pointer">
+          <label className="flex items-center gap-2 text-xs font-semibold text-[11px] text-zinc-800 cursor-pointer">
             <input 
               type="checkbox" 
               checked={isAllSelected}
@@ -208,23 +208,23 @@ export default function MobileSalaries() {
       {/* 2x2 PROJECTION KPI GRID */}
       <div className="grid grid-cols-2 gap-2 mb-3 shrink-0">
         <div className="bg-white p-3 rounded-2xl border border-zinc-200 shadow-sm">
-          <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest block">Bank Balance</span>
-          <p className="text-xs font-black text-zinc-900 mt-0.5">₹ {currentBankBalance.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+          <span className="text-[8px] font-semibold text-[11px] text-zinc-400 uppercase tracking-widest block">Bank Balance</span>
+          <p className="text-xs font-semibold text-[11px] text-zinc-900 mt-0.5">₹ {currentBankBalance.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
         </div>
 
         <div className="bg-white p-3 rounded-2xl border border-zinc-200 shadow-sm">
-          <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest block">Total Due</span>
-          <p className="text-xs font-black text-zinc-800 mt-0.5">₹ {totalPayrollAmount.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+          <span className="text-[8px] font-semibold text-[11px] text-zinc-400 uppercase tracking-widest block">Total Due</span>
+          <p className="text-xs font-semibold text-[11px] text-zinc-800 mt-0.5">₹ {totalPayrollAmount.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
         </div>
 
         <div className="bg-amber-50 p-3 rounded-2xl border border-amber-200 shadow-sm">
-          <span className="text-[8px] font-black text-amber-600 uppercase tracking-widest block">Selected Payout</span>
-          <p className="text-xs font-black text-amber-700 mt-0.5">₹ {selectedPayrollAmount.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+          <span className="text-[8px] font-semibold text-[11px] text-amber-600 uppercase tracking-widest block">Selected Payout</span>
+          <p className="text-xs font-semibold text-[11px] text-amber-700 mt-0.5">₹ {selectedPayrollAmount.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
         </div>
 
         <div className={`p-3 rounded-2xl shadow-sm border ${projectedBalance < 0 ? 'bg-red-600 text-white' : 'bg-zinc-900 text-white'}`}>
-          <span className="text-[8px] font-black uppercase tracking-widest block opacity-80">Projected Bal</span>
-          <p className="text-xs font-black mt-0.5">₹ {projectedBalance.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+          <span className="text-[8px] font-semibold text-[11px] uppercase tracking-widest block opacity-80">Projected Bal</span>
+          <p className="text-xs font-semibold text-[11px] mt-0.5">₹ {projectedBalance.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
         </div>
       </div>
 
@@ -260,11 +260,11 @@ export default function MobileSalaries() {
                       disabled={!emp.canBePaid}
                       className="w-5 h-5 rounded text-[#1E3A8A] focus:ring-[#1E3A8A] border-zinc-300 disabled:opacity-30"
                     />
-                    <div className="w-10 h-10 rounded-2xl bg-[#1E3A8A] text-amber-400 flex items-center justify-center font-black text-xs shrink-0">
+                    <div className="w-10 h-10 rounded-2xl bg-[#1E3A8A] text-amber-400 flex items-center justify-center font-semibold text-[11px] text-xs shrink-0">
                       {emp.fullName.substring(0, 1).toUpperCase()}
                     </div>
                     <div>
-                      <h4 className="font-extrabold text-zinc-900 text-sm">{emp.fullName}</h4>
+                      <h4 className="font-bold text-zinc-900 text-sm">{emp.fullName}</h4>
                       <p className={`text-[9px] ${!emp.accountNo ? 'text-red-500 font-bold' : 'text-zinc-400 font-mono'}`}>
                         {emp.accountNo ? `A/c: ****${emp.accountNo.slice(-4)}` : '⚠️ Bank Details Missing'}
                       </p>
@@ -274,17 +274,17 @@ export default function MobileSalaries() {
                   {/* STATUS BADGE */}
                   <div>
                     {emp.isPaidOrPending ? (
-                      <span className={`px-2.5 py-1 rounded-full text-[8px] font-black uppercase tracking-wider ${
+                      <span className={`px-2.5 py-1 rounded-full text-[8px] font-semibold text-[11px] uppercase tracking-wider ${
                         emp.payoutStatus.status === 'API_PENDING' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
                       }`}>
                         {emp.payoutStatus.status === 'API_PENDING' ? 'Syncing...' : 'Paid'}
                       </span>
                     ) : emp.netPayable === 0 ? (
-                      <span className="px-2.5 py-1 rounded-full text-[8px] font-black text-zinc-400 bg-zinc-100 uppercase">No Dues</span>
+                      <span className="px-2.5 py-1 rounded-full text-[8px] font-semibold text-[11px] text-zinc-400 bg-zinc-100 uppercase">No Dues</span>
                     ) : !emp.accountNo ? (
-                      <span className="px-2.5 py-1 rounded-full text-[8px] font-black text-red-600 bg-red-50 uppercase">Setup Reqd</span>
+                      <span className="px-2.5 py-1 rounded-full text-[8px] font-semibold text-[11px] text-red-600 bg-red-50 uppercase">Setup Reqd</span>
                     ) : (
-                      <span className="px-2.5 py-1 rounded-full text-[8px] font-black text-zinc-600 bg-zinc-100 uppercase">Unpaid</span>
+                      <span className="px-2.5 py-1 rounded-full text-[8px] font-semibold text-[11px] text-zinc-600 bg-zinc-100 uppercase">Unpaid</span>
                     )}
                   </div>
                 </div>
@@ -292,20 +292,20 @@ export default function MobileSalaries() {
                 {/* PAYROLL CALCULATION METRICS */}
                 <div className="grid grid-cols-3 gap-1.5 bg-white p-2.5 rounded-xl border border-zinc-100 text-center text-xs">
                   <div>
-                    <span className="text-[8px] font-black text-zinc-400 uppercase block">Gross Pay</span>
-                    <p className="font-black text-zinc-900 mt-0.5">₹{emp.grossPay.toLocaleString('en-IN')}</p>
+                    <span className="text-[8px] font-semibold text-[11px] text-zinc-400 uppercase block">Gross Pay</span>
+                    <p className="font-semibold text-[11px] text-zinc-900 mt-0.5">₹{emp.grossPay.toLocaleString('en-IN')}</p>
                     <span className="text-[8px] text-zinc-400 block">{emp.totalDays} Days</span>
                   </div>
 
                   <div>
-                    <span className="text-[8px] font-black text-red-500 uppercase block">Advances</span>
-                    <p className="font-black text-red-600 mt-0.5">-₹{emp.advanceDeduction.toLocaleString('en-IN')}</p>
+                    <span className="text-[8px] font-semibold text-[11px] text-red-500 uppercase block">Advances</span>
+                    <p className="font-semibold text-[11px] text-red-600 mt-0.5">-₹{emp.advanceDeduction.toLocaleString('en-IN')}</p>
                     <span className="text-[8px] text-zinc-400 block">Deducted</span>
                   </div>
 
                   <div>
-                    <span className="text-[8px] font-black text-emerald-600 uppercase block">Net Payable</span>
-                    <p className="font-black text-emerald-700 mt-0.5">₹{emp.netPayable.toLocaleString('en-IN')}</p>
+                    <span className="text-[8px] font-semibold text-[11px] text-emerald-600 uppercase block">Net Payable</span>
+                    <p className="font-semibold text-[11px] text-emerald-700 mt-0.5">₹{emp.netPayable.toLocaleString('en-IN')}</p>
                     <span className="text-[8px] text-emerald-600 font-bold block">Final</span>
                   </div>
                 </div>
@@ -320,8 +320,8 @@ export default function MobileSalaries() {
       {selectedEmps.size > 0 && (
         <div className="absolute bottom-0 left-0 right-0 p-4 pb-4 bg-amber-500 border-t border-amber-600 shadow-2xl flex items-center justify-between z-50 animate-in slide-in-from-bottom duration-200">
           <div>
-            <span className="text-xs font-black text-zinc-900 block">{selectedEmps.size} Staff Selected</span>
-            <span className="text-[10px] font-black text-zinc-900 uppercase">
+            <span className="text-xs font-semibold text-[11px] text-zinc-900 block">{selectedEmps.size} Staff Selected</span>
+            <span className="text-[10px] font-semibold text-[11px] text-zinc-900 uppercase">
               Total: ₹{selectedPayrollAmount.toLocaleString('en-IN')}
             </span>
           </div>
@@ -329,7 +329,7 @@ export default function MobileSalaries() {
           <button 
             onClick={handleBatchDisburse}
             disabled={projectedBalance < 0}
-            className={`px-5 py-3 rounded-xl text-xs font-black uppercase tracking-wider shadow-md transition-transform active:scale-95 ${
+            className={`px-5 py-3 rounded-xl text-xs font-semibold text-[11px] uppercase tracking-wider shadow-md transition-transform active:scale-95 ${
               projectedBalance < 0
                 ? 'bg-red-600 text-white cursor-not-allowed'
                 : 'bg-zinc-900 text-white'

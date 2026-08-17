@@ -22,15 +22,15 @@ export default function Settings({ companySettings, setCompanySettings }) {
   const labelClass = "block text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
   
   const cardClass = "bg-white p-8 rounded-[2rem] border border-zinc-200 shadow-sm space-y-4";
-  const cardHeaderClass = "text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b border-zinc-100 pb-3 mb-2";
+  const cardHeaderClass = "text-xs font-bold text-zinc-900 uppercase tracking-wider border-b border-zinc-100 pb-3 mb-2";
 
   return (
-    <div className="w-full h-full font-['Poppins'] flex flex-col">
+    <div className="w-full h-full font-sans flex flex-col">
       
       {/* Header */}
       <div className="flex justify-between items-end pb-4 border-b border-zinc-200 mb-6 shrink-0">
         <div>
-          <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Portal & System Settings</h2>
+          <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Portal & System Settings</h2>
           <p className="text-zinc-500 text-xs mt-1 font-medium">Configure company branding, taxation defaults, and automation templates.</p>
         </div>
         <button onClick={handleSaveSettings} className="bg-[#1E3A8A] text-white px-8 py-3.5 rounded-xl text-xs font-bold uppercase tracking-wider shadow-md hover:bg-blue-900 hover:-translate-y-0.5 transition-all cursor-pointer">

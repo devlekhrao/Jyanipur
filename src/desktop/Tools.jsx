@@ -82,10 +82,10 @@ export default function Tools() {
   const labelClass = "block text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
 
   return (
-    <div className="w-full h-full font-['Poppins'] flex flex-col">
+    <div className="w-full h-full font-sans flex flex-col">
       <div className="flex justify-between items-end pb-4 border-b border-zinc-200 mb-6 shrink-0">
         <div>
-          <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Tools & Assets</h2>
+          <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Tools & Assets</h2>
           <p className="text-zinc-500 text-xs mt-1 font-medium">Manage company equipment, checkouts, and maintenance.</p>
         </div>
         <button onClick={() => setIsModalOpen(true)} className="bg-[#1E3A8A] hover:bg-blue-900 text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer">+ Add New Asset</button>
@@ -94,20 +94,20 @@ export default function Tools() {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6 shrink-0">
         <div className="bg-white p-6 rounded-[2rem] border border-zinc-200 shadow-sm">
-          <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1">Total Assets Owned</span>
-          <p className="text-2xl font-black text-zinc-900">{tools.length}</p>
+          <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Total Assets Owned</span>
+          <p className="text-2xl font-semibold text-[11px] text-zinc-900">{tools.length}</p>
         </div>
         <div className="bg-emerald-50/70 p-6 rounded-[2rem] border border-emerald-100 shadow-sm">
-          <span className="text-[9px] font-extrabold text-emerald-600 uppercase tracking-widest block mb-1">Available in Godown</span>
-          <p className="text-2xl font-black text-emerald-700">{tools.filter(t => t.status === 'Available').length}</p>
+          <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest block mb-1">Available in Godown</span>
+          <p className="text-2xl font-semibold text-[11px] text-emerald-700">{tools.filter(t => t.status === 'Available').length}</p>
         </div>
         <div className="bg-blue-50/70 p-6 rounded-[2rem] border border-blue-100 shadow-sm">
-          <span className="text-[9px] font-extrabold text-[#1E3A8A] uppercase tracking-widest block mb-1">Checked Out (On Site)</span>
-          <p className="text-2xl font-black text-[#1E3A8A]">{tools.filter(t => t.status === 'Checked Out').length}</p>
+          <span className="text-[9px] font-bold text-[#1E3A8A] uppercase tracking-widest block mb-1">Checked Out (On Site)</span>
+          <p className="text-2xl font-semibold text-[11px] text-[#1E3A8A]">{tools.filter(t => t.status === 'Checked Out').length}</p>
         </div>
         <div className="bg-amber-50/70 p-6 rounded-[2rem] border border-amber-200/80 shadow-sm">
-          <span className="text-[9px] font-extrabold text-amber-600 uppercase tracking-widest block mb-1">Under Maintenance</span>
-          <p className="text-2xl font-black text-amber-700">{tools.filter(t => t.status === 'Maintenance').length}</p>
+          <span className="text-[9px] font-bold text-amber-600 uppercase tracking-widest block mb-1">Under Maintenance</span>
+          <p className="text-2xl font-semibold text-[11px] text-amber-700">{tools.filter(t => t.status === 'Maintenance').length}</p>
         </div>
       </div>
 
@@ -144,7 +144,7 @@ export default function Tools() {
               ) : (
                 filteredTools.map(t => (
                   <tr key={t.id} className="hover:bg-zinc-50 transition-colors group">
-                    <td className="py-4 px-6 font-extrabold text-zinc-900">{t.name}</td>
+                    <td className="py-4 px-6 font-bold text-zinc-900">{t.name}</td>
                     <td className="py-4 px-4">
                       <div className="flex flex-col">
                         <span className="font-bold text-zinc-700 text-xs">{t.category}</span>
@@ -152,7 +152,7 @@ export default function Tools() {
                       </div>
                     </td>
                     <td className="py-4 px-4 text-center">
-                      <span className={`px-2.5 py-1 rounded-md text-[9px] font-extrabold uppercase tracking-widest border ${
+                      <span className={`px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-widest border ${
                         t.status === 'Available' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
                         t.status === 'Checked Out' ? 'bg-blue-50 text-[#1E3A8A] border-blue-100' :
                         'bg-amber-50 text-amber-700 border-amber-200'
@@ -163,7 +163,7 @@ export default function Tools() {
                     <td className="py-4 px-4">
                       {t.status === 'Checked Out' ? (
                         <div className="flex flex-col">
-                          <span className="font-extrabold text-zinc-900 text-xs">{t.location || 'Unknown Site'}</span>
+                          <span className="font-bold text-zinc-900 text-xs">{t.location || 'Unknown Site'}</span>
                           <span className="text-[10px] text-zinc-500 font-medium">With: {t.assignedTo}</span>
                         </div>
                       ) : (
@@ -190,7 +190,7 @@ export default function Tools() {
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
           <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in-95 duration-200">
-            <h2 className="text-xl font-extrabold text-zinc-900 mb-1">Add Asset</h2>
+            <h2 className="text-xl font-bold text-zinc-900 mb-1">Add Asset</h2>
             <p className="text-zinc-500 text-[10px] font-bold mb-6 uppercase tracking-widest">Register equipment to master asset list</p>
 
             <form onSubmit={handleSave} className="space-y-4">
@@ -227,7 +227,7 @@ export default function Tools() {
       {isCheckoutModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
           <div className="bg-white w-full max-w-sm rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in-95 duration-200">
-            <h2 className="text-xl font-extrabold text-zinc-900 mb-1">Check Out Tool</h2>
+            <h2 className="text-xl font-bold text-zinc-900 mb-1">Check Out Tool</h2>
             <p className="text-zinc-500 text-[10px] font-bold mb-6 uppercase tracking-widest">Asset Assignment</p>
 
             <form onSubmit={handleCheckout} className="space-y-4">

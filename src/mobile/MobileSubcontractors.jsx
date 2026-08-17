@@ -96,26 +96,26 @@ export default function MobileSubcontractors() {
   const labelClass = "block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
 
   return (
-    <div className="w-full h-full flex flex-col font-['Poppins']">
+    <div className="w-full h-full flex flex-col font-sans">
       
       {/* HEADER SECTION */}
       <div className="mb-3 shrink-0">
         <div className="flex justify-between items-center mb-2">
           <div>
-            <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Subcontractors</h2>
+            <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Subcontractors</h2>
             <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-0.5">Work Orders & Advances</p>
           </div>
           
           <div className="flex gap-1.5">
             <button 
               onClick={() => setIsSubModalOpen(true)}
-              className="bg-white border border-zinc-200 text-zinc-800 font-extrabold px-3 py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-sm active:scale-95"
+              className="bg-white border border-zinc-200 text-zinc-800 font-bold px-3 py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-sm active:scale-95"
             >
               + Sub
             </button>
             <button 
               onClick={() => setIsWoModalOpen(true)}
-              className="bg-[#1E3A8A] text-white font-black px-3.5 py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-md active:scale-95"
+              className="bg-[#1E3A8A] text-white font-semibold text-[11px] px-3.5 py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-md active:scale-95"
             >
               + Work Order
             </button>
@@ -138,23 +138,23 @@ export default function MobileSubcontractors() {
       {/* 2x2 KPI GRID */}
       <div className="grid grid-cols-2 gap-2 mb-3 shrink-0">
         <div className="bg-white p-3 rounded-2xl border border-zinc-200 shadow-sm">
-          <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest block">Active Work Orders</span>
-          <p className="text-base font-black text-zinc-900 mt-0.5">{filteredWos.filter(w => w.status !== 'Completed').length}</p>
+          <span className="text-[8px] font-semibold text-[11px] text-zinc-400 uppercase tracking-widest block">Active Work Orders</span>
+          <p className="text-base font-semibold text-[11px] text-zinc-900 mt-0.5">{filteredWos.filter(w => w.status !== 'Completed').length}</p>
         </div>
 
         <div className="bg-white p-3 rounded-2xl border border-zinc-200 shadow-sm">
-          <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest block">Contracted Value</span>
-          <p className="text-base font-black text-zinc-900 mt-0.5">₹ {totalContracted.toLocaleString('en-IN')}</p>
+          <span className="text-[8px] font-semibold text-[11px] text-zinc-400 uppercase tracking-widest block">Contracted Value</span>
+          <p className="text-base font-semibold text-[11px] text-zinc-900 mt-0.5">₹ {totalContracted.toLocaleString('en-IN')}</p>
         </div>
 
         <div className="bg-emerald-50 p-3 rounded-2xl border border-emerald-100 shadow-sm">
-          <span className="text-[8px] font-black text-emerald-600 uppercase tracking-widest block">Total Paid (Advances)</span>
-          <p className="text-base font-black text-emerald-700 mt-0.5">₹ {totalPaid.toLocaleString('en-IN')}</p>
+          <span className="text-[8px] font-semibold text-[11px] text-emerald-600 uppercase tracking-widest block">Total Paid (Advances)</span>
+          <p className="text-base font-semibold text-[11px] text-emerald-700 mt-0.5">₹ {totalPaid.toLocaleString('en-IN')}</p>
         </div>
 
         <div className="bg-red-50 p-3 rounded-2xl border border-red-100 shadow-sm">
-          <span className="text-[8px] font-black text-red-500 uppercase tracking-widest block">Pending Balance</span>
-          <p className="text-base font-black text-red-600 mt-0.5">₹ {totalBalance.toLocaleString('en-IN')}</p>
+          <span className="text-[8px] font-semibold text-[11px] text-red-500 uppercase tracking-widest block">Pending Balance</span>
+          <p className="text-base font-semibold text-[11px] text-red-600 mt-0.5">₹ {totalBalance.toLocaleString('en-IN')}</p>
         </div>
       </div>
 
@@ -177,10 +177,10 @@ export default function MobileSubcontractors() {
                 {/* CARD HEADER */}
                 <div className="flex justify-between items-start">
                   <div>
-                    <span className="bg-blue-50 text-[#1E3A8A] text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">
+                    <span className="bg-blue-50 text-[#1E3A8A] text-[8px] font-semibold text-[11px] px-2 py-0.5 rounded uppercase tracking-wider">
                       {wo.trade}
                     </span>
-                    <h4 className="font-extrabold text-zinc-900 text-sm mt-1">{wo.subName}</h4>
+                    <h4 className="font-bold text-zinc-900 text-sm mt-1">{wo.subName}</h4>
                     <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{wo.projectName}</p>
                   </div>
 
@@ -188,7 +188,7 @@ export default function MobileSubcontractors() {
                     <select 
                       value={wo.status} 
                       onChange={(e) => handleStatusChange(wo.id, e.target.value)}
-                      className={`px-2.5 py-1 rounded-xl text-[9px] font-black uppercase tracking-wider outline-none appearance-none pr-6 ${
+                      className={`px-2.5 py-1 rounded-xl text-[9px] font-semibold text-[11px] uppercase tracking-wider outline-none appearance-none pr-6 ${
                         wo.status === 'Completed' ? 'bg-emerald-50 text-emerald-700' :
                         wo.status === 'On Hold' ? 'bg-red-50 text-red-600' :
                         'bg-amber-50 text-amber-700'
@@ -211,18 +211,18 @@ export default function MobileSubcontractors() {
                 {/* FINANCIAL METRICS GRID */}
                 <div className="grid grid-cols-3 gap-1.5 bg-zinc-50 p-2.5 rounded-xl border border-zinc-100 text-center text-xs">
                   <div>
-                    <span className="text-[8px] font-black text-zinc-400 uppercase block">Contract</span>
-                    <p className="font-black text-zinc-900 mt-0.5">₹{wo.contractValue?.toLocaleString('en-IN')}</p>
+                    <span className="text-[8px] font-semibold text-[11px] text-zinc-400 uppercase block">Contract</span>
+                    <p className="font-semibold text-[11px] text-zinc-900 mt-0.5">₹{wo.contractValue?.toLocaleString('en-IN')}</p>
                   </div>
 
                   <div>
-                    <span className="text-[8px] font-black text-emerald-600 uppercase block">Paid</span>
-                    <p className="font-black text-emerald-700 mt-0.5">₹{wo.totalPaid?.toLocaleString('en-IN')}</p>
+                    <span className="text-[8px] font-semibold text-[11px] text-emerald-600 uppercase block">Paid</span>
+                    <p className="font-semibold text-[11px] text-emerald-700 mt-0.5">₹{wo.totalPaid?.toLocaleString('en-IN')}</p>
                   </div>
 
                   <div>
-                    <span className="text-[8px] font-black text-red-500 uppercase block">Balance</span>
-                    <p className="font-black text-red-600 mt-0.5">₹{wo.balance?.toLocaleString('en-IN')}</p>
+                    <span className="text-[8px] font-semibold text-[11px] text-red-500 uppercase block">Balance</span>
+                    <p className="font-semibold text-[11px] text-red-600 mt-0.5">₹{wo.balance?.toLocaleString('en-IN')}</p>
                   </div>
                 </div>
 
@@ -230,14 +230,14 @@ export default function MobileSubcontractors() {
                 <div className="flex justify-between items-center pt-1 border-t border-zinc-100">
                   <button 
                     onClick={() => toggleRow(wo.id)} 
-                    className="text-[10px] font-black text-zinc-500 hover:text-zinc-900"
+                    className="text-[10px] font-semibold text-[11px] text-zinc-500 hover:text-zinc-900"
                   >
                     {isExpanded ? 'Hide Ledger ▲' : `Payments (${wo.payments?.length || 0}) ▼`}
                   </button>
 
                   <button 
                     onClick={() => openPayModal(wo.id)}
-                    className="bg-[#1E3A8A] text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider active:scale-95 transition-transform"
+                    className="bg-[#1E3A8A] text-white px-3 py-1.5 rounded-xl text-[10px] font-semibold text-[11px] uppercase tracking-wider active:scale-95 transition-transform"
                   >
                     + Log Pay
                   </button>
@@ -246,7 +246,7 @@ export default function MobileSubcontractors() {
                 {/* EXPANDABLE PAYMENTS STREAM */}
                 {isExpanded && (
                   <div className="bg-zinc-50 border border-zinc-200 rounded-2xl p-3 space-y-2 text-xs">
-                    <h5 className="text-[9px] font-black text-zinc-400 uppercase tracking-widest border-b border-zinc-200 pb-1">
+                    <h5 className="text-[9px] font-semibold text-[11px] text-zinc-400 uppercase tracking-widest border-b border-zinc-200 pb-1">
                       Payment & Advance History
                     </h5>
 
@@ -257,7 +257,7 @@ export default function MobileSubcontractors() {
                         <div key={pay.id} className="flex justify-between items-center py-1.5 border-b border-zinc-100 last:border-0">
                           <div>
                             <div className="flex items-center gap-1.5">
-                              <span className="bg-white border border-zinc-200 text-zinc-700 px-1.5 py-0.5 rounded text-[8px] font-black uppercase">
+                              <span className="bg-white border border-zinc-200 text-zinc-700 px-1.5 py-0.5 rounded text-[8px] font-semibold text-[11px] uppercase">
                                 {pay.mode}
                               </span>
                               <span className="font-bold text-zinc-900 text-xs">₹{Number(pay.amount).toLocaleString('en-IN')}</span>
@@ -286,7 +286,7 @@ export default function MobileSubcontractors() {
           <div className="bg-white w-full rounded-t-[2.5rem] shadow-2xl p-6 flex flex-col animate-in slide-in-from-bottom-full duration-300">
             <div className="flex justify-between items-center border-b border-zinc-100 pb-3 mb-4">
               <div>
-                <h2 className="text-xl font-extrabold text-zinc-900">Add Subcontractor</h2>
+                <h2 className="text-xl font-bold text-zinc-900">Add Subcontractor</h2>
                 <p className="text-zinc-500 text-[9px] font-bold uppercase tracking-widest">Register Agency Master</p>
               </div>
               <button onClick={() => setIsSubModalOpen(false)} className="text-zinc-400 font-bold text-sm">✕</button>
@@ -318,7 +318,7 @@ export default function MobileSubcontractors() {
                 </div>
               </div>
 
-              <button type="submit" className="w-full py-4 bg-[#1E3A8A] text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform mt-2">
+              <button type="submit" className="w-full py-4 bg-[#1E3A8A] text-white font-semibold text-[11px] rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform mt-2">
                 Save Subcontractor
               </button>
             </form>
@@ -332,7 +332,7 @@ export default function MobileSubcontractors() {
           <div className="bg-white w-full rounded-t-[2.5rem] shadow-2xl p-6 flex flex-col animate-in slide-in-from-bottom-full duration-300">
             <div className="flex justify-between items-center border-b border-zinc-100 pb-3 mb-4">
               <div>
-                <h2 className="text-xl font-extrabold text-zinc-900">Assign Work Order</h2>
+                <h2 className="text-xl font-bold text-zinc-900">Assign Work Order</h2>
                 <p className="text-zinc-500 text-[9px] font-bold uppercase tracking-widest">Lock Contract Value</p>
               </div>
               <button onClick={() => setIsWoModalOpen(false)} className="text-zinc-400 font-bold text-sm">✕</button>
@@ -371,7 +371,7 @@ export default function MobileSubcontractors() {
                 <input type="number" inputMode="decimal" required placeholder="0.00" value={woForm.contractValue} onChange={e => setWoForm({...woForm, contractValue: e.target.value})} className={inputClass} />
               </div>
 
-              <button type="submit" className="w-full py-4 bg-[#1E3A8A] text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform mt-2">
+              <button type="submit" className="w-full py-4 bg-[#1E3A8A] text-white font-semibold text-[11px] rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform mt-2">
                 Assign Contract
               </button>
             </form>
@@ -385,7 +385,7 @@ export default function MobileSubcontractors() {
           <div className="bg-white w-full rounded-t-[2.5rem] shadow-2xl p-6 flex flex-col animate-in slide-in-from-bottom-full duration-300">
             <div className="flex justify-between items-center border-b border-zinc-100 pb-3 mb-4">
               <div>
-                <h2 className="text-xl font-extrabold text-zinc-900">Log Payment / Advance</h2>
+                <h2 className="text-xl font-bold text-zinc-900">Log Payment / Advance</h2>
                 <p className="text-zinc-500 text-[9px] font-bold uppercase tracking-widest">Subcontractor Outflow</p>
               </div>
               <button onClick={() => setIsPayModalOpen(false)} className="text-zinc-400 font-bold text-sm">✕</button>
@@ -424,7 +424,7 @@ export default function MobileSubcontractors() {
                 <input type="text" placeholder="e.g. Advance for materials" value={payForm.notes} onChange={e => setPayForm({...payForm, notes: e.target.value})} className={inputClass} />
               </div>
 
-              <button type="submit" className="w-full py-4 bg-emerald-600 text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform mt-2">
+              <button type="submit" className="w-full py-4 bg-emerald-600 text-white font-semibold text-[11px] rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform mt-2">
                 Record Payment
               </button>
             </form>

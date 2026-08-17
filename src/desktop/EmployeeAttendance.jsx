@@ -146,12 +146,12 @@ export default function EmployeeAttendance({ companySettings = {} }) {
   const labelClass = "block text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
 
   return (
-    <div className="w-full h-full font-['Poppins'] flex flex-col">
+    <div className="w-full h-full font-sans flex flex-col">
       
       {/* Top Header & Navigation */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end pb-4 border-b border-zinc-200 mb-6 gap-4 shrink-0">
         <div>
-          <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Staff & Attendance Portal</h2>
+          <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Staff & Attendance Portal</h2>
           <p className="text-zinc-500 text-xs mt-1 font-medium">Manage workforce directory, daily site attendance, and onboarding.</p>
         </div>
 
@@ -182,7 +182,7 @@ export default function EmployeeAttendance({ companySettings = {} }) {
           </button>
           <button 
             onClick={() => setCurrentView('register')}
-            className="bg-amber-500 hover:bg-amber-400 text-zinc-900 font-extrabold px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider transition-all cursor-pointer shadow-md hover:-translate-y-0.5 ml-2"
+            className="bg-amber-500 hover:bg-amber-400 text-zinc-900 font-bold px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider transition-all cursor-pointer shadow-md hover:-translate-y-0.5 ml-2"
           >
             + Register Staff
           </button>
@@ -194,26 +194,26 @@ export default function EmployeeAttendance({ companySettings = {} }) {
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6 shrink-0">
             <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm">
-              <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest">Total Staff</span>
-              <p className="text-2xl font-black text-zinc-900 mt-1">{totalEmployees}</p>
+              <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Total Staff</span>
+              <p className="text-2xl font-semibold text-[11px] text-zinc-900 mt-1">{totalEmployees}</p>
             </div>
             <div className="bg-emerald-50 p-5 rounded-2xl border border-emerald-100 shadow-sm">
-              <span className="text-[9px] font-extrabold text-emerald-600 uppercase tracking-widest">Present Today</span>
-              <p className="text-2xl font-black text-emerald-700 mt-1">{presentCount}</p>
+              <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest">Present Today</span>
+              <p className="text-2xl font-semibold text-[11px] text-emerald-700 mt-1">{presentCount}</p>
             </div>
             <div className="bg-amber-50 p-5 rounded-2xl border border-amber-100 shadow-sm">
-              <span className="text-[9px] font-extrabold text-amber-600 uppercase tracking-widest">Half Day</span>
-              <p className="text-2xl font-black text-amber-700 mt-1">{halfDayCount}</p>
+              <span className="text-[9px] font-bold text-amber-600 uppercase tracking-widest">Half Day</span>
+              <p className="text-2xl font-semibold text-[11px] text-amber-700 mt-1">{halfDayCount}</p>
             </div>
             <div className="bg-red-50 p-5 rounded-2xl border border-red-100 shadow-sm">
-              <span className="text-[9px] font-extrabold text-red-600 uppercase tracking-widest">Absent</span>
-              <p className="text-2xl font-black text-red-700 mt-1">{absentCount}</p>
+              <span className="text-[9px] font-bold text-red-600 uppercase tracking-widest">Absent</span>
+              <p className="text-2xl font-semibold text-[11px] text-red-700 mt-1">{absentCount}</p>
             </div>
           </div>
 
           <div className="bg-white p-6 rounded-[2rem] border border-zinc-200 shadow-sm flex-1 flex flex-col min-h-0 overflow-hidden">
             <div className="flex justify-between items-center mb-4 shrink-0">
-              <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider">
+              <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">
                 Mark Attendance for <span className="text-amber-600">{currentDate.toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
               </h3>
             </div>
@@ -239,7 +239,7 @@ export default function EmployeeAttendance({ companySettings = {} }) {
                       return (
                         <tr key={emp.id} className="hover:bg-zinc-50 transition-colors">
                           <td className="py-3.5 px-4 font-bold text-zinc-500">{emp.empId}</td>
-                          <td className="py-3.5 px-4 font-extrabold text-zinc-900">{emp.fullName}</td>
+                          <td className="py-3.5 px-4 font-bold text-zinc-900">{emp.fullName}</td>
                           <td className="py-3.5 px-4 text-zinc-600 font-medium">{emp.role}</td>
                           <td className="py-3.5 px-4">
                             <div className="flex justify-center gap-2">
@@ -279,7 +279,7 @@ export default function EmployeeAttendance({ companySettings = {} }) {
         <div className="w-full flex-1 flex flex-col min-h-0 overflow-hidden">
           <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-6 gap-4 shrink-0">
             <div>
-              <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider">Monthly Register</h3>
+              <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">Monthly Register</h3>
               <p className="text-[10px] text-zinc-500 font-medium mt-0.5">Select a paintbrush tool, then click cells to mark attendance instantly.</p>
             </div>
             
@@ -297,7 +297,7 @@ export default function EmployeeAttendance({ companySettings = {} }) {
                     key={tool.id}
                     onClick={() => setActiveTool(tool.id)}
                     title={tool.id}
-                    className={`h-7 px-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                    className={`h-7 px-3 rounded-xl text-[10px] font-semibold text-[11px] uppercase tracking-wider transition-all cursor-pointer ${
                       activeTool === tool.id 
                         ? `${tool.color} shadow-sm scale-105 ring-2 ring-white/20` 
                         : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white'
@@ -358,7 +358,7 @@ export default function EmployeeAttendance({ companySettings = {} }) {
                       <tr key={emp.id} className="hover:bg-zinc-50 group">
                         <td className="py-2.5 px-3 sticky left-0 bg-white group-hover:bg-zinc-50 z-10 border-r border-zinc-100 transition-colors">
                           <div className="flex justify-between items-center w-48">
-                            <span className="font-extrabold text-zinc-900 truncate">{emp.fullName}</span>
+                            <span className="font-bold text-zinc-900 truncate">{emp.fullName}</span>
                             <span className="text-[9px] font-bold text-[#1E3A8A] bg-blue-50 px-2 py-0.5 rounded-md">
                               {totalPayableDays} Days
                             </span>
@@ -374,7 +374,7 @@ export default function EmployeeAttendance({ companySettings = {} }) {
                               onClick={() => handleGridCellClick(emp.id, day)}
                               className="py-1 px-0.5 text-center cursor-cell"
                             >
-                              <div className={`w-[26px] h-[26px] mx-auto flex items-center justify-center rounded-md text-[10px] font-black border transition-all ${getStatusColor(status)}`}>
+                              <div className={`w-[26px] h-[26px] mx-auto flex items-center justify-center rounded-md text-[10px] font-semibold text-[11px] border transition-all ${getStatusColor(status)}`}>
                                 {getStatusLetter(status)}
                               </div>
                             </td>
@@ -401,7 +401,7 @@ export default function EmployeeAttendance({ companySettings = {} }) {
       {currentView === 'directory' && (
         <div className="bg-white p-6 rounded-[2rem] border border-zinc-200 shadow-sm flex-1 flex flex-col min-h-0 overflow-hidden">
           <div className="flex justify-between items-center mb-6 shrink-0">
-            <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider">Employee Directory</h3>
+            <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">Employee Directory</h3>
             <span className="text-xs font-semibold text-zinc-500">{employees.length} Staff Members Registered</span>
           </div>
 
@@ -421,11 +421,11 @@ export default function EmployeeAttendance({ companySettings = {} }) {
                   <tr key={emp.id} className="hover:bg-zinc-50 transition-colors">
                     <td className="py-4 px-4 font-bold text-zinc-500">{emp.empId}</td>
                     <td className="py-4 px-4">
-                      <p className="font-extrabold text-zinc-900">{emp.fullName}</p>
+                      <p className="font-bold text-zinc-900">{emp.fullName}</p>
                       <p className="text-[10px] text-zinc-500">{emp.phone}</p>
                     </td>
                     <td className="py-4 px-4 text-zinc-700 font-semibold">{emp.role}</td>
-                    <td className="py-4 px-4 font-extrabold text-zinc-900">
+                    <td className="py-4 px-4 font-bold text-zinc-900">
                       ₹{emp.payRate.toLocaleString('en-IN')} <span className="text-[9px] text-zinc-400 font-normal">({emp.payType})</span>
                     </td>
                     <td className="py-4 px-4 text-right">
@@ -449,7 +449,7 @@ export default function EmployeeAttendance({ companySettings = {} }) {
         <div className="bg-white p-8 rounded-[2rem] border border-zinc-200 shadow-sm max-w-4xl mx-auto w-full overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           <div className="flex justify-between items-center border-b border-zinc-100 pb-4 mb-6">
             <div>
-              <h3 className="text-lg font-extrabold text-zinc-900 tracking-tight">New Staff Registration</h3>
+              <h3 className="text-lg font-bold text-zinc-900 tracking-tight">New Staff Registration</h3>
               <p className="text-zinc-500 text-xs mt-0.5">Onboard new carpenters, supervisors, interior architects, and site labor.</p>
             </div>
             <button 
@@ -462,7 +462,7 @@ export default function EmployeeAttendance({ companySettings = {} }) {
 
           <form onSubmit={handleRegisterSubmit} className="space-y-6">
             <div>
-              <h4 className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest mb-3">1. Personal & Role Info</h4>
+              <h4 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3">1. Personal & Role Info</h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className={labelClass}>Full Name <span className="text-red-500">*</span></label>
@@ -487,7 +487,7 @@ export default function EmployeeAttendance({ companySettings = {} }) {
             </div>
 
             <div>
-              <h4 className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest mb-3">2. Pay Rate & Terms</h4>
+              <h4 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3">2. Pay Rate & Terms</h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className={labelClass}>Wage Structure</label>
@@ -508,7 +508,7 @@ export default function EmployeeAttendance({ companySettings = {} }) {
             </div>
 
             <div>
-              <h4 className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest mb-3">3. ID & Banking</h4>
+              <h4 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3">3. ID & Banking</h4>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
                   <label className={labelClass}>ID Number [OMITTED]</label>
@@ -546,11 +546,11 @@ export default function EmployeeAttendance({ companySettings = {} }) {
         <div className="bg-white p-8 rounded-[2rem] border border-zinc-200 shadow-xl max-w-2xl mx-auto w-full">
           <div className="flex justify-between items-start border-b border-zinc-100 pb-4 mb-6">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-[#1E3A8A] text-amber-400 flex items-center justify-center font-black text-xl shadow-md">
+              <div className="w-14 h-14 rounded-2xl bg-[#1E3A8A] text-amber-400 flex items-center justify-center font-semibold text-[11px] text-xl shadow-md">
                 {selectedEmp.fullName.substring(0, 2).toUpperCase()}
               </div>
               <div>
-                <h3 className="text-lg font-extrabold text-zinc-900">{selectedEmp.fullName}</h3>
+                <h3 className="text-lg font-bold text-zinc-900">{selectedEmp.fullName}</h3>
                 <p className="text-xs font-bold text-amber-600">{selectedEmp.role} | {selectedEmp.empId}</p>
               </div>
             </div>
@@ -559,13 +559,13 @@ export default function EmployeeAttendance({ companySettings = {} }) {
 
           <div className="grid grid-cols-2 gap-6 text-xs text-zinc-700">
             <div className="space-y-3 bg-zinc-50 p-5 rounded-2xl border border-zinc-200/60 shadow-sm">
-              <p className="font-extrabold text-zinc-400 uppercase text-[9px] tracking-widest">Contact & Joining</p>
+              <p className="font-bold text-zinc-400 uppercase text-[9px] tracking-widest">Contact & Joining</p>
               <p><strong>Mobile:</strong> {selectedEmp.phone}</p>
               <p><strong>Joining Date:</strong> {selectedEmp.joiningDate}</p>
               <p><strong>Status:</strong> <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 font-bold">{selectedEmp.status}</span></p>
             </div>
             <div className="space-y-3 bg-zinc-50 p-5 rounded-2xl border border-zinc-200/60 shadow-sm">
-              <p className="font-extrabold text-zinc-400 uppercase text-[9px] tracking-widest">Pay & Bank Details</p>
+              <p className="font-bold text-zinc-400 uppercase text-[9px] tracking-widest">Pay & Bank Details</p>
               <p><strong>Wage Type:</strong> {selectedEmp.payType}</p>
               <p><strong>Rate / Salary:</strong> ₹{selectedEmp.payRate.toLocaleString('en-IN')}</p>
             </div>

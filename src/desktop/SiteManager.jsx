@@ -55,10 +55,10 @@ export default function SiteManager() {
 
   if (!activeProject) {
     return (
-      <div className="w-full h-full font-['Poppins'] flex flex-col items-center justify-center">
+      <div className="w-full h-full font-sans flex flex-col items-center justify-center">
         <div className="bg-white p-10 rounded-[2.5rem] border border-zinc-200 shadow-xl max-w-md w-full text-center">
           <div className="text-4xl mb-4">🏗️</div>
-          <h2 className="text-xl font-extrabold text-zinc-900 mb-2">Site Operations Center</h2>
+          <h2 className="text-xl font-bold text-zinc-900 mb-2">Site Operations Center</h2>
           <p className="text-zinc-500 text-xs font-medium mb-6">Select an active project to view Daily Reports, Documents, and Snag Lists.</p>
           <select value={activeProject} onChange={e => setActiveProject(e.target.value)} className={`${inputClass} cursor-pointer`}>
             <option value="" disabled>Select Project Site...</option>
@@ -70,14 +70,14 @@ export default function SiteManager() {
   }
 
   return (
-    <div className="w-full h-full font-['Poppins'] flex flex-col">
+    <div className="w-full h-full font-sans flex flex-col">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end pb-4 border-b border-zinc-200 mb-6 gap-4 shrink-0">
         <div>
-          <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Site Operations</h2>
+          <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Site Operations</h2>
           <div className="flex items-center gap-2 mt-1">
             <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Active Site:</span>
-            <select value={activeProject} onChange={e => setActiveProject(e.target.value)} className="bg-transparent border-none text-[#1E3A8A] font-extrabold outline-none cursor-pointer p-0 text-sm">
+            <select value={activeProject} onChange={e => setActiveProject(e.target.value)} className="bg-transparent border-none text-[#1E3A8A] font-bold outline-none cursor-pointer p-0 text-sm">
               {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </div>
@@ -107,20 +107,20 @@ export default function SiteManager() {
             {activeTab === 'DPR' && data.dprs?.map(d => (
               <div key={d.id} className="bg-white p-6 rounded-[2rem] border border-zinc-200 shadow-sm flex flex-col gap-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs font-extrabold text-zinc-900">{d.date}</span>
-                  <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest bg-zinc-100 px-2.5 py-0.5 rounded-md">{d.logged_by}</span>
+                  <span className="text-xs font-bold text-zinc-900">{d.date}</span>
+                  <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest bg-zinc-100 px-2.5 py-0.5 rounded-md">{d.logged_by}</span>
                 </div>
                 <p className="text-xs text-zinc-700 font-medium leading-relaxed mt-1">{d.summary}</p>
                 {d.materials_needed && <p className="text-xs text-red-500 font-bold mt-1">Needed: {d.materials_needed}</p>}
-                {d.photo_link && <a href={d.photo_link} target="_blank" rel="noreferrer" className="text-[10px] text-[#1E3A8A] font-extrabold uppercase tracking-wider mt-2 hover:underline">View Site Photos &rarr;</a>}
+                {d.photo_link && <a href={d.photo_link} target="_blank" rel="noreferrer" className="text-[10px] text-[#1E3A8A] font-bold uppercase tracking-wider mt-2 hover:underline">View Site Photos &rarr;</a>}
               </div>
             ))}
 
             {activeTab === 'VAULT' && data.docs?.map(d => (
               <div key={d.id} className="bg-white p-6 rounded-[2rem] border border-zinc-200 shadow-sm flex justify-between items-center gap-4">
                 <div>
-                  <span className="bg-blue-50 text-[#1E3A8A] text-[9px] font-extrabold px-2.5 py-0.5 rounded-md uppercase tracking-wider mb-1.5 inline-block">{d.doc_type}</span>
-                  <h4 className="text-sm font-extrabold text-zinc-900">{d.title}</h4>
+                  <span className="bg-blue-50 text-[#1E3A8A] text-[9px] font-bold px-2.5 py-0.5 rounded-md uppercase tracking-wider mb-1.5 inline-block">{d.doc_type}</span>
+                  <h4 className="text-sm font-bold text-zinc-900">{d.title}</h4>
                   <p className="text-[10px] text-zinc-400 font-semibold mt-1">Uploaded {d.uploaded_at} by {d.uploaded_by}</p>
                 </div>
                 <a href={d.file_link} target="_blank" rel="noreferrer" className="bg-[#1E3A8A] hover:bg-blue-900 text-white px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all shadow-sm shrink-0">
@@ -132,16 +132,16 @@ export default function SiteManager() {
             {activeTab === 'SNAGS' && data.snags?.map(s => (
               <div key={s.id} className="bg-white p-6 rounded-[2rem] border border-zinc-200 shadow-sm flex justify-between items-center gap-4">
                 <div className="flex-1">
-                  <p className={`text-xs font-extrabold ${s.status === 'Resolved' ? 'line-through text-zinc-400' : 'text-zinc-900'}`}>{s.description}</p>
+                  <p className={`text-xs font-bold ${s.status === 'Resolved' ? 'line-through text-zinc-400' : 'text-zinc-900'}`}>{s.description}</p>
                   <div className="flex items-center gap-3 mt-2">
                     <span className="text-[10px] font-bold text-zinc-500">Assignee: {s.assigned_to || 'Unassigned'}</span>
-                    {s.photo_link && <a href={s.photo_link} target="_blank" rel="noreferrer" className="text-[10px] text-[#1E3A8A] font-extrabold uppercase tracking-wider hover:underline">Photo Link</a>}
+                    {s.photo_link && <a href={s.photo_link} target="_blank" rel="noreferrer" className="text-[10px] text-[#1E3A8A] font-bold uppercase tracking-wider hover:underline">Photo Link</a>}
                   </div>
                 </div>
                 <select 
                   value={s.status} 
                   onChange={e => { updateSnagStatus(s.id, e.target.value); refresh(); }}
-                  className={`px-3 py-1.5 rounded-xl text-[10px] font-extrabold uppercase tracking-widest border outline-none cursor-pointer ${s.status === 'Resolved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-600 border-red-200'}`}
+                  className={`px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-widest border outline-none cursor-pointer ${s.status === 'Resolved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-600 border-red-200'}`}
                 >
                   <option value="Pending">Pending</option>
                   <option value="Resolved">Resolved</option>
@@ -159,7 +159,7 @@ export default function SiteManager() {
             
             {activeTab === 'DPR' && (
               <form onSubmit={handleDprSubmit} className="space-y-4">
-                <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-widest border-b border-zinc-100 pb-3 mb-2">Log Daily Report</h3>
+                <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-widest border-b border-zinc-100 pb-3 mb-2">Log Daily Report</h3>
                 <div><label className={labelClass}>Date</label><input type="date" required value={dprForm.date} onChange={e => setDprForm({...dprForm, date: e.target.value})} className={inputClass} /></div>
                 <div><label className={labelClass}>Work Completed Summary</label><textarea required rows="3" value={dprForm.summary} onChange={e => setDprForm({...dprForm, summary: e.target.value})} className={`${inputClass} resize-none`} placeholder="What got done today?"></textarea></div>
                 <div><label className={labelClass}>Materials Needed Tomorrow</label><input type="text" value={dprForm.materials} onChange={e => setDprForm({...dprForm, materials: e.target.value})} className={inputClass} placeholder="e.g. 2 bags cement" /></div>
@@ -173,7 +173,7 @@ export default function SiteManager() {
 
             {activeTab === 'VAULT' && (
               <form onSubmit={handleDocSubmit} className="space-y-4">
-                <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-widest border-b border-zinc-100 pb-3 mb-2">Upload Document</h3>
+                <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-widest border-b border-zinc-100 pb-3 mb-2">Upload Document</h3>
                 <div><label className={labelClass}>Document Title</label><input type="text" required value={docForm.title} onChange={e => setDocForm({...docForm, title: e.target.value})} className={inputClass} placeholder="e.g. Approved Kitchen Layout" /></div>
                 <div>
                   <label className={labelClass}>Type</label>
@@ -195,7 +195,7 @@ export default function SiteManager() {
 
             {activeTab === 'SNAGS' && (
               <form onSubmit={handleSnagSubmit} className="space-y-4">
-                <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-widest border-b border-zinc-100 pb-3 mb-2">Log New Defect / Snag</h3>
+                <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-widest border-b border-zinc-100 pb-3 mb-2">Log New Defect / Snag</h3>
                 <div><label className={labelClass}>Issue Description</label><textarea required rows="3" value={snagForm.description} onChange={e => setSnagForm({...snagForm, description: e.target.value})} className={`${inputClass} resize-none`} placeholder="e.g. Master bedroom wardrobe left door loose"></textarea></div>
                 <div><label className={labelClass}>Assign To (Name or Agency)</label><input type="text" required value={snagForm.assignedTo} onChange={e => setSnagForm({...snagForm, assignedTo: e.target.value})} className={inputClass} placeholder="e.g. Ramesh Carpenter" /></div>
                 <div><label className={labelClass}>Photo Link (Optional)</label><input type="text" value={snagForm.photoLink} onChange={e => setSnagForm({...snagForm, photoLink: e.target.value})} className={inputClass} placeholder="https://..." /></div>

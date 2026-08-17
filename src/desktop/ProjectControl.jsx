@@ -106,7 +106,7 @@ export default function ProjectControl() {
   const labelClass = "block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
 
   return (
-    <div className="w-full font-['Poppins'] pb-12 relative h-full flex flex-col">
+    <div className="w-full font-sans pb-12 relative h-full flex flex-col">
       
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end pb-4 border-b border-zinc-300/50 mb-6 gap-4 shrink-0">
@@ -180,7 +180,7 @@ export default function ProjectControl() {
                     <td className="py-4 px-4 text-xs text-zinc-600">{b.projectName}</td>
                     <td className="py-4 px-4 text-right font-bold text-zinc-800">₹{b.grossAmount.toLocaleString('en-IN')}</td>
                     <td className="py-4 px-4 text-right text-xs text-red-500 font-medium">-₹{b.retentionAmount.toLocaleString('en-IN')} ({b.retentionPercent}%)</td>
-                    <td className="py-4 px-6 text-right font-black text-emerald-600">₹{b.netPayable.toLocaleString('en-IN')}</td>
+                    <td className="py-4 px-6 text-right font-semibold text-[11px] text-emerald-600">₹{b.netPayable.toLocaleString('en-IN')}</td>
                   </tr>
                 ))
               )}
@@ -198,10 +198,10 @@ export default function ProjectControl() {
                 <div>
                   <div className="flex justify-between items-start mb-2">
                     <span className="text-[9px] font-bold text-blue-500 uppercase tracking-widest">{m.projectName}</span>
-                    <span className={`text-[8px] font-extrabold uppercase px-2 py-0.5 rounded ${m.status === 'Received' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>{m.status}</span>
+                    <span className={`text-[8px] font-bold uppercase px-2 py-0.5 rounded ${m.status === 'Received' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>{m.status}</span>
                   </div>
                   <h4 className="font-bold text-zinc-900 text-sm mb-1">{m.stageName}</h4>
-                  <p className="text-xl font-black text-zinc-800 mb-2">₹{m.amount.toLocaleString('en-IN')} <span className="text-xs font-medium text-zinc-400">({m.percentage}%)</span></p>
+                  <p className="text-xl font-semibold text-[11px] text-zinc-800 mb-2">₹{m.amount.toLocaleString('en-IN')} <span className="text-xs font-medium text-zinc-400">({m.percentage}%)</span></p>
                 </div>
                 <div className="pt-3 border-t border-zinc-100 flex justify-between items-center">
                   <span className="text-[10px] text-zinc-400">Due: {m.dueDate || 'N/A'}</span>
@@ -228,7 +228,7 @@ export default function ProjectControl() {
                 <h4 className="font-bold text-zinc-900 text-sm mb-1">{co.title}</h4>
                 <p className="text-xs text-zinc-500 mb-4">{co.description}</p>
                 <div className="pt-3 border-t border-zinc-100 flex justify-between items-center">
-                  <span className="font-black text-emerald-600 text-base">+₹{co.additionalCost.toLocaleString('en-IN')}</span>
+                  <span className="font-semibold text-[11px] text-emerald-600 text-base">+₹{co.additionalCost.toLocaleString('en-IN')}</span>
                   <span className="text-xs text-amber-600 font-bold">+{co.extraDays} Days</span>
                 </div>
               </div>

@@ -86,18 +86,18 @@ export default function MobileTools() {
   const labelClass = "block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
 
   return (
-    <div className="w-full h-full flex flex-col font-['Poppins']">
+    <div className="w-full h-full flex flex-col font-sans">
       
       {/* HEADER SECTION */}
       <div className="mb-3 shrink-0">
         <div className="flex justify-between items-center mb-2">
           <div>
-            <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Tools & Assets</h2>
+            <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Tools & Assets</h2>
             <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-0.5">Equipment Checkouts</p>
           </div>
           <button 
             onClick={() => setIsModalOpen(true)}
-            className="bg-[#1E3A8A] hover:bg-blue-900 text-white font-black px-3.5 py-2.5 rounded-xl text-[10px] uppercase tracking-wider transition-all shadow-md active:scale-95"
+            className="bg-[#1E3A8A] hover:bg-blue-900 text-white font-semibold text-[11px] px-3.5 py-2.5 rounded-xl text-[10px] uppercase tracking-wider transition-all shadow-md active:scale-95"
           >
             + New Asset
           </button>
@@ -119,23 +119,23 @@ export default function MobileTools() {
       {/* 2x2 KPI GRID */}
       <div className="grid grid-cols-2 gap-2 mb-3 shrink-0">
         <div className="bg-white p-3 rounded-2xl border border-zinc-200 shadow-sm">
-          <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest block">Total Assets</span>
-          <p className="text-base font-black text-zinc-900 mt-0.5">{tools.length}</p>
+          <span className="text-[8px] font-semibold text-[11px] text-zinc-400 uppercase tracking-widest block">Total Assets</span>
+          <p className="text-base font-semibold text-[11px] text-zinc-900 mt-0.5">{tools.length}</p>
         </div>
 
         <div className="bg-emerald-50 p-3 rounded-2xl border border-emerald-100 shadow-sm">
-          <span className="text-[8px] font-black text-emerald-600 uppercase tracking-widest block">In Godown</span>
-          <p className="text-base font-black text-emerald-700 mt-0.5">{tools.filter(t => t.status === 'Available').length}</p>
+          <span className="text-[8px] font-semibold text-[11px] text-emerald-600 uppercase tracking-widest block">In Godown</span>
+          <p className="text-base font-semibold text-[11px] text-emerald-700 mt-0.5">{tools.filter(t => t.status === 'Available').length}</p>
         </div>
 
         <div className="bg-blue-50 p-3 rounded-2xl border border-blue-100 shadow-sm">
-          <span className="text-[8px] font-black text-[#1E3A8A] uppercase tracking-widest block">On Site</span>
-          <p className="text-base font-black text-[#1E3A8A] mt-0.5">{tools.filter(t => t.status === 'Checked Out').length}</p>
+          <span className="text-[8px] font-semibold text-[11px] text-[#1E3A8A] uppercase tracking-widest block">On Site</span>
+          <p className="text-base font-semibold text-[11px] text-[#1E3A8A] mt-0.5">{tools.filter(t => t.status === 'Checked Out').length}</p>
         </div>
 
         <div className="bg-amber-50 p-3 rounded-2xl border border-amber-200 shadow-sm">
-          <span className="text-[8px] font-black text-amber-600 uppercase tracking-widest block">Maintenance</span>
-          <p className="text-base font-black text-amber-700 mt-0.5">{tools.filter(t => t.status === 'Maintenance').length}</p>
+          <span className="text-[8px] font-semibold text-[11px] text-amber-600 uppercase tracking-widest block">Maintenance</span>
+          <p className="text-base font-semibold text-[11px] text-amber-700 mt-0.5">{tools.filter(t => t.status === 'Maintenance').length}</p>
         </div>
       </div>
 
@@ -157,15 +157,15 @@ export default function MobileTools() {
               {/* CARD HEADER */}
               <div className="flex justify-between items-start">
                 <div>
-                  <span className="bg-zinc-100 text-zinc-700 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">
+                  <span className="bg-zinc-100 text-zinc-700 text-[8px] font-semibold text-[11px] px-2 py-0.5 rounded uppercase tracking-wider">
                     {t.category}
                   </span>
-                  <h4 className="font-extrabold text-zinc-900 text-sm mt-1">{t.name}</h4>
+                  <h4 className="font-bold text-zinc-900 text-sm mt-1">{t.name}</h4>
                   <p className="text-[9px] font-mono text-zinc-400 mt-0.5">S/N: {t.serialNumber || 'N/A'}</p>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className={`text-[8px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider border ${
+                  <span className={`text-[8px] font-semibold text-[11px] px-2.5 py-1 rounded-full uppercase tracking-wider border ${
                     t.status === 'Available' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
                     t.status === 'Checked Out' ? 'bg-blue-50 text-[#1E3A8A] border-blue-100' :
                     'bg-amber-50 text-amber-700 border-amber-200'
@@ -184,11 +184,11 @@ export default function MobileTools() {
 
               {/* LOCATION / ASSIGNEE INFORMATION */}
               <div className="bg-zinc-50 p-2.5 rounded-xl border border-zinc-100 flex justify-between items-center text-xs">
-                <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">Location</span>
+                <span className="text-[9px] font-semibold text-[11px] text-zinc-400 uppercase tracking-widest">Location</span>
                 <div className="text-right">
                   {t.status === 'Checked Out' ? (
                     <>
-                      <p className="font-extrabold text-zinc-900 text-xs">{t.location || 'Unknown Site'}</p>
+                      <p className="font-bold text-zinc-900 text-xs">{t.location || 'Unknown Site'}</p>
                       <p className="text-[9px] text-zinc-500 font-bold">With: {t.assignedTo || 'Staff'}</p>
                     </>
                   ) : (
@@ -202,14 +202,14 @@ export default function MobileTools() {
                 {t.status === 'Available' ? (
                   <button 
                     onClick={() => openCheckout(t)}
-                    className="w-full py-2.5 bg-[#1E3A8A] text-white font-black rounded-xl text-[10px] uppercase tracking-wider active:scale-95 transition-transform shadow-sm"
+                    className="w-full py-2.5 bg-[#1E3A8A] text-white font-semibold text-[11px] rounded-xl text-[10px] uppercase tracking-wider active:scale-95 transition-transform shadow-sm"
                   >
                     Check Out to Site
                   </button>
                 ) : (
                   <button 
                     onClick={() => markAvailable(t.id)}
-                    className="w-full py-2.5 bg-emerald-50 text-emerald-700 border border-emerald-200 font-black rounded-xl text-[10px] uppercase tracking-wider active:scale-95 transition-transform"
+                    className="w-full py-2.5 bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold text-[11px] rounded-xl text-[10px] uppercase tracking-wider active:scale-95 transition-transform"
                   >
                     Mark Returned to Godown
                   </button>
@@ -228,7 +228,7 @@ export default function MobileTools() {
             
             <div className="flex justify-between items-center border-b border-zinc-100 pb-3 mb-4">
               <div>
-                <h2 className="text-xl font-extrabold text-zinc-900">Add Equipment Asset</h2>
+                <h2 className="text-xl font-bold text-zinc-900">Add Equipment Asset</h2>
                 <p className="text-zinc-500 text-[9px] font-bold uppercase tracking-widest mt-0.5">Register Tool Master</p>
               </div>
               <button 
@@ -307,7 +307,7 @@ export default function MobileTools() {
 
               <button 
                 type="submit" 
-                className="w-full py-4 bg-[#1E3A8A] text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform mt-2"
+                className="w-full py-4 bg-[#1E3A8A] text-white font-semibold text-[11px] rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform mt-2"
               >
                 Save Asset Master
               </button>
@@ -324,7 +324,7 @@ export default function MobileTools() {
             
             <div className="flex justify-between items-center border-b border-zinc-100 pb-3 mb-4">
               <div>
-                <h2 className="text-xl font-extrabold text-zinc-900">Check Out Equipment</h2>
+                <h2 className="text-xl font-bold text-zinc-900">Check Out Equipment</h2>
                 <p className="text-zinc-500 text-[9px] font-bold uppercase tracking-widest mt-0.5">Asset Assignment</p>
               </div>
               <button 
@@ -390,7 +390,7 @@ export default function MobileTools() {
 
               <button 
                 type="submit" 
-                className="w-full py-4 bg-[#1E3A8A] text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform mt-2"
+                className="w-full py-4 bg-[#1E3A8A] text-white font-semibold text-[11px] rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform mt-2"
               >
                 Update Asset Status
               </button>

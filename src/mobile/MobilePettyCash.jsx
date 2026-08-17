@@ -67,26 +67,26 @@ export default function MobilePettyCash() {
   const labelClass = "block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
 
   return (
-    <div className="w-full h-full flex flex-col font-['Poppins']">
+    <div className="w-full h-full flex flex-col font-sans">
       
       {/* HEADER SECTION */}
       <div className="mb-3 shrink-0">
         <div className="flex justify-between items-center mb-2">
           <div>
-            <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Site Petty Cash</h2>
+            <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Site Petty Cash</h2>
             <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-0.5">Supervisor Wallet Logs</p>
           </div>
           
           <div className="flex gap-1.5">
             <button 
               onClick={() => { setFormData(prev => ({...prev, type: 'Advance'})); setIsModalOpen(true); }}
-              className="bg-emerald-50 border border-emerald-200 text-emerald-700 font-extrabold px-3 py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-sm active:scale-95"
+              className="bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold px-3 py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-sm active:scale-95"
             >
               + Advance
             </button>
             <button 
               onClick={() => { setFormData(prev => ({...prev, type: 'Expense'})); setIsModalOpen(true); }}
-              className="bg-[#1E3A8A] text-white font-black px-3.5 py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-md active:scale-95"
+              className="bg-[#1E3A8A] text-white font-semibold text-[11px] px-3.5 py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-md active:scale-95"
             >
               + Expense
             </button>
@@ -111,7 +111,7 @@ export default function MobilePettyCash() {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`flex-1 py-2 rounded-xl text-[10px] font-extrabold uppercase tracking-wider transition-all ${
+              className={`flex-1 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all ${
                 activeTab === tab ? 'bg-white text-[#1E3A8A] shadow-sm' : 'text-zinc-500'
               }`}
             >
@@ -125,20 +125,20 @@ export default function MobilePettyCash() {
       <div className="space-y-2 mb-3 shrink-0">
         <div className="bg-zinc-900 text-white p-4 rounded-2xl shadow-md flex justify-between items-center">
           <div>
-            <span className="text-[8px] font-black text-amber-500 uppercase tracking-widest block">Wallet Balance</span>
-            <p className="text-xl font-black mt-0.5">₹ {walletBalance.toLocaleString('en-IN')}</p>
+            <span className="text-[8px] font-semibold text-[11px] text-amber-500 uppercase tracking-widest block">Wallet Balance</span>
+            <p className="text-xl font-semibold text-[11px] mt-0.5">₹ {walletBalance.toLocaleString('en-IN')}</p>
           </div>
           <span className="text-2xl">👛</span>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
           <div className="bg-emerald-50 p-3 rounded-2xl border border-emerald-100 shadow-sm">
-            <span className="text-[8px] font-black text-emerald-600 uppercase tracking-widest block">Total Advances</span>
-            <p className="text-base font-black text-emerald-700 mt-0.5">₹ {totalAdvances.toLocaleString('en-IN')}</p>
+            <span className="text-[8px] font-semibold text-[11px] text-emerald-600 uppercase tracking-widest block">Total Advances</span>
+            <p className="text-base font-semibold text-[11px] text-emerald-700 mt-0.5">₹ {totalAdvances.toLocaleString('en-IN')}</p>
           </div>
           <div className="bg-white p-3 rounded-2xl border border-zinc-200 shadow-sm">
-            <span className="text-[8px] font-black text-red-500 uppercase tracking-widest block">Total Spent</span>
-            <p className="text-base font-black text-zinc-900 mt-0.5">₹ {totalExpenses.toLocaleString('en-IN')}</p>
+            <span className="text-[8px] font-semibold text-[11px] text-red-500 uppercase tracking-widest block">Total Spent</span>
+            <p className="text-base font-semibold text-[11px] text-zinc-900 mt-0.5">₹ {totalExpenses.toLocaleString('en-IN')}</p>
           </div>
         </div>
       </div>
@@ -157,17 +157,17 @@ export default function MobilePettyCash() {
             <div key={t.id} className="bg-white border border-zinc-200 rounded-[1.5rem] p-4 shadow-sm space-y-2 active:scale-[0.99] transition-transform">
               <div className="flex justify-between items-start">
                 <div>
-                  <span className={`text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider ${
+                  <span className={`text-[8px] font-semibold text-[11px] px-2 py-0.5 rounded uppercase tracking-wider ${
                     t.type === 'Advance' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
                   }`}>
                     {t.type}
                   </span>
-                  <h4 className="font-extrabold text-zinc-900 text-sm mt-1">{t.description}</h4>
+                  <h4 className="font-bold text-zinc-900 text-sm mt-1">{t.description}</h4>
                   <p className="text-[10px] font-bold text-[#1E3A8A] uppercase tracking-wider">{t.projectName || 'Office / General'}</p>
                 </div>
 
                 <div className="text-right">
-                  <p className={`text-base font-black ${t.type === 'Advance' ? 'text-emerald-600' : 'text-zinc-900'}`}>
+                  <p className={`text-base font-semibold text-[11px] ${t.type === 'Advance' ? 'text-emerald-600' : 'text-zinc-900'}`}>
                     {t.type === 'Expense' ? '-' : '+'} ₹{t.amount.toLocaleString('en-IN')}
                   </p>
                   <button 
@@ -194,7 +194,7 @@ export default function MobilePettyCash() {
           <div className="bg-white w-full h-[85vh] rounded-t-[2.5rem] shadow-2xl flex flex-col animate-in slide-in-from-bottom-full duration-300">
             <div className="px-6 pt-6 pb-4 border-b border-zinc-100 flex justify-between items-center shrink-0">
               <div>
-                <h2 className="text-xl font-extrabold text-zinc-900">Log {formData.type}</h2>
+                <h2 className="text-xl font-bold text-zinc-900">Log {formData.type}</h2>
                 <p className="text-zinc-500 text-[9px] font-bold uppercase tracking-widest">Site Petty Cash Register</p>
               </div>
               <button 
@@ -223,7 +223,7 @@ export default function MobilePettyCash() {
                       placeholder="0.00" 
                       value={formData.amount} 
                       onChange={e => setFormData({...formData, amount: e.target.value})} 
-                      className={`${inputClass} font-black text-base`} 
+                      className={`${inputClass} font-semibold text-[11px] text-base`} 
                     />
                   </div>
                 </div>
@@ -273,7 +273,7 @@ export default function MobilePettyCash() {
               <button 
                 type="submit" 
                 form="pettyCashForm"
-                className={`w-full py-4 text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform ${
+                className={`w-full py-4 text-white font-semibold text-[11px] rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform ${
                   formData.type === 'Advance' ? 'bg-emerald-600' : 'bg-[#1E3A8A]'
                 }`}
               >

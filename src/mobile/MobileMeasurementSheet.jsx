@@ -123,12 +123,12 @@ export default function MobileMeasurementSheet() {
   // VIEW 1: SPREADSHEET EDITOR
   if (isEditorOpen) {
     return (
-      <div className="w-full h-full flex flex-col font-['Poppins']">
+      <div className="w-full h-full flex flex-col font-sans">
         
         {/* HEADER BAR */}
         <div className="mb-3 shrink-0 flex justify-between items-center border-b border-zinc-100 pb-2">
           <div>
-            <h2 className="text-xl font-extrabold text-zinc-900">
+            <h2 className="text-xl font-bold text-zinc-900">
               {currentSheet.id ? 'Edit Measurement Sheet' : 'New Measurement Log'}
             </h2>
             <p className="text-zinc-500 text-[9px] font-bold uppercase tracking-widest">Joint Site Measurement</p>
@@ -144,8 +144,8 @@ export default function MobileMeasurementSheet() {
         {/* TOTAL QUANTITY STRIP */}
         <div className="bg-emerald-600 text-white p-3.5 rounded-2xl shadow-md mb-3 flex justify-between items-center shrink-0">
           <div>
-            <span className="text-[8px] font-black uppercase tracking-widest text-emerald-200 block">Grand Total Quantity</span>
-            <p className="text-xl font-black">{grandTotal.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+            <span className="text-[8px] font-semibold text-[11px] uppercase tracking-widest text-emerald-200 block">Grand Total Quantity</span>
+            <p className="text-xl font-semibold text-[11px]">{grandTotal.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
           </div>
           <span className="text-2xl">📐</span>
         </div>
@@ -195,10 +195,10 @@ export default function MobileMeasurementSheet() {
           {/* MEASUREMENT ROWS STREAM */}
           <div className="space-y-3">
             <div className="flex justify-between items-center px-1">
-              <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Measurement Entries ({currentSheet.data.length})</span>
+              <span className="text-[10px] font-semibold text-[11px] text-zinc-400 uppercase tracking-widest">Measurement Entries ({currentSheet.data.length})</span>
               <button 
                 onClick={() => addRows(3)}
-                className="text-[10px] font-black text-[#1E3A8A] bg-blue-50 px-3 py-1 rounded-xl uppercase active:scale-95 transition-transform"
+                className="text-[10px] font-semibold text-[11px] text-[#1E3A8A] bg-blue-50 px-3 py-1 rounded-xl uppercase active:scale-95 transition-transform"
               >
                 + Add Rows
               </button>
@@ -207,7 +207,7 @@ export default function MobileMeasurementSheet() {
             {currentSheet.data.map((row, idx) => (
               <div key={idx} className="bg-white border border-zinc-200 rounded-[1.5rem] p-4 shadow-sm space-y-3 relative">
                 <div className="flex justify-between items-center border-b border-zinc-100 pb-2">
-                  <span className="text-[10px] font-black text-[#1E3A8A] bg-blue-50 px-2.5 py-0.5 rounded-md">
+                  <span className="text-[10px] font-semibold text-[11px] text-[#1E3A8A] bg-blue-50 px-2.5 py-0.5 rounded-md">
                     Row #{idx + 1}
                   </span>
                   <button 
@@ -289,7 +289,7 @@ export default function MobileMeasurementSheet() {
                   </div>
                   <div>
                     <label className={labelClass}>Calculated Total</label>
-                    <div className="h-[46px] bg-emerald-50 border border-emerald-100 rounded-xl px-3 flex items-center font-black text-emerald-700 text-sm">
+                    <div className="h-[46px] bg-emerald-50 border border-emerald-100 rounded-xl px-3 flex items-center font-semibold text-[11px] text-emerald-700 text-sm">
                       {parseFloat(row.total || 0).toFixed(2)}
                     </div>
                   </div>
@@ -315,13 +315,13 @@ export default function MobileMeasurementSheet() {
         <div className="absolute bottom-0 left-0 right-0 p-4 pb-4 bg-white border-t border-zinc-200 shadow-lg flex gap-2">
           <button 
             onClick={() => addRows(3)}
-            className="w-1/3 py-4 bg-zinc-100 text-zinc-700 font-extrabold rounded-xl text-xs uppercase tracking-wider active:scale-95 transition-transform"
+            className="w-1/3 py-4 bg-zinc-100 text-zinc-700 font-bold rounded-xl text-xs uppercase tracking-wider active:scale-95 transition-transform"
           >
             + 3 Rows
           </button>
           <button 
             onClick={handleSave}
-            className="w-2/3 py-4 bg-[#1E3A8A] text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-md active:scale-95 transition-transform"
+            className="w-2/3 py-4 bg-[#1E3A8A] text-white font-semibold text-[11px] rounded-xl text-xs uppercase tracking-wider shadow-md active:scale-95 transition-transform"
           >
             Save Sheet
           </button>
@@ -333,18 +333,18 @@ export default function MobileMeasurementSheet() {
 
   // VIEW 2: SHEETS LIST DASHBOARD
   return (
-    <div className="w-full h-full flex flex-col font-['Poppins']">
+    <div className="w-full h-full flex flex-col font-sans">
       
       {/* HEADER SECTION */}
       <div className="mb-3 shrink-0">
         <div className="flex justify-between items-center mb-2">
           <div>
-            <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Measurement Sheets</h2>
+            <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Measurement Sheets</h2>
             <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-0.5">Site Quantities & Dimensions</p>
           </div>
           <button 
             onClick={openNewSheet}
-            className="bg-[#1E3A8A] hover:bg-blue-900 text-white font-black px-3.5 py-2.5 rounded-xl text-[10px] uppercase tracking-wider transition-all shadow-md active:scale-95"
+            className="bg-[#1E3A8A] hover:bg-blue-900 text-white font-semibold text-[11px] px-3.5 py-2.5 rounded-xl text-[10px] uppercase tracking-wider transition-all shadow-md active:scale-95"
           >
             + Blank Sheet
           </button>
@@ -372,7 +372,7 @@ export default function MobileMeasurementSheet() {
               >
                 <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="font-extrabold text-zinc-900 text-base leading-tight">{sheet.title}</h3>
+                    <h3 className="font-bold text-zinc-900 text-base leading-tight">{sheet.title}</h3>
                     <p className="text-[10px] font-bold text-[#1E3A8A] uppercase tracking-widest mt-0.5">
                       {sheet.projectName || 'General Site'}
                     </p>
@@ -387,12 +387,12 @@ export default function MobileMeasurementSheet() {
 
                 <div className="grid grid-cols-2 gap-2 bg-zinc-50 p-3 rounded-xl border border-zinc-100 text-xs">
                   <div>
-                    <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest block">Entries</span>
-                    <p className="font-extrabold text-zinc-800">{rowCount} Rows</p>
+                    <span className="text-[8px] font-semibold text-[11px] text-zinc-400 uppercase tracking-widest block">Entries</span>
+                    <p className="font-bold text-zinc-800">{rowCount} Rows</p>
                   </div>
                   <div>
-                    <span className="text-[8px] font-black text-emerald-600 uppercase tracking-widest block">Total Quantity</span>
-                    <p className="font-black text-emerald-700">{grandTotal.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+                    <span className="text-[8px] font-semibold text-[11px] text-emerald-600 uppercase tracking-widest block">Total Quantity</span>
+                    <p className="font-semibold text-[11px] text-emerald-700">{grandTotal.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
                   </div>
                 </div>
 
@@ -400,7 +400,7 @@ export default function MobileMeasurementSheet() {
                   <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider">{sheet.date}</span>
                   <button 
                     onClick={() => openExistingSheet(sheet)}
-                    className="bg-zinc-900 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider active:scale-95 transition-transform"
+                    className="bg-zinc-900 text-white px-4 py-2 rounded-xl text-[10px] font-semibold text-[11px] uppercase tracking-wider active:scale-95 transition-transform"
                   >
                     Open Sheet →
                   </button>

@@ -116,29 +116,29 @@ export default function Dashboard({ setActivePage }) {
   const cardClass = "bg-white border border-zinc-200 p-6 rounded-[2rem] shadow-sm";
 
   return (
-    <div className="w-full font-['Poppins'] flex flex-col">
+    <div className="w-full font-sans flex flex-col">
       <div className="mb-6">
-        <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Graphical Command Center</h2>
+        <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Graphical Command Center</h2>
         <p className="text-zinc-500 text-xs mt-1 font-medium">Real-time charts and job costing visualizations.</p>
       </div>
 
       {/* TOP KPI CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className={cardClass}>
-          <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1">Total Received</span>
-          <p className="text-2xl font-black text-emerald-600">₹ {metrics.totalReceived.toLocaleString('en-IN')}</p>
+          <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Total Received</span>
+          <p className="text-2xl font-semibold text-[11px] text-emerald-600">₹ {metrics.totalReceived.toLocaleString('en-IN')}</p>
         </div>
         <div className={cardClass}>
-          <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1">Pending Invoices</span>
-          <p className="text-2xl font-black text-blue-600">₹ {metrics.pendingInvoices.toLocaleString('en-IN')}</p>
+          <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Pending Invoices</span>
+          <p className="text-2xl font-semibold text-[11px] text-blue-600">₹ {metrics.pendingInvoices.toLocaleString('en-IN')}</p>
         </div>
         <div className={cardClass}>
-          <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1">Unpaid Purchases</span>
-          <p className="text-2xl font-black text-amber-600">₹ {metrics.unpaidPurchases.toLocaleString('en-IN')}</p>
+          <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Unpaid Purchases</span>
+          <p className="text-2xl font-semibold text-[11px] text-amber-600">₹ {metrics.unpaidPurchases.toLocaleString('en-IN')}</p>
         </div>
         <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-[2rem] shadow-lg">
-          <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1">Available Funds</span>
-          <p className="text-2xl font-black text-emerald-400">₹ {metrics.availableFunds.toLocaleString('en-IN')}</p>
+          <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Available Funds</span>
+          <p className="text-2xl font-semibold text-[11px] text-emerald-400">₹ {metrics.availableFunds.toLocaleString('en-IN')}</p>
         </div>
       </div>
 
@@ -147,7 +147,7 @@ export default function Dashboard({ setActivePage }) {
         
         {/* BAR CHART */}
         <div className={`lg:col-span-2 ${cardClass} flex flex-col`}>
-          <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-widest mb-6">Revenue vs Cost (Last 6 Months)</h3>
+          <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-widest mb-6">Revenue vs Cost (Last 6 Months)</h3>
           <div className="flex-1 relative flex items-end justify-around pb-6 pt-8 border-b border-zinc-100">
             {/* Grid Lines */}
             <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
@@ -184,28 +184,28 @@ export default function Dashboard({ setActivePage }) {
 
         {/* DOUGHNUT CHART */}
         <div className={`${cardClass} flex flex-col items-center justify-between`}>
-          <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-widest w-full text-left mb-6">Cash Distribution</h3>
+          <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-widest w-full text-left mb-6">Cash Distribution</h3>
           
           <div className="relative w-48 h-48 rounded-full flex items-center justify-center my-4 shadow-inner transition-all duration-500" 
                style={{ background: metrics.cashDistribution.gradient }}>
             <div className="w-32 h-32 bg-white rounded-full flex flex-col items-center justify-center shadow-md">
               <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Health</span>
-              <span className="text-sm font-black text-emerald-500">{metrics.cashDistribution.avail}%</span>
+              <span className="text-sm font-semibold text-[11px] text-emerald-500">{metrics.cashDistribution.avail}%</span>
             </div>
           </div>
 
           <div className="w-full space-y-3 pt-4 border-t border-zinc-100">
             <div className="flex justify-between items-center text-xs">
               <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-emerald-400"></span><span className="font-semibold text-zinc-600">Funds Available</span></div>
-              <span className="font-extrabold text-zinc-900">{metrics.cashDistribution.avail}%</span>
+              <span className="font-bold text-zinc-900">{metrics.cashDistribution.avail}%</span>
             </div>
             <div className="flex justify-between items-center text-xs">
               <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-amber-400"></span><span className="font-semibold text-zinc-600">Expenses Paid</span></div>
-              <span className="font-extrabold text-zinc-900">{metrics.cashDistribution.exp}%</span>
+              <span className="font-bold text-zinc-900">{metrics.cashDistribution.exp}%</span>
             </div>
             <div className="flex justify-between items-center text-xs">
               <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-red-400"></span><span className="font-semibold text-zinc-600">Pending Dues</span></div>
-              <span className="font-extrabold text-zinc-900">{metrics.cashDistribution.pend}%</span>
+              <span className="font-bold text-zinc-900">{metrics.cashDistribution.pend}%</span>
             </div>
           </div>
         </div>
@@ -216,7 +216,7 @@ export default function Dashboard({ setActivePage }) {
         
         <div className={`lg:col-span-2 ${cardClass}`}>
           <div className="flex justify-between items-center mb-5">
-            <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-widest">Active Projects Snapshot</h3>
+            <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-widest">Active Projects Snapshot</h3>
             <button onClick={() => setActivePage('Projects')} className="text-[10px] font-bold text-[#1E3A8A] hover:underline uppercase tracking-wider cursor-pointer">All Projects &rarr;</button>
           </div>
           
@@ -246,7 +246,7 @@ export default function Dashboard({ setActivePage }) {
 
         <div className={cardClass}>
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-widest">Urgent Payables</h3>
+            <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-widest">Urgent Payables</h3>
             <span className="bg-red-100 text-red-600 text-[10px] font-bold px-2.5 py-0.5 rounded-full">{metrics.urgentPayables.length}</span>
           </div>
           {metrics.urgentPayables.length === 0 ? (
@@ -259,7 +259,7 @@ export default function Dashboard({ setActivePage }) {
                     <p className="text-xs font-bold text-zinc-900 max-w-[140px] truncate">{v.vendorName || v.name}</p>
                     <button onClick={() => setActivePage('Vendor Ledger')} className="text-[9px] font-bold text-[#1E3A8A] uppercase hover:underline mt-0.5 block cursor-pointer">Resolve &rarr;</button>
                   </div>
-                  <span className="text-xs font-black text-red-500">₹{Number(v.balance).toLocaleString('en-IN')}</span>
+                  <span className="text-xs font-semibold text-[11px] text-red-500">₹{Number(v.balance).toLocaleString('en-IN')}</span>
                 </div>
               ))}
             </div>

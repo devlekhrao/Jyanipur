@@ -356,13 +356,13 @@ export default function Purchases({ companySettings = {} }) {
                       <td className="py-4 px-6 text-xs font-medium text-zinc-500 truncate max-w-[120px]">{pur.projectName || '-'}</td>
                       <td className="py-4 px-6 text-right font-medium text-xs text-zinc-700">₹{pur.taxableAmount?.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                       <td className="py-4 px-6 text-right font-bold text-xs text-emerald-600">₹{pur.gstAmount?.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-                      <td className="py-4 px-6 text-right font-black text-xs text-zinc-900">₹{pur.totalAmount?.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                      <td className="py-4 px-6 text-right font-semibold text-[11px] text-xs text-zinc-900">₹{pur.totalAmount?.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                       
                       <td className="py-4 px-6 text-center">
                         <select
                           value={pur.returnStatus || 'Pending'}
                           onChange={(e) => handleStatusChange(pur, e.target.value)}
-                          className={`appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23A1A1AA%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%223%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_0.6rem_center] bg-[length:0.8rem_0.8rem] pr-7 pl-3 py-1.5 rounded-full border outline-none cursor-pointer transition-all text-[10px] font-black uppercase tracking-widest ${
+                          className={`appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23A1A1AA%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%223%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_0.6rem_center] bg-[length:0.8rem_0.8rem] pr-7 pl-3 py-1.5 rounded-full border outline-none cursor-pointer transition-all text-[10px] font-semibold text-[11px] uppercase tracking-widest ${
                             pur.returnStatus === '2B Matched' ? 'bg-blue-50 text-blue-700 border-blue-200 focus:ring-2 focus:ring-blue-500/20' :
                             pur.returnStatus === 'ITC Claimed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 focus:ring-2 focus:ring-emerald-500/20' :
                             'bg-amber-50 text-[#B45309] border-amber-200 focus:ring-2 focus:ring-[#B45309]/20'
@@ -376,19 +376,19 @@ export default function Purchases({ companySettings = {} }) {
                       
                       <td className="py-4 px-6 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <button onClick={() => handleEdit(pur)} title="Edit Bill" className="px-3 py-1.5 bg-amber-50 text-[#B45309] hover:bg-[#B45309] hover:text-white border border-amber-200/60 rounded-lg font-black cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
+                          <button onClick={() => handleEdit(pur)} title="Edit Bill" className="px-3 py-1.5 bg-amber-50 text-[#B45309] hover:bg-[#B45309] hover:text-white border border-amber-200/60 rounded-lg font-semibold text-[11px] cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" /></svg>
                             Edit
                           </button>
-                          <button onClick={() => handleView(pur)} title="View Detail" className="px-3 py-1.5 bg-zinc-50 text-zinc-600 hover:bg-zinc-200 border border-zinc-200 rounded-lg font-black cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
+                          <button onClick={() => handleView(pur)} title="View Detail" className="px-3 py-1.5 bg-zinc-50 text-zinc-600 hover:bg-zinc-200 border border-zinc-200 rounded-lg font-semibold text-[11px] cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                             View
                           </button>
-                          <button onClick={() => handleDirectPrint(pur)} title="Print Voucher" className="px-3 py-1.5 bg-zinc-50 text-zinc-600 hover:bg-zinc-200 border border-zinc-200 rounded-lg font-black cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
+                          <button onClick={() => handleDirectPrint(pur)} title="Print Voucher" className="px-3 py-1.5 bg-zinc-50 text-zinc-600 hover:bg-zinc-200 border border-zinc-200 rounded-lg font-semibold text-[11px] cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0v-2.25a2.25 2.25 0 012.25-2.25h6a2.25 2.25 0 012.25 2.25v2.25z" /></svg>
                             Print
                           </button>
-                          <button onClick={() => handleDelete(pur.id)} title="Delete Purchase" className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white border border-red-200 rounded-lg font-black cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
+                          <button onClick={() => handleDelete(pur.id)} title="Delete Purchase" className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white border border-red-200 rounded-lg font-semibold text-[11px] cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                           </button>
                         </div>
@@ -531,7 +531,7 @@ export default function Purchases({ companySettings = {} }) {
             </table>
           </div>
           {!isReadOnly && (
-            <button onClick={addItem} className="mt-4 text-[#B45309] hover:text-[#92400E] text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer flex items-center gap-1.5">
+            <button onClick={addItem} className="mt-4 text-[#B45309] hover:text-[#92400E] text-[10px] font-semibold text-[11px] uppercase tracking-widest transition-all cursor-pointer flex items-center gap-1.5">
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
               Add Material Row
             </button>
@@ -563,7 +563,7 @@ export default function Purchases({ companySettings = {} }) {
                 </>
               ) : null}
 
-              <div className="flex justify-between text-base font-black border-t border-zinc-200 pt-3">
+              <div className="flex justify-between text-base font-semibold text-[11px] border-t border-zinc-200 pt-3">
                 <span>Total Bill Value:</span><span className="text-[#B45309]">₹ {totals.grandTotal.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
               </div>
             </div>

@@ -155,12 +155,12 @@ export default function Salaries() {
   const isAllSelected = allSelectableCount > 0 && selectedEmps.size === allSelectableCount;
 
   return (
-    <div className="w-full h-full font-['Poppins'] flex flex-col">
+    <div className="w-full h-full font-sans flex flex-col">
       
       {/* Header & Filters */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end pb-4 border-b border-zinc-200 mb-6 gap-4 shrink-0">
         <div>
-          <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Payroll & Disbursements</h2>
+          <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Payroll & Disbursements</h2>
           <p className="text-zinc-500 text-xs mt-1 font-medium">Advances are automatically deducted. Select employees to calculate payout projection.</p>
         </div>
 
@@ -180,27 +180,27 @@ export default function Salaries() {
       {/* Projection Dashboard */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6 shrink-0">
         <div className="bg-white p-6 rounded-[2rem] border border-zinc-200 shadow-sm">
-          <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1">Current Bank Balance</span>
-          <p className="text-2xl font-black text-zinc-900">₹ {currentBankBalance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+          <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Current Bank Balance</span>
+          <p className="text-2xl font-semibold text-[11px] text-zinc-900">₹ {currentBankBalance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
         </div>
         <div className="bg-white p-6 rounded-[2rem] border border-zinc-200 shadow-sm">
-          <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1">Total Due Payroll</span>
-          <p className="text-2xl font-black text-zinc-800">₹ {totalPayrollAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+          <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Total Due Payroll</span>
+          <p className="text-2xl font-semibold text-[11px] text-zinc-800">₹ {totalPayrollAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
         </div>
         <div className="bg-amber-50/70 p-6 rounded-[2rem] border border-amber-200/80 shadow-sm">
-          <span className="text-[9px] font-extrabold text-amber-600 uppercase tracking-widest block mb-1">Selected Payout Total</span>
-          <p className="text-2xl font-black text-amber-700">₹ {selectedPayrollAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+          <span className="text-[9px] font-bold text-amber-600 uppercase tracking-widest block mb-1">Selected Payout Total</span>
+          <p className="text-2xl font-semibold text-[11px] text-amber-700">₹ {selectedPayrollAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
         </div>
         <div className={`p-6 rounded-[2rem] shadow-lg border ${projectedBalance < 0 ? 'bg-red-600 border-red-600 text-white' : 'bg-zinc-900 border-zinc-900 text-white'}`}>
-          <span className="text-[9px] font-extrabold uppercase tracking-widest block mb-1 opacity-80">Projected Balance</span>
-          <p className="text-2xl font-black">₹ {projectedBalance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+          <span className="text-[9px] font-bold uppercase tracking-widest block mb-1 opacity-80">Projected Balance</span>
+          <p className="text-2xl font-semibold text-[11px]">₹ {projectedBalance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
         </div>
       </div>
 
       {/* Action Bar */}
       <div className={`mb-6 p-4 rounded-2xl flex justify-between items-center transition-all shrink-0 ${selectedEmps.size > 0 ? 'bg-amber-500 text-zinc-900 shadow-md opacity-100' : 'opacity-0 pointer-events-none h-0 p-0 m-0 overflow-hidden'}`}>
         <div>
-          <span className="text-sm font-extrabold">{selectedEmps.size} Employees Selected</span>
+          <span className="text-sm font-bold">{selectedEmps.size} Employees Selected</span>
           <p className="text-[10px] font-bold uppercase tracking-widest mt-0.5 opacity-90">Totaling ₹ {selectedPayrollAmount.toLocaleString('en-IN')}</p>
         </div>
         <button 
@@ -227,7 +227,7 @@ export default function Salaries() {
             disabled={allSelectableCount === 0}
             className="w-4 h-4 rounded text-[#1E3A8A] focus:ring-[#1E3A8A] cursor-pointer border-zinc-300 mr-4"
           />
-          <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest">Select All Payables</span>
+          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Select All Payables</span>
         </div>
 
         {loading ? (
@@ -253,11 +253,11 @@ export default function Salaries() {
                     disabled={!emp.canBePaid}
                     className="w-4 h-4 rounded text-[#1E3A8A] focus:ring-[#1E3A8A] cursor-pointer border-zinc-300 disabled:opacity-30 disabled:cursor-not-allowed mr-4"
                   />
-                  <div className="w-10 h-10 rounded-2xl bg-[#1E3A8A] text-amber-400 flex items-center justify-center font-black text-sm mr-3 shadow-sm flex-shrink-0">
+                  <div className="w-10 h-10 rounded-2xl bg-[#1E3A8A] text-amber-400 flex items-center justify-center font-semibold text-[11px] text-sm mr-3 shadow-sm flex-shrink-0">
                     {emp.fullName.substring(0, 1).toUpperCase()}
                   </div>
                   <div>
-                    <h4 className="text-sm font-extrabold text-zinc-900">{emp.fullName}</h4>
+                    <h4 className="text-sm font-bold text-zinc-900">{emp.fullName}</h4>
                     <p className={`text-[10px] ${!emp.accountNo ? 'text-red-500 font-bold' : 'text-zinc-400 font-mono font-medium'}`}>
                       {emp.accountNo ? `A/c: ${emp.accountNo.slice(-4)} | ${emp.ifscCode}` : '⚠️ Bank Details Missing'}
                     </p>
@@ -269,28 +269,28 @@ export default function Salaries() {
                   
                   {/* Gross Block */}
                   <div className="flex flex-col items-center bg-zinc-50 border border-zinc-200/80 px-4 py-2 rounded-xl min-w-[110px]">
-                    <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest">Gross Pay</span>
-                    <span className="text-xs font-black text-zinc-900">₹{emp.grossPay.toLocaleString('en-IN')}</span>
+                    <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Gross Pay</span>
+                    <span className="text-xs font-semibold text-[11px] text-zinc-900">₹{emp.grossPay.toLocaleString('en-IN')}</span>
                     <span className="text-[8px] text-zinc-500 mt-0.5 font-medium">{emp.totalDays} Days @ {emp.payType}</span>
                   </div>
 
-                  <span className="text-zinc-400 font-black">-</span>
+                  <span className="text-zinc-400 font-semibold text-[11px]">-</span>
 
                   {/* Advance Block */}
                   <div className={`flex flex-col items-center px-4 py-2 rounded-xl min-w-[110px] border ${emp.advanceDeduction > 0 ? 'bg-red-50/70 border-red-100' : 'bg-zinc-50 border-zinc-200/80'}`}>
-                    <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest">Advances</span>
-                    <span className={`text-xs font-black ${emp.advanceDeduction > 0 ? 'text-red-500' : 'text-zinc-400'}`}>
+                    <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Advances</span>
+                    <span className={`text-xs font-semibold text-[11px] ${emp.advanceDeduction > 0 ? 'text-red-500' : 'text-zinc-400'}`}>
                       ₹{emp.advanceDeduction.toLocaleString('en-IN')}
                     </span>
                     <span className="text-[8px] text-zinc-500 mt-0.5 font-medium">From Staff Exp</span>
                   </div>
 
-                  <span className="text-zinc-400 font-black">=</span>
+                  <span className="text-zinc-400 font-semibold text-[11px]">=</span>
 
                   {/* Net Block */}
                   <div className={`flex flex-col items-center px-4 py-2 rounded-xl min-w-[110px] border ${emp.netPayable > 0 && !emp.isPaidOrPending ? 'bg-emerald-50/70 border-emerald-100' : 'bg-zinc-50 border-zinc-200/80'}`}>
-                    <span className="text-[9px] font-extrabold text-zinc-500 uppercase tracking-widest">Net Payable</span>
-                    <span className={`text-sm font-black ${emp.netPayable > 0 && !emp.isPaidOrPending ? 'text-emerald-700' : 'text-zinc-900'}`}>
+                    <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Net Payable</span>
+                    <span className={`text-sm font-semibold text-[11px] ${emp.netPayable > 0 && !emp.isPaidOrPending ? 'text-emerald-700' : 'text-zinc-900'}`}>
                       ₹{emp.netPayable.toLocaleString('en-IN')}
                     </span>
                   </div>

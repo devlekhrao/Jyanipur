@@ -68,12 +68,12 @@ export default function TaskBoard() {
   const labelClass = "block text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
 
   return (
-    <div className="w-full h-full font-['Poppins'] flex flex-col">
+    <div className="w-full h-full font-sans flex flex-col">
       
       {/* Header Controls */}
       <div className="flex justify-between items-end pb-4 border-b border-zinc-200 mb-6 shrink-0 print:hidden">
         <div>
-          <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Project Task Board</h2>
+          <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Project Task Board</h2>
           <p className="text-zinc-500 text-xs mt-1 font-medium">Assign work, set deadlines, and track completion.</p>
         </div>
         <div className="flex gap-2">
@@ -99,7 +99,7 @@ export default function TaskBoard() {
               
               {/* Column Header */}
               <div className="px-4 py-3 border-b border-zinc-100 flex justify-between items-center shrink-0 bg-zinc-50/50">
-                <h3 className="text-[10px] font-extrabold text-zinc-800 uppercase tracking-widest">{col}</h3>
+                <h3 className="text-[10px] font-bold text-zinc-800 uppercase tracking-widest">{col}</h3>
                 <span className="bg-zinc-200 text-zinc-700 text-[10px] font-bold px-2 py-0.5 rounded-md">{tasks.filter(t => t.status === col).length}</span>
               </div>
               
@@ -108,10 +108,10 @@ export default function TaskBoard() {
                 {tasks.filter(t => t.status === col).map(task => (
                   <div key={task.id} className="bg-white border border-zinc-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow group relative print:border-b print:shadow-none print:rounded-none print:p-2">
                     <div className="flex justify-between items-start mb-1">
-                      <p className="text-[9px] font-extrabold text-[#1E3A8A] uppercase tracking-widest">{task.projectName || 'General Office'}</p>
+                      <p className="text-[9px] font-bold text-[#1E3A8A] uppercase tracking-widest">{task.projectName || 'General Office'}</p>
                       <button onClick={() => handleDelete(task.id)} className="absolute top-3 right-3 text-zinc-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity text-sm cursor-pointer print:hidden">&times;</button>
                     </div>
-                    <h4 className="font-extrabold text-zinc-900 text-sm mb-1 pr-4">{task.title}</h4>
+                    <h4 className="font-bold text-zinc-900 text-sm mb-1 pr-4">{task.title}</h4>
                     {task.description && <p className="text-xs text-zinc-500 mb-3 leading-relaxed">{task.description}</p>}
                     
                     <div className="flex justify-between items-center pt-3 border-t border-zinc-100 mt-2">
@@ -140,7 +140,7 @@ export default function TaskBoard() {
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
           <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in-95 duration-200">
-            <h2 className="text-xl font-extrabold text-zinc-900 mb-1">New Task</h2>
+            <h2 className="text-xl font-bold text-zinc-900 mb-1">New Task</h2>
             <p className="text-zinc-500 text-[10px] font-bold mb-6 uppercase tracking-widest">Assign task to site or office</p>
 
             <form onSubmit={handleSave} className="space-y-4">

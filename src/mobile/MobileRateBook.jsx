@@ -74,18 +74,18 @@ export default function MobileRateBook() {
   const labelClass = "block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
 
   return (
-    <div className="w-full h-full flex flex-col font-['Poppins']">
+    <div className="w-full h-full flex flex-col font-sans">
       
       {/* HEADER SECTION */}
       <div className="mb-3 shrink-0">
         <div className="flex justify-between items-center mb-2">
           <div>
-            <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Rate Book</h2>
+            <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Rate Book</h2>
             <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-0.5">Vendor Price Analyzer</p>
           </div>
           <button 
             onClick={() => setIsModalOpen(true)} 
-            className="bg-[#1E3A8A] hover:bg-blue-900 text-white font-black px-3.5 py-2.5 rounded-xl text-[10px] uppercase tracking-wider transition-all shadow-md active:scale-95"
+            className="bg-[#1E3A8A] hover:bg-blue-900 text-white font-semibold text-[11px] px-3.5 py-2.5 rounded-xl text-[10px] uppercase tracking-wider transition-all shadow-md active:scale-95"
           >
             + Log Rate
           </button>
@@ -124,8 +124,8 @@ export default function MobileRateBook() {
                 
                 {/* MATERIAL GROUP HEADER */}
                 <div className="border-b border-zinc-100 pb-2 flex justify-between items-center">
-                  <h3 className="font-extrabold text-zinc-900 text-sm">{material}</h3>
-                  <span className="bg-zinc-100 text-zinc-600 text-[8px] font-black px-2 py-0.5 rounded-full uppercase">
+                  <h3 className="font-bold text-zinc-900 text-sm">{material}</h3>
+                  <span className="bg-zinc-100 text-zinc-600 text-[8px] font-semibold text-[11px] px-2 py-0.5 rounded-full uppercase">
                     {materialRates.length} Quote{materialRates.length > 1 ? 's' : ''}
                   </span>
                 </div>
@@ -147,9 +147,9 @@ export default function MobileRateBook() {
                         <div className="flex justify-between items-start">
                           <div>
                             <div className="flex items-center gap-1.5">
-                              <h4 className="font-extrabold text-zinc-900 text-xs">{rateObj.vendorName}</h4>
+                              <h4 className="font-bold text-zinc-900 text-xs">{rateObj.vendorName}</h4>
                               {isBest && (
-                                <span className="bg-emerald-600 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                <span className="bg-emerald-600 text-white text-[8px] font-semibold text-[11px] px-2 py-0.5 rounded-full uppercase tracking-wider">
                                   Best Price
                                 </span>
                               )}
@@ -158,7 +158,7 @@ export default function MobileRateBook() {
                           </div>
 
                           <div className="text-right flex flex-col items-end">
-                            <span className={`text-sm font-black ${isBest ? 'text-emerald-700' : 'text-zinc-900'}`}>
+                            <span className={`text-sm font-semibold text-[11px] ${isBest ? 'text-emerald-700' : 'text-zinc-900'}`}>
                               ₹{rateObj.rate.toLocaleString('en-IN', {minimumFractionDigits: 2})}
                               <span className="text-[9px] font-normal text-zinc-400 ml-0.5">/{rateObj.unit}</span>
                             </span>
@@ -195,7 +195,7 @@ export default function MobileRateBook() {
             {/* Modal Header */}
             <div className="px-6 pt-6 pb-4 border-b border-zinc-100 flex justify-between items-center shrink-0">
               <div>
-                <h2 className="text-xl font-extrabold text-zinc-900">Log Material Rate</h2>
+                <h2 className="text-xl font-bold text-zinc-900">Log Material Rate</h2>
                 <p className="text-zinc-500 text-[9px] font-bold uppercase tracking-widest mt-0.5">Quote & Invoice Price Book</p>
               </div>
               <button 
@@ -298,7 +298,7 @@ export default function MobileRateBook() {
               <button 
                 type="submit" 
                 form="rateForm"
-                className="w-full py-4 bg-[#1E3A8A] text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform"
+                className="w-full py-4 bg-[#1E3A8A] text-white font-semibold text-[11px] rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform"
               >
                 Save Rate
               </button>

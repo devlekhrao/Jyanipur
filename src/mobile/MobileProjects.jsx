@@ -176,18 +176,18 @@ export default function MobileProjects() {
   const labelClass = "block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
 
   return (
-    <div className="w-full h-full flex flex-col font-['Poppins']">
+    <div className="w-full h-full flex flex-col font-sans">
       
       {/* HEADER SECTION */}
       <div className="mb-3 shrink-0">
         <div className="flex justify-between items-center mb-2">
           <div>
-            <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Project Board</h2>
+            <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Project Board</h2>
             <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-0.5">Job Costing & Sites</p>
           </div>
           <button 
             onClick={() => handleOpenModal()} 
-            className="bg-[#1E3A8A] hover:bg-blue-900 text-white font-black px-3.5 py-2.5 rounded-xl text-[10px] uppercase tracking-wider transition-all shadow-md active:scale-95"
+            className="bg-[#1E3A8A] hover:bg-blue-900 text-white font-semibold text-[11px] px-3.5 py-2.5 rounded-xl text-[10px] uppercase tracking-wider transition-all shadow-md active:scale-95"
           >
             + New Project
           </button>
@@ -209,23 +209,23 @@ export default function MobileProjects() {
       {/* 2x2 GLOBAL FINANCIAL KPI GRID */}
       <div className="grid grid-cols-2 gap-2 mb-3 shrink-0">
         <div className="bg-white p-3 rounded-2xl border border-zinc-200 shadow-sm">
-          <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest block">Active PO Budgets</span>
-          <p className="text-base font-black text-zinc-900 mt-0.5">₹ {globalBudget.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+          <span className="text-[8px] font-semibold text-[11px] text-zinc-400 uppercase tracking-widest block">Active PO Budgets</span>
+          <p className="text-base font-semibold text-[11px] text-zinc-900 mt-0.5">₹ {globalBudget.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
         </div>
 
         <div className="bg-white p-3 rounded-2xl border border-zinc-200 shadow-sm">
-          <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest block">Total Billed</span>
-          <p className="text-base font-black text-zinc-800 mt-0.5">₹ {globalBilled.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+          <span className="text-[8px] font-semibold text-[11px] text-zinc-400 uppercase tracking-widest block">Total Billed</span>
+          <p className="text-base font-semibold text-[11px] text-zinc-800 mt-0.5">₹ {globalBilled.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
         </div>
 
         <div className="bg-white p-3 rounded-2xl border border-zinc-200 shadow-sm">
-          <span className="text-[8px] font-black text-red-500 uppercase tracking-widest block">Material + Labor</span>
-          <p className="text-base font-black text-red-600 mt-0.5">₹ {globalCost.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+          <span className="text-[8px] font-semibold text-[11px] text-red-500 uppercase tracking-widest block">Material + Labor</span>
+          <p className="text-base font-semibold text-[11px] text-red-600 mt-0.5">₹ {globalCost.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
         </div>
 
         <div className="bg-emerald-50 p-3 rounded-2xl border border-emerald-100 shadow-sm">
-          <span className="text-[8px] font-black text-emerald-600 uppercase tracking-widest block">Est. Net Margin</span>
-          <p className="text-base font-black text-emerald-700 mt-0.5">₹ {(globalBilled - globalCost).toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+          <span className="text-[8px] font-semibold text-[11px] text-emerald-600 uppercase tracking-widest block">Est. Net Margin</span>
+          <p className="text-base font-semibold text-[11px] text-emerald-700 mt-0.5">₹ {(globalBilled - globalCost).toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
         </div>
       </div>
 
@@ -245,8 +245,8 @@ export default function MobileProjects() {
               {/* CLIENT HEADER */}
               <div className="border-b border-zinc-100 pb-2 flex justify-between items-start">
                 <div>
-                  <h3 className="font-extrabold text-zinc-900 text-sm flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-full bg-[#1E3A8A] text-white flex items-center justify-center text-[10px] font-black">
+                  <h3 className="font-bold text-zinc-900 text-sm flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-full bg-[#1E3A8A] text-white flex items-center justify-center text-[10px] font-semibold text-[11px]">
                       {client.name.charAt(0)}
                     </span>
                     {client.name}
@@ -266,8 +266,8 @@ export default function MobileProjects() {
                 </div>
 
                 <div className="text-right">
-                  <span className="text-xs font-black text-zinc-900 block">₹{client.totalBudget.toLocaleString('en-IN', {maximumFractionDigits: 0})}</span>
-                  <span className="text-[8px] font-extrabold text-emerald-600 block">
+                  <span className="text-xs font-semibold text-[11px] text-zinc-900 block">₹{client.totalBudget.toLocaleString('en-IN', {maximumFractionDigits: 0})}</span>
+                  <span className="text-[8px] font-bold text-emerald-600 block">
                     Margin: ₹{(client.totalBilled - client.totalCost).toLocaleString('en-IN', {maximumFractionDigits: 0})}
                   </span>
                 </div>
@@ -285,13 +285,13 @@ export default function MobileProjects() {
                       <div className="flex justify-between items-start">
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="text-[9px] font-black text-zinc-400">#{index + 1}</span>
-                            <h4 className="font-extrabold text-zinc-900 text-sm">{proj.name}</h4>
+                            <span className="text-[9px] font-semibold text-[11px] text-zinc-400">#{index + 1}</span>
+                            <h4 className="font-bold text-zinc-900 text-sm">{proj.name}</h4>
                           </div>
                           <p className="text-[9px] text-zinc-400 font-bold mt-0.5">PO Date: {proj.poDate || '-'}</p>
                         </div>
 
-                        <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider ${
+                        <span className={`px-2 py-0.5 rounded text-[8px] font-semibold text-[11px] uppercase tracking-wider ${
                           proj.status === 'Ongoing' ? 'bg-blue-100 text-[#1E3A8A]' :
                           proj.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' :
                           'bg-amber-100 text-amber-700'
@@ -303,15 +303,15 @@ export default function MobileProjects() {
                       {/* JOB COSTING METRICS GRID */}
                       <div className="grid grid-cols-2 gap-2 bg-white p-2.5 rounded-xl border border-zinc-100 text-xs">
                         <div>
-                          <span className="text-[8px] font-black text-zinc-400 uppercase block">PO Budget</span>
-                          <p className="font-black text-zinc-900">₹{proj.budget.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+                          <span className="text-[8px] font-semibold text-[11px] text-zinc-400 uppercase block">PO Budget</span>
+                          <p className="font-semibold text-[11px] text-zinc-900">₹{proj.budget.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
                           <span className="text-[8px] text-zinc-400 block mt-0.5">Billed: ₹{proj.totalBilled.toLocaleString('en-IN', {maximumFractionDigits: 0})}</span>
                         </div>
 
                         <div className="text-right">
-                          <span className="text-[8px] font-black text-red-500 uppercase block">Total Cost</span>
-                          <p className="font-black text-red-600">₹{totalCost.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
-                          <span className={`text-[8px] font-black block mt-0.5 ${margin >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                          <span className="text-[8px] font-semibold text-[11px] text-red-500 uppercase block">Total Cost</span>
+                          <p className="font-semibold text-[11px] text-red-600">₹{totalCost.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+                          <span className={`text-[8px] font-semibold text-[11px] block mt-0.5 ${margin >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
                             Margin: ₹{margin.toLocaleString('en-IN', {maximumFractionDigits: 0})}
                           </span>
                         </div>
@@ -321,7 +321,7 @@ export default function MobileProjects() {
                       <div className="flex justify-end pt-1">
                         <button 
                           onClick={() => handleOpenModal(proj)} 
-                          className="bg-blue-50 text-[#1E3A8A] px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider active:scale-95 transition-transform"
+                          className="bg-blue-50 text-[#1E3A8A] px-3 py-1.5 rounded-xl text-[10px] font-semibold text-[11px] uppercase tracking-wider active:scale-95 transition-transform"
                         >
                           Edit Project
                         </button>
@@ -345,7 +345,7 @@ export default function MobileProjects() {
             {/* Modal Header */}
             <div className="px-6 pt-6 pb-4 border-b border-zinc-100 flex justify-between items-center shrink-0">
               <div>
-                <h2 className="text-xl font-extrabold text-zinc-900">
+                <h2 className="text-xl font-bold text-zinc-900">
                   {formData.id ? 'Edit Project Details' : 'Create New Project'}
                 </h2>
                 <p className="text-zinc-500 text-[9px] font-bold uppercase tracking-widest mt-0.5">Client & Job Onboarding</p>
@@ -364,7 +364,7 @@ export default function MobileProjects() {
                 
                 {/* SECTION 1: CLIENT SELECTION */}
                 <div className="bg-zinc-50 p-4 rounded-2xl border border-zinc-200/80 space-y-3">
-                  <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">1. Client Master</h3>
+                  <h3 className="text-[10px] font-semibold text-[11px] text-zinc-400 uppercase tracking-widest">1. Client Master</h3>
 
                   {!formData.id && uniqueClients.length > 0 && (
                     <div className="relative">
@@ -428,7 +428,7 @@ export default function MobileProjects() {
 
                 {/* SECTION 2: PROJECT DETAILS */}
                 <div className="bg-zinc-50 p-4 rounded-2xl border border-zinc-200/80 space-y-3">
-                  <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">2. Site Details</h3>
+                  <h3 className="text-[10px] font-semibold text-[11px] text-zinc-400 uppercase tracking-widest">2. Site Details</h3>
 
                   <div>
                     <label className={labelClass}>Project / Site Name <span className="text-red-500">*</span></label>
@@ -493,7 +493,7 @@ export default function MobileProjects() {
               <button 
                 type="submit" 
                 form="projectForm"
-                className="w-full py-4 bg-[#1E3A8A] text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform"
+                className="w-full py-4 bg-[#1E3A8A] text-white font-semibold text-[11px] rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform"
               >
                 Save Project
               </button>

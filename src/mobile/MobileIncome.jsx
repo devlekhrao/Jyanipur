@@ -91,18 +91,18 @@ export default function MobileIncome() {
   const labelClass = "block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
 
   return (
-    <div className="w-full h-full flex flex-col font-['Poppins']">
+    <div className="w-full h-full flex flex-col font-sans">
       
       {/* HEADER SECTION */}
       <div className="mb-3 shrink-0">
         <div className="flex justify-between items-center mb-2">
           <div>
-            <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Client Income</h2>
+            <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Client Income</h2>
             <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-0.5">Milestone Collections</p>
           </div>
           <button 
             onClick={() => setIsModalOpen(true)}
-            className="bg-[#1E3A8A] hover:bg-blue-900 text-white font-black px-3.5 py-2.5 rounded-xl text-[10px] uppercase tracking-wider transition-all shadow-md active:scale-95"
+            className="bg-[#1E3A8A] hover:bg-blue-900 text-white font-semibold text-[11px] px-3.5 py-2.5 rounded-xl text-[10px] uppercase tracking-wider transition-all shadow-md active:scale-95"
           >
             + Add Receipt
           </button>
@@ -110,12 +110,12 @@ export default function MobileIncome() {
 
         {/* MONTH / YEAR SELECTOR */}
         <div className="bg-white p-2.5 rounded-2xl border border-zinc-200 shadow-sm flex items-center justify-between">
-          <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest pl-1">Period:</span>
+          <span className="text-[10px] font-semibold text-[11px] text-zinc-400 uppercase tracking-widest pl-1">Period:</span>
           <div className="flex gap-2">
             <select 
               value={selectedMonth} 
               onChange={e => setSelectedMonth(Number(e.target.value))}
-              className="bg-zinc-100 font-extrabold text-xs text-zinc-800 py-1.5 px-3 rounded-xl outline-none"
+              className="bg-zinc-100 font-bold text-xs text-zinc-800 py-1.5 px-3 rounded-xl outline-none"
             >
               {Array.from({length: 12}, (_, i) => (
                 <option key={i+1} value={i+1}>{new Date(2000, i).toLocaleString('en-US', { month: 'short' })}</option>
@@ -124,7 +124,7 @@ export default function MobileIncome() {
             <select 
               value={selectedYear} 
               onChange={e => setSelectedYear(Number(e.target.value))}
-              className="bg-zinc-100 font-extrabold text-xs text-zinc-800 py-1.5 px-3 rounded-xl outline-none"
+              className="bg-zinc-100 font-bold text-xs text-zinc-800 py-1.5 px-3 rounded-xl outline-none"
             >
               <option value={currentDate.getFullYear() - 1}>{currentDate.getFullYear() - 1}</option>
               <option value={currentDate.getFullYear()}>{currentDate.getFullYear()}</option>
@@ -137,12 +137,12 @@ export default function MobileIncome() {
       {/* KPI SUMMARY CARDS */}
       <div className="grid grid-cols-2 gap-2 mb-3 shrink-0">
         <div className="bg-emerald-500 text-white p-3.5 rounded-2xl shadow-sm">
-          <span className="text-[8px] font-black uppercase tracking-widest block text-emerald-100">Received (Month)</span>
-          <p className="text-lg font-black mt-0.5">₹ {totalMonthIncome.toLocaleString('en-IN')}</p>
+          <span className="text-[8px] font-semibold text-[11px] uppercase tracking-widest block text-emerald-100">Received (Month)</span>
+          <p className="text-lg font-semibold text-[11px] mt-0.5">₹ {totalMonthIncome.toLocaleString('en-IN')}</p>
         </div>
         <div className="bg-zinc-900 text-white p-3.5 rounded-2xl shadow-sm">
-          <span className="text-[8px] font-black uppercase tracking-widest block text-amber-400">Global Pending</span>
-          <p className="text-lg font-black mt-0.5">₹ {Math.max(0, globalPending).toLocaleString('en-IN')}</p>
+          <span className="text-[8px] font-semibold text-[11px] uppercase tracking-widest block text-amber-400">Global Pending</span>
+          <p className="text-lg font-semibold text-[11px] mt-0.5">₹ {Math.max(0, globalPending).toLocaleString('en-IN')}</p>
         </div>
       </div>
 
@@ -160,15 +160,15 @@ export default function MobileIncome() {
             <div key={inc.id} className="bg-white border border-zinc-200 rounded-[1.5rem] p-4 shadow-sm space-y-2 active:scale-[0.99] transition-transform">
               <div className="flex justify-between items-start">
                 <div>
-                  <h4 className="font-extrabold text-zinc-900 text-sm">{inc.projectName}</h4>
+                  <h4 className="font-bold text-zinc-900 text-sm">{inc.projectName}</h4>
                   <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{inc.clientName || 'Client Receipt'}</p>
                 </div>
-                <p className="text-base font-black text-emerald-600">₹ {inc.amount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+                <p className="text-base font-semibold text-[11px] text-emerald-600">₹ {inc.amount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
               </div>
 
               <div className="flex items-center justify-between pt-1">
                 <div className="flex items-center gap-2">
-                  <span className="bg-emerald-50 text-emerald-700 text-[9px] font-black px-2.5 py-0.5 rounded-md uppercase tracking-wider">
+                  <span className="bg-emerald-50 text-emerald-700 text-[9px] font-semibold text-[11px] px-2.5 py-0.5 rounded-md uppercase tracking-wider">
                     {inc.paymentMode}
                   </span>
                   {inc.referenceNo && (
@@ -202,7 +202,7 @@ export default function MobileIncome() {
             {/* Modal Header */}
             <div className="px-6 pt-6 pb-4 border-b border-zinc-100 flex justify-between items-center shrink-0">
               <div>
-                <h2 className="text-xl font-extrabold text-zinc-900">Record Client Payment</h2>
+                <h2 className="text-xl font-bold text-zinc-900">Record Client Payment</h2>
                 <p className="text-zinc-500 text-[9px] font-bold mt-0.5 uppercase tracking-widest">Milestones & Advances</p>
               </div>
               <button 
@@ -255,7 +255,7 @@ export default function MobileIncome() {
                     placeholder="0.00" 
                     value={newEntry.amount} 
                     onChange={e => setNewEntry({...newEntry, amount: e.target.value})} 
-                    className={`${inputClass} font-black text-emerald-600 text-base`} 
+                    className={`${inputClass} font-semibold text-[11px] text-emerald-600 text-base`} 
                     required 
                   />
                 </div>
@@ -289,7 +289,7 @@ export default function MobileIncome() {
               <button 
                 type="submit" 
                 form="incomeForm"
-                className="w-full py-4 bg-[#1E3A8A] text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform"
+                className="w-full py-4 bg-[#1E3A8A] text-white font-semibold text-[11px] rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform"
               >
                 Save Collection
               </button>

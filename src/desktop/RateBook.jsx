@@ -74,12 +74,12 @@ export default function RateBook() {
   const labelClass = "block text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
 
   return (
-    <div className="w-full h-full font-['Poppins'] flex flex-col">
+    <div className="w-full h-full font-sans flex flex-col">
       
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end pb-4 border-b border-zinc-200 mb-6 gap-4 shrink-0">
         <div>
-          <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Material Rate Analyzer</h2>
+          <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Material Rate Analyzer</h2>
           <p className="text-zinc-500 text-xs mt-1 font-medium">Compare past purchases to find the best vendor prices.</p>
         </div>
 
@@ -126,8 +126,8 @@ export default function RateBook() {
             return (
               <div key={material} className="bg-white rounded-[2rem] border border-zinc-200 shadow-sm overflow-hidden">
                 <div className="bg-zinc-50/80 px-6 py-4 border-b border-zinc-100 flex justify-between items-center">
-                  <h3 className="text-sm font-extrabold text-zinc-900">{material}</h3>
-                  <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest">{materialRates.length} Vendor Quotes/Bills</span>
+                  <h3 className="text-sm font-bold text-zinc-900">{material}</h3>
+                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{materialRates.length} Vendor Quotes/Bills</span>
                 </div>
 
                 <div className="overflow-x-auto w-full">
@@ -144,14 +144,14 @@ export default function RateBook() {
                     <tbody className="text-xs text-zinc-800 divide-y divide-zinc-100">
                       {materialRates.map((rateObj) => (
                         <tr key={rateObj.id} className={`transition-colors ${rateObj.id === bestRateId ? 'bg-emerald-50/50' : 'hover:bg-zinc-50'}`}>
-                          <td className="py-4 px-6 font-extrabold text-zinc-900">
+                          <td className="py-4 px-6 font-bold text-zinc-900">
                             {rateObj.vendorName}
                             {rateObj.id === bestRateId && (
-                              <span className="ml-3 px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[8px] font-black uppercase tracking-widest rounded-md">Best Price</span>
+                              <span className="ml-3 px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[8px] font-semibold text-[11px] uppercase tracking-widest rounded-md">Best Price</span>
                             )}
                           </td>
                           <td className="py-4 px-4 text-right">
-                            <span className={`font-black ${rateObj.id === bestRateId ? 'text-emerald-600' : 'text-zinc-900'}`}>
+                            <span className={`font-semibold text-[11px] ${rateObj.id === bestRateId ? 'text-emerald-600' : 'text-zinc-900'}`}>
                               ₹{rateObj.rate.toLocaleString('en-IN', {minimumFractionDigits: 2})}
                             </span>
                             <span className="text-[10px] text-zinc-400 ml-1 font-semibold">/ {rateObj.unit}</span>
@@ -176,7 +176,7 @@ export default function RateBook() {
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
           <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in-95 duration-200">
-            <h2 className="text-xl font-extrabold text-zinc-900 mb-1">Log Material Rate</h2>
+            <h2 className="text-xl font-bold text-zinc-900 mb-1">Log Material Rate</h2>
             <p className="text-zinc-500 text-[10px] font-bold mb-6 uppercase tracking-widest">Record a price from a vendor quote or bill.</p>
 
             <form onSubmit={handleSave} className="space-y-4">

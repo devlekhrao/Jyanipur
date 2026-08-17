@@ -121,7 +121,7 @@ export default function MobileLayout({
   };
 
   return (
-    <div className="w-full h-[100dvh] flex flex-col bg-zinc-100 font-['Poppins'] overflow-hidden">
+    <div className="w-full h-[100dvh] flex flex-col bg-zinc-100 font-sans overflow-hidden">
       
       {/* FLUID SAFE AREA HEADER */}
       <header className="px-4 pt-[calc(env(safe-area-inset-top,0px)+12px)] pb-3 bg-white border-b border-zinc-200 flex justify-between items-center shrink-0 z-30 shadow-sm">
@@ -132,7 +132,7 @@ export default function MobileLayout({
             className="h-7 w-auto object-contain" 
             onError={(e) => { e.target.style.display = 'none'; }}
           />
-          <span className="font-black text-zinc-900 text-sm tracking-tight truncate max-w-[180px]">
+          <span className="font-semibold text-[11px] text-zinc-900 text-sm tracking-tight truncate max-w-[180px]">
             {companySettings.companyName || 'Jyanipur'}
           </span>
         </div>
@@ -141,7 +141,7 @@ export default function MobileLayout({
             triggerLightHaptic();
             handleLogout();
           }}
-          className="text-[9px] font-black text-red-500 bg-red-50 px-2.5 py-1 rounded-lg uppercase tracking-wider active:scale-95 transition-transform"
+          className="text-[9px] font-semibold text-[11px] text-red-500 bg-red-50 px-2.5 py-1 rounded-lg uppercase tracking-wider active:scale-95 transition-transform"
         >
           Logout
         </button>
@@ -180,7 +180,7 @@ export default function MobileLayout({
                 }
               }}
               className={`flex flex-col items-center py-1 px-3 rounded-xl transition-all active:scale-90 ${
-                isActive ? 'text-[#1E3A8A] font-black scale-105' : 'text-zinc-400 font-bold'
+                isActive ? 'text-[#1E3A8A] font-semibold text-[11px] scale-105' : 'text-zinc-400 font-bold'
               }`}
             >
               <Icon 
@@ -213,7 +213,7 @@ export default function MobileLayout({
               {/* Drawer Header */}
               <div className="flex justify-between items-center border-b border-zinc-100 pb-3 mb-4 shrink-0">
                 <div>
-                  <h3 className="text-xl font-extrabold text-zinc-900">All Modules</h3>
+                  <h3 className="text-xl font-bold text-zinc-900">All Modules</h3>
                   <p className="text-zinc-400 text-[10px] font-bold uppercase tracking-widest">Jyanipur Business Suite</p>
                 </div>
                 <button 
@@ -250,7 +250,7 @@ export default function MobileLayout({
                         strokeWidth={isActive ? 2.5 : 2} 
                         className={`w-6 h-6 mb-2 transition-colors ${isActive ? 'stroke-[#1E3A8A]' : 'stroke-zinc-500'}`} 
                       />
-                      <span className="text-[10px] font-extrabold leading-tight text-zinc-800">{app.label}</span>
+                      <span className="text-[10px] font-bold leading-tight text-zinc-800">{app.label}</span>
                     </button>
                   );
                 })}

@@ -76,13 +76,13 @@ export default function MobileDocumentVault() {
   const labelClass = "block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
 
   return (
-    <div className="w-full h-full flex flex-col font-['Poppins']">
+    <div className="w-full h-full flex flex-col font-sans">
       
       {/* HEADER SECTION */}
       <div className="mb-4">
         <div className="flex justify-between items-center mb-1">
           <div>
-            <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Document Vault</h2>
+            <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Document Vault</h2>
             <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-0.5">Drawings & Drive</p>
           </div>
           
@@ -91,7 +91,7 @@ export default function MobileDocumentVault() {
             <select 
               value={selectedProject} 
               onChange={e => setSelectedProject(e.target.value)} 
-              className="bg-white border border-zinc-200 rounded-xl px-3 py-2 text-[10px] font-extrabold uppercase tracking-wider text-zinc-800 outline-none shadow-sm pr-7 appearance-none"
+              className="bg-white border border-zinc-200 rounded-xl px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-zinc-800 outline-none shadow-sm pr-7 appearance-none"
             >
               <option value="All">All Sites</option>
               {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -103,7 +103,7 @@ export default function MobileDocumentVault() {
         {/* UPLOAD BUTTON */}
         <button 
           onClick={() => setIsModalOpen(true)} 
-          className="w-full mt-3 bg-[#1E3A8A] hover:bg-blue-900 text-white py-3.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md active:scale-[0.98]"
+          className="w-full mt-3 bg-[#1E3A8A] hover:bg-blue-900 text-white py-3.5 rounded-xl text-xs font-semibold text-[11px] uppercase tracking-wider transition-all shadow-md active:scale-[0.98]"
         >
           + Upload Document / Drawing
         </button>
@@ -117,7 +117,7 @@ export default function MobileDocumentVault() {
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`px-4 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest shrink-0 transition-all ${
+              className={`px-4 py-2.5 rounded-full text-[10px] font-semibold text-[11px] uppercase tracking-widest shrink-0 transition-all ${
                 isActive 
                   ? 'bg-zinc-900 text-white shadow-md' 
                   : 'bg-white border border-zinc-200 text-zinc-500'
@@ -148,10 +148,10 @@ export default function MobileDocumentVault() {
                     {doc.fileType === 'IMAGE' ? '🖼️' : doc.fileType === 'PDF' ? '📄' : '📁'}
                   </div>
                   <div>
-                    <span className="bg-blue-50 text-[#1E3A8A] text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">
+                    <span className="bg-blue-50 text-[#1E3A8A] text-[8px] font-semibold text-[11px] px-2 py-0.5 rounded uppercase tracking-wider">
                       {doc.category}
                     </span>
-                    <p className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-wider mt-0.5">
+                    <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider mt-0.5">
                       {doc.projectName || 'General Site'}
                     </p>
                   </div>
@@ -165,7 +165,7 @@ export default function MobileDocumentVault() {
                 </button>
               </div>
 
-              <h4 className="font-extrabold text-zinc-900 text-sm mt-1 mb-1 leading-snug">{doc.documentName}</h4>
+              <h4 className="font-bold text-zinc-900 text-sm mt-1 mb-1 leading-snug">{doc.documentName}</h4>
               
               {doc.notes && (
                 <p className="text-xs text-zinc-500 mb-3 bg-zinc-50 p-2.5 rounded-xl border border-zinc-100 line-clamp-2">
@@ -179,7 +179,7 @@ export default function MobileDocumentVault() {
                   href={doc.fileUrl} 
                   target="_blank" 
                   rel="noreferrer" 
-                  className="bg-[#1E3A8A] text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider active:scale-95 transition-transform"
+                  className="bg-[#1E3A8A] text-white px-4 py-2 rounded-xl text-[10px] font-semibold text-[11px] uppercase tracking-wider active:scale-95 transition-transform"
                 >
                   View / Open
                 </a>
@@ -198,7 +198,7 @@ export default function MobileDocumentVault() {
             {/* Modal Header */}
             <div className="px-6 pt-6 pb-4 border-b border-zinc-100 flex justify-between items-center shrink-0">
               <div>
-                <h2 className="text-xl font-extrabold text-zinc-900">Upload to Vault</h2>
+                <h2 className="text-xl font-bold text-zinc-900">Upload to Vault</h2>
                 <p className="text-zinc-500 text-[9px] font-bold mt-0.5 uppercase tracking-widest">Drawings & Files</p>
               </div>
               <button 
@@ -267,7 +267,7 @@ export default function MobileDocumentVault() {
               <button 
                 type="submit" 
                 form="vaultForm"
-                className="w-full py-4 bg-[#1E3A8A] text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform"
+                className="w-full py-4 bg-[#1E3A8A] text-white font-semibold text-[11px] rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform"
               >
                 Save to Vault
               </button>

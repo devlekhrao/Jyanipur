@@ -64,13 +64,13 @@ export default function MobileVendorLedger() {
   const labelClass = "block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
 
   return (
-    <div className="w-full h-full flex flex-col font-['Poppins']">
+    <div className="w-full h-full flex flex-col font-sans">
       
       {/* HEADER SECTION */}
       <div className="mb-3 shrink-0">
         <div className="flex justify-between items-center mb-2">
           <div>
-            <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Vendor Ledgers</h2>
+            <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Vendor Ledgers</h2>
             <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-0.5">Accounts Payable</p>
           </div>
         </div>
@@ -91,18 +91,18 @@ export default function MobileVendorLedger() {
       {/* 3-KPI STRIP */}
       <div className="grid grid-cols-3 gap-2 mb-3 shrink-0">
         <div className="bg-white p-2.5 rounded-2xl border border-zinc-200 shadow-sm text-center">
-          <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest block">Total Billed</span>
-          <p className="text-xs font-black text-zinc-900 mt-0.5">₹ {totalBilled.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+          <span className="text-[8px] font-semibold text-[11px] text-zinc-400 uppercase tracking-widest block">Total Billed</span>
+          <p className="text-xs font-semibold text-[11px] text-zinc-900 mt-0.5">₹ {totalBilled.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
         </div>
 
         <div className="bg-emerald-50 p-2.5 rounded-2xl border border-emerald-100 shadow-sm text-center">
-          <span className="text-[8px] font-black text-emerald-600 uppercase tracking-widest block">Total Paid</span>
-          <p className="text-xs font-black text-emerald-700 mt-0.5">₹ {totalPaid.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+          <span className="text-[8px] font-semibold text-[11px] text-emerald-600 uppercase tracking-widest block">Total Paid</span>
+          <p className="text-xs font-semibold text-[11px] text-emerald-700 mt-0.5">₹ {totalPaid.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
         </div>
 
         <div className="bg-red-50 p-2.5 rounded-2xl border border-red-100 shadow-sm text-center">
-          <span className="text-[8px] font-black text-red-500 uppercase tracking-widest block">Net Payable</span>
-          <p className="text-xs font-black text-red-600 mt-0.5">₹ {totalBalance.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+          <span className="text-[8px] font-semibold text-[11px] text-red-500 uppercase tracking-widest block">Net Payable</span>
+          <p className="text-xs font-semibold text-[11px] text-red-600 mt-0.5">₹ {totalBalance.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
         </div>
       </div>
 
@@ -127,15 +127,15 @@ export default function MobileVendorLedger() {
                 {/* CARD HEADER */}
                 <div className="flex justify-between items-start">
                   <div>
-                    <span className="bg-blue-50 text-[#1E3A8A] text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">
+                    <span className="bg-blue-50 text-[#1E3A8A] text-[8px] font-semibold text-[11px] px-2 py-0.5 rounded uppercase tracking-wider">
                       Supplier
                     </span>
-                    <h4 className="font-extrabold text-zinc-900 text-sm mt-1">{l.vendorName}</h4>
+                    <h4 className="font-bold text-zinc-900 text-sm mt-1">{l.vendorName}</h4>
                   </div>
 
                   <button 
                     onClick={() => openPayModal(l.vendorName)}
-                    className="bg-[#1E3A8A] text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider active:scale-95 transition-transform"
+                    className="bg-[#1E3A8A] text-white px-3 py-1.5 rounded-xl text-[10px] font-semibold text-[11px] uppercase tracking-wider active:scale-95 transition-transform"
                   >
                     Log Pay
                   </button>
@@ -144,18 +144,18 @@ export default function MobileVendorLedger() {
                 {/* METRICS GRID */}
                 <div className="grid grid-cols-3 gap-1.5 bg-zinc-50 p-2.5 rounded-xl border border-zinc-100 text-center text-xs">
                   <div>
-                    <span className="text-[8px] font-black text-zinc-400 uppercase block">Billed</span>
-                    <p className="font-black text-zinc-900 mt-0.5">₹{l.totalBilled?.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+                    <span className="text-[8px] font-semibold text-[11px] text-zinc-400 uppercase block">Billed</span>
+                    <p className="font-semibold text-[11px] text-zinc-900 mt-0.5">₹{l.totalBilled?.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
                   </div>
 
                   <div>
-                    <span className="text-[8px] font-black text-emerald-600 uppercase block">Paid</span>
-                    <p className="font-black text-emerald-700 mt-0.5">₹{l.totalPaid?.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+                    <span className="text-[8px] font-semibold text-[11px] text-emerald-600 uppercase block">Paid</span>
+                    <p className="font-semibold text-[11px] text-emerald-700 mt-0.5">₹{l.totalPaid?.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
                   </div>
 
                   <div>
-                    <span className="text-[8px] font-black text-red-500 uppercase block">Payable</span>
-                    <p className="font-black text-red-600 mt-0.5">₹{l.balance?.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+                    <span className="text-[8px] font-semibold text-[11px] text-red-500 uppercase block">Payable</span>
+                    <p className="font-semibold text-[11px] text-red-600 mt-0.5">₹{l.balance?.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
                   </div>
                 </div>
 
@@ -163,7 +163,7 @@ export default function MobileVendorLedger() {
                 <div className="pt-1 border-t border-zinc-100">
                   <button 
                     onClick={() => setExpandedVendor(isExpanded ? null : l.vendorName)} 
-                    className="text-[10px] font-black text-zinc-500 hover:text-zinc-900 w-full text-left"
+                    className="text-[10px] font-semibold text-[11px] text-zinc-500 hover:text-zinc-900 w-full text-left"
                   >
                     {isExpanded ? 'Hide History ▲' : `Payment History (${l.payments?.length || 0}) ▼`}
                   </button>
@@ -172,7 +172,7 @@ export default function MobileVendorLedger() {
                 {/* EXPANDABLE PAYMENTS STREAM */}
                 {isExpanded && (
                   <div className="bg-zinc-50 border border-zinc-200 rounded-2xl p-3 space-y-2 text-xs">
-                    <h5 className="text-[9px] font-black text-zinc-400 uppercase tracking-widest border-b border-zinc-200 pb-1">
+                    <h5 className="text-[9px] font-semibold text-[11px] text-zinc-400 uppercase tracking-widest border-b border-zinc-200 pb-1">
                       Payment Ledger
                     </h5>
 
@@ -183,7 +183,7 @@ export default function MobileVendorLedger() {
                         <div key={pay.id} className="flex justify-between items-center py-1.5 border-b border-zinc-100 last:border-0">
                           <div>
                             <div className="flex items-center gap-1.5">
-                              <span className="bg-white border border-zinc-200 text-zinc-700 px-1.5 py-0.5 rounded text-[8px] font-black uppercase">
+                              <span className="bg-white border border-zinc-200 text-zinc-700 px-1.5 py-0.5 rounded text-[8px] font-semibold text-[11px] uppercase">
                                 {pay.mode}
                               </span>
                               <span className="font-bold text-zinc-900 text-xs">₹{Number(pay.amount).toLocaleString('en-IN')}</span>
@@ -212,7 +212,7 @@ export default function MobileVendorLedger() {
           <div className="bg-white w-full rounded-t-[2.5rem] shadow-2xl p-6 flex flex-col animate-in slide-in-from-bottom-full duration-300">
             <div className="flex justify-between items-center border-b border-zinc-100 pb-3 mb-4">
               <div>
-                <h2 className="text-xl font-extrabold text-zinc-900">Pay Vendor</h2>
+                <h2 className="text-xl font-bold text-zinc-900">Pay Vendor</h2>
                 <p className="text-zinc-500 text-[9px] font-bold uppercase tracking-widest mt-0.5">Paying: <span className="text-[#1E3A8A]">{payForm.vendorName}</span></p>
               </div>
               <button 
@@ -259,7 +259,7 @@ export default function MobileVendorLedger() {
                 <input type="text" placeholder="Optional payment notes..." value={payForm.notes} onChange={e => setPayForm({...payForm, notes: e.target.value})} className={inputClass} />
               </div>
 
-              <button type="submit" className="w-full py-4 bg-emerald-600 text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform mt-2">
+              <button type="submit" className="w-full py-4 bg-emerald-600 text-white font-semibold text-[11px] rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform mt-2">
                 Record Payment
               </button>
             </form>

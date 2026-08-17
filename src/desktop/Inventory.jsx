@@ -103,12 +103,12 @@ export default function Inventory() {
   const dispatchesThisMonth = movements.filter(m => m.type === 'OUT' && m.date.startsWith(new Date().toISOString().slice(0, 7))).length;
 
   return (
-    <div className="w-full h-full font-['Poppins'] flex flex-col">
+    <div className="w-full h-full font-sans flex flex-col">
       
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end pb-4 border-b border-zinc-200 mb-6 gap-4 shrink-0">
         <div>
-          <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Material Inventory</h2>
+          <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Material Inventory</h2>
           <p className="text-zinc-500 text-xs mt-1 font-medium">Track godown stock and material dispatches to active sites.</p>
         </div>
         <div className="flex gap-2">
@@ -120,20 +120,20 @@ export default function Inventory() {
       {/* KPI STRIP */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 shrink-0">
         <div className="bg-white border border-zinc-200 p-6 rounded-[2rem] shadow-sm">
-          <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1">Total Unique Materials</span>
-          <p className="text-2xl font-black text-zinc-900">{items.length}</p>
+          <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Total Unique Materials</span>
+          <p className="text-2xl font-semibold text-[11px] text-zinc-900">{items.length}</p>
         </div>
         <div className="bg-white border border-amber-200/80 p-6 rounded-[2rem] shadow-sm">
-          <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1">Low Stock Alerts</span>
-          <p className="text-2xl font-black text-amber-600">{lowStockCount}</p>
+          <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Low Stock Alerts</span>
+          <p className="text-2xl font-semibold text-[11px] text-amber-600">{lowStockCount}</p>
         </div>
         <div className="bg-white border border-red-200/80 p-6 rounded-[2rem] shadow-sm">
-          <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1">Out of Stock</span>
-          <p className="text-2xl font-black text-red-500">{outOfStockCount}</p>
+          <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Out of Stock</span>
+          <p className="text-2xl font-semibold text-[11px] text-red-500">{outOfStockCount}</p>
         </div>
         <div className="bg-white border border-zinc-200 p-6 rounded-[2rem] shadow-sm">
-          <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1">Dispatches This Month</span>
-          <p className="text-2xl font-black text-emerald-600">{dispatchesThisMonth}</p>
+          <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Dispatches This Month</span>
+          <p className="text-2xl font-semibold text-[11px] text-emerald-600">{dispatchesThisMonth}</p>
         </div>
       </div>
 
@@ -176,10 +176,10 @@ export default function Inventory() {
                   <tr><td colSpan="4" className="py-12 text-center text-zinc-400 font-medium text-xs">No materials found. Add one above.</td></tr>
                 ) : filteredItems.map(item => (
                   <tr key={item.id} className="hover:bg-zinc-50 transition-colors">
-                    <td className="py-4 px-6 font-extrabold text-zinc-900">{item.name}</td>
+                    <td className="py-4 px-6 font-bold text-zinc-900">{item.name}</td>
                     <td className="py-4 px-4"><span className="px-2.5 py-1 bg-zinc-100 text-zinc-700 rounded-md text-[10px] font-bold">{item.category}</span></td>
                     <td className="py-4 px-4 text-right">
-                      <span className={`font-black text-sm ${item.totalStock === 0 ? 'text-red-500' : item.totalStock <= 5 ? 'text-amber-500' : 'text-emerald-600'}`}>
+                      <span className={`font-semibold text-[11px] text-sm ${item.totalStock === 0 ? 'text-red-500' : item.totalStock <= 5 ? 'text-amber-500' : 'text-emerald-600'}`}>
                         {item.totalStock}
                       </span>
                       <span className="text-[10px] text-zinc-400 ml-1 font-semibold">{item.unit}</span>
@@ -217,8 +217,8 @@ export default function Inventory() {
                         {mov.type === 'IN' ? 'INWARD' : 'DISPATCH'}
                       </span>
                     </td>
-                    <td className="py-4 px-4 font-extrabold text-zinc-900">{mov.itemName}</td>
-                    <td className="py-4 px-4 text-right font-black text-zinc-900">{mov.quantity} <span className="text-[9px] text-zinc-400 font-normal">{mov.unit}</span></td>
+                    <td className="py-4 px-4 font-bold text-zinc-900">{mov.itemName}</td>
+                    <td className="py-4 px-4 text-right font-semibold text-[11px] text-zinc-900">{mov.quantity} <span className="text-[9px] text-zinc-400 font-normal">{mov.unit}</span></td>
                     <td className="py-4 px-4 text-xs font-bold text-zinc-700">{mov.projectName || <span className="text-zinc-400 italic font-normal">Central Godown</span>}</td>
                     <td className="py-4 px-6 text-[10px] text-zinc-500 truncate max-w-[200px]">{mov.notes || '-'}</td>
                   </tr>
@@ -233,7 +233,7 @@ export default function Inventory() {
       {isItemModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
           <div className="bg-white w-full max-w-sm rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in-95 duration-200">
-            <h2 className="text-xl font-extrabold text-zinc-900 mb-1">Add Material Type</h2>
+            <h2 className="text-xl font-bold text-zinc-900 mb-1">Add Material Type</h2>
             <p className="text-zinc-500 text-[10px] font-bold mb-6 uppercase tracking-widest">Register a new item to master list.</p>
 
             <form onSubmit={handleSaveItem} className="space-y-4">
@@ -278,7 +278,7 @@ export default function Inventory() {
       {isMovementModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
           <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in-95 duration-200">
-            <h2 className="text-xl font-extrabold text-zinc-900 mb-1">
+            <h2 className="text-xl font-bold text-zinc-900 mb-1">
               {movementForm.type === 'IN' ? 'Add Stock to Godown' : 'Dispatch Material to Site'}
             </h2>
             <p className="text-zinc-500 text-[10px] font-bold mb-6 uppercase tracking-widest">

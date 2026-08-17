@@ -173,7 +173,7 @@ export default function DesktopLayout() {
 
   if (isLoggedIn) {
     return (
-      <div className="flex w-screen h-screen overflow-hidden bg-zinc-50 font-['Poppins'] text-zinc-900 selection:bg-amber-100">
+      <div className="flex w-screen h-screen overflow-hidden bg-zinc-50 font-sans text-zinc-900 selection:bg-amber-100">
         
         {/* WARNING MODAL */}
         {showWarningModal && (
@@ -182,7 +182,7 @@ export default function DesktopLayout() {
               <div className="w-12 h-12 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center mb-5 border border-amber-500/30">
                 <span className="text-xl">⚠️</span>
               </div>
-              <h3 className="text-xl font-extrabold text-white mb-2">Unsaved Progress</h3>
+              <h3 className="text-xl font-bold text-white mb-2">Unsaved Progress</h3>
               <p className="text-slate-400 text-xs mb-8">
                 You have unsaved changes in <strong className="text-white">{activePage}</strong>.
               </p>
@@ -214,7 +214,7 @@ export default function DesktopLayout() {
             {navigationGroups.map((group) => (
               <div key={group.title} className="flex flex-col mb-2">
                 <button onClick={() => toggleGroup(group.title)} className="flex items-center justify-between px-3 py-2 w-full text-left cursor-pointer group/nav rounded-lg hover:bg-zinc-100 transition-colors">
-                  <span className="text-[10px] font-black text-[#B45309] uppercase tracking-widest">{group.title}</span>
+                  <span className="text-[10px] font-semibold text-[11px] text-[#B45309] uppercase tracking-widest">{group.title}</span>
                   <svg className={`w-3.5 h-3.5 text-[#B45309]/70 transition-transform ${expandedGroups[group.title] ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
                 </button>
                 {expandedGroups[group.title] && (
@@ -243,7 +243,7 @@ export default function DesktopLayout() {
           {/* TOP BAR WITH QUICK SHORTCUTS */}
           <header className="print:hidden w-full h-16 bg-white border-b border-zinc-200/80 px-8 flex items-center justify-between z-10 flex-shrink-0 shadow-sm">
             <div className="flex items-center gap-3">
-              <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest">Quick Shortcuts</span>
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Quick Shortcuts</span>
               <div className="h-4 w-[1px] bg-zinc-200 mx-1"></div>
               
               {/* Shortcut Action Buttons */}
@@ -327,7 +327,7 @@ export default function DesktopLayout() {
   // LOGGED OUT: LOGIN SCREEN (Teak Theme + Stay Signed In)
   // ==========================================
   return (
-    <div className="fixed inset-0 w-screen h-[100dvh] flex items-center justify-center bg-[url('/background.png')] bg-cover bg-center bg-no-repeat px-4 font-['Poppins'] overflow-hidden overscroll-none bg-zinc-900">
+    <div className="fixed inset-0 w-screen h-[100dvh] flex items-center justify-center bg-[url('/background.png')] bg-cover bg-center bg-no-repeat px-4 font-sans overflow-hidden overscroll-none bg-zinc-900">
       
       {/* TEAK TINT OVERLAY INSTEAD OF BLUR */}
       <div className="absolute inset-0 bg-[#B45309]/30 mix-blend-multiply"></div>

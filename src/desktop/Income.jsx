@@ -86,12 +86,12 @@ export default function Income() {
   const inputClass = "w-full px-2 py-2 bg-transparent border-b border-zinc-200 focus:border-[#1E3A8A] focus:outline-none text-zinc-800 text-xs font-medium transition-all placeholder:text-zinc-400";
 
   return (
-    <div className="w-full h-full font-['Poppins'] flex flex-col">
+    <div className="w-full h-full font-sans flex flex-col">
       
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end pb-4 border-b border-zinc-200 mb-6 gap-4 shrink-0">
         <div>
-          <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Client Income & Receivables</h2>
+          <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Client Income & Receivables</h2>
           <p className="text-zinc-500 text-xs mt-1 font-medium">Track PO amounts, milestone payments, and remaining project balances.</p>
         </div>
 
@@ -112,16 +112,16 @@ export default function Income() {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 shrink-0">
         <div className="bg-white p-6 rounded-[2rem] border border-zinc-200 shadow-sm">
-          <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1">Total Active PO Budgets</span>
-          <p className="text-2xl font-black text-zinc-900">₹ {totalActiveBudget.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+          <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Total Active PO Budgets</span>
+          <p className="text-2xl font-semibold text-[11px] text-zinc-900">₹ {totalActiveBudget.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
         </div>
         <div className="bg-emerald-50/70 p-6 rounded-[2rem] border border-emerald-100 shadow-sm">
-          <span className="text-[9px] font-extrabold text-emerald-600 uppercase tracking-widest block mb-1">Received (This Month)</span>
-          <p className="text-2xl font-black text-emerald-700">₹ {totalMonthIncome.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+          <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest block mb-1">Received (This Month)</span>
+          <p className="text-2xl font-semibold text-[11px] text-emerald-700">₹ {totalMonthIncome.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
         </div>
         <div className="bg-zinc-900 text-white p-6 rounded-[2rem] shadow-lg">
-          <span className="text-[9px] font-extrabold text-amber-500 uppercase tracking-widest block mb-1">Global Pending Receivables</span>
-          <p className="text-2xl font-black">₹ {Math.max(0, globalPending).toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+          <span className="text-[9px] font-bold text-amber-500 uppercase tracking-widest block mb-1">Global Pending Receivables</span>
+          <p className="text-2xl font-semibold text-[11px]">₹ {Math.max(0, globalPending).toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
         </div>
       </div>
 
@@ -161,7 +161,7 @@ export default function Income() {
                 </td>
                 <td className="py-2 px-2"><input type="text" placeholder="Transaction ID" value={newEntry.referenceNo} onChange={e => setNewEntry({...newEntry, referenceNo: e.target.value})} className={`${inputClass} font-mono text-[10px]`} /></td>
                 <td className="py-2 px-2"><input type="text" placeholder="Milestone / Notes" value={newEntry.notes} onChange={e => setNewEntry({...newEntry, notes: e.target.value})} className={inputClass} /></td>
-                <td className="py-2 px-2"><input type="number" step="any" placeholder="₹ 0.00" value={newEntry.amount} onChange={e => setNewEntry({...newEntry, amount: e.target.value})} className={`${inputClass} text-right font-black text-emerald-600`} /></td>
+                <td className="py-2 px-2"><input type="number" step="any" placeholder="₹ 0.00" value={newEntry.amount} onChange={e => setNewEntry({...newEntry, amount: e.target.value})} className={`${inputClass} text-right font-semibold text-[11px] text-emerald-600`} /></td>
                 <td className="py-2 px-2 text-center">
                   <button onClick={handleAddIncome} className="w-full bg-[#1E3A8A] hover:bg-blue-900 text-white py-2 rounded-xl font-bold text-[9px] uppercase tracking-wider transition-all shadow-sm cursor-pointer">Add</button>
                 </td>
@@ -177,13 +177,13 @@ export default function Income() {
                   <tr key={inc.id} className="border-b border-zinc-100 hover:bg-zinc-50 transition-colors group">
                     <td className="py-3.5 px-3 font-medium text-zinc-600">{inc.date}</td>
                     <td className="py-3.5 px-3">
-                      <p className="font-extrabold text-zinc-900">{inc.projectName}</p>
+                      <p className="font-bold text-zinc-900">{inc.projectName}</p>
                       <p className="text-[9px] font-bold text-zinc-400 uppercase">{inc.clientName}</p>
                     </td>
                     <td className="py-3.5 px-3 text-zinc-600 font-medium">{inc.paymentMode}</td>
                     <td className="py-3.5 px-3 text-zinc-500 font-mono text-[10px]">{inc.referenceNo || '-'}</td>
                     <td className="py-3.5 px-3 text-zinc-500 truncate max-w-[200px]">{inc.notes || '-'}</td>
-                    <td className="py-3.5 px-3 text-right font-black text-emerald-600">₹ {inc.amount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    <td className="py-3.5 px-3 text-right font-semibold text-[11px] text-emerald-600">₹ {inc.amount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                     <td className="py-3.5 px-3 text-center opacity-0 group-hover:opacity-100 transition-opacity">
                       <button onClick={() => handleDelete(inc.id)} className="text-red-400 hover:text-red-600 font-bold text-[10px] uppercase tracking-wider cursor-pointer">Del</button>
                     </td>
@@ -192,9 +192,9 @@ export default function Income() {
               )}
 
               {/* Monthly Total Footer */}
-              <tr className="font-black text-zinc-900 border-t-2 border-zinc-200 bg-zinc-50/50">
+              <tr className="font-semibold text-[11px] text-zinc-900 border-t-2 border-zinc-200 bg-zinc-50/50">
                 <td colSpan="5" className="py-4 px-3 text-right text-xs uppercase tracking-wider">MONTHLY TOTAL:</td>
-                <td className="py-4 px-3 text-right text-sm font-black text-emerald-600">₹ {totalMonthIncome.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                <td className="py-4 px-3 text-right text-sm font-semibold text-[11px] text-emerald-600">₹ {totalMonthIncome.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                 <td></td>
               </tr>
 

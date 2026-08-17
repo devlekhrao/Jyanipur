@@ -38,12 +38,12 @@ export default function GST() {
   };
 
   return (
-    <div className="w-full h-full font-['Poppins'] flex flex-col">
+    <div className="w-full h-full font-sans flex flex-col">
       
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end pb-4 border-b border-zinc-200 mb-6 gap-4 shrink-0">
         <div>
-          <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">GST & Compliance</h2>
+          <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">GST & Compliance</h2>
           <p className="text-zinc-500 text-xs mt-1 font-medium">Automated GSTR-1, GSTR-2B, and GSTR-3B summaries. Ready for GSP API integration.</p>
         </div>
 
@@ -84,18 +84,18 @@ export default function GST() {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 shrink-0">
         <div className="bg-white p-6 rounded-[2rem] border border-zinc-200 shadow-sm">
-          <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1">Outward Tax Liability (GSTR-1)</span>
-          <p className="text-2xl font-black text-zinc-900">₹ {taxData.outward.total.toLocaleString('en-IN')}</p>
+          <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Outward Tax Liability (GSTR-1)</span>
+          <p className="text-2xl font-semibold text-[11px] text-zinc-900">₹ {taxData.outward.total.toLocaleString('en-IN')}</p>
           <span className="text-[9px] font-medium text-zinc-500 mt-1 block">Total Tax Collected on Sales</span>
         </div>
         <div className="bg-emerald-50/70 p-6 rounded-[2rem] border border-emerald-100 shadow-sm">
-          <span className="text-[9px] font-extrabold text-emerald-600 uppercase tracking-widest block mb-1">Input Tax Credit (GSTR-2B)</span>
-          <p className="text-2xl font-black text-emerald-700">₹ {taxData.inward.total.toLocaleString('en-IN')}</p>
+          <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest block mb-1">Input Tax Credit (GSTR-2B)</span>
+          <p className="text-2xl font-semibold text-[11px] text-emerald-700">₹ {taxData.inward.total.toLocaleString('en-IN')}</p>
           <span className="text-[9px] font-medium text-emerald-600/80 mt-1 block">Total Eligible ITC on Purchases</span>
         </div>
         <div className="bg-zinc-900 text-white p-6 rounded-[2rem] shadow-lg">
-          <span className="text-[9px] font-extrabold text-amber-500 uppercase tracking-widest block mb-1">Net Tax Payable (GSTR-3B)</span>
-          <p className="text-2xl font-black">₹ {netPayable.total.toLocaleString('en-IN')}</p>
+          <span className="text-[9px] font-bold text-amber-500 uppercase tracking-widest block mb-1">Net Tax Payable (GSTR-3B)</span>
+          <p className="text-2xl font-semibold text-[11px]">₹ {netPayable.total.toLocaleString('en-IN')}</p>
           <span className="text-[9px] font-medium text-zinc-400 mt-1 block">Payable to Government via Cash Ledger</span>
         </div>
       </div>
@@ -103,7 +103,7 @@ export default function GST() {
       {/* Tab Content Table */}
       <div className="bg-white p-6 rounded-[2rem] border border-zinc-200 shadow-sm flex-1 flex flex-col min-h-0 overflow-hidden">
         <div className="flex justify-between items-center mb-6 shrink-0">
-          <h3 className="text-xs font-extrabold text-zinc-900 uppercase tracking-widest">{activeTab} RETURN BREAKDOWN</h3>
+          <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-widest">{activeTab} RETURN BREAKDOWN</h3>
           
           {/* Dynamic Action Buttons based on Tab */}
           {activeTab === 'GSTR-1 (Sales)' && (
@@ -117,7 +117,7 @@ export default function GST() {
             </button>
           )}
           {activeTab === 'GSTR-3B' && (
-            <button onClick={() => handlePushToGSTN('GSTR-3B')} disabled={syncing} className="bg-amber-500 hover:bg-amber-400 text-zinc-900 px-5 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all shadow-md cursor-pointer">
+            <button onClick={() => handlePushToGSTN('GSTR-3B')} disabled={syncing} className="bg-amber-500 hover:bg-amber-400 text-zinc-900 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer">
               {syncing ? 'Filing...' : 'File GSTR-3B via GSP'}
             </button>
           )}
@@ -135,22 +135,22 @@ export default function GST() {
             </thead>
             <tbody className="text-xs text-zinc-800 divide-y divide-zinc-100">
               <tr className="hover:bg-zinc-50 transition-colors">
-                <td className="py-4 px-4 font-extrabold text-zinc-900">CGST (Central Tax)</td>
+                <td className="py-4 px-4 font-bold text-zinc-900">CGST (Central Tax)</td>
                 <td className="py-4 px-4 text-right font-medium">₹ {taxData.outward.cgst.toLocaleString('en-IN')}</td>
                 <td className="py-4 px-4 text-right text-emerald-600 font-bold">₹ {taxData.inward.cgst.toLocaleString('en-IN')}</td>
-                <td className="py-4 px-4 text-right font-black text-zinc-900">₹ {netPayable.cgst.toLocaleString('en-IN')}</td>
+                <td className="py-4 px-4 text-right font-semibold text-[11px] text-zinc-900">₹ {netPayable.cgst.toLocaleString('en-IN')}</td>
               </tr>
               <tr className="hover:bg-zinc-50 transition-colors">
-                <td className="py-4 px-4 font-extrabold text-zinc-900">SGST (State Tax)</td>
+                <td className="py-4 px-4 font-bold text-zinc-900">SGST (State Tax)</td>
                 <td className="py-4 px-4 text-right font-medium">₹ {taxData.outward.sgst.toLocaleString('en-IN')}</td>
                 <td className="py-4 px-4 text-right text-emerald-600 font-bold">₹ {taxData.inward.sgst.toLocaleString('en-IN')}</td>
-                <td className="py-4 px-4 text-right font-black text-zinc-900">₹ {netPayable.sgst.toLocaleString('en-IN')}</td>
+                <td className="py-4 px-4 text-right font-semibold text-[11px] text-zinc-900">₹ {netPayable.sgst.toLocaleString('en-IN')}</td>
               </tr>
               <tr className="hover:bg-zinc-50 transition-colors">
-                <td className="py-4 px-4 font-extrabold text-zinc-900">IGST (Integrated Tax)</td>
+                <td className="py-4 px-4 font-bold text-zinc-900">IGST (Integrated Tax)</td>
                 <td className="py-4 px-4 text-right font-medium">₹ {taxData.outward.igst.toLocaleString('en-IN')}</td>
                 <td className="py-4 px-4 text-right text-emerald-600 font-bold">₹ {taxData.inward.igst.toLocaleString('en-IN')}</td>
-                <td className="py-4 px-4 text-right font-black text-zinc-900">₹ {netPayable.igst.toLocaleString('en-IN')}</td>
+                <td className="py-4 px-4 text-right font-semibold text-[11px] text-zinc-900">₹ {netPayable.igst.toLocaleString('en-IN')}</td>
               </tr>
             </tbody>
           </table>

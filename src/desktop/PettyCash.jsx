@@ -61,10 +61,10 @@ export default function PettyCash() {
   const labelClass = "block text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
 
   return (
-    <div className="w-full h-full font-['Poppins'] flex flex-col">
+    <div className="w-full h-full font-sans flex flex-col">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end pb-4 border-b border-zinc-200 mb-6 gap-4 shrink-0">
         <div>
-          <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Site Petty Cash</h2>
+          <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Site Petty Cash</h2>
           <p className="text-zinc-500 text-xs mt-1 font-medium">Track supervisor wallets and daily loose cash expenses.</p>
         </div>
         <div className="flex gap-2">
@@ -76,16 +76,16 @@ export default function PettyCash() {
       {/* KPI STRIP */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 shrink-0">
         <div className="bg-white p-6 rounded-[2rem] border border-zinc-200 shadow-sm">
-          <span className="text-[9px] font-extrabold text-emerald-600 uppercase tracking-widest block mb-1">Total Funded (Advances)</span>
-          <p className="text-2xl font-black text-zinc-900">₹ {totalAdvances.toLocaleString('en-IN')}</p>
+          <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest block mb-1">Total Funded (Advances)</span>
+          <p className="text-2xl font-semibold text-[11px] text-zinc-900">₹ {totalAdvances.toLocaleString('en-IN')}</p>
         </div>
         <div className="bg-white p-6 rounded-[2rem] border border-zinc-200 shadow-sm">
-          <span className="text-[9px] font-extrabold text-red-500 uppercase tracking-widest block mb-1">Total Spent (Expenses)</span>
-          <p className="text-2xl font-black text-zinc-900">₹ {totalExpenses.toLocaleString('en-IN')}</p>
+          <span className="text-[9px] font-bold text-red-500 uppercase tracking-widest block mb-1">Total Spent (Expenses)</span>
+          <p className="text-2xl font-semibold text-[11px] text-zinc-900">₹ {totalExpenses.toLocaleString('en-IN')}</p>
         </div>
         <div className="bg-zinc-900 p-6 rounded-[2rem] shadow-lg text-white">
-          <span className="text-[9px] font-extrabold text-amber-500 uppercase tracking-widest block mb-1">Current Wallet Balance</span>
-          <p className="text-2xl font-black">₹ {walletBalance.toLocaleString('en-IN')}</p>
+          <span className="text-[9px] font-bold text-amber-500 uppercase tracking-widest block mb-1">Current Wallet Balance</span>
+          <p className="text-2xl font-semibold text-[11px]">₹ {walletBalance.toLocaleString('en-IN')}</p>
         </div>
       </div>
 
@@ -126,13 +126,13 @@ export default function PettyCash() {
                 filteredTxns.map(t => (
                   <tr key={t.id} className="hover:bg-zinc-50 transition-colors group">
                     <td className="py-4 px-6 font-medium text-zinc-500 text-xs">{t.date}</td>
-                    <td className="py-4 px-4 font-extrabold text-zinc-900 text-xs">{t.projectName || 'Office / General'}</td>
+                    <td className="py-4 px-4 font-bold text-zinc-900 text-xs">{t.projectName || 'Office / General'}</td>
                     <td className="py-4 px-4 text-xs font-medium text-zinc-700">
                       <span className={`px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider mr-2 ${t.type === 'Advance' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>{t.type}</span>
                       {t.description}
                     </td>
                     <td className="py-4 px-4 text-xs font-semibold text-zinc-600">{t.loggedBy || '-'}</td>
-                    <td className={`py-4 px-4 text-right font-black ${t.type === 'Advance' ? 'text-emerald-600' : 'text-zinc-900'}`}>
+                    <td className={`py-4 px-4 text-right font-semibold text-[11px] ${t.type === 'Advance' ? 'text-emerald-600' : 'text-zinc-900'}`}>
                       {t.type === 'Expense' ? '-' : '+'} ₹{t.amount.toLocaleString('en-IN')}
                     </td>
                     <td className="py-4 px-6 text-center">
@@ -150,7 +150,7 @@ export default function PettyCash() {
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
           <div className="bg-white w-full max-w-sm rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in-95 duration-200">
-            <h2 className="text-xl font-extrabold text-zinc-900 mb-1">Log {formData.type}</h2>
+            <h2 className="text-xl font-bold text-zinc-900 mb-1">Log {formData.type}</h2>
             <p className="text-zinc-500 text-[10px] font-bold mb-6 uppercase tracking-widest">Petty Cash Register</p>
             
             <form onSubmit={handleSave} className="space-y-4">

@@ -68,10 +68,10 @@ export default function MobileSiteManager() {
   // EMPTY SELECTION STATE
   if (!activeProject) {
     return (
-      <div className="w-full h-full flex flex-col font-['Poppins'] items-center justify-center p-4">
+      <div className="w-full h-full flex flex-col font-sans items-center justify-center p-4">
         <div className="bg-white p-6 rounded-[2rem] border border-zinc-200 shadow-lg w-full text-center space-y-4">
           <span className="text-4xl block">🏗️</span>
-          <h2 className="text-xl font-extrabold text-zinc-900">Site Operations Center</h2>
+          <h2 className="text-xl font-bold text-zinc-900">Site Operations Center</h2>
           <p className="text-zinc-500 text-xs font-medium">Select an active project site to view Daily Reports, Document Vaults, and Snag Lists.</p>
           
           <div className="relative">
@@ -91,19 +91,19 @@ export default function MobileSiteManager() {
   }
 
   return (
-    <div className="w-full h-full flex flex-col font-['Poppins']">
+    <div className="w-full h-full flex flex-col font-sans">
       
       {/* HEADER SECTION */}
       <div className="mb-3 shrink-0">
         <div className="flex justify-between items-center mb-2">
           <div>
-            <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Site Operations</h2>
+            <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Site Operations</h2>
             <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-0.5">Field DPRs & Quality Logs</p>
           </div>
           
           <button 
             onClick={() => setIsModalOpen(true)}
-            className="bg-[#1E3A8A] hover:bg-blue-900 text-white font-black px-3.5 py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-md active:scale-95 transition-transform"
+            className="bg-[#1E3A8A] hover:bg-blue-900 text-white font-semibold text-[11px] px-3.5 py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-md active:scale-95 transition-transform"
           >
             {activeTab === 'DPR' ? '+ DPR' : activeTab === 'VAULT' ? '+ Doc' : '+ Snag'}
           </button>
@@ -114,7 +114,7 @@ export default function MobileSiteManager() {
           <select 
             value={activeProject} 
             onChange={e => setActiveProject(e.target.value)} 
-            className="w-full bg-white border border-zinc-200 rounded-2xl px-3.5 py-2.5 text-xs font-extrabold text-[#1E3A8A] outline-none shadow-sm appearance-none pr-8"
+            className="w-full bg-white border border-zinc-200 rounded-2xl px-3.5 py-2.5 text-xs font-bold text-[#1E3A8A] outline-none shadow-sm appearance-none pr-8"
           >
             {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
@@ -131,7 +131,7 @@ export default function MobileSiteManager() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 py-2 rounded-xl text-[10px] font-extrabold uppercase tracking-wider transition-all truncate ${
+              className={`flex-1 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all truncate ${
                 activeTab === tab.id ? 'bg-white text-[#1E3A8A] shadow-sm' : 'text-zinc-500'
               }`}
             >
@@ -155,8 +155,8 @@ export default function MobileSiteManager() {
             data.dprs?.map(d => (
               <div key={d.id} className="bg-white border border-zinc-200 rounded-[1.5rem] p-4 shadow-sm space-y-2 active:scale-[0.99] transition-transform">
                 <div className="flex justify-between items-center border-b border-zinc-100 pb-2">
-                  <span className="text-xs font-extrabold text-zinc-900">{d.date}</span>
-                  <span className="text-[9px] font-extrabold text-zinc-500 uppercase tracking-widest bg-zinc-100 px-2.5 py-0.5 rounded-md">
+                  <span className="text-xs font-bold text-zinc-900">{d.date}</span>
+                  <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest bg-zinc-100 px-2.5 py-0.5 rounded-md">
                     {d.logged_by || 'Supervisor'}
                   </span>
                 </div>
@@ -170,7 +170,7 @@ export default function MobileSiteManager() {
                 )}
 
                 {d.photo_link && (
-                  <a href={d.photo_link} target="_blank" rel="noreferrer" className="text-[10px] text-[#1E3A8A] font-black uppercase tracking-wider block pt-1">
+                  <a href={d.photo_link} target="_blank" rel="noreferrer" className="text-[10px] text-[#1E3A8A] font-semibold text-[11px] uppercase tracking-wider block pt-1">
                     View Site Photos →
                   </a>
                 )}
@@ -187,10 +187,10 @@ export default function MobileSiteManager() {
             data.docs?.map(d => (
               <div key={d.id} className="bg-white border border-zinc-200 rounded-[1.5rem] p-4 shadow-sm space-y-2 active:scale-[0.99] transition-transform flex items-center justify-between">
                 <div>
-                  <span className="bg-blue-50 text-[#1E3A8A] text-[8px] font-black px-2.5 py-0.5 rounded uppercase tracking-wider inline-block">
+                  <span className="bg-blue-50 text-[#1E3A8A] text-[8px] font-semibold text-[11px] px-2.5 py-0.5 rounded uppercase tracking-wider inline-block">
                     {d.doc_type}
                   </span>
-                  <h4 className="text-sm font-extrabold text-zinc-900 mt-1">{d.title}</h4>
+                  <h4 className="text-sm font-bold text-zinc-900 mt-1">{d.title}</h4>
                   <p className="text-[9px] text-zinc-400 font-semibold mt-0.5">
                     {d.uploaded_at} • {d.uploaded_by}
                   </p>
@@ -200,7 +200,7 @@ export default function MobileSiteManager() {
                   href={d.file_link} 
                   target="_blank" 
                   rel="noreferrer" 
-                  className="bg-[#1E3A8A] text-white px-3.5 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider shrink-0 active:scale-95 transition-transform"
+                  className="bg-[#1E3A8A] text-white px-3.5 py-2 rounded-xl text-[10px] font-semibold text-[11px] uppercase tracking-wider shrink-0 active:scale-95 transition-transform"
                 >
                   Open
                 </a>
@@ -217,7 +217,7 @@ export default function MobileSiteManager() {
             data.snags?.map(s => (
               <div key={s.id} className="bg-white border border-zinc-200 rounded-[1.5rem] p-4 shadow-sm space-y-3 active:scale-[0.99] transition-transform">
                 <div>
-                  <p className={`text-xs font-extrabold ${s.status === 'Resolved' ? 'line-through text-zinc-400' : 'text-zinc-900'}`}>
+                  <p className={`text-xs font-bold ${s.status === 'Resolved' ? 'line-through text-zinc-400' : 'text-zinc-900'}`}>
                     {s.description}
                   </p>
                   <p className="text-[10px] text-zinc-400 font-bold mt-1">
@@ -227,7 +227,7 @@ export default function MobileSiteManager() {
 
                 <div className="flex justify-between items-center pt-2 border-t border-zinc-100">
                   {s.photo_link ? (
-                    <a href={s.photo_link} target="_blank" rel="noreferrer" className="text-[10px] text-[#1E3A8A] font-black uppercase tracking-wider">
+                    <a href={s.photo_link} target="_blank" rel="noreferrer" className="text-[10px] text-[#1E3A8A] font-semibold text-[11px] uppercase tracking-wider">
                       Photo Link
                     </a>
                   ) : (
@@ -238,7 +238,7 @@ export default function MobileSiteManager() {
                     <select 
                       value={s.status} 
                       onChange={e => { updateSnagStatus(s.id, e.target.value); refresh(); }}
-                      className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest outline-none appearance-none pr-6 ${
+                      className={`px-3 py-1.5 rounded-xl text-[9px] font-semibold text-[11px] uppercase tracking-widest outline-none appearance-none pr-6 ${
                         s.status === 'Resolved' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'
                       }`}
                     >
@@ -262,7 +262,7 @@ export default function MobileSiteManager() {
             {/* Modal Header */}
             <div className="px-6 pt-6 pb-4 border-b border-zinc-100 flex justify-between items-center shrink-0">
               <div>
-                <h2 className="text-xl font-extrabold text-zinc-900">
+                <h2 className="text-xl font-bold text-zinc-900">
                   {activeTab === 'DPR' ? 'Log Daily Progress' : activeTab === 'VAULT' ? 'Upload Document' : 'Log New Defect / Snag'}
                 </h2>
                 <p className="text-zinc-500 text-[9px] font-bold uppercase tracking-widest mt-0.5">Site Operations Log</p>
@@ -364,7 +364,7 @@ export default function MobileSiteManager() {
               <button 
                 type="submit" 
                 form="siteForm"
-                className={`w-full py-4 text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform ${
+                className={`w-full py-4 text-white font-semibold text-[11px] rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform ${
                   activeTab === 'SNAGS' ? 'bg-red-600' : 'bg-[#1E3A8A]'
                 }`}
               >

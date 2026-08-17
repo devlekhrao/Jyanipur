@@ -116,13 +116,13 @@ export default function MobileProjectControl() {
   const labelClass = "block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
 
   return (
-    <div className="w-full h-full flex flex-col font-['Poppins']">
+    <div className="w-full h-full flex flex-col font-sans">
       
       {/* HEADER SECTION */}
       <div className="mb-3 shrink-0">
         <div className="flex justify-between items-center mb-2">
           <div>
-            <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Project Control</h2>
+            <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Project Control</h2>
             <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-0.5">RA Bills & Variations</p>
           </div>
           
@@ -131,7 +131,7 @@ export default function MobileProjectControl() {
             {activeTab === 'RA Bills' && (
               <button 
                 onClick={() => setIsRaModalOpen(true)}
-                className="bg-[#1E3A8A] text-white font-black px-3.5 py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-md active:scale-95"
+                className="bg-[#1E3A8A] text-white font-semibold text-[11px] px-3.5 py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-md active:scale-95"
               >
                 + RA Bill
               </button>
@@ -139,7 +139,7 @@ export default function MobileProjectControl() {
             {activeTab === 'Milestones' && (
               <button 
                 onClick={() => setIsMilestoneModalOpen(true)}
-                className="bg-[#1E3A8A] text-white font-black px-3.5 py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-md active:scale-95"
+                className="bg-[#1E3A8A] text-white font-semibold text-[11px] px-3.5 py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-md active:scale-95"
               >
                 + Milestone
               </button>
@@ -147,7 +147,7 @@ export default function MobileProjectControl() {
             {activeTab === 'Change Orders' && (
               <button 
                 onClick={() => setIsCoModalOpen(true)}
-                className="bg-[#1E3A8A] text-white font-black px-3.5 py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-md active:scale-95"
+                className="bg-[#1E3A8A] text-white font-semibold text-[11px] px-3.5 py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-md active:scale-95"
               >
                 + Variation
               </button>
@@ -160,7 +160,7 @@ export default function MobileProjectControl() {
           <select 
             value={selectedProjectId} 
             onChange={e => setSelectedProjectId(e.target.value)}
-            className="w-full bg-white border border-zinc-200 rounded-2xl px-3.5 py-2.5 text-xs font-extrabold text-zinc-800 outline-none shadow-sm appearance-none pr-8"
+            className="w-full bg-white border border-zinc-200 rounded-2xl px-3.5 py-2.5 text-xs font-bold text-zinc-800 outline-none shadow-sm appearance-none pr-8"
           >
             <option value="">All Projects Filter</option>
             {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -174,7 +174,7 @@ export default function MobileProjectControl() {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`flex-1 py-2 rounded-xl text-[9px] font-extrabold uppercase tracking-wider transition-all truncate ${
+              className={`flex-1 py-2 rounded-xl text-[9px] font-bold uppercase tracking-wider transition-all truncate ${
                 activeTab === tab ? 'bg-white text-[#1E3A8A] shadow-sm' : 'text-zinc-500'
               }`}
             >
@@ -199,26 +199,26 @@ export default function MobileProjectControl() {
               <div key={b.id} className="bg-white border border-zinc-200 rounded-[1.5rem] p-4 shadow-sm space-y-3 active:scale-[0.99] transition-transform">
                 <div className="flex justify-between items-start">
                   <div>
-                    <span className="bg-blue-50 text-[#1E3A8A] text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">
+                    <span className="bg-blue-50 text-[#1E3A8A] text-[8px] font-semibold text-[11px] px-2 py-0.5 rounded uppercase tracking-wider">
                       {b.billNo}
                     </span>
-                    <h4 className="font-extrabold text-zinc-900 text-sm mt-1">{b.subName || 'Subcontractor'} ({b.trade || 'Work'})</h4>
+                    <h4 className="font-bold text-zinc-900 text-sm mt-1">{b.subName || 'Subcontractor'} ({b.trade || 'Work'})</h4>
                     <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{b.projectName}</p>
                   </div>
 
                   <div className="text-right">
-                    <span className="text-base font-black text-emerald-600 block">₹{b.netPayable?.toLocaleString('en-IN')}</span>
-                    <span className="text-[8px] font-extrabold text-zinc-400 uppercase">Net Payable</span>
+                    <span className="text-base font-semibold text-[11px] text-emerald-600 block">₹{b.netPayable?.toLocaleString('en-IN')}</span>
+                    <span className="text-[8px] font-bold text-zinc-400 uppercase">Net Payable</span>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 bg-zinc-50 p-2.5 rounded-xl text-xs border border-zinc-100">
                   <div>
-                    <span className="text-[8px] font-black text-zinc-400 uppercase block">Gross Bill</span>
+                    <span className="text-[8px] font-semibold text-[11px] text-zinc-400 uppercase block">Gross Bill</span>
                     <p className="font-bold text-zinc-800">₹{b.grossAmount?.toLocaleString('en-IN')}</p>
                   </div>
                   <div className="text-right">
-                    <span className="text-[8px] font-black text-red-500 uppercase block">Retention ({b.retentionPercent}%)</span>
+                    <span className="text-[8px] font-semibold text-[11px] text-red-500 uppercase block">Retention ({b.retentionPercent}%)</span>
                     <p className="font-bold text-red-600">-₹{b.retentionAmount?.toLocaleString('en-IN')}</p>
                   </div>
                 </div>
@@ -237,9 +237,9 @@ export default function MobileProjectControl() {
                 <div className="flex justify-between items-start">
                   <div>
                     <span className="text-[9px] font-bold text-blue-500 uppercase tracking-wider block">{m.projectName}</span>
-                    <h4 className="font-extrabold text-zinc-900 text-sm mt-0.5">{m.stageName}</h4>
+                    <h4 className="font-bold text-zinc-900 text-sm mt-0.5">{m.stageName}</h4>
                   </div>
-                  <span className={`text-[8px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider ${
+                  <span className={`text-[8px] font-semibold text-[11px] px-2.5 py-1 rounded-full uppercase tracking-wider ${
                     m.status === 'Received' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
                   }`}>
                     {m.status}
@@ -248,14 +248,14 @@ export default function MobileProjectControl() {
 
                 <div className="flex justify-between items-center pt-2 border-t border-zinc-100">
                   <div>
-                    <p className="text-base font-black text-zinc-900">₹{m.amount?.toLocaleString('en-IN')} <span className="text-xs font-medium text-zinc-400">({m.percentage}%)</span></p>
+                    <p className="text-base font-semibold text-[11px] text-zinc-900">₹{m.amount?.toLocaleString('en-IN')} <span className="text-xs font-medium text-zinc-400">({m.percentage}%)</span></p>
                     <span className="text-[9px] text-zinc-400 font-semibold block">Due: {m.dueDate || 'N/A'}</span>
                   </div>
 
                   {m.status !== 'Received' && (
                     <button 
                       onClick={() => updateMilestoneStatus(m.id, 'Received').then(loadData)} 
-                      className="bg-emerald-600 text-white px-3.5 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider active:scale-95 transition-transform shadow-sm"
+                      className="bg-emerald-600 text-white px-3.5 py-2 rounded-xl text-[10px] font-semibold text-[11px] uppercase tracking-wider active:scale-95 transition-transform shadow-sm"
                     >
                       Mark Paid
                     </button>
@@ -276,7 +276,7 @@ export default function MobileProjectControl() {
                 <div className="flex justify-between items-start">
                   <div>
                     <span className="text-[9px] font-bold text-blue-500 uppercase tracking-wider block">{co.projectName}</span>
-                    <h4 className="font-extrabold text-zinc-900 text-sm mt-0.5">{co.title}</h4>
+                    <h4 className="font-bold text-zinc-900 text-sm mt-0.5">{co.title}</h4>
                   </div>
                   <span className="text-[9px] font-bold text-zinc-400">{co.date}</span>
                 </div>
@@ -288,7 +288,7 @@ export default function MobileProjectControl() {
                 )}
 
                 <div className="pt-2 border-t border-zinc-100 flex justify-between items-center">
-                  <span className="font-black text-emerald-600 text-base">+₹{co.additionalCost?.toLocaleString('en-IN')}</span>
+                  <span className="font-semibold text-[11px] text-emerald-600 text-base">+₹{co.additionalCost?.toLocaleString('en-IN')}</span>
                   <span className="text-xs text-amber-600 font-bold bg-amber-50 px-2.5 py-1 rounded-lg">+{co.extraDays} Days</span>
                 </div>
               </div>
@@ -303,7 +303,7 @@ export default function MobileProjectControl() {
           <div className="bg-white w-full h-[85vh] rounded-t-[2.5rem] shadow-2xl flex flex-col animate-in slide-in-from-bottom-full duration-300">
             <div className="px-6 pt-6 pb-4 border-b border-zinc-100 flex justify-between items-center shrink-0">
               <div>
-                <h2 className="text-xl font-extrabold text-zinc-900">Contractor RA Bill</h2>
+                <h2 className="text-xl font-bold text-zinc-900">Contractor RA Bill</h2>
                 <p className="text-zinc-500 text-[9px] font-bold uppercase tracking-widest">Running Account Entry</p>
               </div>
               <button onClick={() => setIsRaModalOpen(false)} className="w-8 h-8 flex items-center justify-center bg-zinc-100 text-zinc-600 rounded-full font-bold active:bg-zinc-200">✕</button>
@@ -358,7 +358,7 @@ export default function MobileProjectControl() {
             </div>
 
             <div className="px-6 py-4 pb-[calc(env(safe-area-inset-bottom,20px)+16px)] border-t border-zinc-100 bg-white shrink-0">
-              <button type="submit" form="raForm" className="w-full py-4 bg-[#1E3A8A] text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform">
+              <button type="submit" form="raForm" className="w-full py-4 bg-[#1E3A8A] text-white font-semibold text-[11px] rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform">
                 Save RA Bill
               </button>
             </div>
@@ -372,7 +372,7 @@ export default function MobileProjectControl() {
           <div className="bg-white w-full h-[85vh] rounded-t-[2.5rem] shadow-2xl flex flex-col animate-in slide-in-from-bottom-full duration-300">
             <div className="px-6 pt-6 pb-4 border-b border-zinc-100 flex justify-between items-center shrink-0">
               <div>
-                <h2 className="text-xl font-extrabold text-zinc-900">Add Payment Milestone</h2>
+                <h2 className="text-xl font-bold text-zinc-900">Add Payment Milestone</h2>
                 <p className="text-zinc-500 text-[9px] font-bold uppercase tracking-widest">Client Payment Term</p>
               </div>
               <button onClick={() => setIsMilestoneModalOpen(false)} className="w-8 h-8 flex items-center justify-center bg-zinc-100 text-zinc-600 rounded-full font-bold active:bg-zinc-200">✕</button>
@@ -415,7 +415,7 @@ export default function MobileProjectControl() {
             </div>
 
             <div className="px-6 py-4 pb-[calc(env(safe-area-inset-bottom,20px)+16px)] border-t border-zinc-100 bg-white shrink-0">
-              <button type="submit" form="milestoneForm" className="w-full py-4 bg-[#1E3A8A] text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform">
+              <button type="submit" form="milestoneForm" className="w-full py-4 bg-[#1E3A8A] text-white font-semibold text-[11px] rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform">
                 Save Milestone
               </button>
             </div>
@@ -429,7 +429,7 @@ export default function MobileProjectControl() {
           <div className="bg-white w-full h-[85vh] rounded-t-[2.5rem] shadow-2xl flex flex-col animate-in slide-in-from-bottom-full duration-300">
             <div className="px-6 pt-6 pb-4 border-b border-zinc-100 flex justify-between items-center shrink-0">
               <div>
-                <h2 className="text-xl font-extrabold text-zinc-900">Log Scope Variation</h2>
+                <h2 className="text-xl font-bold text-zinc-900">Log Scope Variation</h2>
                 <p className="text-zinc-500 text-[9px] font-bold uppercase tracking-widest">Extra Work & Timeline Impact</p>
               </div>
               <button onClick={() => setIsCoModalOpen(false)} className="w-8 h-8 flex items-center justify-center bg-zinc-100 text-zinc-600 rounded-full font-bold active:bg-zinc-200">✕</button>
@@ -472,7 +472,7 @@ export default function MobileProjectControl() {
             </div>
 
             <div className="px-6 py-4 pb-[calc(env(safe-area-inset-bottom,20px)+16px)] border-t border-zinc-100 bg-white shrink-0">
-              <button type="submit" form="coForm" className="w-full py-4 bg-[#1E3A8A] text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform">
+              <button type="submit" form="coForm" className="w-full py-4 bg-[#1E3A8A] text-white font-semibold text-[11px] rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform">
                 Save Scope Variation
               </button>
             </div>

@@ -116,7 +116,7 @@ export default function MeasurementSheet() {
     const cellClass = "w-full bg-transparent outline-none focus:bg-amber-50/50 px-2 py-2 text-xs text-zinc-800 font-medium transition-colors";
     
     return (
-      <div className="w-full h-full font-['Poppins'] flex flex-col">
+      <div className="w-full h-full font-sans flex flex-col">
         {/* Editor Toolbar */}
         <div className="bg-white border border-zinc-200 shadow-sm rounded-2xl p-4 mb-6 shrink-0 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
           <div className="flex-1 w-full flex flex-col md:flex-row gap-4 items-center">
@@ -145,7 +145,7 @@ export default function MeasurementSheet() {
             />
           </div>
           <div className="flex gap-3 w-full md:w-auto items-center">
-            <div className="px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-xs font-black whitespace-nowrap">
+            <div className="px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-xs font-semibold text-[11px] whitespace-nowrap">
               Total: {grandTotal.toFixed(2)}
             </div>
             <button onClick={handleSave} className="bg-[#1E3A8A] hover:bg-blue-900 text-white px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider shadow-md cursor-pointer transition-all w-full md:w-auto">
@@ -176,7 +176,7 @@ export default function MeasurementSheet() {
               <tbody className="divide-y divide-zinc-100 text-xs">
                 {currentSheet.data.map((row, idx) => (
                   <tr key={idx} className="divide-x divide-zinc-100 hover:bg-zinc-50 focus-within:bg-blue-50/30 group">
-                    <td className="w-10 text-center text-[10px] font-extrabold text-zinc-400 bg-zinc-50 select-none group-focus-within:bg-[#1E3A8A] group-focus-within:text-white transition-colors">{idx + 1}</td>
+                    <td className="w-10 text-center text-[10px] font-bold text-zinc-400 bg-zinc-50 select-none group-focus-within:bg-[#1E3A8A] group-focus-within:text-white transition-colors">{idx + 1}</td>
                     <td><input type="text" value={row.location} onChange={e => handleCellChange(idx, 'location', e.target.value)} className={cellClass} /></td>
                     <td><input type="text" value={row.description} onChange={e => handleCellChange(idx, 'description', e.target.value)} className={cellClass} /></td>
                     <td>
@@ -189,7 +189,7 @@ export default function MeasurementSheet() {
                     <td><input type="number" step="any" value={row.w} onChange={e => handleCellChange(idx, 'w', e.target.value)} className={`${cellClass} text-center`} /></td>
                     <td><input type="number" step="any" value={row.h} onChange={e => handleCellChange(idx, 'h', e.target.value)} className={`${cellClass} text-center`} /></td>
                     <td><input type="number" step="any" value={row.deduction} onChange={e => handleCellChange(idx, 'deduction', e.target.value)} className={`${cellClass} text-center text-red-500 font-bold`} /></td>
-                    <td className="px-3 py-2 text-right font-black text-emerald-600 bg-emerald-50/20 select-none">{parseFloat(row.total || 0).toFixed(2)}</td>
+                    <td className="px-3 py-2 text-right font-semibold text-[11px] text-emerald-600 bg-emerald-50/20 select-none">{parseFloat(row.total || 0).toFixed(2)}</td>
                     <td><input type="text" value={row.remarks} onChange={e => handleCellChange(idx, 'remarks', e.target.value)} className={cellClass} /></td>
                   </tr>
                 ))}
@@ -206,10 +206,10 @@ export default function MeasurementSheet() {
 
   // --- MAIN DASHBOARD VIEW ---
   return (
-    <div className="w-full h-full font-['Poppins'] flex flex-col">
+    <div className="w-full h-full font-sans flex flex-col">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end pb-4 border-b border-zinc-200 mb-6 gap-4 shrink-0">
         <div>
-          <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Joint Measurement Sheets</h2>
+          <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Joint Measurement Sheets</h2>
           <p className="text-zinc-500 text-xs mt-1 font-medium">Build, calculate, and store site measurement spreadsheets.</p>
         </div>
         <button onClick={openNewSheet} className="bg-[#1E3A8A] hover:bg-blue-900 text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer">
@@ -223,7 +223,7 @@ export default function MeasurementSheet() {
         ) : sheets.length === 0 ? (
           <div className="py-20 text-center bg-white border border-dashed border-zinc-200 rounded-[2rem]">
             <span className="text-3xl block mb-2">📊</span>
-            <h3 className="text-sm font-extrabold text-zinc-800">No Sheets Found</h3>
+            <h3 className="text-sm font-bold text-zinc-800">No Sheets Found</h3>
             <p className="text-xs text-zinc-500 mt-1 mb-4">Start by creating your first measurement sheet.</p>
             <button onClick={openNewSheet} className="text-xs font-bold text-[#1E3A8A] hover:underline uppercase tracking-wider cursor-pointer">Create Sheet</button>
           </div>
@@ -241,7 +241,7 @@ export default function MeasurementSheet() {
                   </div>
                   
                   <div>
-                    <h3 className="text-base font-extrabold text-zinc-900 leading-tight mb-1 truncate">{sheet.title}</h3>
+                    <h3 className="text-base font-bold text-zinc-900 leading-tight mb-1 truncate">{sheet.title}</h3>
                     <p className="text-[9px] font-bold text-[#1E3A8A] uppercase tracking-widest mb-4">{sheet.projectName || 'General Site'}</p>
                     
                     <div className="space-y-2 mb-6 border-t border-zinc-100 pt-4">
@@ -255,7 +255,7 @@ export default function MeasurementSheet() {
                       </div>
                       <div className="flex justify-between items-center text-xs bg-zinc-50 p-2.5 rounded-xl mt-2 border border-zinc-100">
                         <span className="text-zinc-500 font-bold uppercase tracking-widest text-[9px]">Total Quantity</span>
-                        <span className="font-black text-emerald-600">{grandTotal.toLocaleString('en-IN', {maximumFractionDigits: 2})}</span>
+                        <span className="font-semibold text-[11px] text-emerald-600">{grandTotal.toLocaleString('en-IN', {maximumFractionDigits: 2})}</span>
                       </div>
                     </div>
                   </div>

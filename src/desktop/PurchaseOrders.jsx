@@ -240,10 +240,10 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
 
   if (currentView === 'list') {
     return (
-      <div className="w-full h-full font-['Poppins'] flex flex-col print:hidden">
+      <div className="w-full h-full font-sans flex flex-col print:hidden">
         <div className="flex justify-between items-end pb-4 border-b border-zinc-200 mb-6 shrink-0">
           <div>
-            <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Purchase Orders</h2>
+            <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Purchase Orders</h2>
             <p className="text-zinc-500 text-xs mt-1 font-medium">Generate official material procurements requests.</p>
           </div>
           <button onClick={() => { handleClear(false); setCurrentView('form'); }} className="bg-[#1E3A8A] hover:bg-blue-900 text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-md">
@@ -272,9 +272,9 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
                   poList.map((po) => (
                     <tr key={po.id} className={`transition-all ${po.isCancelled ? 'bg-red-50/20 opacity-60' : 'hover:bg-zinc-50'}`}>
                       <td className={`py-4 px-6 text-xs font-medium ${po.isCancelled ? 'line-through text-zinc-400' : 'text-zinc-600'}`}>{po.date}</td>
-                      <td className={`py-4 px-6 font-extrabold text-xs ${po.isCancelled ? 'line-through text-zinc-400' : 'text-[#1E3A8A]'}`}>{po.poNo}</td>
+                      <td className={`py-4 px-6 font-bold text-xs ${po.isCancelled ? 'line-through text-zinc-400' : 'text-[#1E3A8A]'}`}>{po.poNo}</td>
                       <td className={`py-4 px-6 text-xs font-semibold ${po.isCancelled ? 'line-through text-zinc-400' : 'text-zinc-800'}`}>{po.vendorName}</td>
-                      <td className={`py-4 px-6 text-right font-black text-xs ${po.isCancelled ? 'line-through text-zinc-400' : 'text-emerald-600'}`}>{po.amount}</td>
+                      <td className={`py-4 px-6 text-right font-semibold text-[11px] text-xs ${po.isCancelled ? 'line-through text-zinc-400' : 'text-emerald-600'}`}>{po.amount}</td>
                       <td className="py-4 px-6 text-center space-x-3">
                         {!po.isCancelled ? (
                           <>
@@ -303,10 +303,10 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
   }
 
   return (
-    <div className="w-full h-full font-['Poppins'] flex flex-col">
+    <div className="w-full h-full font-sans flex flex-col">
       <div className="print:hidden flex-1 flex flex-col min-h-0 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <div className="flex items-center justify-between border-b border-zinc-200 pb-4 mb-6 shrink-0">
-          <h2 className="text-xl font-extrabold text-zinc-900 tracking-tight">
+          <h2 className="text-xl font-bold text-zinc-900 tracking-tight">
             {isReadOnly ? `Viewing PO ${poDetails.poNo}` : editingId ? `Edit PO ${poDetails.poNo}` : 'Create Purchase Order'}
           </h2>
           <div className="flex gap-2">
@@ -433,7 +433,7 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
               <div className="flex justify-between text-xs px-1 mb-2"><span>Total Base:</span><span className="text-white font-medium">₹ {totals.subtotal.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span></div>
               <div className="flex justify-between text-xs px-1 mb-2"><span>Total Tax:</span><span className="text-white font-medium">₹ {totals.totalTax.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span></div>
               
-              <div className="flex justify-between text-base font-extrabold text-white border-t-2 border-blue-400/30 pt-4 px-1 mt-4">
+              <div className="flex justify-between text-base font-bold text-white border-t-2 border-blue-400/30 pt-4 px-1 mt-4">
                 <span>PO Total:</span><span>₹ {totals.grandTotal.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
               </div>
             </div>
@@ -448,7 +448,7 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
         </div>
       </div>
 
-      <div className="hidden print:block w-full bg-white text-zinc-900 font-['Poppins'] text-[11px] leading-tight print:p-0 print:m-0">
+      <div className="hidden print:block w-full bg-white text-zinc-900 font-sans text-[11px] leading-tight print:p-0 print:m-0">
         <style dangerouslySetInnerHTML={{__html: `
           @media print {
             @page { margin: 10mm; size: A4 portrait; }
@@ -463,7 +463,7 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
             <div className="flex items-center gap-4">
               {companySettings?.logoUrl && <img src={companySettings.logoUrl} className="h-14 w-auto object-contain shrink-0" alt="Logo" />}
               <div>
-                <h1 className="text-xl font-black tracking-tight text-[#1E3A8A]">{companySettings?.companyName || 'Company Name'}</h1>
+                <h1 className="text-xl font-semibold text-[11px] tracking-tight text-[#1E3A8A]">{companySettings?.companyName || 'Company Name'}</h1>
                 <p className="text-[10px] text-zinc-600 whitespace-pre-wrap mt-0.5 max-w-xs">{companySettings?.companyAddress}</p>
                 <p className="text-[10px] text-zinc-800 mt-1 font-bold">
                   GSTIN: <span className="font-medium text-zinc-600 mr-2">{companySettings?.companyGst}</span> 
@@ -472,7 +472,7 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
               </div>
             </div>
             <div className="text-right">
-              <span className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] block mb-1">Purchase Order</span>
+              <span className="text-[10px] font-semibold text-[11px] text-amber-600 uppercase tracking-[0.2em] block mb-1">Purchase Order</span>
               <h2 className="text-xl font-bold text-zinc-900 tracking-tight">{poDetails.poNo || 'PO-000'}</h2>
               <p className="text-[10px] font-bold text-zinc-800 mt-1">Date: <span className="font-medium text-zinc-600">{poDetails.date}</span></p>
             </div>
@@ -480,13 +480,13 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
 
           <div className="grid grid-cols-2 gap-8 mb-6 pb-4 border-b border-zinc-200">
             <div>
-              <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1.5">To (Vendor / Supplier)</span>
+              <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1.5">To (Vendor / Supplier)</span>
               <h3 className="text-sm font-bold text-zinc-900 uppercase">{poDetails.vendorName || 'Vendor Name'}</h3>
               <p className="text-[10px] text-zinc-600 whitespace-pre-wrap mt-1 leading-relaxed">{poDetails.vendorAddress}</p>
               {poDetails.vendorGst && <p className="text-[10px] text-zinc-800 font-bold mt-1.5">GSTIN: <span className="font-medium text-zinc-600">{poDetails.vendorGst.toUpperCase()}</span></p>}
             </div>
             <div className="text-right space-y-1">
-              <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1.5">Delivery Details</span>
+              <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1.5">Delivery Details</span>
               {poDetails.expectedDelivery && <p className="text-[10px] text-zinc-800 font-bold">Expected By: <span className="font-medium text-zinc-600">{poDetails.expectedDelivery}</span></p>}
               {poDetails.projectName && <p className="text-[10px] text-zinc-800 font-bold mt-2">Project: <span className="font-medium text-[#1E3A8A]">{poDetails.projectName}</span></p>}
               <p className="text-[10px] text-zinc-800 font-bold mt-2">Ship To:<br/><span className="font-medium text-zinc-600 whitespace-pre-wrap leading-tight block mt-0.5">{poDetails.shippingAddress}</span></p>
@@ -518,7 +518,7 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
                     <td className="py-3 px-2 text-center text-zinc-600">{item.uom}</td>
                     <td className="py-3 px-2 text-right text-zinc-800">₹{parseFloat(item.rate || 0).toLocaleString('en-IN')}</td>
                     <td className="py-3 px-2 text-center text-zinc-500">{item.tax}%</td>
-                    <td className="py-3 px-3 text-right font-black text-zinc-900">₹{row.totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                    <td className="py-3 px-3 text-right font-semibold text-[11px] text-zinc-900">₹{row.totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                   </tr>
                 );
               })}
@@ -541,7 +541,7 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
                 <span className="font-bold text-zinc-900">₹{totals.totalTax.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
               </div>
               
-              <div className="flex justify-between font-black text-white bg-[#1E3A8A] px-2 py-2 rounded mt-2 text-sm">
+              <div className="flex justify-between font-semibold text-[11px] text-white bg-[#1E3A8A] px-2 py-2 rounded mt-2 text-sm">
                 <span>Grand Total:</span><span>₹{totals.grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
               </div>
             </div>
@@ -551,14 +551,14 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
             <div className="space-y-4">
               {companySettings?.showTermsOnPdf !== false && (
                 <div>
-                  <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1">Terms & Conditions</span>
+                  <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Terms & Conditions</span>
                   <p className="whitespace-pre-wrap text-zinc-500 leading-tight">{poDetails.terms}</p>
                 </div>
               )}
 
               {companySettings?.showRemarksOnPdf !== false && poDetails.description && (
                 <div>
-                  <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1">Remarks / Notes</span>
+                  <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Remarks / Notes</span>
                   <p className="text-zinc-600 font-medium">{poDetails.description}</p>
                 </div>
               )}

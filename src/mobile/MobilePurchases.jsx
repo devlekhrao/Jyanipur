@@ -198,18 +198,18 @@ export default function MobilePurchases() {
   const labelClass = "block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
 
   return (
-    <div className="w-full h-full flex flex-col font-['Poppins']">
+    <div className="w-full h-full flex flex-col font-sans">
       
       {/* HEADER SECTION */}
       <div className="mb-3 shrink-0">
         <div className="flex justify-between items-center mb-2">
           <div>
-            <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Purchases & ITC</h2>
+            <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Purchases & ITC</h2>
             <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-0.5">Inward Supply Invoices</p>
           </div>
           <button 
             onClick={() => setIsModalOpen(true)}
-            className="bg-[#1E3A8A] hover:bg-blue-900 text-white font-black px-3.5 py-2.5 rounded-xl text-[10px] uppercase tracking-wider transition-all shadow-md active:scale-95"
+            className="bg-[#1E3A8A] hover:bg-blue-900 text-white font-semibold text-[11px] px-3.5 py-2.5 rounded-xl text-[10px] uppercase tracking-wider transition-all shadow-md active:scale-95"
           >
             + Log Bill
           </button>
@@ -229,12 +229,12 @@ export default function MobilePurchases() {
 
         {/* PERIOD SELECTOR STRIP */}
         <div className="bg-white p-2.5 rounded-2xl border border-zinc-200 shadow-sm flex items-center justify-between">
-          <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest pl-1">Period:</span>
+          <span className="text-[10px] font-semibold text-[11px] text-zinc-400 uppercase tracking-widest pl-1">Period:</span>
           <div className="flex gap-2">
             <select 
               value={selectedMonth} 
               onChange={handleMonthChange}
-              className="bg-zinc-100 font-extrabold text-xs text-zinc-800 py-1.5 px-3 rounded-xl outline-none"
+              className="bg-zinc-100 font-bold text-xs text-zinc-800 py-1.5 px-3 rounded-xl outline-none"
             >
               {Array.from({length: 12}, (_, i) => (
                 <option key={i+1} value={i+1}>{new Date(2000, i).toLocaleString('en-US', { month: 'short' })}</option>
@@ -243,7 +243,7 @@ export default function MobilePurchases() {
             <select 
               value={selectedYear} 
               onChange={handleYearChange}
-              className="bg-zinc-100 font-extrabold text-xs text-zinc-800 py-1.5 px-3 rounded-xl outline-none"
+              className="bg-zinc-100 font-bold text-xs text-zinc-800 py-1.5 px-3 rounded-xl outline-none"
             >
               <option value={currentDate.getFullYear() - 1}>{currentDate.getFullYear() - 1}</option>
               <option value={currentDate.getFullYear()}>{currentDate.getFullYear()}</option>
@@ -256,18 +256,18 @@ export default function MobilePurchases() {
       {/* SUMMARY KPI CARDS */}
       <div className="grid grid-cols-3 gap-2 mb-3 shrink-0">
         <div className="bg-white p-2.5 rounded-2xl border border-zinc-200 shadow-sm text-center">
-          <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest block">Taxable</span>
-          <p className="text-xs font-black text-zinc-900 mt-0.5">₹ {totalTaxable.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+          <span className="text-[8px] font-semibold text-[11px] text-zinc-400 uppercase tracking-widest block">Taxable</span>
+          <p className="text-xs font-semibold text-[11px] text-zinc-900 mt-0.5">₹ {totalTaxable.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
         </div>
 
         <div className="bg-emerald-50 p-2.5 rounded-2xl border border-emerald-100 shadow-sm text-center">
-          <span className="text-[8px] font-black text-emerald-600 uppercase tracking-widest block">ITC Credit</span>
-          <p className="text-xs font-black text-emerald-700 mt-0.5">₹ {totalGst.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+          <span className="text-[8px] font-semibold text-[11px] text-emerald-600 uppercase tracking-widest block">ITC Credit</span>
+          <p className="text-xs font-semibold text-[11px] text-emerald-700 mt-0.5">₹ {totalGst.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
         </div>
 
         <div className="bg-zinc-900 text-white p-2.5 rounded-2xl shadow-sm text-center">
-          <span className="text-[8px] font-black text-amber-400 uppercase tracking-widest block">Gross Total</span>
-          <p className="text-xs font-black mt-0.5">₹ {totalGross.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+          <span className="text-[8px] font-semibold text-[11px] text-amber-400 uppercase tracking-widest block">Gross Total</span>
+          <p className="text-xs font-semibold text-[11px] mt-0.5">₹ {totalGross.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
         </div>
       </div>
 
@@ -294,17 +294,17 @@ export default function MobilePurchases() {
                 <div className="flex justify-between items-start">
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="bg-blue-50 text-[#1E3A8A] text-[9px] font-black px-2 py-0.5 rounded uppercase">
+                      <span className="bg-blue-50 text-[#1E3A8A] text-[9px] font-semibold text-[11px] px-2 py-0.5 rounded uppercase">
                         {p.invoiceNo || 'INV'}
                       </span>
                       <span className="text-[10px] font-bold text-zinc-400">{p.invoiceDate}</span>
                     </div>
-                    <h4 className="font-extrabold text-zinc-900 text-sm mt-1">{p.vendorName}</h4>
+                    <h4 className="font-bold text-zinc-900 text-sm mt-1">{p.vendorName}</h4>
                     <span className="text-[9px] font-mono text-zinc-400">{p.gstin || 'UNREGISTERED'}</span>
                   </div>
 
                   <div className="text-right">
-                    <span className="text-base font-black text-zinc-900 block">₹ {p.totalAmount?.toLocaleString('en-IN', {maximumFractionDigits: 0})}</span>
+                    <span className="text-base font-semibold text-[11px] text-zinc-900 block">₹ {p.totalAmount?.toLocaleString('en-IN', {maximumFractionDigits: 0})}</span>
                     <span className="text-[8px] font-bold text-emerald-600 block">ITC: ₹{p.gstAmount?.toLocaleString('en-IN', {maximumFractionDigits: 0})}</span>
                   </div>
                 </div>
@@ -315,7 +315,7 @@ export default function MobilePurchases() {
                     <select 
                       value={p.returnStatus} 
                       onChange={(e) => handleStatusChange(p.id, e.target.value)}
-                      className={`px-2.5 py-1 rounded-xl text-[9px] font-black uppercase tracking-wider outline-none appearance-none pr-6 ${
+                      className={`px-2.5 py-1 rounded-xl text-[9px] font-semibold text-[11px] uppercase tracking-wider outline-none appearance-none pr-6 ${
                         p.returnStatus === '2B Matched' ? 'bg-blue-50 text-[#1E3A8A]' :
                         p.returnStatus === 'ITC Claimed' ? 'bg-emerald-50 text-emerald-700' :
                         'bg-amber-50 text-amber-700'
@@ -347,7 +347,7 @@ export default function MobilePurchases() {
                 {/* EXPANDABLE ITEMS ACCORDION */}
                 {isExpanded && (
                   <div className="bg-zinc-50 border border-zinc-200 rounded-2xl p-3 space-y-2 text-xs">
-                    <h5 className="text-[9px] font-black text-zinc-400 uppercase tracking-widest border-b border-zinc-200 pb-1">
+                    <h5 className="text-[9px] font-semibold text-[11px] text-zinc-400 uppercase tracking-widest border-b border-zinc-200 pb-1">
                       Itemized Bill Breakdown
                     </h5>
 
@@ -357,7 +357,7 @@ export default function MobilePurchases() {
                       parsedItems.map((item, idx) => (
                         <div key={idx} className="flex justify-between items-center py-1 border-b border-zinc-100 last:border-0">
                           <div>
-                            <p className="font-extrabold text-zinc-800">{item.materialName}</p>
+                            <p className="font-bold text-zinc-800">{item.materialName}</p>
                             <span className="text-[9px] text-zinc-400 font-mono">HSN: {item.hsn || '-'} • {item.qty} {item.unit} @ ₹{item.rate}</span>
                           </div>
                           <div className="text-right">
@@ -384,7 +384,7 @@ export default function MobilePurchases() {
             {/* Modal Header */}
             <div className="px-6 pt-6 pb-4 border-b border-zinc-100 flex justify-between items-center shrink-0">
               <div>
-                <h2 className="text-xl font-extrabold text-zinc-900">Log Purchase Bill</h2>
+                <h2 className="text-xl font-bold text-zinc-900">Log Purchase Bill</h2>
                 <p className="text-zinc-500 text-[9px] font-bold uppercase tracking-widest mt-0.5">RateBook Auto-Sync Active</p>
               </div>
               <button 
@@ -401,7 +401,7 @@ export default function MobilePurchases() {
                 
                 {/* SECTION 1: VENDOR INFO */}
                 <div className="bg-zinc-50 p-4 rounded-2xl border border-zinc-200/80 space-y-3">
-                  <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">1. Vendor & Invoice Info</h3>
+                  <h3 className="text-[10px] font-semibold text-[11px] text-zinc-400 uppercase tracking-widest">1. Vendor & Invoice Info</h3>
 
                   <div>
                     <label className={labelClass}>Vendor / Supplier Name <span className="text-red-500">*</span></label>
@@ -467,11 +467,11 @@ export default function MobilePurchases() {
                 {/* SECTION 2: BILL LINES */}
                 <div className="space-y-3">
                   <div className="flex justify-between items-center px-1">
-                    <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">2. Itemized Bill Lines</h3>
+                    <h3 className="text-[10px] font-semibold text-[11px] text-zinc-400 uppercase tracking-widest">2. Itemized Bill Lines</h3>
                     <button 
                       type="button"
                       onClick={addItemRow} 
-                      className="text-[10px] font-black text-[#1E3A8A] bg-blue-50 px-3 py-1 rounded-xl uppercase active:scale-95 transition-transform"
+                      className="text-[10px] font-semibold text-[11px] text-[#1E3A8A] bg-blue-50 px-3 py-1 rounded-xl uppercase active:scale-95 transition-transform"
                     >
                       + Add Row
                     </button>
@@ -480,7 +480,7 @@ export default function MobilePurchases() {
                   {enhancedItems.map((item, index) => (
                     <div key={index} className="bg-white border border-zinc-200 rounded-[1.5rem] p-4 shadow-sm space-y-3 relative">
                       <div className="flex justify-between items-center border-b border-zinc-100 pb-2">
-                        <span className="text-[10px] font-black text-[#1E3A8A] bg-blue-50 px-2.5 py-0.5 rounded-md">
+                        <span className="text-[10px] font-semibold text-[11px] text-[#1E3A8A] bg-blue-50 px-2.5 py-0.5 rounded-md">
                           Item #{index + 1}
                         </span>
                         {billItems.length > 1 && (
@@ -556,12 +556,12 @@ export default function MobilePurchases() {
 
                       <div className="grid grid-cols-2 gap-2 pt-1 border-t border-zinc-100 text-xs">
                         <div>
-                          <span className="text-[8px] font-black text-zinc-400 uppercase">Taxable Value</span>
+                          <span className="text-[8px] font-semibold text-[11px] text-zinc-400 uppercase">Taxable Value</span>
                           <p className="font-bold text-zinc-800">₹{item.taxable.toFixed(2)}</p>
                         </div>
                         <div className="text-right">
-                          <span className="text-[8px] font-black text-emerald-600 uppercase">Line Total</span>
-                          <p className="font-black text-zinc-900">₹{item.total.toFixed(2)}</p>
+                          <span className="text-[8px] font-semibold text-[11px] text-emerald-600 uppercase">Line Total</span>
+                          <p className="font-semibold text-[11px] text-zinc-900">₹{item.total.toFixed(2)}</p>
                         </div>
                       </div>
                     </div>
@@ -575,23 +575,23 @@ export default function MobilePurchases() {
             <div className="px-6 py-4 pb-[calc(env(safe-area-inset-bottom,20px)+16px)] border-t border-zinc-100 bg-white shrink-0 space-y-3">
               <div className="grid grid-cols-3 gap-2 text-center bg-zinc-50 p-2.5 rounded-2xl border border-zinc-200/80">
                 <div>
-                  <span className="block text-[8px] font-black text-zinc-400 uppercase">Taxable</span>
+                  <span className="block text-[8px] font-semibold text-[11px] text-zinc-400 uppercase">Taxable</span>
                   <span className="text-xs font-bold text-zinc-800">₹{liveTaxable.toLocaleString('en-IN', {maximumFractionDigits: 0})}</span>
                 </div>
                 <div>
-                  <span className="block text-[8px] font-black text-emerald-600 uppercase">ITC Credit</span>
-                  <span className="text-xs font-black text-emerald-700">₹{liveGstAmount.toLocaleString('en-IN', {maximumFractionDigits: 0})}</span>
+                  <span className="block text-[8px] font-semibold text-[11px] text-emerald-600 uppercase">ITC Credit</span>
+                  <span className="text-xs font-semibold text-[11px] text-emerald-700">₹{liveGstAmount.toLocaleString('en-IN', {maximumFractionDigits: 0})}</span>
                 </div>
                 <div>
-                  <span className="block text-[8px] font-black text-zinc-900 uppercase">Gross Total</span>
-                  <span className="text-xs font-black text-zinc-900">₹{liveTotalAmount.toLocaleString('en-IN', {maximumFractionDigits: 0})}</span>
+                  <span className="block text-[8px] font-semibold text-[11px] text-zinc-900 uppercase">Gross Total</span>
+                  <span className="text-xs font-semibold text-[11px] text-zinc-900">₹{liveTotalAmount.toLocaleString('en-IN', {maximumFractionDigits: 0})}</span>
                 </div>
               </div>
 
               <button 
                 type="submit" 
                 form="purchaseForm"
-                className="w-full py-4 bg-[#1E3A8A] text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform"
+                className="w-full py-4 bg-[#1E3A8A] text-white font-semibold text-[11px] rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform"
               >
                 Save Purchase Bill
               </button>

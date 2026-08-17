@@ -75,26 +75,26 @@ export default function MobileTaskBoard() {
   const columnTasks = tasks.filter(t => t.status === activeColumn);
 
   return (
-    <div className="w-full h-full flex flex-col font-['Poppins']">
+    <div className="w-full h-full flex flex-col font-sans">
       
       {/* HEADER SECTION */}
       <div className="mb-3 shrink-0">
         <div className="flex justify-between items-center mb-2">
           <div>
-            <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Task Board</h2>
+            <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Task Board</h2>
             <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-0.5">Project Action Items</p>
           </div>
           
           <div className="flex gap-1.5">
             <button 
               onClick={handleExport}
-              className="bg-white border border-zinc-200 text-zinc-800 font-extrabold px-3 py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-sm active:scale-95"
+              className="bg-white border border-zinc-200 text-zinc-800 font-bold px-3 py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-sm active:scale-95"
             >
               📥 CSV
             </button>
             <button 
               onClick={() => setIsModalOpen(true)}
-              className="bg-[#1E3A8A] text-white font-black px-3.5 py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-md active:scale-95"
+              className="bg-[#1E3A8A] text-white font-semibold text-[11px] px-3.5 py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-md active:scale-95"
             >
               + Add Task
             </button>
@@ -111,12 +111,12 @@ export default function MobileTaskBoard() {
               <button
                 key={col}
                 onClick={() => setActiveColumn(col)}
-                className={`flex-1 py-2 rounded-xl text-[10px] font-extrabold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${
+                className={`flex-1 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${
                   isActive ? 'bg-white text-[#1E3A8A] shadow-sm' : 'text-zinc-500'
                 }`}
               >
                 <span>{col}</span>
-                <span className={`px-1.5 py-0.2 rounded-md text-[8px] font-black ${
+                <span className={`px-1.5 py-0.2 rounded-md text-[8px] font-semibold text-[11px] ${
                   isActive ? 'bg-blue-50 text-[#1E3A8A]' : 'bg-zinc-300 text-zinc-600'
                 }`}>
                   {count}
@@ -148,10 +148,10 @@ export default function MobileTaskBoard() {
                 {/* CARD HEADER */}
                 <div className="flex justify-between items-start">
                   <div>
-                    <span className="bg-blue-50 text-[#1E3A8A] text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">
+                    <span className="bg-blue-50 text-[#1E3A8A] text-[8px] font-semibold text-[11px] px-2 py-0.5 rounded uppercase tracking-wider">
                       {task.projectName || 'General Office'}
                     </span>
-                    <h4 className="font-extrabold text-zinc-900 text-sm mt-1">{task.title}</h4>
+                    <h4 className="font-bold text-zinc-900 text-sm mt-1">{task.title}</h4>
                   </div>
 
                   <button 
@@ -171,7 +171,7 @@ export default function MobileTaskBoard() {
 
                 {/* METRICS & MOVE CONTROL */}
                 <div className="pt-2 border-t border-zinc-100 flex justify-between items-center text-xs">
-                  <span className={`text-[9px] font-black px-2 py-0.5 rounded-md ${
+                  <span className={`text-[9px] font-semibold text-[11px] px-2 py-0.5 rounded-md ${
                     isOverdue ? 'bg-red-100 text-red-600' : 'bg-zinc-100 text-zinc-600'
                   }`}>
                     Due: {task.dueDate}
@@ -187,7 +187,7 @@ export default function MobileTaskBoard() {
                   <select 
                     value={task.status} 
                     onChange={(e) => handleStatusMove(task.id, e.target.value)}
-                    className="w-full bg-zinc-100 border border-zinc-200 text-zinc-800 text-[10px] font-extrabold uppercase tracking-wider rounded-xl py-2 px-3 outline-none appearance-none pr-8"
+                    className="w-full bg-zinc-100 border border-zinc-200 text-zinc-800 text-[10px] font-bold uppercase tracking-wider rounded-xl py-2 px-3 outline-none appearance-none pr-8"
                   >
                     {columns.map(c => <option key={c} value={c}>Move to: {c}</option>)}
                   </select>
@@ -208,7 +208,7 @@ export default function MobileTaskBoard() {
             {/* Modal Header */}
             <div className="px-6 pt-6 pb-4 border-b border-zinc-100 flex justify-between items-center shrink-0">
               <div>
-                <h2 className="text-xl font-extrabold text-zinc-900">Create New Task</h2>
+                <h2 className="text-xl font-bold text-zinc-900">Create New Task</h2>
                 <p className="text-zinc-500 text-[9px] font-bold uppercase tracking-widest mt-0.5">Assign Work & Deadline</p>
               </div>
               <button 
@@ -296,7 +296,7 @@ export default function MobileTaskBoard() {
               <button 
                 type="submit" 
                 form="taskForm"
-                className="w-full py-4 bg-[#1E3A8A] text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform"
+                className="w-full py-4 bg-[#1E3A8A] text-white font-semibold text-[11px] rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform"
               >
                 Save Task
               </button>

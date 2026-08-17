@@ -25,13 +25,13 @@ export default function MobileSettings({ companySettings = {}, setCompanySetting
   const tabs = ['Profile', 'Bank', 'Prefixes & Tax', 'Labor & HR', 'Templates', 'PDF Print'];
 
   return (
-    <div className="w-full h-full flex flex-col font-['Poppins']">
+    <div className="w-full h-full flex flex-col font-sans">
       
       {/* HEADER SECTION */}
       <div className="mb-3 shrink-0">
         <div className="flex justify-between items-center mb-2">
           <div>
-            <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">System Settings</h2>
+            <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">System Settings</h2>
             <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-0.5">Branding & System Defaults</p>
           </div>
         </div>
@@ -42,7 +42,7 @@ export default function MobileSettings({ companySettings = {}, setCompanySetting
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest shrink-0 transition-all ${
+              className={`px-4 py-2.5 rounded-full text-[10px] font-semibold text-[11px] uppercase tracking-widest shrink-0 transition-all ${
                 activeTab === tab 
                   ? 'bg-zinc-900 text-white shadow-md' 
                   : 'bg-white border border-zinc-200 text-zinc-500'
@@ -60,7 +60,7 @@ export default function MobileSettings({ companySettings = {}, setCompanySetting
         {/* TAB 1: COMPANY PROFILE */}
         {activeTab === 'Profile' && (
           <div className="bg-white border border-zinc-200 rounded-[1.5rem] p-4 shadow-sm space-y-3">
-            <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">Company Profile</h3>
+            <h3 className="text-[10px] font-semibold text-[11px] text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">Company Profile</h3>
 
             <div>
               <label className={labelClass}>Company Name</label>
@@ -98,7 +98,7 @@ export default function MobileSettings({ companySettings = {}, setCompanySetting
         {/* TAB 2: BANK DETAILS */}
         {activeTab === 'Bank' && (
           <div className="bg-white border border-zinc-200 rounded-[1.5rem] p-4 shadow-sm space-y-3">
-            <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">Bank Account (PDF Print)</h3>
+            <h3 className="text-[10px] font-semibold text-[11px] text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">Bank Account (PDF Print)</h3>
 
             <div>
               <label className={labelClass}>Bank Name</label>
@@ -126,7 +126,7 @@ export default function MobileSettings({ companySettings = {}, setCompanySetting
         {activeTab === 'Prefixes & Tax' && (
           <div className="space-y-3">
             <div className="bg-white border border-zinc-200 rounded-[1.5rem] p-4 shadow-sm space-y-3">
-              <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">Document Numbering Prefixes</h3>
+              <h3 className="text-[10px] font-semibold text-[11px] text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">Document Numbering Prefixes</h3>
 
               <div className="grid grid-cols-3 gap-2">
                 <div>
@@ -145,7 +145,7 @@ export default function MobileSettings({ companySettings = {}, setCompanySetting
             </div>
 
             <div className="bg-white border border-zinc-200 rounded-[1.5rem] p-4 shadow-sm space-y-3">
-              <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">Taxation Defaults</h3>
+              <h3 className="text-[10px] font-semibold text-[11px] text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">Taxation Defaults</h3>
 
               <div className="grid grid-cols-3 gap-2">
                 <div>
@@ -168,7 +168,7 @@ export default function MobileSettings({ companySettings = {}, setCompanySetting
         {/* TAB 4: LABOR & HR RULES */}
         {activeTab === 'Labor & HR' && (
           <div className="bg-white border border-zinc-200 rounded-[1.5rem] p-4 shadow-sm space-y-3">
-            <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">HR & Labor Shift Rules</h3>
+            <h3 className="text-[10px] font-semibold text-[11px] text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">HR & Labor Shift Rules</h3>
 
             <div className="grid grid-cols-2 gap-2">
               <div>
@@ -203,7 +203,7 @@ export default function MobileSettings({ companySettings = {}, setCompanySetting
         {activeTab === 'Templates' && (
           <div className="space-y-3">
             <div className="bg-white border border-zinc-200 rounded-[1.5rem] p-4 shadow-sm space-y-3">
-              <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">Default Document Terms</h3>
+              <h3 className="text-[10px] font-semibold text-[11px] text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">Default Document Terms</h3>
 
               <div>
                 <label className={labelClass}>Tax Invoice Terms</label>
@@ -222,7 +222,7 @@ export default function MobileSettings({ companySettings = {}, setCompanySetting
             </div>
 
             <div className="bg-white border border-zinc-200 rounded-[1.5rem] p-4 shadow-sm space-y-3">
-              <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">WhatsApp Templates</h3>
+              <h3 className="text-[10px] font-semibold text-[11px] text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">WhatsApp Templates</h3>
 
               <div>
                 <label className={labelClass}>Invoice Sent Message</label>
@@ -236,7 +236,7 @@ export default function MobileSettings({ companySettings = {}, setCompanySetting
             </div>
 
             <div className="bg-white border border-zinc-200 rounded-[1.5rem] p-4 shadow-sm space-y-3">
-              <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">Workflow Stages</h3>
+              <h3 className="text-[10px] font-semibold text-[11px] text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">Workflow Stages</h3>
 
               <div>
                 <label className={labelClass}>CRM Lead Stages (Comma Separated)</label>
@@ -257,7 +257,7 @@ export default function MobileSettings({ companySettings = {}, setCompanySetting
             
             {/* DIGITAL SIGNATURE */}
             <div className="bg-white border border-zinc-200 rounded-[1.5rem] p-4 shadow-sm space-y-3">
-              <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">Digital Signature</h3>
+              <h3 className="text-[10px] font-semibold text-[11px] text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">Digital Signature</h3>
 
               <div>
                 <label className={labelClass}>Upload Signature Image</label>
@@ -283,7 +283,7 @@ export default function MobileSettings({ companySettings = {}, setCompanySetting
               {companySettings.signatureUrl && (
                 <div className="p-3 bg-zinc-50 rounded-2xl border border-zinc-200 flex justify-between items-center">
                   <div>
-                    <span className="text-[8px] font-black text-zinc-400 uppercase block mb-1">Preview</span>
+                    <span className="text-[8px] font-semibold text-[11px] text-zinc-400 uppercase block mb-1">Preview</span>
                     <img src={companySettings.signatureUrl} alt="Signature Preview" className="h-10 w-auto object-contain" />
                   </div>
                   <button 
@@ -298,7 +298,7 @@ export default function MobileSettings({ companySettings = {}, setCompanySetting
 
             {/* PRINT LAYOUT VISIBILITY */}
             <div className="bg-white border border-zinc-200 rounded-[1.5rem] p-4 shadow-sm space-y-3">
-              <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">PDF Print Visibility</h3>
+              <h3 className="text-[10px] font-semibold text-[11px] text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">PDF Print Visibility</h3>
 
               <div className="space-y-3 pt-1">
                 {[
@@ -316,7 +316,7 @@ export default function MobileSettings({ companySettings = {}, setCompanySetting
                       className="w-5 h-5 rounded text-[#1E3A8A] border-zinc-300 focus:ring-[#1E3A8A] shrink-0 mt-0.5" 
                     />
                     <div>
-                      <span className="text-xs font-black text-zinc-900 block leading-tight">{item.label}</span>
+                      <span className="text-xs font-semibold text-[11px] text-zinc-900 block leading-tight">{item.label}</span>
                       <span className="text-[9px] font-semibold text-zinc-400 block">{item.desc}</span>
                     </div>
                   </label>
@@ -326,7 +326,7 @@ export default function MobileSettings({ companySettings = {}, setCompanySetting
 
             {/* PDF FOOTER DISCLAIMER */}
             <div className="bg-white border border-zinc-200 rounded-[1.5rem] p-4 shadow-sm space-y-3">
-              <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">PDF Footer Note</h3>
+              <h3 className="text-[10px] font-semibold text-[11px] text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">PDF Footer Note</h3>
               <textarea 
                 value={companySettings.pdfFooterDisclaimer || ''} 
                 onChange={e => setCompanySettings({...companySettings, pdfFooterDisclaimer: e.target.value})} 
@@ -344,7 +344,7 @@ export default function MobileSettings({ companySettings = {}, setCompanySetting
       <div className="absolute bottom-0 left-0 right-0 p-4 pb-4 bg-white border-t border-zinc-200 shadow-lg z-50">
         <button 
           onClick={handleSaveSettings}
-          className="w-full py-4 bg-[#1E3A8A] text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-md active:scale-95 transition-transform"
+          className="w-full py-4 bg-[#1E3A8A] text-white font-semibold text-[11px] rounded-xl text-xs uppercase tracking-wider shadow-md active:scale-95 transition-transform"
         >
           Save Preferences
         </button>

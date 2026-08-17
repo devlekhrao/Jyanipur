@@ -71,13 +71,13 @@ export default function MobileCRM() {
   const activeLeads = leads.filter(l => l.status === activeStatusTab);
 
   return (
-    <div className="w-full h-full flex flex-col font-['Poppins']">
+    <div className="w-full h-full flex flex-col font-sans">
       
       {/* HEADER SECTION */}
       <div className="mb-4">
         <div className="flex justify-between items-center mb-2">
           <div>
-            <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Pipeline</h2>
+            <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Pipeline</h2>
             <p className="text-zinc-500 text-[10px] mt-0.5 font-bold uppercase tracking-widest">Client CRM</p>
           </div>
           <button 
@@ -92,7 +92,7 @@ export default function MobileCRM() {
         {/* ADD NEW LEAD BUTTON */}
         <button 
           onClick={() => setIsModalOpen(true)} 
-          className="w-full mt-3 bg-[#1E3A8A] hover:bg-blue-900 text-white py-3.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md active:scale-[0.98]"
+          className="w-full mt-3 bg-[#1E3A8A] hover:bg-blue-900 text-white py-3.5 rounded-xl text-xs font-semibold text-[11px] uppercase tracking-wider transition-all shadow-md active:scale-[0.98]"
         >
           + Add New Inquiry
         </button>
@@ -107,7 +107,7 @@ export default function MobileCRM() {
             <button
               key={col}
               onClick={() => setActiveStatusTab(col)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest shrink-0 transition-all ${
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-[10px] font-semibold text-[11px] uppercase tracking-widest shrink-0 transition-all ${
                 isActive 
                   ? 'bg-zinc-900 text-white shadow-md' 
                   : 'bg-white border border-zinc-200 text-zinc-500'
@@ -137,7 +137,7 @@ export default function MobileCRM() {
               <div key={lead.id} className="bg-white border border-zinc-200 rounded-[1.5rem] p-4 shadow-sm active:scale-[0.99] transition-transform">
                 
                 <div className="flex justify-between items-start mb-1">
-                  <h4 className="font-extrabold text-zinc-900 text-base leading-tight pr-4">{lead.clientName}</h4>
+                  <h4 className="font-bold text-zinc-900 text-base leading-tight pr-4">{lead.clientName}</h4>
                   <button 
                     onClick={() => handleDelete(lead.id)} 
                     className="text-zinc-300 hover:text-red-500 active:text-red-600 p-1 -mr-2 -mt-2 transition-colors"
@@ -159,7 +159,7 @@ export default function MobileCRM() {
                 <div className="flex justify-between items-center gap-3 pt-3 border-t border-zinc-100">
                   <a 
                     href={`tel:${lead.phone}`} 
-                    className="flex-1 text-center py-2.5 bg-green-50 text-green-700 rounded-xl text-[10px] font-black uppercase tracking-widest active:bg-green-100 transition-colors"
+                    className="flex-1 text-center py-2.5 bg-green-50 text-green-700 rounded-xl text-[10px] font-semibold text-[11px] uppercase tracking-widest active:bg-green-100 transition-colors"
                   >
                     📞 Call
                   </a>
@@ -168,7 +168,7 @@ export default function MobileCRM() {
                     <select 
                       value={lead.status} 
                       onChange={(e) => handleStatusMove(lead.id, e.target.value)}
-                      className="w-full appearance-none py-2.5 px-3 bg-zinc-100 text-zinc-700 rounded-xl text-[10px] font-black uppercase tracking-widest border border-zinc-200 focus:outline-none active:bg-zinc-200 text-center"
+                      className="w-full appearance-none py-2.5 px-3 bg-zinc-100 text-zinc-700 rounded-xl text-[10px] font-semibold text-[11px] uppercase tracking-widest border border-zinc-200 focus:outline-none active:bg-zinc-200 text-center"
                     >
                       {columns.map(c => <option key={c} value={c}>Move to {c}</option>)}
                     </select>
@@ -193,7 +193,7 @@ export default function MobileCRM() {
             {/* Modal Header */}
             <div className="px-6 pt-6 pb-4 border-b border-zinc-100 flex justify-between items-center shrink-0">
               <div>
-                <h2 className="text-xl font-extrabold text-zinc-900">New Inquiry</h2>
+                <h2 className="text-xl font-bold text-zinc-900">New Inquiry</h2>
                 <p className="text-zinc-500 text-[9px] font-bold mt-1 uppercase tracking-widest">Add Client details</p>
               </div>
               <button 
@@ -255,7 +255,7 @@ export default function MobileCRM() {
               <button 
                 type="submit" 
                 form="leadForm"
-                className="w-full py-4 bg-[#1E3A8A] text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform"
+                className="w-full py-4 bg-[#1E3A8A] text-white font-semibold text-[11px] rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform"
               >
                 Save Lead
               </button>

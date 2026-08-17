@@ -96,12 +96,12 @@ export default function Subcontractors() {
   const labelClass = "block text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
 
   return (
-    <div className="w-full h-full font-['Poppins'] flex flex-col">
+    <div className="w-full h-full font-sans flex flex-col">
       
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end pb-4 border-b border-zinc-200 mb-6 gap-4 shrink-0">
         <div>
-          <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Subcontractor Ledgers</h2>
+          <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Subcontractor Ledgers</h2>
           <p className="text-zinc-500 text-xs mt-1 font-medium">Track work orders, running account (RA) bills, and advances.</p>
         </div>
         <div className="flex gap-2">
@@ -113,20 +113,20 @@ export default function Subcontractors() {
       {/* KPI STRIP */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6 shrink-0">
         <div className="bg-white border border-zinc-200 p-6 rounded-[2rem] shadow-sm">
-          <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1">Active Work Orders</span>
-          <p className="text-2xl font-black text-zinc-900">{filteredWos.filter(w => w.status !== 'Completed').length}</p>
+          <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Active Work Orders</span>
+          <p className="text-2xl font-semibold text-[11px] text-zinc-900">{filteredWos.filter(w => w.status !== 'Completed').length}</p>
         </div>
         <div className="bg-white border border-zinc-200 p-6 rounded-[2rem] shadow-sm">
-          <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1">Total Contracted Value</span>
-          <p className="text-2xl font-black text-zinc-900">₹ {totalContracted.toLocaleString('en-IN')}</p>
+          <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Total Contracted Value</span>
+          <p className="text-2xl font-semibold text-[11px] text-zinc-900">₹ {totalContracted.toLocaleString('en-IN')}</p>
         </div>
         <div className="bg-emerald-50/70 border border-emerald-100 p-6 rounded-[2rem] shadow-sm">
-          <span className="text-[9px] font-extrabold text-emerald-600 uppercase tracking-widest block mb-1">Total Paid (Advances)</span>
-          <p className="text-2xl font-black text-emerald-700">₹ {totalPaid.toLocaleString('en-IN')}</p>
+          <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest block mb-1">Total Paid (Advances)</span>
+          <p className="text-2xl font-semibold text-[11px] text-emerald-700">₹ {totalPaid.toLocaleString('en-IN')}</p>
         </div>
         <div className="bg-red-50/70 border border-red-100 p-6 rounded-[2rem] shadow-sm">
-          <span className="text-[9px] font-extrabold text-red-600 uppercase tracking-widest block mb-1">Pending Balance To Pay</span>
-          <p className="text-2xl font-black text-red-600">₹ {totalBalance.toLocaleString('en-IN')}</p>
+          <span className="text-[9px] font-bold text-red-600 uppercase tracking-widest block mb-1">Pending Balance To Pay</span>
+          <p className="text-2xl font-semibold text-[11px] text-red-600">₹ {totalBalance.toLocaleString('en-IN')}</p>
         </div>
       </div>
 
@@ -167,21 +167,21 @@ export default function Subcontractors() {
                   <React.Fragment key={wo.id}>
                     <tr className={`hover:bg-zinc-50 transition-colors cursor-pointer ${expandedRows.includes(wo.id) ? 'bg-zinc-50/80' : ''}`} onClick={() => toggleRow(wo.id)}>
                       <td className="py-4 px-4 text-center text-zinc-400 font-bold text-xs">{expandedRows.includes(wo.id) ? 'v' : '>'}</td>
-                      <td className="py-4 px-4 font-extrabold text-zinc-900">{wo.projectName}</td>
+                      <td className="py-4 px-4 font-bold text-zinc-900">{wo.projectName}</td>
                       <td className="py-4 px-4">
                         <div className="flex flex-col">
-                          <span className="font-extrabold text-[#1E3A8A]">{wo.subName}</span>
+                          <span className="font-bold text-[#1E3A8A]">{wo.subName}</span>
                           <span className="text-[10px] text-zinc-500 font-medium mt-0.5">{wo.trade} | {wo.scope}</span>
                         </div>
                       </td>
-                      <td className="py-4 px-4 text-right font-black text-zinc-900">₹{wo.contractValue.toLocaleString('en-IN')}</td>
-                      <td className="py-4 px-4 text-right font-extrabold text-emerald-600">₹{wo.totalPaid.toLocaleString('en-IN')}</td>
-                      <td className="py-4 px-4 text-right font-black text-red-500">₹{wo.balance.toLocaleString('en-IN')}</td>
+                      <td className="py-4 px-4 text-right font-semibold text-[11px] text-zinc-900">₹{wo.contractValue.toLocaleString('en-IN')}</td>
+                      <td className="py-4 px-4 text-right font-bold text-emerald-600">₹{wo.totalPaid.toLocaleString('en-IN')}</td>
+                      <td className="py-4 px-4 text-right font-semibold text-[11px] text-red-500">₹{wo.balance.toLocaleString('en-IN')}</td>
                       <td className="py-4 px-4 text-center" onClick={(e) => e.stopPropagation()}>
                         <select 
                           value={wo.status} 
                           onChange={(e) => handleStatusChange(wo.id, e.target.value)}
-                          className={`px-2.5 py-1 rounded-md text-[9px] font-extrabold uppercase tracking-widest border border-zinc-200 outline-none cursor-pointer appearance-none ${
+                          className={`px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-widest border border-zinc-200 outline-none cursor-pointer appearance-none ${
                             wo.status === 'Completed' ? 'bg-emerald-50 text-emerald-700' :
                             wo.status === 'On Hold' ? 'bg-red-50 text-red-600' :
                             'bg-amber-50 text-amber-700'
@@ -201,7 +201,7 @@ export default function Subcontractors() {
                         <td colSpan="6" className="py-4 pr-6">
                           <div className="bg-white border border-zinc-200 rounded-2xl p-5 shadow-sm">
                             <div className="flex justify-between items-center mb-4 border-b border-zinc-100 pb-3">
-                              <h4 className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest">Payment & Advance History</h4>
+                              <h4 className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Payment & Advance History</h4>
                               <button onClick={() => openPayModal(wo.id)} className="bg-[#1E3A8A] hover:bg-blue-900 text-white px-3.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer">
                                 + Log Payment
                               </button>
@@ -227,7 +227,7 @@ export default function Subcontractors() {
                                       <td className="py-2.5"><span className="bg-zinc-100 px-2 py-0.5 rounded text-[9px] font-bold text-zinc-700">{pay.mode}</span></td>
                                       <td className="py-2.5 text-zinc-500 font-mono text-[10px]">{pay.ref || '-'}</td>
                                       <td className="py-2.5 text-zinc-500 font-medium">{pay.notes || '-'}</td>
-                                      <td className="py-2.5 text-right font-black text-emerald-600">₹{Number(pay.amount).toLocaleString('en-IN')}</td>
+                                      <td className="py-2.5 text-right font-semibold text-[11px] text-emerald-600">₹{Number(pay.amount).toLocaleString('en-IN')}</td>
                                     </tr>
                                   ))}
                                 </tbody>
@@ -249,7 +249,7 @@ export default function Subcontractors() {
       {isSubModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
           <div className="bg-white w-full max-w-sm rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in-95 duration-200">
-            <h2 className="text-xl font-extrabold text-zinc-900 mb-1">Add Subcontractor</h2>
+            <h2 className="text-xl font-bold text-zinc-900 mb-1">Add Subcontractor</h2>
             <p className="text-zinc-500 text-[10px] font-bold mb-6 uppercase tracking-widest">Register agency to master list.</p>
 
             <form onSubmit={handleSaveSub} className="space-y-4">
@@ -288,7 +288,7 @@ export default function Subcontractors() {
       {isWoModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
           <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in-95 duration-200">
-            <h2 className="text-xl font-extrabold text-zinc-900 mb-1">Assign Work Order</h2>
+            <h2 className="text-xl font-bold text-zinc-900 mb-1">Assign Work Order</h2>
             <p className="text-zinc-500 text-[10px] font-bold mb-6 uppercase tracking-widest">Lock in contract value for site.</p>
 
             <form onSubmit={handleSaveWo} className="space-y-4">
@@ -327,7 +327,7 @@ export default function Subcontractors() {
       {isPayModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
           <div className="bg-white w-full max-w-sm rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in-95 duration-200">
-            <h2 className="text-xl font-extrabold text-zinc-900 mb-1">Log Payment / Advance</h2>
+            <h2 className="text-xl font-bold text-zinc-900 mb-1">Log Payment / Advance</h2>
             <p className="text-zinc-500 text-[10px] font-bold mb-6 uppercase tracking-widest">Funds transferred to subcontractor.</p>
 
             <form onSubmit={handleSavePay} className="space-y-4">

@@ -97,18 +97,18 @@ export default function MobileEmployeeAttendance({ companySettings = {} }) {
   const labelClass = "block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
 
   return (
-    <div className="w-full h-full flex flex-col font-['Poppins']">
+    <div className="w-full h-full flex flex-col font-sans">
       
       {/* HEADER SECTION */}
       <div className="mb-3 shrink-0">
         <div className="flex justify-between items-center mb-2">
           <div>
-            <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Staff & Attendance</h2>
+            <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Staff & Attendance</h2>
             <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-0.5">Workforce & Payroll</p>
           </div>
           <button 
             onClick={() => setCurrentView('register')}
-            className="bg-amber-500 hover:bg-amber-400 text-zinc-900 font-black px-3.5 py-2 rounded-xl text-[10px] uppercase tracking-wider transition-all shadow-sm active:scale-95"
+            className="bg-amber-500 hover:bg-amber-400 text-zinc-900 font-semibold text-[11px] px-3.5 py-2 rounded-xl text-[10px] uppercase tracking-wider transition-all shadow-sm active:scale-95"
           >
             + Register
           </button>
@@ -118,7 +118,7 @@ export default function MobileEmployeeAttendance({ companySettings = {} }) {
         <div className="flex bg-zinc-200/80 p-1 rounded-2xl gap-1">
           <button
             onClick={() => setCurrentView('attendance')}
-            className={`flex-1 py-2 rounded-xl text-[10px] font-extrabold uppercase tracking-wider transition-all ${
+            className={`flex-1 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all ${
               currentView === 'attendance' ? 'bg-white text-[#1E3A8A] shadow-sm' : 'text-zinc-500'
             }`}
           >
@@ -126,7 +126,7 @@ export default function MobileEmployeeAttendance({ companySettings = {} }) {
           </button>
           <button
             onClick={() => setCurrentView('monthly')}
-            className={`flex-1 py-2 rounded-xl text-[10px] font-extrabold uppercase tracking-wider transition-all ${
+            className={`flex-1 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all ${
               currentView === 'monthly' ? 'bg-white text-[#1E3A8A] shadow-sm' : 'text-zinc-500'
             }`}
           >
@@ -134,7 +134,7 @@ export default function MobileEmployeeAttendance({ companySettings = {} }) {
           </button>
           <button
             onClick={() => setCurrentView('directory')}
-            className={`flex-1 py-2 rounded-xl text-[10px] font-extrabold uppercase tracking-wider transition-all ${
+            className={`flex-1 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all ${
               currentView === 'directory' ? 'bg-white text-[#1E3A8A] shadow-sm' : 'text-zinc-500'
             }`}
           >
@@ -150,20 +150,20 @@ export default function MobileEmployeeAttendance({ companySettings = {} }) {
           {/* STATS STRIP */}
           <div className="grid grid-cols-4 gap-2 mb-3 shrink-0">
             <div className="bg-white p-2.5 rounded-2xl border border-zinc-200 shadow-sm text-center">
-              <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest block">Total</span>
-              <p className="text-lg font-black text-zinc-900">{totalEmployees}</p>
+              <span className="text-[8px] font-semibold text-[11px] text-zinc-400 uppercase tracking-widest block">Total</span>
+              <p className="text-lg font-semibold text-[11px] text-zinc-900">{totalEmployees}</p>
             </div>
             <div className="bg-emerald-50 p-2.5 rounded-2xl border border-emerald-100 shadow-sm text-center">
-              <span className="text-[8px] font-black text-emerald-600 uppercase tracking-widest block">Present</span>
-              <p className="text-lg font-black text-emerald-700">{presentCount}</p>
+              <span className="text-[8px] font-semibold text-[11px] text-emerald-600 uppercase tracking-widest block">Present</span>
+              <p className="text-lg font-semibold text-[11px] text-emerald-700">{presentCount}</p>
             </div>
             <div className="bg-amber-50 p-2.5 rounded-2xl border border-amber-100 shadow-sm text-center">
-              <span className="text-[8px] font-black text-amber-600 uppercase tracking-widest block">Half</span>
-              <p className="text-lg font-black text-amber-700">{halfDayCount}</p>
+              <span className="text-[8px] font-semibold text-[11px] text-amber-600 uppercase tracking-widest block">Half</span>
+              <p className="text-lg font-semibold text-[11px] text-amber-700">{halfDayCount}</p>
             </div>
             <div className="bg-red-50 p-2.5 rounded-2xl border border-red-100 shadow-sm text-center">
-              <span className="text-[8px] font-black text-red-600 uppercase tracking-widest block">Absent</span>
-              <p className="text-lg font-black text-red-700">{absentCount}</p>
+              <span className="text-[8px] font-semibold text-[11px] text-red-600 uppercase tracking-widest block">Absent</span>
+              <p className="text-lg font-semibold text-[11px] text-red-700">{absentCount}</p>
             </div>
           </div>
 
@@ -182,10 +182,10 @@ export default function MobileEmployeeAttendance({ companySettings = {} }) {
                   <div key={emp.id} className="bg-white border border-zinc-200 rounded-[1.5rem] p-4 shadow-sm space-y-3">
                     <div className="flex justify-between items-start">
                       <div>
-                        <h4 className="font-extrabold text-zinc-900 text-sm">{emp.fullName}</h4>
+                        <h4 className="font-bold text-zinc-900 text-sm">{emp.fullName}</h4>
                         <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{emp.role} • {emp.empId}</p>
                       </div>
-                      <span className="text-[9px] font-black px-2.5 py-1 rounded-full bg-zinc-100 text-zinc-700">
+                      <span className="text-[9px] font-semibold text-[11px] px-2.5 py-1 rounded-full bg-zinc-100 text-zinc-700">
                         {emp.payType}
                       </span>
                     </div>
@@ -201,7 +201,7 @@ export default function MobileEmployeeAttendance({ companySettings = {} }) {
                         <button
                           key={st.label}
                           onClick={() => handleAttendanceChange(emp.id, st.label)}
-                          className={`py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all active:scale-95 ${
+                          className={`py-2.5 rounded-xl text-[9px] font-semibold text-[11px] uppercase tracking-wider transition-all active:scale-95 ${
                             currentStatus === st.label
                               ? `${st.color} shadow-md`
                               : 'bg-zinc-100 text-zinc-500'
@@ -226,12 +226,12 @@ export default function MobileEmployeeAttendance({ companySettings = {} }) {
           
           {/* MONTH / YEAR PICKER */}
           <div className="bg-white p-3 rounded-2xl border border-zinc-200 shadow-sm flex items-center justify-between shrink-0">
-            <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Select Month:</span>
+            <span className="text-[10px] font-semibold text-[11px] text-zinc-400 uppercase tracking-widest">Select Month:</span>
             <div className="flex gap-2">
               <select 
                 value={viewMonth} 
                 onChange={e => setViewMonth(Number(e.target.value))}
-                className="bg-zinc-100 font-extrabold text-xs text-zinc-800 py-1.5 px-3 rounded-xl outline-none"
+                className="bg-zinc-100 font-bold text-xs text-zinc-800 py-1.5 px-3 rounded-xl outline-none"
               >
                 {Array.from({length: 12}, (_, i) => (
                   <option key={i+1} value={i+1}>{new Date(2000, i).toLocaleString('en-US', { month: 'short' })}</option>
@@ -240,7 +240,7 @@ export default function MobileEmployeeAttendance({ companySettings = {} }) {
               <select 
                 value={viewYear} 
                 onChange={e => setViewYear(Number(e.target.value))}
-                className="bg-zinc-100 font-extrabold text-xs text-zinc-800 py-1.5 px-3 rounded-xl outline-none"
+                className="bg-zinc-100 font-bold text-xs text-zinc-800 py-1.5 px-3 rounded-xl outline-none"
               >
                 <option value={currentDate.getFullYear() - 1}>{currentDate.getFullYear() - 1}</option>
                 <option value={currentDate.getFullYear()}>{currentDate.getFullYear()}</option>
@@ -263,17 +263,17 @@ export default function MobileEmployeeAttendance({ companySettings = {} }) {
               return (
                 <div key={emp.id} className="bg-white border border-zinc-200 rounded-[1.5rem] p-4 shadow-sm flex justify-between items-center">
                   <div>
-                    <h4 className="font-extrabold text-zinc-900 text-sm">{emp.fullName}</h4>
+                    <h4 className="font-bold text-zinc-900 text-sm">{emp.fullName}</h4>
                     <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-0.5">{emp.role}</p>
                     <div className="flex gap-2 mt-2">
-                      <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">P: {pCount}</span>
-                      <span className="text-[9px] font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md">H: {hCount}</span>
-                      <span className="text-[9px] font-black text-red-600 bg-red-50 px-2 py-0.5 rounded-md">A: {aCount}</span>
+                      <span className="text-[9px] font-semibold text-[11px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">P: {pCount}</span>
+                      <span className="text-[9px] font-semibold text-[11px] text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md">H: {hCount}</span>
+                      <span className="text-[9px] font-semibold text-[11px] text-red-600 bg-red-50 px-2 py-0.5 rounded-md">A: {aCount}</span>
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className="text-lg font-black text-[#1E3A8A] block">{totalPayableDays}</span>
-                    <span className="text-[8px] font-extrabold text-zinc-400 uppercase tracking-widest">Payable Days</span>
+                    <span className="text-lg font-semibold text-[11px] text-[#1E3A8A] block">{totalPayableDays}</span>
+                    <span className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest">Payable Days</span>
                   </div>
                 </div>
               );
@@ -291,17 +291,17 @@ export default function MobileEmployeeAttendance({ companySettings = {} }) {
           ) : employees.map(emp => (
             <div key={emp.id} className="bg-white border border-zinc-200 rounded-[1.5rem] p-4 shadow-sm flex justify-between items-center">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#1E3A8A] text-amber-400 flex items-center justify-center font-black text-sm shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-[#1E3A8A] text-amber-400 flex items-center justify-center font-semibold text-[11px] text-sm shrink-0">
                   {emp.fullName.substring(0, 2).toUpperCase()}
                 </div>
                 <div>
-                  <h4 className="font-extrabold text-zinc-900 text-sm">{emp.fullName}</h4>
+                  <h4 className="font-bold text-zinc-900 text-sm">{emp.fullName}</h4>
                   <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{emp.phone}</p>
                 </div>
               </div>
               <button 
                 onClick={() => { setSelectedEmp(emp); setCurrentView('view_emp'); }}
-                className="bg-blue-50 text-[#1E3A8A] px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider active:scale-95 transition-transform"
+                className="bg-blue-50 text-[#1E3A8A] px-3 py-2 rounded-xl text-[10px] font-semibold text-[11px] uppercase tracking-wider active:scale-95 transition-transform"
               >
                 Card
               </button>
@@ -314,7 +314,7 @@ export default function MobileEmployeeAttendance({ companySettings = {} }) {
       {currentView === 'register' && (
         <div className="flex-1 overflow-y-auto bg-white border border-zinc-200 rounded-[2rem] p-5 shadow-sm">
           <div className="flex justify-between items-center mb-4 pb-3 border-b border-zinc-100">
-            <h3 className="font-extrabold text-zinc-900 text-base">New Staff Onboarding</h3>
+            <h3 className="font-bold text-zinc-900 text-base">New Staff Onboarding</h3>
             <button onClick={() => setCurrentView('attendance')} className="text-zinc-400 font-bold text-sm">✕</button>
           </div>
 
@@ -360,7 +360,7 @@ export default function MobileEmployeeAttendance({ companySettings = {} }) {
               <input type="text" placeholder="ID / Reference Number" value={newEmp.idNumber} onChange={e => setNewEmp({...newEmp, idNumber: e.target.value})} className={inputClass} />
             </div>
 
-            <button type="submit" className="w-full py-4 bg-[#1E3A8A] text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform mt-4">
+            <button type="submit" className="w-full py-4 bg-[#1E3A8A] text-white font-semibold text-[11px] rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform mt-4">
               Complete Onboarding
             </button>
           </form>
@@ -373,11 +373,11 @@ export default function MobileEmployeeAttendance({ companySettings = {} }) {
           <div>
             <div className="flex justify-between items-start mb-4 pb-3 border-b border-zinc-100">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-[#1E3A8A] text-amber-400 flex items-center justify-center font-black text-lg">
+                <div className="w-12 h-12 rounded-2xl bg-[#1E3A8A] text-amber-400 flex items-center justify-center font-semibold text-[11px] text-lg">
                   {selectedEmp.fullName.substring(0, 2).toUpperCase()}
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-zinc-900 text-base">{selectedEmp.fullName}</h3>
+                  <h3 className="font-bold text-zinc-900 text-base">{selectedEmp.fullName}</h3>
                   <p className="text-[10px] font-bold text-amber-600">{selectedEmp.role} • {selectedEmp.empId}</p>
                 </div>
               </div>
@@ -392,7 +392,7 @@ export default function MobileEmployeeAttendance({ companySettings = {} }) {
             </div>
           </div>
 
-          <button onClick={() => setCurrentView('directory')} className="w-full py-3.5 bg-[#1E3A8A] text-white font-black rounded-xl text-xs uppercase tracking-wider mt-6">
+          <button onClick={() => setCurrentView('directory')} className="w-full py-3.5 bg-[#1E3A8A] text-white font-semibold text-[11px] rounded-xl text-xs uppercase tracking-wider mt-6">
             Back to Directory
           </button>
         </div>

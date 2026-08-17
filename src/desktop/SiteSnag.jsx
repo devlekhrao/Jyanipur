@@ -96,12 +96,12 @@ export default function SiteSnag({ companySettings = {} }) {
   const labelClass = "block text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
 
   return (
-    <div className="w-full h-full font-['Poppins'] flex flex-col">
+    <div className="w-full h-full font-sans flex flex-col">
       
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end pb-4 border-b border-zinc-200 mb-6 gap-4 shrink-0 print:hidden">
         <div>
-          <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Site Snag & Quality Punch List</h2>
+          <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Site Snag & Quality Punch List</h2>
           <p className="text-zinc-500 text-xs mt-1 font-medium">Log handover defects, assign subcontractors, and track resolution.</p>
         </div>
         <div className="flex gap-2">
@@ -117,15 +117,15 @@ export default function SiteSnag({ companySettings = {} }) {
       {/* KPI Counters */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 shrink-0 print:hidden">
         <div className="bg-red-50/70 border border-red-200 p-6 rounded-[2rem] flex justify-between items-center shadow-sm">
-          <div><span className="text-[9px] font-extrabold text-red-500 uppercase tracking-widest block">Open Snags</span><p className="text-2xl font-black text-red-700">{openCount}</p></div>
+          <div><span className="text-[9px] font-bold text-red-500 uppercase tracking-widest block">Open Snags</span><p className="text-2xl font-semibold text-[11px] text-red-700">{openCount}</p></div>
           <span className="text-2xl">⚠️</span>
         </div>
         <div className="bg-amber-50/70 border border-amber-200 p-6 rounded-[2rem] flex justify-between items-center shadow-sm">
-          <div><span className="text-[9px] font-extrabold text-amber-600 uppercase tracking-widest block">In Progress</span><p className="text-2xl font-black text-amber-700">{inProgressCount}</p></div>
+          <div><span className="text-[9px] font-bold text-amber-600 uppercase tracking-widest block">In Progress</span><p className="text-2xl font-semibold text-[11px] text-amber-700">{inProgressCount}</p></div>
           <span className="text-2xl">🛠️</span>
         </div>
         <div className="bg-emerald-50/70 border border-emerald-200 p-6 rounded-[2rem] flex justify-between items-center shadow-sm">
-          <div><span className="text-[9px] font-extrabold text-emerald-600 uppercase tracking-widest block">Resolved Handovers</span><p className="text-2xl font-black text-emerald-700">{resolvedCount}</p></div>
+          <div><span className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest block">Resolved Handovers</span><p className="text-2xl font-semibold text-[11px] text-emerald-700">{resolvedCount}</p></div>
           <span className="text-2xl">✅</span>
         </div>
       </div>
@@ -147,7 +147,7 @@ export default function SiteSnag({ companySettings = {} }) {
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider">Site:</span>
+          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Site:</span>
           <select value={selectedProject} onChange={e => setSelectedProject(e.target.value)} className="bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs font-bold text-zinc-800 outline-none cursor-pointer shadow-sm">
             <option value="All">All Sites</option>
             {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -170,13 +170,13 @@ export default function SiteSnag({ companySettings = {} }) {
               
               <div>
                 <div className="flex justify-between items-start mb-2">
-                  <span className="text-[9px] font-extrabold text-[#1E3A8A] uppercase tracking-widest">{snag.projectName || 'General Site'}</span>
-                  <span className={`text-[8px] font-extrabold uppercase px-2 py-0.5 rounded-md ${snag.priority === 'High' ? 'bg-red-100 text-red-600' : 'bg-zinc-100 text-zinc-600'}`}>
+                  <span className="text-[9px] font-bold text-[#1E3A8A] uppercase tracking-widest">{snag.projectName || 'General Site'}</span>
+                  <span className={`text-[8px] font-bold uppercase px-2 py-0.5 rounded-md ${snag.priority === 'High' ? 'bg-red-100 text-red-600' : 'bg-zinc-100 text-zinc-600'}`}>
                     {snag.priority} Priority
                   </span>
                 </div>
 
-                <h4 className="font-extrabold text-zinc-900 text-base mb-1">{snag.title}</h4>
+                <h4 className="font-bold text-zinc-900 text-base mb-1">{snag.title}</h4>
                 {snag.description && <p className="text-xs text-zinc-500 mb-3 leading-relaxed">{snag.description}</p>}
 
                 {snag.photoUrl && (
@@ -200,7 +200,7 @@ export default function SiteSnag({ companySettings = {} }) {
                   <select 
                     value={snag.status} 
                     onChange={e => handleStatusChange(snag.id, e.target.value)} 
-                    className={`text-[9px] font-extrabold uppercase tracking-wider px-2 py-1.5 rounded-xl border outline-none cursor-pointer ${
+                    className={`text-[9px] font-bold uppercase tracking-wider px-2 py-1.5 rounded-xl border outline-none cursor-pointer ${
                       snag.status === 'Resolved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
                       snag.status === 'In Progress' ? 'bg-amber-50 text-amber-700 border-amber-200' :
                       'bg-red-50 text-red-700 border-red-200'
@@ -221,7 +221,7 @@ export default function SiteSnag({ companySettings = {} }) {
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
           <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in-95 duration-200">
-            <h2 className="text-xl font-extrabold text-zinc-900 mb-1">Report Quality Snag</h2>
+            <h2 className="text-xl font-bold text-zinc-900 mb-1">Report Quality Snag</h2>
             <p className="text-zinc-500 text-[10px] font-bold mb-6 uppercase tracking-widest">Handover Punch List</p>
 
             <form onSubmit={handleSave} className="space-y-4">

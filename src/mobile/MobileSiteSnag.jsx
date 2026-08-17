@@ -96,18 +96,18 @@ export default function MobileSiteSnag({ companySettings = {} }) {
   const labelClass = "block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
 
   return (
-    <div className="w-full h-full flex flex-col font-['Poppins']">
+    <div className="w-full h-full flex flex-col font-sans">
       
       {/* HEADER SECTION */}
       <div className="mb-3 shrink-0">
         <div className="flex justify-between items-center mb-2">
           <div>
-            <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Site Snag List</h2>
+            <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Site Snag List</h2>
             <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-0.5">Defects & Quality Control</p>
           </div>
           <button 
             onClick={() => setIsModalOpen(true)}
-            className="bg-[#1E3A8A] hover:bg-blue-900 text-white font-black px-3.5 py-2.5 rounded-xl text-[10px] uppercase tracking-wider transition-all shadow-md active:scale-95"
+            className="bg-[#1E3A8A] hover:bg-blue-900 text-white font-semibold text-[11px] px-3.5 py-2.5 rounded-xl text-[10px] uppercase tracking-wider transition-all shadow-md active:scale-95"
           >
             + Add Snag
           </button>
@@ -118,7 +118,7 @@ export default function MobileSiteSnag({ companySettings = {} }) {
           <select 
             value={selectedProject} 
             onChange={e => setSelectedProject(e.target.value)}
-            className="w-full bg-white border border-zinc-200 rounded-2xl px-3.5 py-2.5 text-xs font-extrabold text-zinc-800 outline-none shadow-sm appearance-none pr-8"
+            className="w-full bg-white border border-zinc-200 rounded-2xl px-3.5 py-2.5 text-xs font-bold text-zinc-800 outline-none shadow-sm appearance-none pr-8"
           >
             <option value="All">All Sites Filter</option>
             {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -132,7 +132,7 @@ export default function MobileSiteSnag({ companySettings = {} }) {
             <button
               key={tab}
               onClick={() => setActiveFilter(tab)}
-              className={`flex-1 py-2 rounded-xl text-[9px] font-extrabold uppercase tracking-wider transition-all truncate ${
+              className={`flex-1 py-2 rounded-xl text-[9px] font-bold uppercase tracking-wider transition-all truncate ${
                 activeFilter === tab ? 'bg-white text-[#1E3A8A] shadow-sm' : 'text-zinc-500'
               }`}
             >
@@ -145,18 +145,18 @@ export default function MobileSiteSnag({ companySettings = {} }) {
       {/* KPI METRICS STRIP */}
       <div className="grid grid-cols-3 gap-2 mb-3 shrink-0">
         <div className="bg-red-50 p-2.5 rounded-2xl border border-red-100 shadow-sm text-center">
-          <span className="text-[8px] font-black text-red-500 uppercase tracking-widest block">Open</span>
-          <p className="text-base font-black text-red-700 mt-0.5">{openCount}</p>
+          <span className="text-[8px] font-semibold text-[11px] text-red-500 uppercase tracking-widest block">Open</span>
+          <p className="text-base font-semibold text-[11px] text-red-700 mt-0.5">{openCount}</p>
         </div>
 
         <div className="bg-amber-50 p-2.5 rounded-2xl border border-amber-100 shadow-sm text-center">
-          <span className="text-[8px] font-black text-amber-600 uppercase tracking-widest block">In Progress</span>
-          <p className="text-base font-black text-amber-700 mt-0.5">{inProgressCount}</p>
+          <span className="text-[8px] font-semibold text-[11px] text-amber-600 uppercase tracking-widest block">In Progress</span>
+          <p className="text-base font-semibold text-[11px] text-amber-700 mt-0.5">{inProgressCount}</p>
         </div>
 
         <div className="bg-emerald-50 p-2.5 rounded-2xl border border-emerald-100 shadow-sm text-center">
-          <span className="text-[8px] font-black text-emerald-600 uppercase tracking-widest block">Resolved</span>
-          <p className="text-base font-black text-emerald-700 mt-0.5">{resolvedCount}</p>
+          <span className="text-[8px] font-semibold text-[11px] text-emerald-600 uppercase tracking-widest block">Resolved</span>
+          <p className="text-base font-semibold text-[11px] text-emerald-700 mt-0.5">{resolvedCount}</p>
         </div>
       </div>
 
@@ -178,14 +178,14 @@ export default function MobileSiteSnag({ companySettings = {} }) {
               {/* CARD HEADER */}
               <div className="flex justify-between items-start">
                 <div>
-                  <span className="text-[9px] font-extrabold text-[#1E3A8A] uppercase tracking-wider block">
+                  <span className="text-[9px] font-bold text-[#1E3A8A] uppercase tracking-wider block">
                     {snag.projectName || 'General Site'}
                   </span>
-                  <h4 className="font-extrabold text-zinc-900 text-sm mt-0.5">{snag.title}</h4>
+                  <h4 className="font-bold text-zinc-900 text-sm mt-0.5">{snag.title}</h4>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded ${
+                  <span className={`text-[8px] font-semibold text-[11px] uppercase px-2 py-0.5 rounded ${
                     snag.priority === 'High' ? 'bg-red-100 text-red-600' : 'bg-zinc-100 text-zinc-600'
                   }`}>
                     {snag.priority}
@@ -221,7 +221,7 @@ export default function MobileSiteSnag({ companySettings = {} }) {
                 <div className="flex items-center gap-1.5">
                   <button 
                     onClick={() => notifySubcontractor(snag)}
-                    className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-xl text-[9px] font-black uppercase tracking-wider active:scale-95 transition-transform"
+                    className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-xl text-[9px] font-semibold text-[11px] uppercase tracking-wider active:scale-95 transition-transform"
                   >
                     💬 WA
                   </button>
@@ -230,7 +230,7 @@ export default function MobileSiteSnag({ companySettings = {} }) {
                     <select 
                       value={snag.status} 
                       onChange={e => handleStatusChange(snag.id, e.target.value)}
-                      className={`text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded-xl border outline-none appearance-none pr-5 ${
+                      className={`text-[9px] font-semibold text-[11px] uppercase tracking-wider px-2 py-1 rounded-xl border outline-none appearance-none pr-5 ${
                         snag.status === 'Resolved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
                         snag.status === 'In Progress' ? 'bg-amber-50 text-amber-700 border-amber-200' :
                         'bg-red-50 text-red-700 border-red-200'
@@ -258,7 +258,7 @@ export default function MobileSiteSnag({ companySettings = {} }) {
             {/* Modal Header */}
             <div className="px-6 pt-6 pb-4 border-b border-zinc-100 flex justify-between items-center shrink-0">
               <div>
-                <h2 className="text-xl font-extrabold text-zinc-900">Report Defect / Snag</h2>
+                <h2 className="text-xl font-bold text-zinc-900">Report Defect / Snag</h2>
                 <p className="text-zinc-500 text-[9px] font-bold uppercase tracking-widest mt-0.5">Quality Control Log</p>
               </div>
               <button 
@@ -362,7 +362,7 @@ export default function MobileSiteSnag({ companySettings = {} }) {
               <button 
                 type="submit" 
                 form="snagForm"
-                className="w-full py-4 bg-[#1E3A8A] text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform"
+                className="w-full py-4 bg-[#1E3A8A] text-white font-semibold text-[11px] rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform"
               >
                 Save Quality Defect
               </button>

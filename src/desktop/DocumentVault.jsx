@@ -76,12 +76,12 @@ export default function DocumentVault() {
   const labelClass = "block text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
 
   return (
-    <div className="w-full h-full font-['Poppins'] flex flex-col">
+    <div className="w-full h-full font-sans flex flex-col">
       
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end pb-4 border-b border-zinc-200 mb-6 gap-4 shrink-0">
         <div>
-          <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Document Vault & Drawings Drive</h2>
+          <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Document Vault & Drawings Drive</h2>
           <p className="text-zinc-500 text-xs mt-1 font-medium">Store 2D layout drawings, 3D renders, contracts, and site approvals in one place.</p>
         </div>
         <button onClick={() => setIsModalOpen(true)} className="bg-[#1E3A8A] hover:bg-blue-900 text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer">
@@ -106,7 +106,7 @@ export default function DocumentVault() {
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-extrabold text-zinc-500 uppercase tracking-wider">Project:</span>
+          <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Project:</span>
           <select 
             value={selectedProject} 
             onChange={e => setSelectedProject(e.target.value)} 
@@ -140,7 +140,7 @@ export default function DocumentVault() {
                   </div>
                 </div>
 
-                <h4 className="font-extrabold text-zinc-900 text-sm mb-1 line-clamp-2">{doc.documentName}</h4>
+                <h4 className="font-bold text-zinc-900 text-sm mb-1 line-clamp-2">{doc.documentName}</h4>
                 {doc.notes && <p className="text-xs text-zinc-500 mb-4 line-clamp-2">{doc.notes}</p>}
               </div>
 
@@ -159,7 +159,7 @@ export default function DocumentVault() {
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
           <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in-95 duration-200">
-            <h2 className="text-xl font-extrabold text-zinc-900 mb-1">Add to Document Vault</h2>
+            <h2 className="text-xl font-bold text-zinc-900 mb-1">Add to Document Vault</h2>
             <p className="text-zinc-500 text-[10px] font-bold mb-6 uppercase tracking-widest">Store project drawings & approvals</p>
 
             <form onSubmit={handleSave} className="space-y-4">

@@ -200,18 +200,18 @@ export default function MobilePurchaseOrders({ companySettings = {}, updateDirty
   // LIST VIEW
   if (currentView === 'list') {
     return (
-      <div className="w-full h-full flex flex-col font-['Poppins']">
+      <div className="w-full h-full flex flex-col font-sans">
         
         {/* HEADER SECTION */}
         <div className="mb-3 shrink-0">
           <div className="flex justify-between items-center mb-2">
             <div>
-              <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Purchase Orders</h2>
+              <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Purchase Orders</h2>
               <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-0.5">Procurement & Vendors</p>
             </div>
             <button 
               onClick={() => { handleClear(false); setCurrentView('form'); }}
-              className="bg-[#1E3A8A] hover:bg-blue-900 text-white font-black px-3.5 py-2.5 rounded-xl text-[10px] uppercase tracking-wider transition-all shadow-md active:scale-95"
+              className="bg-[#1E3A8A] hover:bg-blue-900 text-white font-semibold text-[11px] px-3.5 py-2.5 rounded-xl text-[10px] uppercase tracking-wider transition-all shadow-md active:scale-95"
             >
               + Create PO
             </button>
@@ -236,15 +236,15 @@ export default function MobilePurchaseOrders({ companySettings = {}, updateDirty
                 <div className="flex justify-between items-start">
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-extrabold text-[#1E3A8A] text-sm">{po.poNo}</span>
+                      <span className="font-bold text-[#1E3A8A] text-sm">{po.poNo}</span>
                       {po.isCancelled && (
-                        <span className="bg-red-100 text-red-600 text-[8px] font-black px-2 py-0.5 rounded uppercase">Cancelled</span>
+                        <span className="bg-red-100 text-red-600 text-[8px] font-semibold text-[11px] px-2 py-0.5 rounded uppercase">Cancelled</span>
                       )}
                     </div>
-                    <h4 className="font-extrabold text-zinc-900 text-sm mt-0.5">{po.vendorName}</h4>
+                    <h4 className="font-bold text-zinc-900 text-sm mt-0.5">{po.vendorName}</h4>
                     <p className="text-[10px] text-zinc-400 font-bold">{po.projectName || 'General Site'}</p>
                   </div>
-                  <p className="text-base font-black text-emerald-600">{po.amount}</p>
+                  <p className="text-base font-semibold text-[11px] text-emerald-600">{po.amount}</p>
                 </div>
 
                 <div className="flex justify-between items-center pt-2 border-t border-zinc-100">
@@ -252,13 +252,13 @@ export default function MobilePurchaseOrders({ companySettings = {}, updateDirty
                   <div className="flex gap-1.5">
                     <button 
                       onClick={() => handleSendWhatsApp(po)}
-                      className="bg-emerald-50 text-emerald-700 px-2.5 py-1.5 rounded-xl text-[10px] font-black uppercase active:scale-95 transition-transform"
+                      className="bg-emerald-50 text-emerald-700 px-2.5 py-1.5 rounded-xl text-[10px] font-semibold text-[11px] uppercase active:scale-95 transition-transform"
                     >
                       💬 WA
                     </button>
                     <button 
                       onClick={() => handleEdit(po)} 
-                      className="bg-blue-50 text-[#1E3A8A] px-3 py-1.5 rounded-xl text-[10px] font-black uppercase active:scale-95 transition-transform"
+                      className="bg-blue-50 text-[#1E3A8A] px-3 py-1.5 rounded-xl text-[10px] font-semibold text-[11px] uppercase active:scale-95 transition-transform"
                     >
                       Edit
                     </button>
@@ -275,12 +275,12 @@ export default function MobilePurchaseOrders({ companySettings = {}, updateDirty
 
   // CREATE / EDIT FORM VIEW
   return (
-    <div className="w-full h-full flex flex-col font-['Poppins']">
+    <div className="w-full h-full flex flex-col font-sans">
       
       {/* HEADER BAR */}
       <div className="mb-3 shrink-0 flex justify-between items-center border-b border-zinc-100 pb-2">
         <div>
-          <h2 className="text-xl font-extrabold text-zinc-900">
+          <h2 className="text-xl font-bold text-zinc-900">
             {editingId ? `Edit ${poDetails.poNo}` : 'New Purchase Order'}
           </h2>
           <p className="text-zinc-500 text-[9px] font-bold uppercase tracking-widest">Supplier Requisition</p>
@@ -298,7 +298,7 @@ export default function MobilePurchaseOrders({ companySettings = {}, updateDirty
         
         {/* VENDOR & PO DETAILS SHEET */}
         <div className="bg-white border border-zinc-200 rounded-[1.5rem] p-4 shadow-sm space-y-3">
-          <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">1. Supplier & Order Info</h3>
+          <h3 className="text-[10px] font-semibold text-[11px] text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">1. Supplier & Order Info</h3>
 
           <div>
             <label className={labelClass}>Vendor / Supplier Name <span className="text-red-500">*</span></label>
@@ -336,8 +336,8 @@ export default function MobilePurchaseOrders({ companySettings = {}, updateDirty
         {/* MATERIAL ITEMS SECTION */}
         <div className="bg-white border border-zinc-200 rounded-[1.5rem] p-4 shadow-sm space-y-3">
           <div className="flex justify-between items-center border-b border-zinc-100 pb-1">
-            <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">2. Procurement Items</h3>
-            <button onClick={addItem} className="text-[10px] font-black text-[#1E3A8A] bg-blue-50 px-2.5 py-1 rounded-lg uppercase">+ Add Item</button>
+            <h3 className="text-[10px] font-semibold text-[11px] text-zinc-400 uppercase tracking-widest">2. Procurement Items</h3>
+            <button onClick={addItem} className="text-[10px] font-semibold text-[11px] text-[#1E3A8A] bg-blue-50 px-2.5 py-1 rounded-lg uppercase">+ Add Item</button>
           </div>
 
           {items.map((item, index) => {
@@ -346,7 +346,7 @@ export default function MobilePurchaseOrders({ companySettings = {}, updateDirty
               <div key={item.id} className="bg-zinc-50 border border-zinc-200 rounded-2xl p-3 space-y-3 relative">
                 <button onClick={() => removeItem(item.id)} className="absolute top-2 right-2 text-zinc-300 hover:text-red-500 font-bold text-xs">✕</button>
 
-                <span className="text-[9px] font-black text-zinc-400 uppercase">Item #{index + 1}</span>
+                <span className="text-[9px] font-semibold text-[11px] text-zinc-400 uppercase">Item #{index + 1}</span>
 
                 <div>
                   <label className={labelClass}>Material Description</label>
@@ -390,7 +390,7 @@ export default function MobilePurchaseOrders({ companySettings = {}, updateDirty
                   </div>
                   <div>
                     <label className={labelClass}>Total (₹)</label>
-                    <div className="h-[46px] bg-zinc-200/60 rounded-xl px-2 flex items-center font-black text-zinc-900 text-xs">
+                    <div className="h-[46px] bg-zinc-200/60 rounded-xl px-2 flex items-center font-semibold text-[11px] text-zinc-900 text-xs">
                       ₹ {rowCalc.totalAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
                     </div>
                   </div>
@@ -410,7 +410,7 @@ export default function MobilePurchaseOrders({ companySettings = {}, updateDirty
             <span>Estimated Tax:</span>
             <span className="text-white font-bold">₹ {totals.totalTax.toLocaleString('en-IN')}</span>
           </div>
-          <div className="flex justify-between text-base font-black text-amber-400 pt-2 border-t border-blue-800">
+          <div className="flex justify-between text-base font-semibold text-[11px] text-amber-400 pt-2 border-t border-blue-800">
             <span>Grand Total:</span>
             <span>₹ {totals.grandTotal.toLocaleString('en-IN')}</span>
           </div>
@@ -422,7 +422,7 @@ export default function MobilePurchaseOrders({ companySettings = {}, updateDirty
       <div className="absolute bottom-0 left-0 right-0 p-4 pb-4 bg-white border-t border-zinc-200 shadow-lg">
         <button 
           onClick={handleSaveOnly}
-          className="w-full py-4 bg-[#1E3A8A] text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-md active:scale-95 transition-transform"
+          className="w-full py-4 bg-[#1E3A8A] text-white font-semibold text-[11px] rounded-xl text-xs uppercase tracking-wider shadow-md active:scale-95 transition-transform"
         >
           Save Purchase Order
         </button>

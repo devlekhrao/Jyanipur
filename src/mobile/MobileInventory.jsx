@@ -102,26 +102,26 @@ export default function MobileInventory() {
   const outOfStockCount = items.filter(i => i.totalStock === 0).length;
 
   return (
-    <div className="w-full h-full flex flex-col font-['Poppins']">
+    <div className="w-full h-full flex flex-col font-sans">
       
       {/* HEADER SECTION */}
       <div className="mb-3 shrink-0">
         <div className="flex justify-between items-center mb-2">
           <div>
-            <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Godown & Stock</h2>
+            <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Godown & Stock</h2>
             <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-0.5">Material Dispatches</p>
           </div>
           
           <div className="flex gap-1.5">
             <button 
               onClick={() => setIsItemModalOpen(true)}
-              className="bg-white border border-zinc-200 text-zinc-800 font-extrabold px-3 py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-sm active:scale-95"
+              className="bg-white border border-zinc-200 text-zinc-800 font-bold px-3 py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-sm active:scale-95"
             >
               + Item
             </button>
             <button 
               onClick={() => openMovementModal(null, 'OUT')}
-              className="bg-[#1E3A8A] text-white font-black px-3.5 py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-md active:scale-95"
+              className="bg-[#1E3A8A] text-white font-semibold text-[11px] px-3.5 py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-md active:scale-95"
             >
               Dispatch
             </button>
@@ -144,7 +144,7 @@ export default function MobileInventory() {
         <div className="flex bg-zinc-200/80 p-1 rounded-2xl gap-1">
           <button
             onClick={() => setActiveTab('Godown')}
-            className={`flex-1 py-2 rounded-xl text-[10px] font-extrabold uppercase tracking-wider transition-all ${
+            className={`flex-1 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all ${
               activeTab === 'Godown' ? 'bg-white text-[#1E3A8A] shadow-sm' : 'text-zinc-500'
             }`}
           >
@@ -152,7 +152,7 @@ export default function MobileInventory() {
           </button>
           <button
             onClick={() => setActiveTab('Movements')}
-            className={`flex-1 py-2 rounded-xl text-[10px] font-extrabold uppercase tracking-wider transition-all ${
+            className={`flex-1 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all ${
               activeTab === 'Movements' ? 'bg-white text-[#1E3A8A] shadow-sm' : 'text-zinc-500'
             }`}
           >
@@ -165,16 +165,16 @@ export default function MobileInventory() {
       <div className="grid grid-cols-2 gap-2 mb-3 shrink-0">
         <div className="bg-white p-3 rounded-2xl border border-amber-200 shadow-sm flex justify-between items-center">
           <div>
-            <span className="text-[8px] font-black text-amber-600 uppercase tracking-widest block">Low Stock Alerts</span>
-            <p className="text-lg font-black text-amber-700">{lowStockCount}</p>
+            <span className="text-[8px] font-semibold text-[11px] text-amber-600 uppercase tracking-widest block">Low Stock Alerts</span>
+            <p className="text-lg font-semibold text-[11px] text-amber-700">{lowStockCount}</p>
           </div>
           <span className="text-xl">⚠️</span>
         </div>
 
         <div className="bg-white p-3 rounded-2xl border border-red-200 shadow-sm flex justify-between items-center">
           <div>
-            <span className="text-[8px] font-black text-red-500 uppercase tracking-widest block">Out of Stock</span>
-            <p className="text-lg font-black text-red-600">{outOfStockCount}</p>
+            <span className="text-[8px] font-semibold text-[11px] text-red-500 uppercase tracking-widest block">Out of Stock</span>
+            <p className="text-lg font-semibold text-[11px] text-red-600">{outOfStockCount}</p>
           </div>
           <span className="text-xl">🚫</span>
         </div>
@@ -195,14 +195,14 @@ export default function MobileInventory() {
               <div key={item.id} className="bg-white border border-zinc-200 rounded-[1.5rem] p-4 shadow-sm space-y-3 active:scale-[0.99] transition-transform">
                 <div className="flex justify-between items-start">
                   <div>
-                    <span className="bg-zinc-100 text-zinc-700 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">
+                    <span className="bg-zinc-100 text-zinc-700 text-[8px] font-semibold text-[11px] px-2 py-0.5 rounded uppercase tracking-wider">
                       {item.category}
                     </span>
-                    <h4 className="font-extrabold text-zinc-900 text-sm mt-1">{item.name}</h4>
+                    <h4 className="font-bold text-zinc-900 text-sm mt-1">{item.name}</h4>
                   </div>
 
                   <div className="text-right">
-                    <span className={`text-base font-black ${item.totalStock === 0 ? 'text-red-500' : item.totalStock <= 5 ? 'text-amber-500' : 'text-emerald-600'}`}>
+                    <span className={`text-base font-semibold text-[11px] ${item.totalStock === 0 ? 'text-red-500' : item.totalStock <= 5 ? 'text-amber-500' : 'text-emerald-600'}`}>
                       {item.totalStock}
                     </span>
                     <span className="text-[10px] text-zinc-400 font-bold ml-1">{item.unit}</span>
@@ -212,13 +212,13 @@ export default function MobileInventory() {
                 <div className="flex gap-2 pt-2 border-t border-zinc-100">
                   <button 
                     onClick={() => openMovementModal(item, 'IN')}
-                    className="flex-1 py-2 bg-emerald-50 text-emerald-700 font-black rounded-xl text-[10px] uppercase tracking-wider active:scale-95 transition-transform"
+                    className="flex-1 py-2 bg-emerald-50 text-emerald-700 font-semibold text-[11px] rounded-xl text-[10px] uppercase tracking-wider active:scale-95 transition-transform"
                   >
                     + Stock In
                   </button>
                   <button 
                     onClick={() => openMovementModal(item, 'OUT')}
-                    className="flex-1 py-2 bg-blue-50 text-[#1E3A8A] font-black rounded-xl text-[10px] uppercase tracking-wider active:scale-95 transition-transform"
+                    className="flex-1 py-2 bg-blue-50 text-[#1E3A8A] font-semibold text-[11px] rounded-xl text-[10px] uppercase tracking-wider active:scale-95 transition-transform"
                   >
                     Dispatch Out
                   </button>
@@ -237,14 +237,14 @@ export default function MobileInventory() {
               <div key={mov.id} className="bg-white border border-zinc-200 rounded-[1.5rem] p-4 shadow-sm space-y-2 active:scale-[0.99] transition-transform">
                 <div className="flex justify-between items-start">
                   <div>
-                    <span className={`text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider ${
+                    <span className={`text-[8px] font-semibold text-[11px] px-2 py-0.5 rounded uppercase tracking-wider ${
                       mov.type === 'IN' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-[#1E3A8A]'
                     }`}>
                       {mov.type === 'IN' ? 'INWARD' : 'DISPATCH'}
                     </span>
-                    <h4 className="font-extrabold text-zinc-900 text-sm mt-1">{mov.itemName}</h4>
+                    <h4 className="font-bold text-zinc-900 text-sm mt-1">{mov.itemName}</h4>
                   </div>
-                  <p className="text-sm font-black text-zinc-900">{mov.quantity} <span className="text-[10px] text-zinc-400 font-bold">{mov.unit}</span></p>
+                  <p className="text-sm font-semibold text-[11px] text-zinc-900">{mov.quantity} <span className="text-[10px] text-zinc-400 font-bold">{mov.unit}</span></p>
                 </div>
 
                 <div className="pt-2 border-t border-zinc-100 flex justify-between items-center text-[10px]">
@@ -269,7 +269,7 @@ export default function MobileInventory() {
           <div className="bg-white w-full rounded-t-[2.5rem] shadow-2xl p-6 flex flex-col animate-in slide-in-from-bottom-full duration-300">
             <div className="flex justify-between items-center border-b border-zinc-100 pb-3 mb-4">
               <div>
-                <h2 className="text-xl font-extrabold text-zinc-900">Add Material Type</h2>
+                <h2 className="text-xl font-bold text-zinc-900">Add Material Type</h2>
                 <p className="text-zinc-500 text-[9px] font-bold uppercase tracking-widest">Register to Master Catalog</p>
               </div>
               <button onClick={() => setIsItemModalOpen(false)} className="text-zinc-400 font-bold text-sm">✕</button>
@@ -306,7 +306,7 @@ export default function MobileInventory() {
                 </div>
               </div>
 
-              <button type="submit" className="w-full py-4 bg-[#1E3A8A] text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform mt-2">
+              <button type="submit" className="w-full py-4 bg-[#1E3A8A] text-white font-semibold text-[11px] rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform mt-2">
                 Save Material Master
               </button>
             </form>
@@ -320,7 +320,7 @@ export default function MobileInventory() {
           <div className="bg-white w-full h-[85vh] rounded-t-[2.5rem] shadow-2xl flex flex-col animate-in slide-in-from-bottom-full duration-300">
             <div className="px-6 pt-6 pb-4 border-b border-zinc-100 flex justify-between items-center shrink-0">
               <div>
-                <h2 className="text-xl font-extrabold text-zinc-900">
+                <h2 className="text-xl font-bold text-zinc-900">
                   {movementForm.type === 'IN' ? 'Stock Inward' : 'Dispatch to Site'}
                 </h2>
                 <p className="text-zinc-500 text-[9px] font-bold uppercase tracking-widest">Inventory Log</p>
@@ -332,8 +332,8 @@ export default function MobileInventory() {
               <form id="movementForm" onSubmit={handleRecordMovement} className="space-y-4 pb-20">
                 
                 <div className="grid grid-cols-2 gap-2 p-1 bg-zinc-100 rounded-2xl">
-                  <button type="button" onClick={() => setMovementForm({...movementForm, type: 'IN', projectId: ''})} className={`py-2 rounded-xl text-xs font-extrabold transition-all ${movementForm.type === 'IN' ? 'bg-white text-emerald-600 shadow-sm' : 'text-zinc-400'}`}>INWARD</button>
-                  <button type="button" onClick={() => setMovementForm({...movementForm, type: 'OUT'})} className={`py-2 rounded-xl text-xs font-extrabold transition-all ${movementForm.type === 'OUT' ? 'bg-white text-[#1E3A8A] shadow-sm' : 'text-zinc-400'}`}>DISPATCH</button>
+                  <button type="button" onClick={() => setMovementForm({...movementForm, type: 'IN', projectId: ''})} className={`py-2 rounded-xl text-xs font-bold transition-all ${movementForm.type === 'IN' ? 'bg-white text-emerald-600 shadow-sm' : 'text-zinc-400'}`}>INWARD</button>
+                  <button type="button" onClick={() => setMovementForm({...movementForm, type: 'OUT'})} className={`py-2 rounded-xl text-xs font-bold transition-all ${movementForm.type === 'OUT' ? 'bg-white text-[#1E3A8A] shadow-sm' : 'text-zinc-400'}`}>DISPATCH</button>
                 </div>
 
                 <div>
@@ -383,7 +383,7 @@ export default function MobileInventory() {
               <button 
                 type="submit" 
                 form="movementForm"
-                className={`w-full py-4 text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform ${
+                className={`w-full py-4 text-white font-semibold text-[11px] rounded-xl text-xs uppercase tracking-wider shadow-lg active:scale-[0.98] transition-transform ${
                   movementForm.type === 'IN' ? 'bg-emerald-600' : 'bg-[#1E3A8A]'
                 }`}
               >

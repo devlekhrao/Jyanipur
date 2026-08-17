@@ -184,12 +184,12 @@ export default function Projects() {
   const labelClass = "block text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
 
   return (
-    <div className="w-full h-full font-['Poppins'] flex flex-col">
+    <div className="w-full h-full font-sans flex flex-col">
       
       {/* Header & Controls */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end pb-4 border-b border-zinc-200 mb-6 gap-4 shrink-0">
         <div>
-          <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Project Board & Job Costing</h2>
+          <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Project Board & Job Costing</h2>
           <p className="text-zinc-500 text-xs mt-1 font-medium">Onboard clients and sequence multiple projects by PO Date.</p>
         </div>
 
@@ -216,20 +216,20 @@ export default function Projects() {
       {/* Global Financial Overview */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6 shrink-0">
         <div className="bg-white p-6 rounded-[2rem] border border-zinc-200 shadow-sm">
-          <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1">Total Active PO Budgets</span>
-          <p className="text-2xl font-black text-zinc-900">₹ {globalBudget.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+          <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Total Active PO Budgets</span>
+          <p className="text-2xl font-semibold text-[11px] text-zinc-900">₹ {globalBudget.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
         </div>
         <div className="bg-white p-6 rounded-[2rem] border border-zinc-200 shadow-sm">
-          <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1">Total Billed (Invoices)</span>
-          <p className="text-2xl font-black text-zinc-800">₹ {globalBilled.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+          <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Total Billed (Invoices)</span>
+          <p className="text-2xl font-semibold text-[11px] text-zinc-800">₹ {globalBilled.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
         </div>
         <div className="bg-white p-6 rounded-[2rem] border border-zinc-200 shadow-sm">
-          <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1">Total Cost (Mat + Labor)</span>
-          <p className="text-2xl font-black text-red-500">₹ {globalCost.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+          <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Total Cost (Mat + Labor)</span>
+          <p className="text-2xl font-semibold text-[11px] text-red-500">₹ {globalCost.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
         </div>
         <div className="bg-emerald-50/70 p-6 rounded-[2rem] border border-emerald-100 shadow-sm">
-          <span className="text-[9px] font-extrabold text-emerald-600 uppercase tracking-widest block mb-1">Estimated Net Margin</span>
-          <p className="text-2xl font-black text-emerald-700">₹ {(globalBilled - globalCost).toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+          <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest block mb-1">Estimated Net Margin</span>
+          <p className="text-2xl font-semibold text-[11px] text-emerald-700">₹ {(globalBilled - globalCost).toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
         </div>
       </div>
 
@@ -246,21 +246,21 @@ export default function Projects() {
               {/* Client Header */}
               <div className="bg-zinc-50/80 px-6 py-4 border-b border-zinc-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                  <h3 className="text-sm font-extrabold text-zinc-900 flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-full bg-[#1E3A8A] text-white flex items-center justify-center text-[10px] font-black">{client.name.charAt(0)}</span>
+                  <h3 className="text-sm font-bold text-zinc-900 flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-full bg-[#1E3A8A] text-white flex items-center justify-center text-[10px] font-semibold text-[11px]">{client.name.charAt(0)}</span>
                     {client.name}
                   </h3>
                   <div className="flex gap-4 mt-1.5 ml-8">
                     {client.gstin && <p className="text-[9px] font-mono font-bold text-zinc-500 bg-white px-2 py-0.5 rounded border border-zinc-200 shadow-xs">GST: {client.gstin}</p>}
                     {client.phone && <p className="text-[9px] font-mono font-bold text-zinc-500 bg-white px-2 py-0.5 rounded border border-zinc-200 shadow-xs">Ph: {client.phone}</p>}
-                    <p className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest py-0.5">
+                    <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest py-0.5">
                       {client.projects.length} Project{client.projects.length > 1 ? 's' : ''}
                     </p>
                   </div>
                 </div>
                 <div className="text-right hidden sm:block">
-                  <p className="text-xs font-black text-zinc-900">Client Budget: ₹{client.totalBudget.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
-                  <p className="text-[10px] font-extrabold text-emerald-600 mt-0.5">Est. Margin: ₹{(client.totalBilled - client.totalCost).toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+                  <p className="text-xs font-semibold text-[11px] text-zinc-900">Client Budget: ₹{client.totalBudget.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+                  <p className="text-[10px] font-bold text-emerald-600 mt-0.5">Est. Margin: ₹{(client.totalBilled - client.totalCost).toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
                 </div>
               </div>
 
@@ -288,9 +288,9 @@ export default function Projects() {
                         <tr key={proj.id} className="hover:bg-zinc-50 transition-colors">
                           <td className="py-4 px-6">
                             <div className="flex items-center gap-2">
-                              <span className="text-[9px] font-black text-zinc-400">#{index + 1}</span>
+                              <span className="text-[9px] font-semibold text-[11px] text-zinc-400">#{index + 1}</span>
                               <div>
-                                <p className="font-extrabold text-zinc-900">{proj.name}</p>
+                                <p className="font-bold text-zinc-900">{proj.name}</p>
                                 <p className="text-[10px] text-zinc-400 font-medium mt-0.5">
                                   {proj.invoicesCount} Invoices Linked
                                 </p>
@@ -301,7 +301,7 @@ export default function Projects() {
                             {proj.poDate || '-'}
                           </td>
                           <td className="py-4 px-4 text-center">
-                            <span className={`inline-block px-2.5 py-1 rounded-md text-[9px] font-extrabold uppercase tracking-wider ${
+                            <span className={`inline-block px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-wider ${
                               proj.status === 'Ongoing' ? 'bg-blue-50 text-[#1E3A8A] border border-blue-100' :
                               proj.status === 'Completed' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
                               'bg-amber-50 text-amber-600 border border-amber-100'
@@ -309,19 +309,19 @@ export default function Projects() {
                               {proj.status}
                             </span>
                           </td>
-                          <td className="py-4 px-4 text-right font-black text-zinc-900">
+                          <td className="py-4 px-4 text-right font-semibold text-[11px] text-zinc-900">
                             ₹{proj.budget.toLocaleString('en-IN', {maximumFractionDigits: 0})}
                           </td>
                           <td className="py-4 px-4 text-right">
-                            <p className="font-black text-zinc-800">₹{proj.totalBilled.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+                            <p className="font-semibold text-[11px] text-zinc-800">₹{proj.totalBilled.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
                             <p className="text-[9px] text-zinc-400 font-medium mt-0.5">₹{proj.totalReceived.toLocaleString('en-IN', {maximumFractionDigits: 0})} Recv</p>
                           </td>
                           <td className="py-4 px-4 text-right">
-                            <p className="font-black text-red-500">₹{totalCost.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+                            <p className="font-semibold text-[11px] text-red-500">₹{totalCost.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
                             <p className="text-[9px] text-zinc-400 font-medium mt-0.5">Mat: ₹{proj.materialCost.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
                           </td>
                           <td className="py-4 px-4 text-right">
-                            <span className={`font-black ${margin >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                            <span className={`font-semibold text-[11px] ${margin >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
                               ₹{margin.toLocaleString('en-IN', {maximumFractionDigits: 0})}
                             </span>
                           </td>
@@ -346,7 +346,7 @@ export default function Projects() {
           <div className="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in-95 duration-200">
             
             <div className="mb-6">
-              <h2 className="text-xl font-extrabold text-zinc-900 tracking-tight">
+              <h2 className="text-xl font-bold text-zinc-900 tracking-tight">
                 {formData.id ? 'Edit Project Details' : 'Create New Project'}
               </h2>
               <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-1">Link this project to a client to track budgets.</p>
@@ -356,7 +356,7 @@ export default function Projects() {
               
               {/* CLIENT SECTION */}
               <div className="bg-zinc-50 p-4 rounded-2xl border border-zinc-200/80 space-y-3">
-                <h3 className="text-[10px] font-extrabold text-zinc-800 uppercase tracking-widest">1. Client Details</h3>
+                <h3 className="text-[10px] font-bold text-zinc-800 uppercase tracking-widest">1. Client Details</h3>
 
                 {!formData.id && uniqueClients.length > 0 && (
                   <div>
@@ -418,7 +418,7 @@ export default function Projects() {
 
               {/* PROJECT SECTION */}
               <div className="bg-zinc-50 p-4 rounded-2xl border border-zinc-200/80 space-y-3">
-                <h3 className="text-[10px] font-extrabold text-zinc-800 uppercase tracking-widest">2. Project Details</h3>
+                <h3 className="text-[10px] font-bold text-zinc-800 uppercase tracking-widest">2. Project Details</h3>
                 
                 <div>
                   <label className={labelClass}>Project / Site Name <span className="text-red-500">*</span></label>

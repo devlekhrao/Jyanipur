@@ -50,12 +50,12 @@ export default function VendorLedger() {
   const labelClass = "block text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
 
   return (
-    <div className="w-full h-full font-['Poppins'] flex flex-col">
+    <div className="w-full h-full font-sans flex flex-col">
       
       {/* Header */}
       <div className="flex justify-between items-end pb-4 border-b border-zinc-200 mb-6 shrink-0">
         <div>
-          <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Vendor Accounts Payable</h2>
+          <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Vendor Accounts Payable</h2>
           <p className="text-zinc-500 text-xs mt-1 font-medium">Track total bills vs payments made to your suppliers.</p>
         </div>
       </div>
@@ -94,10 +94,10 @@ export default function VendorLedger() {
                           <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                         </svg>
                       </td>
-                      <td className="py-4 px-4 font-extrabold text-zinc-900">{l.vendorName}</td>
+                      <td className="py-4 px-4 font-bold text-zinc-900">{l.vendorName}</td>
                       <td className="py-4 px-4 text-right font-medium text-zinc-700">₹{l.totalBilled.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                       <td className="py-4 px-4 text-right font-bold text-emerald-600">₹{l.totalPaid.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-                      <td className="py-4 px-4 text-right font-black text-red-500">₹{l.balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                      <td className="py-4 px-4 text-right font-semibold text-[11px] text-red-500">₹{l.balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                       <td className="py-4 px-6 text-center" onClick={(e) => e.stopPropagation()}>
                         <button onClick={() => openPayModal(l.vendorName)} className="text-[10px] font-bold bg-[#1E3A8A] text-white hover:bg-blue-900 px-4 py-2 rounded-xl uppercase tracking-wider transition-all shadow-md cursor-pointer">
                           Log Payment
@@ -110,7 +110,7 @@ export default function VendorLedger() {
                         <td></td>
                         <td colSpan="5" className="py-4 pr-6">
                           <div className="bg-white border border-zinc-200 rounded-2xl p-5 shadow-sm">
-                            <h4 className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest mb-3">Payment History</h4>
+                            <h4 className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-3">Payment History</h4>
                             {l.payments.length === 0 ? <p className="text-xs text-zinc-400 font-medium italic">No payments logged yet.</p> : (
                               <table className="w-full text-left text-xs">
                                 <thead>
@@ -130,7 +130,7 @@ export default function VendorLedger() {
                                         {pay.ref}
                                       </td>
                                       <td className="py-2.5 text-zinc-500 font-medium">{pay.notes || '-'}</td>
-                                      <td className="py-2.5 text-right font-black text-emerald-600">₹{pay.amount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                                      <td className="py-2.5 text-right font-semibold text-[11px] text-emerald-600">₹{pay.amount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                                     </tr>
                                   ))}
                                 </tbody>
@@ -152,7 +152,7 @@ export default function VendorLedger() {
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
           <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in-95 duration-200">
-            <h2 className="text-xl font-extrabold text-zinc-900 mb-1">Pay Vendor</h2>
+            <h2 className="text-xl font-bold text-zinc-900 mb-1">Pay Vendor</h2>
             <p className="text-zinc-500 text-[10px] font-bold mb-6 uppercase tracking-widest">Paying: <span className="text-[#1E3A8A]">{payForm.vendorName}</span></p>
             
             <form onSubmit={handleSavePay} className="space-y-4">
