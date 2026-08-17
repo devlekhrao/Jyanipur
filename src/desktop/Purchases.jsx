@@ -270,7 +270,7 @@ export default function Purchases({ companySettings = {} }) {
 
   if (currentView === 'list') {
     return (
-      <div className="w-full h-full font-['Poppins'] flex flex-col print:hidden">
+      <div className="w-full h-full flex flex-col print:hidden" style={{ fontFamily: 'Poppins, sans-serif' }}>
         
         {/* Header & Filters */}
         <div className="flex flex-col 2xl:flex-row justify-between items-start 2xl:items-center pb-5 mb-6 border-b border-zinc-200 shrink-0 gap-4">
@@ -410,10 +410,10 @@ export default function Purchases({ companySettings = {} }) {
   // RENDER 2: FORM VIEW (CREATE / EDIT / VIEW)
   // ==========================================
   return (
-    <div className="w-full h-full font-['Poppins'] flex flex-col">
+    <div className="w-full h-full flex flex-col print:hidden" style={{ fontFamily: 'Poppins, sans-serif' }}>
       
       {/* SCREEN FORM VIEW (HIDDEN ON PRINT) */}
-      <div className="print:hidden flex-1 flex flex-col min-h-0 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <div className="flex-1 flex flex-col min-h-0 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <div className="flex items-center justify-between border-b border-zinc-200 pb-4 mb-6 shrink-0">
           <h2 className="text-xl font-bold text-zinc-900 tracking-tight">
             {isReadOnly ? `Viewing Purchase ${purchaseDetails.invoiceNo}` : editingId ? `Edit Purchase ${purchaseDetails.invoiceNo}` : 'Log New Purchase'}
