@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { sendWhatsAppMessage } from '../WhatsAppHelper';
-import { getPurchaseOrders, savePurchaseOrder, toggleCancelPurchaseOrder } from '../db';
+import { getPurchaseOrders, savePurchaseOrder, toggleCancelPurchaseOrder, getVendors } from '../db';
 
 // Helper function to convert number to Words
 function numberToWords(num) {
@@ -36,6 +36,12 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
   const [loading, setLoading] = useState(true);
   const [poList, setPoList] = useState([]);
   
+  // Vendor Autocomplete State
+  const [vendorsList, setVendorsList] = useState([]);
+  const [vendorSuggestions, setVendorSuggestions] = useState([]);
+  const [showVendorDropdown, setShowVendorDropdown] = useState(false);
+  const vendorDropdownRef = useRef(null);
+
   const [poDetails, setPoDetails] = useState(() => {
     const saved = localStorage.getItem('draft_poDetails');
     if (saved && saved !== 'undefined') {
@@ -45,7 +51,7 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
       vendorName: '', vendorAddress: '', vendorGst: '', 
       date: new Date().toISOString().split('T')[0], expectedDelivery: '', 
       poNo: companySettings.poPrefix || 'PO/', 
-      projectName: '', shippingAddress: 'Jyanipur Site Office', 
+      projectName: '', shippingAddress: companySettings.companyAddress || 'Site Office', 
       terms: companySettings.defaultPOTerms || '', 
       description: ''
     };
@@ -85,16 +91,32 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
   const loadPOsFromDb = async () => {
     setLoading(true);
     try {
-      const data = await getPurchaseOrders();
-      setPoList(data || []);
+      const [poData, vData] = await Promise.all([
+        getPurchaseOrders(),
+        getVendors ? getVendors() : Promise.resolve([])
+      ]);
+      setPoList(poData || []);
+      setVendorsList(vData || []);
     } catch (e) {
-      console.warn("getPurchaseOrders not yet implemented in db.js");
+      console.warn("getPurchaseOrders or getVendors not yet implemented in db.js");
       setPoList([]);
+      setVendorsList([]);
     }
     setLoading(false);
   };
 
-  useEffect(() => { loadPOsFromDb(); }, []);
+  useEffect(() => { loadPOsFromDb(); }, [currentView]);
+
+  // Click outside to close vendor dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (vendorDropdownRef.current && !vendorDropdownRef.current.contains(event.target)) {
+        setShowVendorDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     if (!editingId && currentView === 'form') {
@@ -105,6 +127,38 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
       }));
     }
   }, [companySettings, editingId, currentView]);
+
+  const handleVendorInputChange = (e) => {
+    const val = e.target.value;
+    const exactMatch = vendorsList.find(v => v.name && v.name.toLowerCase() === val.toLowerCase());
+    
+    if (exactMatch) {
+      handleSelectVendor(exactMatch);
+      return;
+    }
+
+    setPoDetails(prev => ({ ...prev, vendorName: val }));
+    if (errors.vendorName) setErrors(prev => ({ ...prev, vendorName: false }));
+
+    if (val.trim().length > 0) {
+      const matches = vendorsList.filter(v => v.name && v.name.toLowerCase().includes(val.toLowerCase()));
+      setVendorSuggestions(matches);
+      setShowVendorDropdown(matches.length > 0);
+    } else {
+      setVendorSuggestions(vendorsList);
+      setShowVendorDropdown(vendorsList.length > 0);
+    }
+  };
+
+  const handleSelectVendor = (vendor) => {
+    setPoDetails(prev => ({
+      ...prev,
+      vendorName: vendor.name,
+      vendorGst: vendor.gstin || '',
+      vendorAddress: vendor.address || ''
+    }));
+    setShowVendorDropdown(false);
+  };
 
   const addItem = () => setItems([...items, { id: Date.now(), description: '', uom: 'Nos', qty: '', rate: '', tax: companySettings.defaultGstRate || 18 }]);
   const updateItem = (id, field, value) => setItems(items.map(item => item.id === id ? { ...item, [field]: value } : item));
@@ -136,6 +190,7 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
     setErrors({});
     
     const record = {
+      id: editingId || Date.now(),
       vendorName: poDetails.vendorName,
       vendorAddress: poDetails.vendorAddress,
       vendorGst: poDetails.vendorGst,
@@ -161,10 +216,11 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
   };
 
   const handleSaveOnly = async () => {
-    await savePOToState();
-    alert(`Purchase Order ${poDetails.poNo} saved!`);
-    handleClear(false);
-    setCurrentView('list');
+    if (await savePOToState()) {
+      alert(`Purchase Order ${poDetails.poNo} saved!`);
+      handleClear(false);
+      setCurrentView('list');
+    }
   };
 
   const handleSaveAndPrint = async () => {
@@ -221,11 +277,12 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
       setEditingId(null);
       setPoDetails({ 
         vendorName: '', vendorAddress: '', vendorGst: '', date: new Date().toISOString().split('T')[0], 
-        expectedDelivery: '', poNo: companySettings.poPrefix || 'PO/', projectName: '', shippingAddress: 'Jyanipur Site Office', 
+        expectedDelivery: '', poNo: companySettings.poPrefix || 'PO/', projectName: '', shippingAddress: companySettings.companyAddress || 'Site Office', 
         terms: companySettings.defaultPOTerms || '', description: '' 
       });
       setItems([{ id: 1, description: '', uom: 'Nos', qty: '', rate: '', tax: companySettings.defaultGstRate || 18 }]);
       setErrors({});
+      setShowVendorDropdown(false);
       localStorage.removeItem('draft_poDetails');
       localStorage.removeItem('draft_poItems');
       localStorage.removeItem('draft_poEditingId');
@@ -233,34 +290,41 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
     }
   };
 
-  const inputClass = "w-full px-3 py-2.5 rounded-xl border border-zinc-200 bg-zinc-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] text-zinc-900 text-xs font-medium transition-all shadow-sm disabled:opacity-75 disabled:cursor-not-allowed";
-  const labelClass = "block text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
+  const inputClass = "w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-white focus:outline-none focus:border-[#B45309] focus:ring-1 focus:ring-inset focus:ring-[#B45309] text-zinc-900 text-xs font-medium transition-all disabled:opacity-75 disabled:cursor-not-allowed shadow-sm";
+  const labelClass = "block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1.5 ml-0.5";
 
   const isReadOnly = currentView === 'view';
 
   if (currentView === 'list') {
     return (
-      <div className="w-full h-full font-['Poppins'] flex flex-col print:hidden">
-        <div className="flex justify-between items-end pb-4 border-b border-zinc-200 mb-6 shrink-0">
+      <div className="w-full h-full flex flex-col print:hidden" style={{ fontFamily: 'Poppins, sans-serif' }}>
+        
+        {/* Header */}
+        <div className="flex justify-between items-center pb-5 mb-6 border-b border-zinc-200 shrink-0">
           <div>
-            <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Purchase Orders</h2>
-            <p className="text-zinc-500 text-xs mt-1 font-medium">Generate official material procurements requests.</p>
+            <h2 className="text-xl font-bold text-zinc-900 tracking-tight">Purchase Orders</h2>
+            <p className="text-zinc-500 text-xs mt-0.5 font-medium">Generate official material procurement requests for suppliers.</p>
           </div>
-          <button onClick={() => { handleClear(false); setCurrentView('form'); }} className="bg-[#1E3A8A] hover:bg-blue-900 text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-md">
-            + Create PO
+          <button 
+            onClick={() => { handleClear(false); setCurrentView('form'); }} 
+            className="bg-[#B45309] hover:bg-[#92400E] text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm flex items-center gap-1.5 h-10"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+            Create PO
           </button>
         </div>
 
-        <div className="bg-white border border-zinc-200 rounded-[2rem] shadow-sm overflow-hidden flex-1 flex flex-col min-h-0">
+        {/* PO Table */}
+        <div className="bg-white border border-zinc-200/80 rounded-2xl shadow-sm overflow-hidden flex-1 flex flex-col min-h-0">
           <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <table className="w-full text-left border-collapse whitespace-nowrap">
               <thead>
-                <tr className="bg-zinc-50/50 text-zinc-400 text-[10px] uppercase tracking-[0.15em] border-b border-zinc-100">
+                <tr className="bg-zinc-50/80 text-zinc-500 text-[10px] uppercase tracking-wider border-b border-zinc-200">
                   <th className="py-4 px-6 font-semibold">Date</th>
                   <th className="py-4 px-6 font-semibold">PO No.</th>
                   <th className="py-4 px-6 font-semibold">Vendor</th>
                   <th className="py-4 px-6 font-semibold text-right">Total Amount</th>
-                  <th className="py-4 px-6 font-semibold text-center">Actions</th>
+                  <th className="py-4 px-6 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100 text-sm">
@@ -270,26 +334,28 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
                   <tr><td colSpan="5" className="py-12 text-center text-zinc-400 font-medium text-xs">No POs created yet. Click "+ Create PO" above.</td></tr>
                 ) : (
                   poList.map((po) => (
-                    <tr key={po.id} className={`transition-all ${po.isCancelled ? 'bg-red-50/20 opacity-60' : 'hover:bg-zinc-50'}`}>
+                    <tr key={po.id} className={`transition-all ${po.isCancelled ? 'bg-red-50/20 opacity-60' : 'hover:bg-zinc-50/80'}`}>
                       <td className={`py-4 px-6 text-xs font-medium ${po.isCancelled ? 'line-through text-zinc-400' : 'text-zinc-600'}`}>{po.date}</td>
-                      <td className={`py-4 px-6 font-bold text-xs ${po.isCancelled ? 'line-through text-zinc-400' : 'text-[#1E3A8A]'}`}>{po.poNo}</td>
+                      <td className={`py-4 px-6 font-bold text-xs ${po.isCancelled ? 'line-through text-zinc-400' : 'text-[#B45309]'}`}>{po.poNo}</td>
                       <td className={`py-4 px-6 text-xs font-semibold ${po.isCancelled ? 'line-through text-zinc-400' : 'text-zinc-800'}`}>{po.vendorName}</td>
-                      <td className={`py-4 px-6 text-right font-semibold text-[11px] text-xs ${po.isCancelled ? 'line-through text-zinc-400' : 'text-emerald-600'}`}>{po.amount}</td>
-                      <td className="py-4 px-6 text-center space-x-3">
-                        {!po.isCancelled ? (
-                          <>
-                            <button onClick={() => handleEdit(po)} className="text-[#1E3A8A] hover:text-blue-900 font-bold cursor-pointer text-[10px] uppercase tracking-wider">Edit</button>
-                            <button onClick={() => handleView(po)} className="text-zinc-600 hover:text-zinc-900 font-bold cursor-pointer text-[10px] uppercase tracking-wider">View</button>
-                            <button onClick={() => handleDirectPrint(po)} className="text-amber-600 hover:text-amber-700 font-bold cursor-pointer text-[10px] uppercase tracking-wider">Print</button>
-                            <button onClick={() => handleSendWhatsApp(po)} className="text-emerald-600 hover:text-emerald-700 font-bold cursor-pointer text-[10px] uppercase tracking-wider">💬 WhatsApp</button>
-                            <button onClick={() => handleToggleCancel(po)} className="text-red-500 hover:text-red-700 font-bold cursor-pointer text-[10px] uppercase tracking-wider">Cancel</button>
-                          </>
-                        ) : (
-                          <>
-                            <button onClick={() => handleView(po)} className="text-zinc-500 hover:text-zinc-900 font-bold cursor-pointer text-[10px] uppercase tracking-wider">View</button>
-                            <button onClick={() => handleToggleCancel(po)} className="text-emerald-600 hover:text-emerald-700 font-bold cursor-pointer text-[10px] uppercase tracking-wider">Restore</button>
-                          </>
-                        )}
+                      <td className={`py-4 px-6 text-right font-semibold text-xs ${po.isCancelled ? 'line-through text-zinc-400' : 'text-emerald-600'}`}>{po.amount}</td>
+                      <td className="py-4 px-6 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          {!po.isCancelled ? (
+                            <>
+                              <button onClick={() => handleEdit(po)} className="px-3 py-1.5 bg-amber-50 text-[#B45309] hover:bg-[#B45309] hover:text-white border border-amber-200/60 rounded-lg font-semibold cursor-pointer text-[10px] uppercase tracking-wider transition-all">Edit</button>
+                              <button onClick={() => handleView(po)} className="px-3 py-1.5 bg-zinc-50 text-zinc-600 hover:bg-zinc-200 border border-zinc-200 rounded-lg font-semibold cursor-pointer text-[10px] uppercase tracking-wider transition-all">View</button>
+                              <button onClick={() => handleDirectPrint(po)} className="px-3 py-1.5 bg-zinc-50 text-zinc-600 hover:bg-zinc-200 border border-zinc-200 rounded-lg font-semibold cursor-pointer text-[10px] uppercase tracking-wider transition-all">Print</button>
+                              <button onClick={() => handleSendWhatsApp(po)} className="px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border border-emerald-200 rounded-lg font-semibold cursor-pointer text-[10px] uppercase tracking-wider transition-all">💬 WhatsApp</button>
+                              <button onClick={() => handleToggleCancel(po)} className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white border border-red-200 rounded-lg font-semibold cursor-pointer text-[10px] uppercase tracking-wider transition-all">Cancel</button>
+                            </>
+                          ) : (
+                            <>
+                              <button onClick={() => handleView(po)} className="px-3 py-1.5 bg-zinc-50 text-zinc-600 hover:bg-zinc-200 border border-zinc-200 rounded-lg font-semibold cursor-pointer text-[10px] uppercase tracking-wider transition-all">View</button>
+                              <button onClick={() => handleToggleCancel(po)} className="px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border border-emerald-200 rounded-lg font-semibold cursor-pointer text-[10px] uppercase tracking-wider transition-all">Restore</button>
+                            </>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -303,151 +369,237 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
   }
 
   return (
-    <div className="w-full h-full font-['Poppins'] flex flex-col">
-      <div className="print:hidden flex-1 flex flex-col min-h-0 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+    <div className="w-full h-full flex flex-col print:hidden" style={{ fontFamily: 'Poppins, sans-serif' }}>
+      <div className="flex-1 flex flex-col min-h-0 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        
+        {/* Form View Header */}
         <div className="flex items-center justify-between border-b border-zinc-200 pb-4 mb-6 shrink-0">
           <h2 className="text-xl font-bold text-zinc-900 tracking-tight">
             {isReadOnly ? `Viewing PO ${poDetails.poNo}` : editingId ? `Edit PO ${poDetails.poNo}` : 'Create Purchase Order'}
           </h2>
           <div className="flex gap-2">
-            <button onClick={() => { setCurrentView('list'); handleClear(false); }} className="text-zinc-600 hover:text-zinc-900 text-[10px] font-bold uppercase tracking-[0.15em] transition-colors cursor-pointer bg-white px-4 py-2 rounded-xl shadow-sm border border-zinc-200">
-              &larr; Back
+            <button onClick={() => { setCurrentView('list'); handleClear(false); }} className="text-zinc-600 hover:text-zinc-900 text-xs font-bold transition-colors cursor-pointer bg-white px-4 py-2 rounded-xl border border-zinc-200 flex items-center gap-1.5 shadow-sm">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+              Back
             </button>
             {isReadOnly && (
               <>
-                <button onClick={() => handleSendWhatsApp(poDetails)} className="bg-emerald-600 text-white px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider shadow-md hover:bg-emerald-500 transition-all flex items-center gap-1 cursor-pointer">
+                <button onClick={() => handleSendWhatsApp(poDetails)} className="bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-sm hover:bg-emerald-700 transition-all flex items-center gap-1.5 cursor-pointer">
                   💬 WhatsApp
                 </button>
-                <button onClick={() => window.print()} className="bg-[#1E3A8A] text-white px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider shadow-md hover:bg-blue-900 transition-all cursor-pointer">
-                  🖨️ Print / Save PDF
+                <button onClick={() => window.print()} className="bg-[#B45309] text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-sm hover:bg-[#92400E] transition-all flex items-center gap-1.5 cursor-pointer">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0v-2.25a2.25 2.25 0 012.25-2.25h6a2.25 2.25 0 012.25 2.25v2.25z" /></svg>
+                  Print / Save PDF
                 </button>
               </>
             )}
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-4 mb-4 shrink-0">
-          <div className="flex-[2] min-w-[200px]">
+        {/* Vendor Metadata Header */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 shrink-0">
+          <div className="md:col-span-1 relative" ref={vendorDropdownRef}>
             <label className={labelClass}>Vendor / Supplier Name <span className="text-red-500">*</span></label>
-            <input disabled={isReadOnly} type="text" value={poDetails.vendorName} onChange={(e) => { setPoDetails({...poDetails, vendorName: e.target.value}); if(errors.vendorName) setErrors({...errors, vendorName: false}); }} className={`${inputClass} ${errors.vendorName ? 'ring-1 ring-red-400 bg-red-50' : ''}`} />
+            <input 
+              disabled={isReadOnly} 
+              type="text" 
+              list="po-vendors-datalist"
+              value={poDetails.vendorName} 
+              onChange={handleVendorInputChange} 
+              onFocus={() => {
+                const matches = vendorsList.filter(v => v.name);
+                setVendorSuggestions(matches);
+                setShowVendorDropdown(matches.length > 0);
+              }}
+              className={`${inputClass} ${errors.vendorName ? 'border-red-400 focus:border-red-500 focus:ring-red-500 bg-red-50/20' : ''}`} 
+              placeholder="Type or select vendor..." 
+              autoComplete="off"
+            />
+
+            <datalist id="po-vendors-datalist">
+              {vendorsList.map((v) => (
+                <option key={v.id || v.name} value={v.name}>{v.gstin ? `GST: ${v.gstin}` : 'Unregistered'}</option>
+              ))}
+            </datalist>
+
+            {showVendorDropdown && !isReadOnly && (
+              <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-zinc-200 rounded-xl shadow-xl z-[120] max-h-52 overflow-y-auto">
+                <div className="p-2 border-b border-zinc-100 text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex justify-between items-center">
+                  <span>Saved Vendors ({vendorSuggestions.length})</span>
+                  <span className="text-[9px] text-[#B45309]">Click to Auto-fill</span>
+                </div>
+                {vendorSuggestions.map((v) => (
+                  <div
+                    key={v.id || v.name}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      handleSelectVendor(v);
+                    }}
+                    className="px-4 py-2.5 hover:bg-amber-50 cursor-pointer flex justify-between items-center transition-colors border-b border-zinc-50 last:border-none"
+                  >
+                    <div>
+                      <p className="font-semibold text-xs text-zinc-900">{v.name}</p>
+                      {v.tradeCategory && <p className="text-[10px] text-zinc-400 font-medium">{v.tradeCategory}</p>}
+                    </div>
+                    {v.gstin ? (
+                      <span className="text-[10px] font-mono bg-zinc-100 px-2 py-0.5 rounded text-zinc-700 font-semibold border border-zinc-200">
+                        {v.gstin}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-zinc-400 italic">No GST</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-          <div className="flex-1 min-w-[150px]">
+
+          <div>
             <label className={labelClass}>Vendor GSTIN</label>
-            <input disabled={isReadOnly} type="text" value={poDetails.vendorGst} onChange={(e) => setPoDetails({...poDetails, vendorGst: e.target.value.toUpperCase()})} className={`${inputClass} uppercase`} maxLength={15} />
+            <input disabled={isReadOnly} type="text" value={poDetails.vendorGst} onChange={(e) => setPoDetails({...poDetails, vendorGst: e.target.value.toUpperCase()})} className={`${inputClass} font-mono uppercase`} maxLength={15} placeholder="Optional" />
           </div>
-          <div className="flex-[3] min-w-[250px]">
+
+          <div>
             <label className={labelClass}>Vendor Address</label>
-            <input disabled={isReadOnly} type="text" value={poDetails.vendorAddress} onChange={(e) => setPoDetails({...poDetails, vendorAddress: e.target.value})} className={inputClass} />
+            <input disabled={isReadOnly} type="text" value={poDetails.vendorAddress} onChange={(e) => setPoDetails({...poDetails, vendorAddress: e.target.value})} className={inputClass} placeholder="Supplier Operating Address" />
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-4 mb-8 shrink-0">
-          <div className="flex-1 min-w-[120px]">
+        {/* PO Dates & Project Info */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 shrink-0">
+          <div>
             <label className={labelClass}>PO No. <span className="text-red-500">*</span></label>
-            <input disabled={isReadOnly} type="text" value={poDetails.poNo} onChange={(e) => { setPoDetails({...poDetails, poNo: e.target.value}); if(errors.poNo) setErrors({...errors, poNo: false}); }} className={`${inputClass} ${errors.poNo ? 'ring-1 ring-red-400 bg-red-50' : ''}`} />
+            <input disabled={isReadOnly} type="text" value={poDetails.poNo} onChange={(e) => { setPoDetails({...poDetails, poNo: e.target.value}); if(errors.poNo) setErrors({...errors, poNo: false}); }} className={`${inputClass} ${errors.poNo ? 'border-red-400 focus:border-red-500 focus:ring-red-500 bg-red-50/20' : ''}`} />
           </div>
-          <div className="flex-1 min-w-[120px]">
+          <div>
             <label className={labelClass}>PO Date</label>
             <input disabled={isReadOnly} type="date" value={poDetails.date} onChange={(e) => setPoDetails({...poDetails, date: e.target.value})} className={inputClass} />
           </div>
-          <div className="flex-1 min-w-[120px]">
+          <div>
             <label className={labelClass}>Expected Delivery Date</label>
             <input disabled={isReadOnly} type="date" value={poDetails.expectedDelivery} onChange={(e) => setPoDetails({...poDetails, expectedDelivery: e.target.value})} className={inputClass} />
           </div>
-          <div className="flex-[2] min-w-[200px]">
+          <div>
             <label className={labelClass}>Project Name / Code</label>
-            <input disabled={isReadOnly} type="text" value={poDetails.projectName} onChange={(e) => setPoDetails({...poDetails, projectName: e.target.value})} className={inputClass} placeholder="e.g. Kondapur Villa Project" />
+            <input disabled={isReadOnly} type="text" value={poDetails.projectName} onChange={(e) => setPoDetails({...poDetails, projectName: e.target.value})} className={inputClass} placeholder="e.g. Kondapur Site" />
           </div>
         </div>
 
-        <div className="mb-6 overflow-x-auto bg-white border border-zinc-200 rounded-[2rem] p-5 shadow-sm shrink-0">
-          <table className="w-full text-left border-collapse whitespace-nowrap">
-            <thead>
-              <tr className="text-zinc-400 text-[9px] uppercase tracking-widest border-b border-zinc-100">
-                <th className="py-3 pr-4 font-bold">Item Description (Material)</th>
-                <th className="py-3 px-2 font-bold w-20 text-center">UOM</th>
-                <th className="py-3 px-2 font-bold w-20 text-center">Qty</th>
-                <th className="py-3 px-2 font-bold w-28 text-right">Rate</th>
-                <th className="py-3 px-2 font-bold w-32 text-right">Base Amt</th>
-                <th className="py-3 px-2 font-bold w-24 text-center">Tax %</th>
-                <th className="py-3 px-2 font-bold w-32 text-right">Total Amt</th>
-                {!isReadOnly && <th className="py-3 pl-2 w-6"></th>}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-100">
-              {items.map((item) => {
-                const rowCalc = calculateRow(item);
-                const tInp = "w-full border-b border-transparent hover:border-zinc-300 focus:border-[#1E3A8A] bg-transparent focus:outline-none py-1.5 px-1 text-xs transition-all font-medium text-zinc-900 placeholder-zinc-400 disabled:opacity-75";
-                return (
-                  <tr key={item.id} className="group hover:bg-zinc-50 transition-colors">
-                    <td className="py-2 pr-4"><input disabled={isReadOnly} type="text" placeholder="e.g. 53 Grade Cement" value={item.description} onChange={(e) => updateItem(item.id, 'description', e.target.value)} className={tInp} /></td>
-                    <td className="py-2 px-2">
-                      <select disabled={isReadOnly} value={item.uom} onChange={(e) => updateItem(item.id, 'uom', e.target.value)} className={`${tInp} text-center appearance-none cursor-pointer`}>
-                        <option value="Nos">Nos</option><option value="Bags">Bags</option><option value="SqFt">SqFt</option><option value="Rft">Rft</option><option value="Cum">Cum</option><option value="Kgs">Kgs</option><option value="Ltrs">Ltrs</option><option value="Box">Box</option><option value="Roll">Roll</option><option value="LumpSum">LumpSum</option>
-                      </select>
-                    </td>
-                    <td className="py-2 px-2"><input disabled={isReadOnly} type="number" step="any" value={item.qty} onChange={(e) => updateItem(item.id, 'qty', e.target.value)} className={`${tInp} text-center`} /></td>
-                    <td className="py-2 px-2"><input disabled={isReadOnly} type="number" step="any" value={item.rate} onChange={(e) => updateItem(item.id, 'rate', e.target.value)} className={`${tInp} text-right`} /></td>
-                    <td className="py-2 px-2 text-right text-xs font-semibold text-zinc-800">{rowCalc.baseAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
-                    <td className="py-2 px-2">
-                      <select disabled={isReadOnly} value={item.tax} onChange={(e) => updateItem(item.id, 'tax', e.target.value)} className={`${tInp} text-center appearance-none cursor-pointer`}>
-                        <option value="0">0%</option><option value="5">5%</option><option value="12">12%</option><option value="18">18%</option><option value="28">28%</option>
-                      </select>
-                    </td>
-                    <td className="py-2 px-2 text-right text-xs font-bold text-zinc-900">{rowCalc.totalAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
-                    {!isReadOnly && (
-                      <td className="py-2 pl-2 text-center">
-                        <button onClick={() => removeItem(item.id)} className="text-zinc-400 hover:text-red-500 font-bold opacity-0 group-hover:opacity-100 transition-all cursor-pointer">&times;</button>
+        {/* Item Rows Table */}
+        <div className="mb-6 bg-white border border-zinc-200 rounded-2xl p-5 shadow-sm shrink-0">
+          <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-3 border-b border-zinc-100 pb-2">Procurement Items & Quantities</p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse whitespace-nowrap min-w-[800px]">
+              <thead>
+                <tr className="text-zinc-400 text-[10px] uppercase tracking-wider border-b border-zinc-100 pb-3">
+                  <th className="py-2.5 pr-4 font-bold">Item Description (Material)</th>
+                  <th className="py-2.5 px-2 font-bold w-20 text-center">UOM</th>
+                  <th className="py-2.5 px-2 font-bold w-24 text-center">Qty</th>
+                  <th className="py-2.5 px-2 font-bold w-28 text-right">Rate (₹)</th>
+                  <th className="py-2.5 px-2 font-bold w-28 text-right">Base Amt</th>
+                  <th className="py-2.5 px-2 font-bold w-20 text-center">Tax %</th>
+                  <th className="py-2.5 px-2 font-bold w-28 text-right">Total Amt</th>
+                  {!isReadOnly && <th className="py-2.5 pl-2 w-6"></th>}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {items.map((item) => {
+                  const rowCalc = calculateRow(item);
+                  const tInp = "w-full border-b border-transparent hover:border-zinc-300 focus:border-[#B45309] bg-transparent focus:outline-none py-2 px-1 text-xs transition-all font-medium text-zinc-900 placeholder-zinc-300 disabled:opacity-75";
+                  
+                  return (
+                    <tr key={item.id} className="group hover:bg-zinc-50/50 transition-colors">
+                      <td className="py-2 pr-4">
+                        <input disabled={isReadOnly} type="text" placeholder="e.g. 18mm Century Plywood" value={item.description} onChange={(e) => updateItem(item.id, 'description', e.target.value)} className={tInp} />
                       </td>
-                    )}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      <td className="py-2 px-2">
+                        <select disabled={isReadOnly} value={item.uom} onChange={(e) => updateItem(item.id, 'uom', e.target.value)} className={`${tInp} text-center appearance-none cursor-pointer bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%2371717A%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_0.25rem_center] bg-[length:0.75rem_0.75rem] pr-4`}>
+                          <option value="Nos">Nos</option><option value="Bags">Bags</option><option value="SqFt">SqFt</option><option value="Rft">Rft</option><option value="Cum">Cum</option><option value="Kgs">Kgs</option><option value="Ltrs">Ltrs</option><option value="Box">Box</option><option value="Roll">Roll</option><option value="LumpSum">LumpSum</option>
+                        </select>
+                      </td>
+                      <td className="py-2 px-2">
+                        <input disabled={isReadOnly} type="number" step="any" value={item.qty} onChange={(e) => updateItem(item.id, 'qty', e.target.value)} className={`${tInp} text-center font-bold text-[#B45309]`} placeholder="0" />
+                      </td>
+                      <td className="py-2 px-2">
+                        <input disabled={isReadOnly} type="number" step="any" value={item.rate} onChange={(e) => updateItem(item.id, 'rate', e.target.value)} className={`${tInp} text-right`} placeholder="0.00" />
+                      </td>
+                      <td className="py-2 px-2 text-right text-xs font-semibold text-zinc-800">{rowCalc.baseAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
+                      <td className="py-2 px-2">
+                        <select disabled={isReadOnly} value={item.tax} onChange={(e) => updateItem(item.id, 'tax', e.target.value)} className={`${tInp} text-center appearance-none cursor-pointer bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%2371717A%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_0.25rem_center] bg-[length:0.75rem_0.75rem] pr-4`}>
+                          <option value="0">0%</option><option value="5">5%</option><option value="12">12%</option><option value="18">18%</option><option value="28">28%</option>
+                        </select>
+                      </td>
+                      <td className="py-2 px-2 text-right text-xs font-bold text-zinc-900">{rowCalc.totalAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
+                      {!isReadOnly && (
+                        <td className="py-2 pl-2 text-center">
+                          <button onClick={() => removeItem(item.id)} className="text-zinc-300 hover:text-red-500 font-bold opacity-0 group-hover:opacity-100 transition-all cursor-pointer text-base flex items-center justify-center">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                          </button>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
           {!isReadOnly && (
-            <button onClick={addItem} className="mt-4 px-4 py-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 text-[10px] font-bold uppercase tracking-[0.15em] rounded-xl transition-all cursor-pointer">
-              + Add Material
+            <button onClick={addItem} className="mt-4 text-[#B45309] hover:text-[#92400E] text-[11px] font-semibold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+              Add Material Row
             </button>
           )}
         </div>
 
+        {/* Bottom Terms & Totals Deck */}
         <div className="flex flex-col lg:flex-row justify-between gap-6 pb-8 shrink-0">
-          <div className="flex-1 space-y-5">
+          <div className="flex-1 space-y-4">
             <div>
-              <label className={labelClass}>Shipping / Delivery Address</label>
-              <textarea disabled={isReadOnly} value={poDetails.shippingAddress} onChange={(e) => setPoDetails({...poDetails, shippingAddress: e.target.value})} className={`${inputClass} resize-y min-h-[50px] py-2`} rows="2"></textarea>
+              <label className={labelClass}>Shipping / Site Delivery Address</label>
+              <textarea disabled={isReadOnly} value={poDetails.shippingAddress} onChange={(e) => setPoDetails({...poDetails, shippingAddress: e.target.value})} className={`${inputClass} resize-y min-h-[60px] py-2`} rows="2"></textarea>
             </div>
             <div>
-              <label className={labelClass}>Remarks / Internal Notes</label>
+              <label className={labelClass}>Internal Remarks / Notes</label>
               <textarea disabled={isReadOnly} value={poDetails.description} onChange={(e) => setPoDetails({...poDetails, description: e.target.value})} className={`${inputClass} resize-y min-h-[40px] py-2`} rows="1"></textarea>
             </div>
             <div>
-              <label className={labelClass}>Purchase Order Terms</label>
-              <textarea disabled={isReadOnly} value={poDetails.terms} onChange={(e) => setPoDetails({...poDetails, terms: e.target.value})} className={`${inputClass} resize-none h-[120px] text-[11px] leading-relaxed`}></textarea>
+              <label className={labelClass}>Purchase Order Terms & Conditions</label>
+              <textarea disabled={isReadOnly} value={poDetails.terms} onChange={(e) => setPoDetails({...poDetails, terms: e.target.value})} className={`${inputClass} resize-y min-h-[100px] text-xs leading-relaxed`}></textarea>
             </div>
           </div>
 
           <div className="w-full lg:w-80 flex flex-col justify-between">
-            <div className="bg-[#1E3A8A] p-6 rounded-[2rem] shadow-xl text-blue-100 border border-blue-900/50">
-              <div className="flex justify-between text-xs px-1 mb-2"><span>Total Base:</span><span className="text-white font-medium">₹ {totals.subtotal.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span></div>
-              <div className="flex justify-between text-xs px-1 mb-2"><span>Total Tax:</span><span className="text-white font-medium">₹ {totals.totalTax.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span></div>
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-200 text-zinc-800 space-y-3">
+              <div className="flex justify-between text-xs">
+                <span className="text-zinc-500">Base Amount:</span>
+                <span className="font-semibold text-zinc-900">₹ {totals.subtotal.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-zinc-500">Estimated Tax:</span>
+                <span className="font-semibold text-emerald-600">₹ {totals.totalTax.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
+              </div>
               
-              <div className="flex justify-between text-base font-bold text-white border-t-2 border-blue-400/30 pt-4 px-1 mt-4">
-                <span>PO Total:</span><span>₹ {totals.grandTotal.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
+              <div className="flex justify-between text-base font-bold text-[11px] border-t border-zinc-200 pt-3">
+                <span>Grand Total:</span>
+                <span className="text-[#B45309]">₹ {totals.grandTotal.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
               </div>
             </div>
 
             {!isReadOnly && (
               <div className="flex gap-2 mt-4">
-                <button onClick={handleSaveOnly} className="flex-1 py-3.5 bg-zinc-900 hover:bg-black text-white rounded-2xl font-bold text-[10px] uppercase tracking-wider transition-all shadow-md cursor-pointer">Save Draft</button>
-                <button onClick={handleSaveAndPrint} className="flex-[2] py-3.5 bg-[#1E3A8A] hover:bg-blue-900 text-white rounded-2xl font-bold text-[10px] uppercase tracking-wider transition-all shadow-[0_8px_16px_rgba(30,58,138,0.3)] cursor-pointer">Save & Generate PDF</button>
+                <button onClick={handleSaveOnly} className="flex-1 py-3 bg-white border border-zinc-300 hover:bg-zinc-50 text-zinc-800 rounded-xl font-semibold text-xs transition-all cursor-pointer">
+                  Save Draft
+                </button>
+                <button onClick={handleSaveAndPrint} className="flex-1 py-3 bg-[#B45309] hover:bg-[#92400E] text-white rounded-xl font-medium text-xs transition-all shadow-sm cursor-pointer">
+                  Save & Print
+                </button>
               </div>
             )}
           </div>
         </div>
       </div>
 
+      {/* PRINT VIEW (A4 FORMAT) */}
       <div className="hidden print:block w-full bg-white text-zinc-900 font-['Poppins'] text-[11px] leading-tight print:p-0 print:m-0">
         <style dangerouslySetInnerHTML={{__html: `
           @media print {
@@ -463,7 +615,7 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
             <div className="flex items-center gap-4">
               {companySettings?.logoUrl && <img src={companySettings.logoUrl} className="h-14 w-auto object-contain shrink-0" alt="Logo" />}
               <div>
-                <h1 className="text-xl font-semibold text-[11px] tracking-tight text-[#1E3A8A]">{companySettings?.companyName || 'Company Name'}</h1>
+                <h1 className="text-xl font-semibold tracking-tight text-[#B45309]">{companySettings?.companyName || 'Company Name'}</h1>
                 <p className="text-[10px] text-zinc-600 whitespace-pre-wrap mt-0.5 max-w-xs">{companySettings?.companyAddress}</p>
                 <p className="text-[10px] text-zinc-800 mt-1 font-bold">
                   GSTIN: <span className="font-medium text-zinc-600 mr-2">{companySettings?.companyGst}</span> 
@@ -472,7 +624,7 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
               </div>
             </div>
             <div className="text-right">
-              <span className="text-[10px] font-semibold text-[11px] text-amber-600 uppercase tracking-[0.2em] block mb-1">Purchase Order</span>
+              <span className="text-[10px] font-bold text-[#B45309] uppercase tracking-[0.2em] block mb-1">Purchase Order</span>
               <h2 className="text-xl font-bold text-zinc-900 tracking-tight">{poDetails.poNo || 'PO-000'}</h2>
               <p className="text-[10px] font-bold text-zinc-800 mt-1">Date: <span className="font-medium text-zinc-600">{poDetails.date}</span></p>
             </div>
@@ -488,14 +640,14 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
             <div className="text-right space-y-1">
               <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1.5">Delivery Details</span>
               {poDetails.expectedDelivery && <p className="text-[10px] text-zinc-800 font-bold">Expected By: <span className="font-medium text-zinc-600">{poDetails.expectedDelivery}</span></p>}
-              {poDetails.projectName && <p className="text-[10px] text-zinc-800 font-bold mt-2">Project: <span className="font-medium text-[#1E3A8A]">{poDetails.projectName}</span></p>}
+              {poDetails.projectName && <p className="text-[10px] text-zinc-800 font-bold mt-2">Project: <span className="font-medium text-[#B45309]">{poDetails.projectName}</span></p>}
               <p className="text-[10px] text-zinc-800 font-bold mt-2">Ship To:<br/><span className="font-medium text-zinc-600 whitespace-pre-wrap leading-tight block mt-0.5">{poDetails.shippingAddress}</span></p>
             </div>
           </div>
 
           <table className="w-full text-left border-collapse mb-6">
             <thead>
-              <tr className="bg-[#1E3A8A] text-white text-[9px] uppercase tracking-wider">
+              <tr className="bg-[#B45309] text-white text-[9px] uppercase tracking-wider">
                 <th className="py-2.5 px-2 font-bold text-center w-8 rounded-tl-md">#</th>
                 <th className="py-2.5 px-3 font-bold">Material / Description</th>
                 <th className="py-2.5 px-2 font-bold text-center w-12">Qty</th>
@@ -514,11 +666,11 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
                   <tr key={item.id} className="break-inside-avoid">
                     <td className="py-3 px-2 text-center text-zinc-500">{index + 1}</td>
                     <td className="py-3 px-3 font-bold text-zinc-900">{item.description}</td>
-                    <td className="py-3 px-2 text-center font-bold text-zinc-800">{parseFloat(item.qty).toLocaleString()}</td>
+                    <td className="py-3 px-2 text-center font-bold text-zinc-800">{parseFloat(item.qty || 0).toLocaleString()}</td>
                     <td className="py-3 px-2 text-center text-zinc-600">{item.uom}</td>
                     <td className="py-3 px-2 text-right text-zinc-800">₹{parseFloat(item.rate || 0).toLocaleString('en-IN')}</td>
                     <td className="py-3 px-2 text-center text-zinc-500">{item.tax}%</td>
-                    <td className="py-3 px-3 text-right font-semibold text-[11px] text-zinc-900">₹{row.totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                    <td className="py-3 px-3 text-right font-semibold text-zinc-900">₹{row.totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                   </tr>
                 );
               })}
@@ -541,7 +693,7 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
                 <span className="font-bold text-zinc-900">₹{totals.totalTax.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
               </div>
               
-              <div className="flex justify-between font-semibold text-[11px] text-white bg-[#1E3A8A] px-2 py-2 rounded mt-2 text-sm">
+              <div className="flex justify-between font-semibold text-white bg-[#B45309] px-2.5 py-2 rounded mt-2 text-sm">
                 <span>Grand Total:</span><span>₹{totals.grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
               </div>
             </div>
