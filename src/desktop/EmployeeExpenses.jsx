@@ -48,7 +48,7 @@ export default function EmployeeExpenses() {
     return d.getMonth() + 1 === Number(selectedMonth) && d.getFullYear() === Number(selectedYear);
   });
 
-  const totalMonthExpense = monthlyExpenses.reduce((sum, e) => sum + e.amount, 0);
+  const totalMonthExpense = monthlyExpenses.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
 
   // 2. Calculate Current Week Expense (last 7 days from today)
   const oneWeekAgo = new Date(currentDate);
@@ -58,13 +58,13 @@ export default function EmployeeExpenses() {
     const d = new Date(e.date);
     return d >= oneWeekAgo && d <= currentDate;
   });
-  const totalWeekExpense = weeklyExpenses.reduce((sum, e) => sum + e.amount, 0);
+  const totalWeekExpense = weeklyExpenses.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
 
   // 3. Employee-wise breakdown for the selected month
   const employeeTotals = {};
   monthlyExpenses.forEach(exp => {
     if (!employeeTotals[exp.empId]) employeeTotals[exp.empId] = 0;
-    employeeTotals[exp.empId] += exp.amount;
+    employeeTotals[exp.empId] += (parseFloat(exp.amount) || 0);
   });
 
   // Helper to get employee name from ID
@@ -100,19 +100,19 @@ export default function EmployeeExpenses() {
     }
   };
 
-  const inputClass = "w-full px-2 py-2 bg-transparent border-b border-zinc-200 focus:border-[#1E3A8A] focus:outline-none text-zinc-900 text-xs font-medium transition-all placeholder:text-zinc-400";
+  const inputClass = "w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white focus:outline-none focus:border-[#B45309] focus:ring-1 focus:ring-inset focus:ring-[#B45309] text-zinc-900 text-xs font-medium transition-all shadow-sm";
 
   return (
-    <div className="w-full h-full font-['Poppins'] flex flex-col">
+    <div className="w-full h-full flex flex-col" style={{ fontFamily: 'Poppins, sans-serif' }}>
       
-      {/* Header & Filters */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end pb-4 border-b border-zinc-200 mb-6 gap-4 print:hidden shrink-0">
+      {/* HEADER & FILTERS */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center pb-5 mb-6 border-b border-zinc-200 shrink-0 gap-4 print:hidden">
         <div>
-          <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Staff Expenses</h2>
-          <p className="text-zinc-500 text-xs mt-1 font-medium">Track allowances, petty cash, and site purchases given to employees.</p>
+          <h2 className="text-xl font-bold text-zinc-900 tracking-tight">Staff Expenses</h2>
+          <p className="text-zinc-500 text-sm mt-0.5 font-medium">Track allowances, petty cash, and site purchases given to employees.</p>
         </div>
 
-        <div className="flex items-center gap-1.5 h-10 bg-white border border-zinc-200 rounded-2xl px-3 shadow-sm">
+        <div className="flex items-center h-10 bg-white border border-zinc-200 rounded-xl px-3 shadow-sm">
           <select 
             value={selectedMonth} 
             onChange={(e) => setSelectedMonth(Number(e.target.value))} 
@@ -134,31 +134,31 @@ export default function EmployeeExpenses() {
         </div>
       </div>
 
-      {/* Dashboard Summary Cards */}
+      {/* DASHBOARD SUMMARY CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 print:hidden shrink-0">
-        <div className="bg-zinc-900 text-white p-6 rounded-[2rem] shadow-lg flex flex-col justify-center">
-          <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Total Given (This Month)</span>
-          <p className="text-2xl font-semibold text-[11px]">₹ {totalMonthExpense.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+        <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm flex flex-col justify-center">
+          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Total Given (This Month)</span>
+          <p className="text-xl font-bold text-zinc-900">₹ {totalMonthExpense.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
         </div>
-        <div className="bg-amber-50/70 p-6 rounded-[2rem] border border-amber-200/80 shadow-sm flex flex-col justify-center">
-          <span className="text-[9px] font-bold text-amber-600 uppercase tracking-widest block mb-1">Total Given (Past 7 Days)</span>
-          <p className="text-2xl font-semibold text-[11px] text-amber-700">₹ {totalWeekExpense.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+        <div className="bg-amber-50 p-5 rounded-2xl border border-amber-200/80 shadow-sm flex flex-col justify-center">
+          <span className="text-[10px] font-bold text-[#B45309] uppercase tracking-widest block mb-1">Total Given (Past 7 Days)</span>
+          <p className="text-xl font-bold text-[#B45309]">₹ {totalWeekExpense.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
         </div>
         
         {/* Employee Breakdown Mini-Dashboard */}
-        <div className="bg-white p-5 rounded-[2rem] border border-zinc-200 shadow-sm flex flex-col justify-center">
-          <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-2">Highest Spenders (This Month)</span>
-          <div className="space-y-2 max-h-[70px] overflow-y-auto pr-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm flex flex-col justify-center">
+          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-2">Highest Spenders (This Month)</span>
+          <div className="space-y-1.5 max-h-[60px] overflow-y-auto pr-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {Object.keys(employeeTotals).length === 0 ? (
-              <p className="text-[10px] text-zinc-400 font-medium">No expenses recorded yet.</p>
+              <p className="text-xs text-zinc-400 font-medium">No expenses recorded yet.</p>
             ) : (
               Object.entries(employeeTotals)
                 .sort(([,a], [,b]) => b - a)
                 .slice(0, 3)
                 .map(([empId, total]) => (
                   <div key={empId} className="flex justify-between items-center text-xs">
-                    <span className="font-bold text-zinc-800 truncate pr-2">{getEmpName(empId)}</span>
-                    <span className="font-semibold text-[11px] text-red-500">₹{total.toLocaleString('en-IN')}</span>
+                    <span className="font-semibold text-zinc-800 truncate pr-2">{getEmpName(empId)}</span>
+                    <span className="font-bold text-red-500">₹{total.toLocaleString('en-IN')}</span>
                   </div>
                 ))
             )}
@@ -168,37 +168,45 @@ export default function EmployeeExpenses() {
 
       {/* PDF Header (Only visible when printing) */}
       <div className="hidden print:block mb-6">
-        <h2 className="text-xl font-semibold text-[11px] text-zinc-900">Staff Expense Register</h2>
+        <h2 className="text-xl font-bold text-zinc-900">Staff Expense Register</h2>
         <p className="text-xs text-zinc-600">Period: {new Date(selectedYear, selectedMonth - 1).toLocaleString('en-US', { month: 'long', year: 'numeric' })}</p>
       </div>
 
-      {/* Full Width Seamless Entry Table Container */}
-      <div className="bg-white border border-zinc-200 rounded-[2rem] p-6 shadow-sm flex-1 flex flex-col min-h-0 overflow-hidden">
+      {/* FULL WIDTH TABLE CONTAINER */}
+      <div className="bg-white border border-zinc-200/80 rounded-2xl shadow-sm flex-1 flex flex-col min-h-0 overflow-hidden">
         <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           <table className="w-full text-left border-collapse whitespace-nowrap min-w-[900px]">
             <thead>
-              <tr className="text-zinc-400 text-[9px] uppercase tracking-widest border-b border-zinc-100 bg-zinc-50/50">
-                <th className="py-3.5 px-3 font-bold w-32">Date</th>
-                <th className="py-3.5 px-3 font-bold w-48">Employee</th>
-                <th className="py-3.5 px-3 font-bold w-40">Category</th>
-                <th className="py-3.5 px-3 font-bold min-w-[200px]">Description / Bill Ref</th>
-                <th className="py-3.5 px-3 font-bold text-right w-32">Amount</th>
-                <th className="py-3.5 px-3 font-bold text-center w-20 print:hidden">Action</th>
+              <tr className="bg-zinc-50/80 text-zinc-500 text-[11px] uppercase tracking-wider border-b border-zinc-200 sticky top-0 bg-zinc-50 z-10">
+                <th className="py-3.5 px-4 font-semibold w-32">Date</th>
+                <th className="py-3.5 px-4 font-semibold w-48">Employee</th>
+                <th className="py-3.5 px-4 font-semibold w-40">Category</th>
+                <th className="py-3.5 px-4 font-semibold min-w-[200px]">Description / Bill Ref</th>
+                <th className="py-3.5 px-4 font-semibold text-right w-36">Amount</th>
+                <th className="py-3.5 px-6 font-semibold text-right w-20 print:hidden">Action</th>
               </tr>
             </thead>
-            <tbody className="text-xs text-zinc-800">
+            <tbody className="text-sm text-zinc-800 divide-y divide-zinc-100">
               
               {/* INLINE ENTRY ROW */}
-              <tr className="border-b border-zinc-200 bg-zinc-50/50 print:hidden">
-                <td className="py-2 px-2"><input type="date" value={newExp.date} onChange={e => setNewExp({...newExp, date: e.target.value})} className={inputClass} /></td>
-                <td className="py-2 px-2">
-                  <select value={newExp.empId} onChange={e => setNewExp({...newExp, empId: e.target.value})} className={`${inputClass} cursor-pointer font-bold`}>
+              <tr className="bg-amber-50/30 border-b border-amber-100 print:hidden">
+                <td className="py-3 px-3"><input type="date" value={newExp.date} onChange={e => setNewExp({...newExp, date: e.target.value})} className={inputClass} /></td>
+                <td className="py-3 px-3">
+                  <select 
+                    value={newExp.empId} 
+                    onChange={e => setNewExp({...newExp, empId: e.target.value})} 
+                    className={`${inputClass} cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23B45309%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_0.8rem_center] bg-[length:1rem_1rem] pr-8 font-semibold text-zinc-900`}
+                  >
                     <option value="" disabled>Select Staff...</option>
                     {employees.map(e => <option key={e.empId} value={e.empId}>{e.fullName} ({e.empId})</option>)}
                   </select>
                 </td>
-                <td className="py-2 px-2">
-                  <select value={newExp.category} onChange={e => setNewExp({...newExp, category: e.target.value})} className={`${inputClass} cursor-pointer`}>
+                <td className="py-3 px-3">
+                  <select 
+                    value={newExp.category} 
+                    onChange={e => setNewExp({...newExp, category: e.target.value})} 
+                    className={`${inputClass} cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23B45309%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_0.8rem_center] bg-[length:1rem_1rem] pr-8`}
+                  >
                     <option value="Material/Tools">Material / Tools</option>
                     <option value="Travel/Fuel">Travel / Fuel</option>
                     <option value="Food/Meals">Food / Meals</option>
@@ -206,41 +214,46 @@ export default function EmployeeExpenses() {
                     <option value="Miscellaneous">Miscellaneous</option>
                   </select>
                 </td>
-                <td className="py-2 px-2"><input type="text" placeholder="Bill no, item details..." value={newExp.description} onChange={e => setNewExp({...newExp, description: e.target.value})} className={inputClass} /></td>
-                <td className="py-2 px-2"><input type="number" step="any" placeholder="₹ 0.00" value={newExp.amount} onChange={e => setNewExp({...newExp, amount: e.target.value})} className={`${inputClass} text-right font-semibold text-[11px] text-red-500`} /></td>
-                <td className="py-2 px-2 text-center">
-                  <button onClick={handleAddExpense} className="w-full bg-[#1E3A8A] hover:bg-blue-900 text-white py-2 rounded-xl font-bold text-[9px] uppercase tracking-wider transition-all shadow-sm cursor-pointer">Add</button>
+                <td className="py-3 px-3"><input type="text" placeholder="Bill no, item details..." value={newExp.description} onChange={e => setNewExp({...newExp, description: e.target.value})} className={inputClass} /></td>
+                <td className="py-3 px-3"><input type="number" step="any" placeholder="₹ 0.00" value={newExp.amount} onChange={e => setNewExp({...newExp, amount: e.target.value})} className={`${inputClass} text-right font-bold text-red-500`} /></td>
+                <td className="py-3 px-6 text-right">
+                  <button onClick={handleAddExpense} className="px-4 py-2 bg-[#B45309] hover:bg-[#92400E] text-white rounded-xl font-semibold text-xs transition-all shadow-sm cursor-pointer flex items-center justify-center gap-1 ml-auto">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                    Add
+                  </button>
                 </td>
               </tr>
 
               {/* SAVED RECORDS */}
               {loading ? (
-                <tr><td colSpan="6" className="py-12 text-center text-zinc-400 font-medium">Loading records...</td></tr>
+                <tr><td colSpan="6" className="py-12 text-center text-zinc-400 font-medium text-sm">Loading records...</td></tr>
               ) : monthlyExpenses.length === 0 ? (
-                <tr><td colSpan="6" className="py-12 text-center text-zinc-400 font-medium">No expenses found for this month. Type above to add one.</td></tr>
+                <tr><td colSpan="6" className="py-12 text-center text-zinc-400 font-medium text-sm">No expenses found for this month. Use the top row above to add one.</td></tr>
               ) : (
                 monthlyExpenses.map(exp => (
-                  <tr key={exp.id} className="border-b border-zinc-100 hover:bg-zinc-50 transition-colors group">
-                    <td className="py-3.5 px-3 font-medium text-zinc-600">{exp.date}</td>
-                    <td className="py-3.5 px-3 font-bold text-zinc-900">{getEmpName(exp.empId)}</td>
-                    <td className="py-3.5 px-3 text-zinc-600 font-medium">
-                      <span className="bg-zinc-100 border border-zinc-200 px-2.5 py-1 rounded-lg text-[10px] font-bold text-zinc-700">
+                  <tr key={exp.id} className="hover:bg-zinc-50 transition-colors group">
+                    <td className="py-4 px-4 text-xs font-medium text-zinc-500">{exp.date}</td>
+                    <td className="py-4 px-4 font-semibold text-zinc-900">{getEmpName(exp.empId)}</td>
+                    <td className="py-4 px-4">
+                      <span className="px-2.5 py-1 bg-amber-50 text-[#B45309] border border-amber-200/60 rounded-md text-[10px] font-semibold uppercase tracking-wider">
                         {exp.category}
                       </span>
                     </td>
-                    <td className="py-3.5 px-3 text-zinc-500 truncate max-w-[250px]">{exp.description || '-'}</td>
-                    <td className="py-3.5 px-3 text-right font-semibold text-[11px] text-zinc-900">₹ {exp.amount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                    <td className="py-3.5 px-3 text-center opacity-0 group-hover:opacity-100 transition-opacity print:hidden">
-                      <button onClick={() => handleDelete(exp.id)} className="text-red-400 hover:text-red-600 font-bold text-[10px] uppercase tracking-wider cursor-pointer">Del</button>
+                    <td className="py-4 px-4 text-xs text-zinc-500 truncate max-w-[250px]">{exp.description || '-'}</td>
+                    <td className="py-4 px-4 text-right font-bold text-sm text-zinc-900">₹ {parseFloat(exp.amount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    <td className="py-4 px-6 text-right print:hidden">
+                      <button onClick={() => handleDelete(exp.id)} className="p-1.5 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white border border-red-200 rounded-lg transition-all cursor-pointer opacity-0 group-hover:opacity-100" title="Delete Expense Record">
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                      </button>
                     </td>
                   </tr>
                 ))
               )}
 
-              {/* Total Footer */}
-              <tr className="font-semibold text-[11px] text-zinc-900 border-t-2 border-zinc-200 bg-zinc-50/50">
-                <td colSpan="4" className="py-4 px-3 text-right text-xs uppercase tracking-wider">MONTHLY TOTAL:</td>
-                <td className="py-4 px-3 text-right text-sm font-semibold text-[11px] text-[#1E3A8A]">₹ {totalMonthExpense.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+              {/* TOTAL FOOTER */}
+              <tr className="font-semibold text-zinc-900 border-t-2 border-zinc-200 bg-zinc-50/80">
+                <td colSpan="4" className="py-4 px-4 text-right text-xs uppercase tracking-wider font-bold">MONTHLY TOTAL:</td>
+                <td className="py-4 px-4 text-right text-sm font-bold text-[#B45309]">₹ {totalMonthExpense.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                 <td className="print:hidden"></td>
               </tr>
 
