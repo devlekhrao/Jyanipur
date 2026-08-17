@@ -13,7 +13,6 @@ function getFinancialYear(dateStr) {
   }
 }
 
-// Helper function to convert number to Indian Currency Words
 function numberToWords(num) {
   if (!num || isNaN(num)) return 'Zero Rupees Only';
   const a = ['', 'One ', 'Two ', 'Three ', 'Four ', 'Five ', 'Six ', 'Seven ', 'Eight ', 'Nine ', 'Ten ', 'Eleven ', 'Twelve ', 'Thirteen ', 'Fourteen ', 'Fifteen ', 'Sixteen ', 'Seventeen ', 'Eighteen ', 'Nineteen '];
@@ -95,9 +94,8 @@ export default function Purchases({ companySettings = {} }) {
     setLoading(false);
   };
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { loadData(); }, [currentView]);
 
-  // Close vendor suggestions on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (vendorDropdownRef.current && !vendorDropdownRef.current.contains(event.target)) {
@@ -110,6 +108,15 @@ export default function Purchases({ companySettings = {} }) {
 
   const handleVendorInputChange = (e) => {
     const val = e.target.value;
+    
+    // Check if user selected an item or typed exact name
+    const exactMatch = vendorsList.find(v => v.name && v.name.toLowerCase() === val.toLowerCase());
+    
+    if (exactMatch) {
+      handleSelectVendor(exactMatch);
+      return;
+    }
+
     setPurchaseDetails(prev => ({ ...prev, vendorName: val }));
     if (errors.vendorName) setErrors(prev => ({ ...prev, vendorName: false }));
 
@@ -120,8 +127,8 @@ export default function Purchases({ companySettings = {} }) {
       setVendorSuggestions(matches);
       setShowVendorDropdown(matches.length > 0);
     } else {
-      setVendorSuggestions([]);
-      setShowVendorDropdown(false);
+      setVendorSuggestions(vendorsList);
+      setShowVendorDropdown(vendorsList.length > 0);
     }
   };
 
@@ -228,7 +235,6 @@ export default function Purchases({ companySettings = {} }) {
     try {
       await savePurchase(record);
       
-      // Auto-feed line items to Rate Book
       for (const item of items) {
         if (item.materialName && item.rate > 0) {
           await saveMaterialRate({
@@ -255,12 +261,6 @@ export default function Purchases({ companySettings = {} }) {
       alert(`Purchase Bill ${purchaseDetails.invoiceNo} saved! Rate Book updated.`);
       handleClear(false);
       setCurrentView('list');
-    }
-  };
-
-  const handleSaveAndPrint = async () => {
-    if (await savePurchaseToState()) {
-      setTimeout(() => window.print(), 100);
     }
   };
 
@@ -484,33 +484,47 @@ export default function Purchases({ companySettings = {} }) {
           </div>
         </div>
 
-        {/* METADATA WITH VENDOR AUTOCOMPLETE */}
+        {/* METADATA WITH NATIVE DATALIST & AUTOCOMPLETE DROPDOWN */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 shrink-0">
           <div className="md:col-span-2 relative" ref={vendorDropdownRef}>
             <label className={labelClass}>Vendor Name <span className="text-red-500">*</span></label>
             <input 
               disabled={isReadOnly} 
               type="text" 
+              list="vendors-datalist"
               value={purchaseDetails.vendorName} 
               onChange={handleVendorInputChange} 
               onFocus={() => {
-                if (vendorSuggestions.length > 0) setShowVendorDropdown(true);
+                const matches = vendorsList.filter(v => v.name);
+                setVendorSuggestions(matches);
+                setShowVendorDropdown(matches.length > 0);
               }}
               className={`${inputClass} ${errors.vendorName ? 'border-red-400 focus:border-red-500 focus:ring-red-500 bg-red-50/20' : ''}`} 
-              placeholder="Supplier / Shop Name (Type to search)" 
+              placeholder="Type or select supplier (e.g., Jay Laxmi)" 
               autoComplete="off"
             />
+
+            {/* Native Datalist Fallback */}
+            <datalist id="vendors-datalist">
+              {vendorsList.map((v) => (
+                <option key={v.id || v.name} value={v.name}>{v.gstin ? `GST: ${v.gstin}` : 'Unregistered'}</option>
+              ))}
+            </datalist>
             
-            {/* VENDOR AUTOCOMPLETE DROPDOWN */}
+            {/* CUSTOM AUTOCOMPLETE DROPDOWN */}
             {showVendorDropdown && !isReadOnly && (
               <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-zinc-200 rounded-xl shadow-xl z-[120] max-h-52 overflow-y-auto">
-                <div className="p-2 border-b border-zinc-100 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
-                  Saved Vendors ({vendorSuggestions.length})
+                <div className="p-2 border-b border-zinc-100 text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex justify-between items-center">
+                  <span>Saved Vendors ({vendorSuggestions.length})</span>
+                  <span className="text-[9px] text-[#B45309]">Click to Auto-fill</span>
                 </div>
                 {vendorSuggestions.map((v) => (
                   <div
                     key={v.id || v.name}
-                    onClick={() => handleSelectVendor(v)}
+                    onMouseDown={(e) => {
+                      e.preventDefault(); // Prevents input blur before click registers
+                      handleSelectVendor(v);
+                    }}
                     className="px-4 py-2.5 hover:bg-amber-50 cursor-pointer flex justify-between items-center transition-colors border-b border-zinc-50 last:border-none"
                   >
                     <div>
@@ -518,7 +532,7 @@ export default function Purchases({ companySettings = {} }) {
                       {v.tradeCategory && <p className="text-[10px] text-zinc-400 font-medium">{v.tradeCategory}</p>}
                     </div>
                     {v.gstin ? (
-                      <span className="text-[10px] font-mono bg-zinc-100 px-2 py-0.5 rounded text-zinc-600 font-semibold">
+                      <span className="text-[10px] font-mono bg-zinc-100 px-2 py-0.5 rounded text-zinc-700 font-semibold border border-zinc-200">
                         {v.gstin}
                       </span>
                     ) : (
@@ -639,7 +653,6 @@ export default function Purchases({ companySettings = {} }) {
             </div>
           </div>
 
-          {/* TOTALS SUMMARY DECK */}
           <div className="w-full lg:w-80 flex flex-col justify-between">
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-200 text-zinc-800 space-y-3">
               <div className="flex justify-between text-xs">
