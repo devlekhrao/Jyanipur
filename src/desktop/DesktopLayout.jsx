@@ -197,11 +197,15 @@ export default function DesktopLayout() {
 
         {/* LIGHT SIDEBAR WITH TEAK ACCENTS */}
         <aside className="print:hidden w-[260px] h-full bg-white text-zinc-800 flex flex-col flex-shrink-0 z-20 shadow-sm border-r border-[#B45309]/20">            
-          <div className="p-6 flex items-center justify-center gap-3 border-b border-zinc-100">
-            <div className="bg-zinc-50 p-2 rounded-xl shadow-sm border border-zinc-100">
-              <img src={companySettings.logoUrl} alt="Logo" className="h-6 w-auto object-contain" style={{ filter: teakTintFilter }} onError={(e) => { e.target.style.display='none'; }} />
-            </div>
-            <span className="font-bold text-sm tracking-[0.2em] uppercase text-[#B45309]">Jyanipur</span>
+        <div className="p-6 flex items-center justify-center gap-3 border-b border-zinc-100">
+            <img 
+              src={companySettings.logoUrl} 
+              alt="Logo" 
+              className="h-9 w-auto object-contain drop-shadow-sm" 
+              style={{ filter: teakTintFilter }} 
+              onError={(e) => { e.target.style.display='none'; }} 
+            />
+            <span className="font-bold text-base tracking-[0.2em] uppercase text-[#B45309]">Jyanipur</span>
           </div>
 
           <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-2 [&::-webkit-scrollbar]:hidden">
