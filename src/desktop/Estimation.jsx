@@ -246,6 +246,43 @@ export default function Estimation({ companySettings = {} }) {
     setTimeout(() => window.print(), 150);
   };
 
+  // NEW: Duplicate an estimate instantly
+  const handleDuplicate = (est) => {
+    const newEst = { 
+      ...est, 
+      id: Date.now(), 
+      estimateNo: `${est.estimateNo}-COPY`, 
+      date: new Date().toISOString().split('T')[0],
+      isCancelled: false
+    };
+    setEstimationsList([newEst, ...estimationsList]);
+    alert('Estimate successfully duplicated!');
+  };
+
+  // NEW: Draft into Tax Invoice via localStorage
+  const handleConvertToInvoice = (est) => {
+    const invoiceDraft = {
+      partyName: est.client || '',
+      partyAddress: est.partyAddress || '',
+      projectName: est.projectName || '',
+      date: new Date().toISOString().split('T')[0],
+      poRef: est.estimateNo || '', // Link the estimate number
+      description: est.description || '',
+      bankName: est.bankName || '',
+      accountName: est.accountName || '',
+      accountNo: est.accountNo || '',
+      ifscCode: est.ifscCode || '',
+      advanceReceived: est.advanceReceived || '',
+      discount: est.discount || '',
+      terms: est.terms || ''
+    };
+    localStorage.setItem('draft_invoiceDetails', JSON.stringify(invoiceDraft));
+    localStorage.setItem('draft_items', JSON.stringify(est.items || []));
+    localStorage.setItem('draft_taxMode', est.taxMode || 'CGST_SGST');
+    
+    alert('Estimate details copied! Navigate to the "Tax Invoice" module and click "+ New Invoice" to complete the conversion.');
+  };
+
   const handleToggleCancel = (id) => {
     setEstimationsList(estimationsList.map(est => {
       if (est.id === id) {
@@ -329,21 +366,45 @@ export default function Estimation({ companySettings = {} }) {
                       <td className={`py-4 px-6 font-bold text-xs ${est.isCancelled ? 'line-through text-zinc-400' : 'text-zinc-900'}`}>
                         {est.amount}
                       </td>
-                      <td className="py-4 px-6 text-right space-x-3">
-                        {!est.isCancelled ? (
-                          <>
-                            <button onClick={() => handleEdit(est)} className="text-[#B45309] hover:text-[#92400E] font-bold cursor-pointer text-[10px] uppercase tracking-wider">Edit</button>
-                            <button onClick={() => handleView(est)} className="text-zinc-600 hover:text-zinc-900 font-bold cursor-pointer text-[10px] uppercase tracking-wider">View</button>
-                            <button onClick={() => handleDirectPrint(est)} className="text-amber-700 hover:text-amber-900 font-bold cursor-pointer text-[10px] uppercase tracking-wider">Print</button>
-                            <button onClick={() => handleToggleCancel(est.id)} className="text-red-500 hover:text-red-700 font-bold cursor-pointer text-[10px] uppercase tracking-wider">Cancel</button>
-                          </>
-                        ) : (
-                          <>
-                            <button onClick={() => handleView(est)} className="text-zinc-500 hover:text-zinc-900 font-bold cursor-pointer text-[10px] uppercase tracking-wider">View</button>
-                            <button onClick={() => handleToggleCancel(est.id)} className="text-amber-700 hover:text-amber-900 font-bold cursor-pointer text-[10px] uppercase tracking-wider">Restore (Undo)</button>
-                          </>
-                        )}
+                      
+                      {/* ACTION BUTTONS */}
+                      <td className="py-4 px-6 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          {!est.isCancelled ? (
+                            <>
+                              <button onClick={() => handleEdit(est)} title="Edit Estimate" className="px-3 py-1.5 bg-amber-50 text-[#B45309] hover:bg-[#B45309] hover:text-white border border-amber-200/60 rounded-lg font-bold cursor-pointer text-[10px] uppercase tracking-wider transition-all">
+                                Edit
+                              </button>
+                              
+                              <button onClick={() => handleView(est)} title="View Detail" className="px-3 py-1.5 bg-zinc-50 text-zinc-600 hover:bg-zinc-200 border border-zinc-200 rounded-lg font-bold cursor-pointer text-[10px] uppercase tracking-wider transition-all">
+                                View
+                              </button>
+                              
+                              <button onClick={() => handleDirectPrint(est)} title="Print or Save PDF" className="p-1.5 bg-zinc-50 text-zinc-600 hover:bg-zinc-200 border border-zinc-200 rounded-lg font-bold cursor-pointer text-sm transition-all flex items-center justify-center">
+                                🖨️
+                              </button>
+                              
+                              <button onClick={() => handleDuplicate(est)} title="Duplicate/Clone Estimate" className="px-2.5 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white border border-blue-200 rounded-lg font-bold cursor-pointer text-[10px] uppercase tracking-wider transition-all flex items-center gap-1">
+                                📋 <span className="hidden xl:inline">Copy</span>
+                              </button>
+
+                              <button onClick={() => handleConvertToInvoice(est)} title="Convert to Tax Invoice" className="px-2.5 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white border border-emerald-200 rounded-lg font-bold cursor-pointer text-[10px] uppercase tracking-wider transition-all flex items-center gap-1">
+                                🔄 <span className="hidden xl:inline">To Invoice</span>
+                              </button>
+                              
+                              <button onClick={() => handleToggleCancel(est.id)} title="Cancel/Reject Estimate" className="px-2 py-1.5 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white border border-red-200 rounded-lg font-bold cursor-pointer text-[10px] uppercase tracking-wider transition-all">
+                                ❌
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button onClick={() => handleView(est)} className="px-3 py-1.5 bg-zinc-50 text-zinc-600 hover:bg-zinc-200 border border-zinc-200 rounded-lg font-bold cursor-pointer text-[10px] uppercase tracking-wider transition-all">View</button>
+                              <button onClick={() => handleToggleCancel(est.id)} className="px-3 py-1.5 bg-amber-50 text-amber-700 hover:bg-amber-600 hover:text-white border border-amber-200 rounded-lg font-bold cursor-pointer text-[10px] uppercase tracking-wider transition-all">Restore</button>
+                            </>
+                          )}
+                        </div>
                       </td>
+
                     </tr>
                   ))
                 )}
