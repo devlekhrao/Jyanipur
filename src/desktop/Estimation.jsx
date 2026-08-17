@@ -224,8 +224,8 @@ export default function Estimation({ companySettings = {} }) {
     }
   };
 
-  const inputClass = "w-full px-4 py-3 rounded-2xl border border-zinc-200 bg-zinc-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#B45309] text-zinc-900 text-xs font-medium transition-all shadow-inner disabled:opacity-75 disabled:cursor-not-allowed";
-  const labelClass = "block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
+  const inputClass = "w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#B45309] text-zinc-900 text-xs font-medium transition-all disabled:opacity-75 disabled:cursor-not-allowed";
+  const labelClass = "block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1.5 ml-0.5";
 
   // ==========================================
   // RENDER 1: ESTIMATION BOARD LIST VIEW
@@ -233,29 +233,29 @@ export default function Estimation({ companySettings = {} }) {
   if (currentView === 'list') {
     return (
       <div className="w-full h-full font-['Poppins'] flex flex-col print:hidden">
-        <div className="flex justify-between items-end pb-4 border-b border-zinc-200 mb-6 shrink-0">
+        <div className="flex justify-between items-center pb-5 mb-6 border-b border-zinc-200 shrink-0">
           <div>
-            <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Estimations</h2>
-            <p className="text-zinc-500 text-xs mt-1 font-medium">Manage and track your client BOQs & estimates.</p>
+            <h2 className="text-xl font-bold text-zinc-900 tracking-tight">Estimations & BOQs</h2>
+            <p className="text-zinc-500 text-xs mt-0.5 font-medium">Create and review client estimations.</p>
           </div>
           <button 
             onClick={() => { handleClear(false); setCurrentView('form'); }}
-            className="bg-[#B45309] hover:bg-[#92400E] text-white px-5 py-3 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-md hover:shadow-lg shadow-[#B45309]/20 hover:-translate-y-0.5"
+            className="bg-[#B45309] hover:bg-[#92400E] text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm flex items-center gap-1.5"
           >
-            + New Estimate
+            <span>+</span> New Estimate
           </button>
         </div>
 
-        <div className="bg-white border border-zinc-200 rounded-[2.5rem] shadow-sm overflow-hidden flex-1 flex flex-col min-h-0">
+        <div className="bg-white border border-zinc-200/80 rounded-2xl shadow-sm overflow-hidden flex-1 flex flex-col min-h-0">
           <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <table className="w-full text-left border-collapse whitespace-nowrap">
               <thead>
-                <tr className="bg-zinc-50/70 text-zinc-400 text-[10px] uppercase tracking-[0.15em] border-b border-zinc-100">
-                  <th className="py-4 px-6 font-semibold">Date</th>
-                  <th className="py-4 px-6 font-semibold">Estimate No.</th>
-                  <th className="py-4 px-6 font-semibold">Client / Party</th>
-                  <th className="py-4 px-6 font-semibold">Total Amount</th>
-                  <th className="py-4 px-6 font-semibold text-right">Actions</th>
+                <tr className="bg-zinc-50/80 text-zinc-400 text-[10px] uppercase tracking-wider border-b border-zinc-100">
+                  <th className="py-3.5 px-6 font-semibold">Date</th>
+                  <th className="py-3.5 px-6 font-semibold">Estimate No.</th>
+                  <th className="py-3.5 px-6 font-semibold">Client / Party</th>
+                  <th className="py-3.5 px-6 font-semibold">Total Amount</th>
+                  <th className="py-3.5 px-6 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100 text-sm">
@@ -267,15 +267,15 @@ export default function Estimation({ companySettings = {} }) {
                   estimationsList.map((est) => (
                     <tr 
                       key={est.id} 
-                      className={`transition-all ${est.isCancelled ? 'bg-red-50/20 opacity-60' : 'hover:bg-amber-50/30'}`}
+                      className={`transition-all ${est.isCancelled ? 'bg-red-50/20 opacity-60' : 'hover:bg-zinc-50/80'}`}
                     >
                       <td className={`py-4 px-6 text-xs font-medium ${est.isCancelled ? 'line-through text-zinc-400' : 'text-zinc-600'}`}>
                         {est.date}
                       </td>
-                      <td className={`py-4 px-6 font-extrabold text-xs ${est.isCancelled ? 'line-through text-zinc-400' : 'text-[#B45309]'}`}>
+                      <td className={`py-4 px-6 font-bold text-xs ${est.isCancelled ? 'line-through text-zinc-400' : 'text-[#B45309]'}`}>
                         {est.estimateNo}
                         {est.isCancelled && (
-                          <span className="ml-2 px-2.5 py-1 rounded-full text-[9px] font-bold bg-red-100 text-red-600 border border-red-200 uppercase tracking-widest no-underline inline-block">
+                          <span className="ml-2 px-2 py-0.5 rounded text-[9px] font-bold bg-red-100 text-red-600 border border-red-200 uppercase tracking-wider no-underline inline-block">
                             Cancelled
                           </span>
                         )}
@@ -283,7 +283,7 @@ export default function Estimation({ companySettings = {} }) {
                       <td className={`py-4 px-6 text-xs font-semibold ${est.isCancelled ? 'line-through text-zinc-400' : 'text-zinc-800'}`}>
                         {est.client}
                       </td>
-                      <td className={`py-4 px-6 font-black text-xs ${est.isCancelled ? 'line-through text-zinc-400' : 'text-amber-700'}`}>
+                      <td className={`py-4 px-6 font-bold text-xs ${est.isCancelled ? 'line-through text-zinc-400' : 'text-zinc-900'}`}>
                         {est.amount}
                       </td>
                       <td className="py-4 px-6 text-right space-x-3">
@@ -323,56 +323,57 @@ export default function Estimation({ companySettings = {} }) {
       {/* SCREEN FORM VIEW (HIDDEN ON PRINT) */}
       <div className="print:hidden flex-1 flex flex-col min-h-0 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <div className="flex items-center justify-between border-b border-zinc-200 pb-4 mb-6 shrink-0">
-          <h2 className="text-xl font-extrabold text-zinc-900 tracking-tight">
-            {isReadOnly ? `Viewing Estimate ${estimateDetails.estimateNo}` : editingId ? `Edit Estimate ${estimateDetails.estimateNo}` : 'Create Estimation'}
+          <h2 className="text-xl font-bold text-zinc-900 tracking-tight">
+            {isReadOnly ? `Viewing Estimate ${estimateDetails.estimateNo}` : editingId ? `Edit Estimate ${estimateDetails.estimateNo}` : 'New Estimation'}
           </h2>
           <div className="flex gap-2">
-            <button onClick={() => { setCurrentView('list'); handleClear(false); }} className="text-[#B45309] hover:bg-[#B45309]/10 text-[10px] font-bold uppercase tracking-[0.15em] transition-colors cursor-pointer bg-white px-4 py-2.5 rounded-2xl shadow-sm border border-[#B45309]/20">
+            <button onClick={() => { setCurrentView('list'); handleClear(false); }} className="text-zinc-600 hover:text-zinc-900 text-xs font-bold transition-colors cursor-pointer bg-white px-4 py-2 rounded-xl border border-zinc-200">
               &larr; Back
             </button>
             {isReadOnly && (
-              <button onClick={() => window.print()} className="bg-[#B45309] text-white px-5 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-wider shadow-md hover:bg-[#92400E] transition-all cursor-pointer">
+              <button onClick={() => window.print()} className="bg-[#B45309] text-white px-5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer hover:bg-[#92400E]">
                 🖨️ Print / Save PDF
               </button>
             )}
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-4 mb-4 shrink-0">
-          <div className="flex-[2] min-w-[200px]">
+        {/* TOP METADATA INPUTS */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 shrink-0">
+          <div>
             <label className={labelClass}>Client Name <span className="text-red-500">*</span></label>
-            <input disabled={isReadOnly} type="text" value={estimateDetails.partyName} onChange={(e) => { setEstimateDetails({...estimateDetails, partyName: e.target.value}); if(errors.partyName) setErrors({...errors, partyName: false}); }} className={`${inputClass} ${errors.partyName ? 'ring-2 ring-red-400 bg-red-50' : ''}`} />
+            <input disabled={isReadOnly} type="text" value={estimateDetails.partyName} onChange={(e) => { setEstimateDetails({...estimateDetails, partyName: e.target.value}); if(errors.partyName) setErrors({...errors, partyName: false}); }} className={`${inputClass} ${errors.partyName ? 'ring-2 ring-red-400' : ''}`} placeholder="e.g. Reliance Retail" />
           </div>
-          <div className="flex-[2] min-w-[200px]">
+          <div>
             <label className={labelClass}>Project / Site Name</label>
-            <input disabled={isReadOnly} type="text" value={estimateDetails.projectName} onChange={(e) => setEstimateDetails({...estimateDetails, projectName: e.target.value})} className={inputClass} />
+            <input disabled={isReadOnly} type="text" value={estimateDetails.projectName} onChange={(e) => setEstimateDetails({...estimateDetails, projectName: e.target.value})} className={inputClass} placeholder="e.g. Flagship Store Interior" />
           </div>
-          <div className="flex-[3] min-w-[250px]">
+          <div>
             <label className={labelClass}>Site Address</label>
-            <input disabled={isReadOnly} type="text" value={estimateDetails.partyAddress} onChange={(e) => setEstimateDetails({...estimateDetails, partyAddress: e.target.value})} className={inputClass} />
+            <input disabled={isReadOnly} type="text" value={estimateDetails.partyAddress} onChange={(e) => setEstimateDetails({...estimateDetails, partyAddress: e.target.value})} className={inputClass} placeholder="e.g. Commercial St, Mumbai" />
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-4 mb-8 shrink-0">
-          <div className="flex-1 min-w-[100px]">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 shrink-0">
+          <div>
             <label className={labelClass}>Estimate No. <span className="text-red-500">*</span></label>
-            <input disabled={isReadOnly} type="text" value={estimateDetails.estimateNo} onChange={(e) => { setEstimateDetails({...estimateDetails, estimateNo: e.target.value}); if(errors.estimateNo) setErrors({...errors, estimateNo: false}); }} className={`${inputClass} ${errors.estimateNo ? 'ring-2 ring-red-400 bg-red-50' : ''}`} />
+            <input disabled={isReadOnly} type="text" value={estimateDetails.estimateNo} onChange={(e) => { setEstimateDetails({...estimateDetails, estimateNo: e.target.value}); if(errors.estimateNo) setErrors({...errors, estimateNo: false}); }} className={`${inputClass} ${errors.estimateNo ? 'ring-2 ring-red-400' : ''}`} placeholder="e.g. EST-001" />
           </div>
-          <div className="flex-1 min-w-[120px]">
+          <div>
             <label className={labelClass}>Estimate Date</label>
             <input disabled={isReadOnly} type="date" value={estimateDetails.date} onChange={(e) => setEstimateDetails({...estimateDetails, date: e.target.value})} className={inputClass} />
           </div>
-          <div className="flex-1 min-w-[120px]">
+          <div>
             <label className={labelClass}>Valid Until</label>
             <input disabled={isReadOnly} type="date" value={estimateDetails.validUntil} onChange={(e) => setEstimateDetails({...estimateDetails, validUntil: e.target.value})} className={inputClass} />
           </div>
-          <div className="flex-1 min-w-[140px]">
-            <label className={labelClass}>Tax Calculation Type</label>
+          <div>
+            <label className={labelClass}>Tax Type</label>
             <select 
               disabled={isReadOnly}
               value={taxMode} 
               onChange={(e) => setTaxMode(e.target.value)}
-              className={`${inputClass} cursor-pointer font-bold text-[#B45309] bg-amber-50/50 border-amber-200`}
+              className={`${inputClass} cursor-pointer font-bold text-[#B45309]`}
             >
               <option value="CGST_SGST">CGST + SGST (In State)</option>
               <option value="IGST">IGST (Out of State)</option>
@@ -381,30 +382,31 @@ export default function Estimation({ companySettings = {} }) {
           </div>
         </div>
 
-        <div className="mb-6 overflow-x-auto bg-white border border-zinc-200 rounded-[2.5rem] p-6 shadow-sm shrink-0">
+        {/* BOQ ITEMS TABLE */}
+        <div className="mb-6 bg-white border border-zinc-200 rounded-2xl p-5 shadow-sm shrink-0">
           <table className="w-full text-left border-collapse whitespace-nowrap">
             <thead>
-              <tr className="text-zinc-400 text-[9px] uppercase tracking-widest border-b border-zinc-100 pb-3">
-                <th className="py-3 pr-4 font-bold">Scope of Work / Material Description</th>
-                <th className="py-3 px-2 font-bold w-20 text-center">Unit</th>
-                <th className="py-3 px-2 font-bold w-16 text-center">L</th>
-                <th className="py-3 px-2 font-bold w-16 text-center">B</th>
-                <th className="py-3 px-2 font-bold w-16 text-center">NO</th>
-                <th className="py-3 px-2 font-bold w-20 text-center">Qty</th>
-                <th className="py-3 px-2 font-bold w-24 text-right">Rate</th>
-                <th className="py-3 px-2 font-bold w-28 text-right">Amount</th>
-                {taxMode !== 'NONE' && <th className="py-3 px-2 font-bold w-20 text-center">GST %</th>}
-                <th className="py-3 px-2 font-bold w-28 text-right">Total</th>
-                {!isReadOnly && <th className="py-3 pl-2 w-6"></th>}
+              <tr className="text-zinc-400 text-[10px] uppercase tracking-wider border-b border-zinc-100 pb-3">
+                <th className="py-2.5 pr-4 font-bold">Scope of Work / Material Description</th>
+                <th className="py-2.5 px-2 font-bold w-20 text-center">Unit</th>
+                <th className="py-2.5 px-2 font-bold w-16 text-center">L</th>
+                <th className="py-2.5 px-2 font-bold w-16 text-center">B</th>
+                <th className="py-2.5 px-2 font-bold w-16 text-center">NO</th>
+                <th className="py-2.5 px-2 font-bold w-20 text-center">Qty</th>
+                <th className="py-2.5 px-2 font-bold w-24 text-right">Rate</th>
+                <th className="py-2.5 px-2 font-bold w-28 text-right">Amount</th>
+                {taxMode !== 'NONE' && <th className="py-2.5 px-2 font-bold w-20 text-center">GST %</th>}
+                <th className="py-2.5 px-2 font-bold w-28 text-right">Total</th>
+                {!isReadOnly && <th className="py-2.5 pl-2 w-6"></th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
               {items.map((item) => {
                 const rowCalc = calculateRow(item);
-                const tInp = "w-full border-b border-transparent hover:border-amber-300 focus:border-[#B45309] bg-transparent focus:outline-none py-2 px-1 text-xs transition-all font-medium text-zinc-900 placeholder-zinc-400 disabled:opacity-75";
+                const tInp = "w-full border-b border-transparent hover:border-zinc-300 focus:border-[#B45309] bg-transparent focus:outline-none py-2 px-1 text-xs transition-all font-medium text-zinc-900 placeholder-zinc-300 disabled:opacity-75";
                 
                 return (
-                  <tr key={item.id} className="group hover:bg-amber-50/20 transition-colors">
+                  <tr key={item.id} className="group hover:bg-zinc-50/50 transition-colors">
                     <td className="py-2 pr-4"><input disabled={isReadOnly} type="text" placeholder="BOQ Description" value={item.description} onChange={(e) => updateItem(item.id, 'description', e.target.value)} className={tInp} /></td>
                     <td className="py-2 px-2">
                       <select disabled={isReadOnly} value={item.unit} onChange={(e) => updateItem(item.id, 'unit', e.target.value)} className={`${tInp} text-center appearance-none cursor-pointer`}>
@@ -414,7 +416,7 @@ export default function Estimation({ companySettings = {} }) {
                     <td className="py-2 px-2"><input disabled={isReadOnly} type="number" step="any" value={item.sizeL} onChange={(e) => updateItem(item.id, 'sizeL', e.target.value)} className={`${tInp} text-center`} /></td>
                     <td className="py-2 px-2"><input disabled={isReadOnly} type="number" step="any" value={item.sizeB} onChange={(e) => updateItem(item.id, 'sizeB', e.target.value)} className={`${tInp} text-center`} /></td>
                     <td className="py-2 px-2"><input disabled={isReadOnly} type="number" step="any" value={item.no} onChange={(e) => updateItem(item.id, 'no', e.target.value)} className={`${tInp} text-center`} /></td>
-                    <td className="py-2 px-2 text-center text-xs font-semibold text-zinc-600">{rowCalc.quantity.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
+                    <td className="py-2 px-2 text-center text-xs font-semibold text-zinc-500">{rowCalc.quantity.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
                     <td className="py-2 px-2"><input disabled={isReadOnly} type="number" step="any" value={item.rate} onChange={(e) => updateItem(item.id, 'rate', e.target.value)} className={`${tInp} text-right`} /></td>
                     <td className="py-2 px-2 text-right text-xs font-semibold text-zinc-800">{rowCalc.baseAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
                     {taxMode !== 'NONE' && (
@@ -427,7 +429,7 @@ export default function Estimation({ companySettings = {} }) {
                     <td className="py-2 px-2 text-right text-xs font-bold text-zinc-900">{rowCalc.totalAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
                     {!isReadOnly && (
                       <td className="py-2 pl-2 text-center">
-                        <button onClick={() => removeItem(item.id)} className="text-zinc-400 hover:text-red-500 font-bold opacity-0 group-hover:opacity-100 transition-all cursor-pointer text-base">&times;</button>
+                        <button onClick={() => removeItem(item.id)} className="text-zinc-300 hover:text-red-500 font-bold opacity-0 group-hover:opacity-100 transition-all cursor-pointer text-base">&times;</button>
                       </td>
                     )}
                   </tr>
@@ -436,82 +438,88 @@ export default function Estimation({ companySettings = {} }) {
             </tbody>
           </table>
           {!isReadOnly && (
-            <button onClick={addItem} className="mt-5 px-5 py-2.5 bg-amber-50 hover:bg-amber-100 text-[#B45309] text-[10px] font-bold uppercase tracking-[0.15em] rounded-2xl transition-all cursor-pointer border border-amber-200/60">
-              + Add BOQ Item
+            <button onClick={addItem} className="mt-4 text-[#B45309] hover:text-[#92400E] text-xs font-bold transition-all cursor-pointer flex items-center gap-1">
+              <span>+</span> Add BOQ Line Item
             </button>
           )}
         </div>
 
+        {/* BOTTOM SECTION */}
         <div className="flex flex-col lg:flex-row justify-between gap-6 pb-8 shrink-0">
           <div className="flex-1 space-y-5">
             <div>
               <label className={labelClass}>Scope Remarks / Notes</label>
-              <textarea disabled={isReadOnly} value={estimateDetails.description} onChange={(e) => setEstimateDetails({...estimateDetails, description: e.target.value})} className={`${inputClass} resize-y min-h-[44px] py-3.5`} rows="1"></textarea>
+              <textarea disabled={isReadOnly} value={estimateDetails.description} onChange={(e) => setEstimateDetails({...estimateDetails, description: e.target.value})} className={`${inputClass} resize-y min-h-[40px] py-2`} rows="1"></textarea>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white rounded-3xl p-5 border border-zinc-200 shadow-sm">
-                <h3 className="text-[9px] font-extrabold text-[#B45309] uppercase tracking-widest mb-3">Bank Details</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-white rounded-2xl p-4 border border-zinc-200 shadow-sm">
+                <h3 className="text-[10px] font-bold text-[#B45309] uppercase tracking-wider mb-3">Bank Details</h3>
                 <div className="space-y-2 text-xs">
-                  <div className="flex items-center border-b border-zinc-100 pb-1.5">
+                  <div className="flex items-center border-b border-zinc-100 pb-1">
                     <span className="text-[10px] font-bold text-zinc-400 w-16 uppercase shrink-0">Bank:</span>
                     <input disabled={isReadOnly} type="text" placeholder="Bank Name" value={estimateDetails.bankName} onChange={(e) => setEstimateDetails({...estimateDetails, bankName: e.target.value})} className="w-full bg-transparent focus:outline-none font-medium text-zinc-900" />
                   </div>
-                  <div className="flex items-center border-b border-zinc-100 pb-1.5">
+                  <div className="flex items-center border-b border-zinc-100 pb-1">
                     <span className="text-[10px] font-bold text-zinc-400 w-16 uppercase shrink-0">Name:</span>
                     <input disabled={isReadOnly} type="text" placeholder="Account Holder" value={estimateDetails.accountName} onChange={(e) => setEstimateDetails({...estimateDetails, accountName: e.target.value})} className="w-full bg-transparent focus:outline-none font-medium text-zinc-900" />
                   </div>
-                  <div className="flex items-center border-b border-zinc-100 pb-1.5">
+                  <div className="flex items-center border-b border-zinc-100 pb-1">
                     <span className="text-[10px] font-bold text-zinc-400 w-16 uppercase shrink-0">A/C No:</span>
                     <input disabled={isReadOnly} type="text" placeholder="Account Number" value={estimateDetails.accountNo} onChange={(e) => setEstimateDetails({...estimateDetails, accountNo: e.target.value})} className="w-full bg-transparent focus:outline-none font-medium text-zinc-900" />
                   </div>
-                  <div className="flex items-center border-b border-zinc-100 pb-1.5">
+                  <div className="flex items-center border-b border-zinc-100 pb-1">
                     <span className="text-[10px] font-bold text-zinc-400 w-16 uppercase shrink-0">IFSC:</span>
                     <input disabled={isReadOnly} type="text" placeholder="IFSC Code" value={estimateDetails.ifscCode} onChange={(e) => setEstimateDetails({...estimateDetails, ifscCode: e.target.value})} className="w-full bg-transparent focus:outline-none font-medium text-zinc-900" />
                   </div>
                 </div>
               </div>
               <div>
-                <label className={labelClass}>Payment Terms & Validity</label>
-                <textarea disabled={isReadOnly} value={estimateDetails.terms} onChange={(e) => setEstimateDetails({...estimateDetails, terms: e.target.value})} className={`${inputClass} resize-none h-[155px] text-[11px] leading-relaxed`}></textarea>
+                <label className={labelClass}>Payment Terms & Schedule</label>
+                <textarea disabled={isReadOnly} value={estimateDetails.terms} onChange={(e) => setEstimateDetails({...estimateDetails, terms: e.target.value})} className={`${inputClass} resize-none h-[140px] text-[11px] leading-relaxed`}></textarea>
               </div>
             </div>
           </div>
 
+          {/* TOTALS SUMMARY DECK */}
           <div className="w-full lg:w-80 flex flex-col justify-between">
-            <div className="bg-[#B45309] p-6 rounded-[2.5rem] shadow-xl text-amber-100 border border-[#92400E]">
-              <div className="flex justify-between text-xs px-1 mb-2">
-                <span>Basic BOQ:</span><span className="text-white font-medium">₹ {totals.subtotal.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
+            <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm text-zinc-700 space-y-3">
+              <div className="flex justify-between text-xs">
+                <span className="text-zinc-500">Basic BOQ Total:</span><span className="text-zinc-900 font-semibold">₹ {totals.subtotal.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
               </div>
               
               {taxMode === 'IGST' ? (
-                <div className="flex justify-between text-xs px-1 mb-2"><span>IGST:</span><span className="text-white font-medium">₹ {totals.totalGst.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span></div>
+                <div className="flex justify-between text-xs"><span>IGST:</span><span className="text-zinc-900 font-semibold">₹ {totals.totalGst.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span></div>
               ) : taxMode === 'CGST_SGST' ? (
                 <>
-                  <div className="flex justify-between text-xs px-1 mb-2"><span>CGST:</span><span className="text-white font-medium">₹ {(totals.totalGst / 2).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span></div>
-                  <div className="flex justify-between text-xs px-1 mb-2"><span>SGST:</span><span className="text-white font-medium">₹ {(totals.totalGst / 2).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span></div>
+                  <div className="flex justify-between text-xs"><span className="text-zinc-500">CGST:</span><span className="text-zinc-900 font-semibold">₹ {(totals.totalGst / 2).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span></div>
+                  <div className="flex justify-between text-xs"><span className="text-zinc-500">SGST:</span><span className="text-zinc-900 font-semibold">₹ {(totals.totalGst / 2).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span></div>
                 </>
               ) : null}
 
-              <div className="flex justify-between text-sm font-bold text-white border-t border-amber-600/60 pt-3 px-1 mt-2">
-                <span>Total Estimate:</span><span>₹ {totals.grandTotal.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
+              <div className="flex justify-between text-sm font-bold text-zinc-900 border-t border-zinc-100 pt-3">
+                <span>Grand Total:</span><span>₹ {totals.grandTotal.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
               </div>
-              <div className="border-t border-amber-600/60 pt-4 space-y-3 mt-3">
-                <div className="flex justify-between items-center text-xs px-1">
-                  <span>Discount:</span><input disabled={isReadOnly} type="number" value={estimateDetails.discount} onChange={(e) => setEstimateDetails({...estimateDetails, discount: e.target.value})} placeholder="0" className="w-24 bg-[#92400E] text-white rounded-xl px-2.5 py-1.5 text-right outline-none focus:ring-1 focus:ring-white border border-amber-600 disabled:opacity-50" />
+
+              <div className="border-t border-zinc-100 pt-3 space-y-2">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-zinc-500">Discount:</span>
+                  <input disabled={isReadOnly} type="number" value={estimateDetails.discount} onChange={(e) => setEstimateDetails({...estimateDetails, discount: e.target.value})} placeholder="0" className="w-24 bg-zinc-50 text-zinc-900 rounded-lg px-2.5 py-1 text-right outline-none border border-zinc-200 focus:border-[#B45309]" />
                 </div>
-                <div className="flex justify-between items-center text-xs px-1">
-                  <span>Advance:</span><input disabled={isReadOnly} type="number" value={estimateDetails.advanceReceived} onChange={(e) => setEstimateDetails({...estimateDetails, advanceReceived: e.target.value})} placeholder="0" className="w-24 bg-[#92400E] text-white rounded-xl px-2.5 py-1.5 text-right outline-none focus:ring-1 focus:ring-white border border-amber-600 disabled:opacity-50" />
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-zinc-500">Advance:</span>
+                  <input disabled={isReadOnly} type="number" value={estimateDetails.advanceReceived} onChange={(e) => setEstimateDetails({...estimateDetails, advanceReceived: e.target.value})} placeholder="0" className="w-24 bg-zinc-50 text-zinc-900 rounded-lg px-2.5 py-1 text-right outline-none border border-zinc-200 focus:border-[#B45309]" />
                 </div>
               </div>
-              <div className="flex justify-between text-base font-extrabold text-white border-t-2 border-amber-600 pt-4 px-1 mt-4">
+
+              <div className="flex justify-between text-base font-extrabold text-[#B45309] border-t border-zinc-200 pt-3">
                 <span>Balance Due:</span><span>₹ {netPayable > 0 ? netPayable.toLocaleString('en-IN', { maximumFractionDigits: 2 }) : 0}</span>
               </div>
             </div>
 
             {!isReadOnly && (
               <div className="flex gap-2 mt-4">
-                <button onClick={handleSaveOnly} className="flex-1 py-4 bg-zinc-900 hover:bg-black text-white rounded-2xl font-bold text-[10px] uppercase tracking-wider transition-all shadow-md cursor-pointer">Save</button>
-                <button onClick={handleSaveAndPrint} className="flex-[2] py-4 bg-[#B45309] hover:bg-[#92400E] text-white rounded-2xl font-bold text-[10px] uppercase tracking-wider transition-all shadow-md shadow-[#B45309]/20 cursor-pointer">Save & Print PDF</button>
+                <button onClick={handleSaveOnly} className="flex-1 py-3 bg-zinc-900 hover:bg-black text-white rounded-xl font-bold text-xs transition-all shadow-sm cursor-pointer">Save</button>
+                <button onClick={handleSaveAndPrint} className="flex-[1.5] py-3 bg-[#B45309] hover:bg-[#92400E] text-white rounded-xl font-bold text-xs transition-all shadow-sm cursor-pointer">Save & Print PDF</button>
               </div>
             )}
           </div>
