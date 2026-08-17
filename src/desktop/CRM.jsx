@@ -139,7 +139,6 @@ export default function CRM() {
   };
 
   const handleCreateEstimation = (lead) => {
-    // Save to local storage so the Estimation module can pick it up if you build an importer there
     const draft = {
       partyName: lead.clientName || '',
       partyAddress: lead.address || '',
@@ -184,33 +183,33 @@ export default function CRM() {
 
   const columns = ['New Inquiry', 'Site Visited', 'Negotiation', 'Won', 'Lost'];
 
-  const inputClass = "w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-white focus:outline-none focus:border-[#B45309] focus:ring-1 focus:ring-inset focus:ring-[#B45309] text-zinc-900 text-xs font-medium transition-all disabled:opacity-75 disabled:cursor-not-allowed";
-  const labelClass = "block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1.5 ml-0.5";
+  const inputClass = "w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-white focus:outline-none focus:border-[#B45309] focus:ring-1 focus:ring-inset focus:ring-[#B45309] text-zinc-900 text-sm font-medium transition-all disabled:opacity-75 disabled:cursor-not-allowed";
+  const labelClass = "block text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5 ml-0.5";
 
   return (
-    <div className="w-full h-full font-['Poppins'] flex flex-col">
+    <div className="w-full h-full flex flex-col" style={{ fontFamily: 'Poppins, sans-serif' }}>
       {/* HEADER & FILTERS */}
       <div className="flex flex-col 2xl:flex-row justify-between items-start 2xl:items-center pb-5 mb-6 border-b border-zinc-200 shrink-0 gap-4">
         <div>
-          <h2 className="text-xl font-bold text-zinc-900 tracking-tight">CRM Pipeline</h2>
-          <p className="text-zinc-500 text-xs mt-0.5 font-medium">Manage leads, track contact attempts, and convert to estimates.</p>
+          <h2 className="text-xl font-semibold text-zinc-900 tracking-tight">CRM Pipeline</h2>
+          <p className="text-zinc-500 text-sm mt-0.5 font-medium">Manage leads, track contact attempts, and convert to estimates.</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           
           <div className="flex items-center h-10 bg-white border border-zinc-200 rounded-xl px-3.5 shadow-sm w-full md:w-auto">
-            <span className="text-xs text-zinc-400">🔍</span>
-            <input type="text" placeholder="Search name, phone, status..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="bg-transparent border-none text-xs font-medium text-zinc-800 outline-none px-2 w-full md:w-56 placeholder:text-zinc-400" />
+            <span className="text-sm text-zinc-400">🔍</span>
+            <input type="text" placeholder="Search name, phone, status..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="bg-transparent border-none text-sm font-medium text-zinc-800 outline-none px-2 w-full md:w-56 placeholder:text-zinc-400" />
           </div>
 
-          <button onClick={handleExport} className="h-10 bg-white border border-zinc-200 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 px-4 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer flex items-center gap-1.5">
+          <button onClick={handleExport} className="h-10 bg-white border border-zinc-200 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 px-4 rounded-xl text-sm font-medium transition-all shadow-sm cursor-pointer flex items-center gap-1.5">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
             </svg>
             <span className="hidden sm:inline">Export</span>
           </button>
           
-          <button onClick={() => { resetForm(); setIsModalOpen(true); }} className="h-10 bg-[#B45309] hover:bg-[#92400E] text-white px-5 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer flex items-center gap-1.5">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <button onClick={() => { resetForm(); setIsModalOpen(true); }} className="h-10 bg-[#B45309] hover:bg-[#92400E] text-white px-5 rounded-xl text-sm font-medium transition-all shadow-sm cursor-pointer flex items-center gap-1.5">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
             Add New Lead
@@ -223,20 +222,20 @@ export default function CRM() {
         <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           <table className="w-full text-left border-collapse whitespace-nowrap">
             <thead>
-              <tr className="bg-zinc-50/80 text-zinc-400 text-[10px] uppercase tracking-wider border-b border-zinc-100">
-                <th className="py-3.5 px-6 font-semibold">Date Added</th>
-                <th className="py-3.5 px-6 font-semibold">Client Profile</th>
-                <th className="py-3.5 px-6 font-semibold">Contact Details</th>
-                <th className="py-3.5 px-6 font-semibold">Project / Source</th>
-                <th className="py-3.5 px-6 font-semibold text-center">Follow-ups</th>
-                <th className="py-3.5 px-6 font-semibold text-center">Status</th>
-                <th className="py-3.5 px-6 font-semibold text-right">Est. Value</th>
-                <th className="py-3.5 px-6 font-semibold text-right">Actions</th>
+              <tr className="bg-zinc-50/80 text-zinc-500 text-[11px] uppercase tracking-wider border-b border-zinc-200">
+                <th className="py-4 px-6 font-semibold">Date Added</th>
+                <th className="py-4 px-6 font-semibold">Client Profile</th>
+                <th className="py-4 px-6 font-semibold">Contact Details</th>
+                <th className="py-4 px-6 font-semibold">Project / Source</th>
+                <th className="py-4 px-6 font-semibold text-center">Follow-ups</th>
+                <th className="py-4 px-6 font-semibold text-center">Status</th>
+                <th className="py-4 px-6 font-semibold text-right">Est. Value</th>
+                <th className="py-4 px-6 font-semibold text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100 text-sm">
               {loading ? (
-                <tr><td colSpan="8" className="py-12 text-center text-zinc-400 font-medium text-xs">Loading leads...</td></tr>
+                <tr><td colSpan="8" className="py-12 text-center text-zinc-400 font-medium text-sm">Loading leads...</td></tr>
               ) : filteredLeads.length === 0 ? (
                 <tr>
                   <td colSpan="8" className="py-16 text-center">
@@ -244,39 +243,39 @@ export default function CRM() {
                       <div className="w-12 h-12 bg-amber-50 rounded-full flex items-center justify-center text-amber-500">
                         <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                       </div>
-                      <p className="text-zinc-500 font-medium text-xs">No leads found in pipeline.</p>
+                      <p className="text-zinc-500 font-medium text-sm">No leads found in pipeline.</p>
                     </div>
                   </td>
                 </tr>
               ) : (
                 filteredLeads.map((lead) => (
                   <tr key={lead.id} className="transition-all hover:bg-zinc-50/80 group">
-                    <td className="py-4 px-6 text-xs font-medium text-zinc-500">{lead.dateAdded || '-'}</td>
+                    <td className="py-4 px-6 text-sm font-medium text-zinc-500">{lead.dateAdded || '-'}</td>
                     
                     <td className="py-4 px-6">
-                      <p className="font-bold text-xs text-zinc-900">{lead.clientName}</p>
-                      {lead.occupation && <p className="text-[10px] text-zinc-500 mt-0.5 truncate max-w-[150px]">{lead.occupation}</p>}
+                      <p className="font-semibold text-sm text-zinc-900">{lead.clientName}</p>
+                      {lead.occupation && <p className="text-[11px] font-medium text-zinc-500 mt-0.5 truncate max-w-[150px]">{lead.occupation}</p>}
                     </td>
                     
                     <td className="py-4 px-6">
-                      <p className="text-xs font-medium text-zinc-700">{lead.phone || 'No Phone'}</p>
-                      {lead.email && <p className="text-[10px] text-zinc-500 mt-0.5">{lead.email}</p>}
+                      <p className="text-sm font-medium text-zinc-800">{lead.phone || 'No Phone'}</p>
+                      {lead.email && <p className="text-[11px] font-medium text-zinc-500 mt-0.5">{lead.email}</p>}
                     </td>
                     
                     <td className="py-4 px-6">
                       <div className="flex flex-col gap-1 items-start">
-                        <span className="inline-block bg-zinc-100 text-zinc-600 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded">{lead.projectType}</span>
-                        {lead.source && <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider">{lead.source}</span>}
+                        <span className="inline-block bg-zinc-100 text-zinc-600 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded">{lead.projectType}</span>
+                        {lead.source && <span className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider">{lead.source}</span>}
                       </div>
                     </td>
 
                     <td className="py-4 px-6 text-center">
                       <div className="flex items-center justify-center gap-2">
-                        <span className="font-bold text-zinc-700 text-xs bg-white border border-zinc-200 w-6 h-6 flex items-center justify-center rounded-md shadow-sm">
+                        <span className="font-medium text-zinc-800 text-sm bg-white border border-zinc-200 w-7 h-7 flex items-center justify-center rounded-md shadow-sm">
                           {lead.followUpCount || 0}
                         </span>
                         <button onClick={() => handleAddFollowUp(lead)} title="Add Attempt" className="text-emerald-600 hover:bg-emerald-50 border border-transparent hover:border-emerald-200 rounded p-1 transition-all cursor-pointer">
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
                         </button>
                       </div>
                     </td>
@@ -285,19 +284,19 @@ export default function CRM() {
                       <select
                         value={lead.status || 'New Inquiry'}
                         onChange={(e) => handleStatusMove(lead.id, e.target.value)}
-                        className={`appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23A1A1AA%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%223%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_0.6rem_center] bg-[length:0.8rem_0.8rem] pr-7 pl-3 py-1.5 rounded-full border outline-none cursor-pointer transition-all text-[10px] font-black uppercase tracking-widest ${
+                        className={`appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23A1A1AA%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_0.6rem_center] bg-[length:0.8rem_0.8rem] pr-7 pl-3 py-1.5 rounded-full border outline-none cursor-pointer transition-all text-[11px] font-semibold uppercase tracking-wider ${
                           lead.status === 'Won' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 focus:ring-2 focus:ring-emerald-500/20' :
                           lead.status === 'Lost' ? 'bg-red-50 text-red-700 border-red-200 focus:ring-2 focus:ring-red-500/20' :
                           lead.status === 'Negotiation' ? 'bg-amber-50 text-amber-700 border-amber-200 focus:ring-2 focus:ring-amber-500/20' :
                           lead.status === 'Site Visited' ? 'bg-blue-50 text-blue-700 border-blue-200 focus:ring-2 focus:ring-blue-500/20' :
-                          'bg-zinc-50 text-zinc-600 border-zinc-200 focus:ring-2 focus:ring-zinc-500/20'
+                          'bg-zinc-50 text-zinc-700 border-zinc-200 focus:ring-2 focus:ring-zinc-500/20'
                         }`}
                       >
                         {columns.map(c => <option key={c} value={c}>{c}</option>)}
                       </select>
                     </td>
 
-                    <td className="py-4 px-6 text-right font-black text-xs text-[#B45309]">
+                    <td className="py-4 px-6 text-right font-medium text-sm text-[#B45309]">
                       ₹{(lead.estimatedValue || 0).toLocaleString('en-IN')}
                     </td>
                     
@@ -307,25 +306,25 @@ export default function CRM() {
                         {/* Direct Communication Buttons */}
                         {lead.phone && (
                           <a href={`tel:${lead.phone}`} title="Call Client" className="p-1.5 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white border border-blue-200 rounded-lg transition-all">
-                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
                           </a>
                         )}
                         {lead.email && (
                           <a href={`mailto:${lead.email}`} title="Email Client" className="p-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white border border-indigo-200 rounded-lg transition-all">
-                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" /></svg>
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" /></svg>
                           </a>
                         )}
 
-                        <button onClick={() => handleEdit(lead)} title="Edit Profile" className="px-2.5 py-1.5 bg-zinc-50 text-zinc-600 hover:bg-zinc-200 border border-zinc-200 rounded-lg font-black cursor-pointer text-[10px] uppercase tracking-widest transition-all">
+                        <button onClick={() => handleEdit(lead)} title="Edit Profile" className="px-3 py-1.5 bg-zinc-50 text-zinc-600 hover:bg-zinc-200 border border-zinc-200 rounded-lg font-semibold cursor-pointer text-[11px] uppercase tracking-wider transition-all">
                           Edit
                         </button>
                         
-                        <button onClick={() => handleCreateEstimation(lead)} title="Create Estimation for Lead" className="px-2.5 py-1.5 bg-amber-50 text-[#B45309] hover:bg-[#B45309] hover:text-white border border-amber-200/60 rounded-lg font-black cursor-pointer text-[10px] uppercase tracking-widest transition-all">
+                        <button onClick={() => handleCreateEstimation(lead)} title="Create Estimation for Lead" className="px-3 py-1.5 bg-amber-50 text-[#B45309] hover:bg-[#B45309] hover:text-white border border-amber-200/60 rounded-lg font-semibold cursor-pointer text-[11px] uppercase tracking-wider transition-all">
                           Est.
                         </button>
                         
                         <button onClick={() => handleDelete(lead.id)} title="Delete Lead" className="p-1.5 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white border border-red-200 rounded-lg transition-all">
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
                       </div>
                     </td>
@@ -345,8 +344,8 @@ export default function CRM() {
             {/* Modal Header */}
             <div className="px-6 py-5 border-b border-zinc-200 flex justify-between items-center bg-zinc-50 shrink-0">
               <div>
-                <h2 className="text-xl font-bold text-zinc-900">{formData.id ? 'Edit Client Profile' : 'New Client Inquiry'}</h2>
-                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-0.5">Comprehensive CRM Lead Details</p>
+                <h2 className="text-xl font-semibold text-zinc-900">{formData.id ? 'Edit Client Profile' : 'New Client Inquiry'}</h2>
+                <p className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider mt-0.5">Comprehensive CRM Lead Details</p>
               </div>
               <button onClick={() => setIsModalOpen(false)} className="text-zinc-400 hover:text-zinc-700 cursor-pointer">
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -359,7 +358,7 @@ export default function CRM() {
                 
                 {/* Section 1: Contact Details */}
                 <div>
-                  <h3 className="text-[10px] font-black text-[#B45309] uppercase tracking-widest mb-3 border-b border-zinc-100 pb-2">1. Primary Contact</h3>
+                  <h3 className="text-[11px] font-semibold text-[#B45309] uppercase tracking-wider mb-3 border-b border-zinc-100 pb-2">1. Primary Contact</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className={labelClass}>Client Full Name <span className="text-red-500">*</span></label>
@@ -386,7 +385,7 @@ export default function CRM() {
 
                 {/* Section 2: Project Details */}
                 <div>
-                  <h3 className="text-[10px] font-black text-[#B45309] uppercase tracking-widest mb-3 border-b border-zinc-100 pb-2">2. Requirement Details</h3>
+                  <h3 className="text-[11px] font-semibold text-[#B45309] uppercase tracking-wider mb-3 border-b border-zinc-100 pb-2">2. Requirement Details</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <label className={labelClass}>Project Type</label>
@@ -427,10 +426,10 @@ export default function CRM() {
 
             {/* Modal Footer */}
             <div className="px-6 py-4 border-t border-zinc-200 flex justify-end gap-3 bg-zinc-50 shrink-0">
-              <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 bg-white border border-zinc-300 hover:bg-zinc-100 text-zinc-700 font-bold rounded-xl text-xs transition-all cursor-pointer">
+              <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 bg-white border border-zinc-300 hover:bg-zinc-100 text-zinc-700 font-semibold rounded-xl text-sm transition-all cursor-pointer">
                 Cancel
               </button>
-              <button type="submit" form="leadForm" className="px-6 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white font-bold rounded-xl text-xs shadow-sm transition-all cursor-pointer">
+              <button type="submit" form="leadForm" className="px-6 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer">
                 {formData.id ? 'Update Lead' : 'Save Lead'}
               </button>
             </div>
