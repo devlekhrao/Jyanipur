@@ -8,10 +8,15 @@ import MobileLayout from './mobile/MobileLayout';
 export default function App() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false); // Added Checkbox State
   const [error, setError] = useState('');
   const [isMobile, setIsMobile] = useState(false);
   const teakTintFilter = 'brightness(0) saturate(100%) invert(36%) sepia(61%) saturate(2251%) hue-rotate(5deg) brightness(95%) contrast(92%)';
+
+  // Check local storage on initial load to keep user signed in
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return localStorage.getItem('jyanipur_auth') === 'true';
+  });
 
   const defaultSettings = {
     companyName: 'Jyanipur Interiors & Construction',
@@ -95,9 +100,19 @@ export default function App() {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    if (email.trim() === 'accounts@jyanipur.in' && password === '@llIneedis1.978') {
+    
+    // Read directly from HTML form to bypass React's autofill glitch
+    const enteredEmail = e.target.email.value;
+    const enteredPassword = e.target.password.value;
+
+    if (enteredEmail.trim() === 'accounts@jyanipur.in' && enteredPassword === '@llIneedis1.978') {
       setError('');
       setIsLoggedIn(true);
+      
+      // Save session if "Keep me signed in" is checked
+      if (rememberMe) {
+        localStorage.setItem('jyanipur_auth', 'true');
+      }
     } else {
       setError('Invalid credentials. Please try again.');
     }
@@ -108,6 +123,8 @@ export default function App() {
     setEmail('');
     setPassword('');
     setError('');
+    // Clear the saved session so they stay logged out
+    localStorage.removeItem('jyanipur_auth');
   };
 
   // ==========================================
@@ -130,7 +147,7 @@ export default function App() {
   }
 
   // ==========================================
-  // LOGGED OUT: LOGIN SCREEN (Teak Theme)
+  // LOGGED OUT: LOGIN SCREEN (Teak Theme + Checkbox)
   // ==========================================
   return (
     <div className="fixed inset-0 w-screen h-[100dvh] flex items-center justify-center bg-[url('/background.png')] bg-cover bg-center bg-no-repeat px-4 font-['Poppins'] overflow-hidden overscroll-none bg-zinc-900">
@@ -160,7 +177,7 @@ export default function App() {
         )}
 
         {/* FORMS WITH STANDARD AUTOCOMPLETE */}
-        <form onSubmit={handleLogin} className="space-y-5">
+        <form onSubmit={handleLogin} className="space-y-4">
           <div>
             <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2 ml-1">Work Email</label>
             <input 
@@ -187,6 +204,21 @@ export default function App() {
               required 
             />
           </div>
+
+          {/* KEEP ME SIGNED IN CHECKBOX */}
+          <div className="flex items-center pt-2 pb-2 ml-1">
+            <input 
+              type="checkbox" 
+              id="rememberMe" 
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="w-4 h-4 text-[#B45309] bg-zinc-100 border-zinc-300 rounded focus:ring-[#B45309] cursor-pointer"
+            />
+            <label htmlFor="rememberMe" className="ml-3 text-xs font-bold text-zinc-500 cursor-pointer select-none">
+              Keep me signed in
+            </label>
+          </div>
+
           <button type="submit" className="w-full py-4 bg-[#B45309] hover:bg-[#92400E] text-white font-bold rounded-2xl transition-all mt-6 cursor-pointer text-sm shadow-[0_10px_20px_rgba(180,83,9,0.2)] hover:shadow-[0_15px_25px_rgba(180,83,9,0.3)] hover:-translate-y-1 tracking-wide">
             Enter Portal
           </button>
