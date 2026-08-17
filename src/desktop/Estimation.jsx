@@ -52,9 +52,8 @@ export default function Estimation({ companySettings = {} }) {
       terms: companySettings.defaultEstimateTerms || '1. 50% Mobilization advance upon booking.\n2. 40% against material delivery at site.\n3. 10% upon final hand-over.',
       description: 'Tentative BOQ estimation based on conceptual drawings.',
       discount: 0,
-      advanceReceived: 0,
       amount: '₹ 3,54,000.00',
-      status: 'Pending', // New Status Field
+      status: 'Pending',
       isCancelled: false
     }
   ]);
@@ -74,7 +73,6 @@ export default function Estimation({ companySettings = {} }) {
     accountName: companySettings.accountName || '', 
     accountNo: companySettings.accountNo || '', 
     ifscCode: companySettings.ifscCode || '', 
-    advanceReceived: '', 
     discount: ''
   });
 
@@ -157,7 +155,8 @@ export default function Estimation({ companySettings = {} }) {
     return { subtotal: acc.subtotal + rowCalc.baseAmount, totalGst: acc.totalGst + rowCalc.gstAmount, grandTotal: acc.grandTotal + rowCalc.totalAmount };
   }, { subtotal: 0, totalGst: 0, grandTotal: 0 });
 
-  const netPayable = totals.grandTotal - (parseFloat(estimateDetails.discount) || 0) - (parseFloat(estimateDetails.advanceReceived) || 0);
+  // Strictly Estimate Final Amount (No advances or balances)
+  const finalAmount = totals.grandTotal - (parseFloat(estimateDetails.discount) || 0);
 
   const saveEstimationToState = () => {
     const newErrors = {};
@@ -171,7 +170,6 @@ export default function Estimation({ companySettings = {} }) {
 
     setErrors({});
     
-    // Find existing status if editing
     const existingEst = estimationsList.find(e => e.id === editingId);
 
     const record = {
@@ -191,9 +189,8 @@ export default function Estimation({ companySettings = {} }) {
       terms: estimateDetails.terms,
       description: estimateDetails.description,
       discount: estimateDetails.discount,
-      advanceReceived: estimateDetails.advanceReceived,
-      amount: '₹ ' + (netPayable > 0 ? netPayable : 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-      status: existingEst ? existingEst.status : 'Pending', // Persist status
+      amount: '₹ ' + (finalAmount > 0 ? finalAmount : 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      status: existingEst ? existingEst.status : 'Pending',
       isCancelled: false
     };
 
@@ -235,7 +232,6 @@ export default function Estimation({ companySettings = {} }) {
       accountName: est.accountName || companySettings.accountName || '',
       accountNo: est.accountNo || companySettings.accountNo || '',
       ifscCode: est.ifscCode || companySettings.ifscCode || '',
-      advanceReceived: est.advanceReceived || '',
       discount: est.discount || ''
     });
     setItems(est.items && est.items.length > 0 ? est.items : [{ id: 1, description: '', unit: 'Sq.Ft.', sizeL: '', sizeB: '', no: '', qty: '', rate: '', gst: 18 }]);
@@ -252,21 +248,19 @@ export default function Estimation({ companySettings = {} }) {
     setTimeout(() => window.print(), 150);
   };
 
-  // Duplicate an estimate instantly
   const handleDuplicate = (est) => {
     const newEst = { 
       ...est, 
       id: Date.now(), 
       estimateNo: `${est.estimateNo}-COPY`, 
       date: new Date().toISOString().split('T')[0],
-      status: 'Pending', // Reset status on copy
+      status: 'Pending', 
       isCancelled: false
     };
     setEstimationsList([newEst, ...estimationsList]);
     alert('Estimate successfully duplicated!');
   };
 
-  // Draft into Tax Invoice via localStorage
   const handleConvertToInvoice = (est) => {
     const invoiceDraft = {
       partyName: est.client || '',
@@ -279,7 +273,6 @@ export default function Estimation({ companySettings = {} }) {
       accountName: est.accountName || '',
       accountNo: est.accountNo || '',
       ifscCode: est.ifscCode || '',
-      advanceReceived: est.advanceReceived || '',
       discount: est.discount || '',
       terms: est.terms || ''
     };
@@ -299,7 +292,6 @@ export default function Estimation({ companySettings = {} }) {
     }));
   };
 
-  // Update Status directly from list view
   const handleStatusChange = (id, newStatus) => {
     setEstimationsList(estimationsList.map(est => {
       if (est.id === id) {
@@ -314,14 +306,15 @@ export default function Estimation({ companySettings = {} }) {
       setEditingId(null);
       setEstimateDetails({ 
         partyName: '', partyAddress: '', projectName: '', date: new Date().toISOString().split('T')[0], estimateNo: '', validUntil: '', description: '', terms: companySettings.defaultEstimateTerms || '1. 50% Mobilization advance upon booking.\n2. 40% against material delivery at site.\n3. 10% upon final hand-over.', 
-        bankName: companySettings.bankName || '', accountName: companySettings.accountName || '', accountNo: companySettings.accountNo || '', ifscCode: companySettings.ifscCode || '', advanceReceived: '', discount: '' 
+        bankName: companySettings.bankName || '', accountName: companySettings.accountName || '', accountNo: companySettings.accountNo || '', ifscCode: companySettings.ifscCode || '', discount: '' 
       });
       setItems([{ id: 1, description: '', unit: 'Sq.Ft.', sizeL: '', sizeB: '', no: '', qty: '', rate: '', gst: 18 }]);
       setErrors({});
     }
   };
 
-  const inputClass = "w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#B45309] text-zinc-900 text-xs font-medium transition-all disabled:opacity-75 disabled:cursor-not-allowed";
+  // Fixed input class: Added focus:ring-inset to prevent clipping on edges
+  const inputClass = "w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-white focus:outline-none focus:border-[#B45309] focus:ring-1 focus:ring-inset focus:ring-[#B45309] text-zinc-900 text-xs font-medium transition-all disabled:opacity-75 disabled:cursor-not-allowed";
   const labelClass = "block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1.5 ml-0.5";
 
   // ==========================================
@@ -385,7 +378,6 @@ export default function Estimation({ companySettings = {} }) {
                         {est.client}
                       </td>
                       
-                      {/* STATUS DROPDOWN */}
                       <td className="py-4 px-6">
                         <select
                           value={est.status || 'Pending'}
@@ -410,7 +402,6 @@ export default function Estimation({ companySettings = {} }) {
                         {est.amount}
                       </td>
                       
-                      {/* ACTION BUTTONS (2D ICONS + FONT BLACK) */}
                       <td className="py-4 px-6 text-right">
                         <div className="flex items-center justify-end gap-2">
                           {!est.isCancelled ? (
@@ -524,7 +515,7 @@ export default function Estimation({ companySettings = {} }) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 shrink-0">
           <div>
             <label className={labelClass}>Client Name <span className="text-red-500">*</span></label>
-            <input disabled={isReadOnly} type="text" value={estimateDetails.partyName} onChange={(e) => { setEstimateDetails({...estimateDetails, partyName: e.target.value}); if(errors.partyName) setErrors({...errors, partyName: false}); }} className={`${inputClass} ${errors.partyName ? 'ring-2 ring-red-400' : ''}`} placeholder="e.g. Reliance Retail" />
+            <input disabled={isReadOnly} type="text" value={estimateDetails.partyName} onChange={(e) => { setEstimateDetails({...estimateDetails, partyName: e.target.value}); if(errors.partyName) setErrors({...errors, partyName: false}); }} className={`${inputClass} ${errors.partyName ? 'border-red-400 focus:border-red-500 focus:ring-red-500 bg-red-50/20' : ''}`} placeholder="e.g. Reliance Retail" />
           </div>
           <div>
             <label className={labelClass}>Project / Site Name</label>
@@ -539,7 +530,7 @@ export default function Estimation({ companySettings = {} }) {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 shrink-0">
           <div>
             <label className={labelClass}>Estimate No. <span className="text-red-500">*</span></label>
-            <input disabled={isReadOnly} type="text" value={estimateDetails.estimateNo} onChange={(e) => { setEstimateDetails({...estimateDetails, estimateNo: e.target.value}); if(errors.estimateNo) setErrors({...errors, estimateNo: false}); }} className={`${inputClass} ${errors.estimateNo ? 'ring-2 ring-red-400' : ''}`} placeholder="e.g. EST-001" />
+            <input disabled={isReadOnly} type="text" value={estimateDetails.estimateNo} onChange={(e) => { setEstimateDetails({...estimateDetails, estimateNo: e.target.value}); if(errors.estimateNo) setErrors({...errors, estimateNo: false}); }} className={`${inputClass} ${errors.estimateNo ? 'border-red-400 focus:border-red-500 focus:ring-red-500 bg-red-50/20' : ''}`} placeholder="e.g. EST-001" />
           </div>
           <div>
             <label className={labelClass}>Estimate Date</label>
@@ -703,14 +694,10 @@ export default function Estimation({ companySettings = {} }) {
                   <span className="text-zinc-500">Discount:</span>
                   <input disabled={isReadOnly} type="number" value={estimateDetails.discount} onChange={(e) => setEstimateDetails({...estimateDetails, discount: e.target.value})} placeholder="0" className="w-24 bg-zinc-50 text-zinc-900 rounded-lg px-2.5 py-1 text-right outline-none border border-zinc-200 focus:border-[#B45309]" />
                 </div>
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-zinc-500">Advance:</span>
-                  <input disabled={isReadOnly} type="number" value={estimateDetails.advanceReceived} onChange={(e) => setEstimateDetails({...estimateDetails, advanceReceived: e.target.value})} placeholder="0" className="w-24 bg-zinc-50 text-zinc-900 rounded-lg px-2.5 py-1 text-right outline-none border border-zinc-200 focus:border-[#B45309]" />
-                </div>
               </div>
 
               <div className="flex justify-between text-base font-extrabold text-[#B45309] border-t border-zinc-200 pt-3">
-                <span>Balance Due:</span><span>₹ {netPayable > 0 ? netPayable.toLocaleString('en-IN', { maximumFractionDigits: 2 }) : 0}</span>
+                <span>Final Estimate:</span><span>₹ {finalAmount > 0 ? finalAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 }) : 0}</span>
               </div>
             </div>
 
@@ -820,7 +807,7 @@ export default function Estimation({ companySettings = {} }) {
           <div className="border-t-2 border-zinc-800 pt-3 mb-6 flex justify-between items-start break-inside-avoid">
             <div className="w-1/2 pr-4">
               <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Estimated Amount in Words</span>
-              <p className="text-[10px] font-bold text-zinc-900 capitalize">{numberToWords(netPayable > 0 ? netPayable : totals.grandTotal)}</p>
+              <p className="text-[10px] font-bold text-zinc-900 capitalize">{numberToWords(finalAmount > 0 ? finalAmount : totals.grandTotal)}</p>
             </div>
             
             <div className="w-1/3 text-xs space-y-1.5 border border-zinc-200 bg-zinc-50 rounded-lg p-3">
@@ -854,13 +841,9 @@ export default function Estimation({ companySettings = {} }) {
                   <span>Discount:</span><span>- ₹{parseFloat(estimateDetails.discount).toLocaleString('en-IN')}</span>
                 </div>
               )}
-              {(estimateDetails.advanceReceived > 0) && (
-                <div className="flex justify-between text-zinc-500 text-[10px]">
-                  <span>Advance Payable:</span><span>- ₹{parseFloat(estimateDetails.advanceReceived).toLocaleString('en-IN')}</span>
-                </div>
-              )}
+
               <div className="flex justify-between font-black text-zinc-900 bg-zinc-200 px-2 py-1.5 rounded mt-2 text-sm">
-                <span>Balance Due:</span><span>₹{netPayable > 0 ? netPayable.toLocaleString('en-IN', {minimumFractionDigits: 2}) : 0}</span>
+                <span>Final Estimate:</span><span>₹{finalAmount > 0 ? finalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2}) : 0}</span>
               </div>
             </div>
           </div>
