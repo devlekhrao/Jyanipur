@@ -19,6 +19,7 @@ import GST from './GST';
 import Projects from './Projects';
 import TaskBoard from './TaskBoard';
 import DocumentVault from './DocumentVault';
+import CADViewer from './CADViewer';
 import SiteSnag from './SiteSnag';
 import ProjectControl from './ProjectControl';
 import ProjectPnL from './ProjectPnL';
@@ -121,17 +122,17 @@ export default function DesktopLayout() {
 
   const handleDiscard = () => {
     if (activePage === 'Tax Invoice') {
-      localStorage.removeItem('draft_invoiceDetails');
-      localStorage.removeItem('draft_items');
-      localStorage.removeItem('draft_taxMode');
-      localStorage.removeItem('draft_editingId');
-      localStorage.removeItem('draft_invoiceView');
+      sessionStorage.removeItem('draft_invoiceDetails');
+      sessionStorage.removeItem('draft_items');
+      sessionStorage.removeItem('draft_taxMode');
+      sessionStorage.removeItem('draft_editingId');
+      sessionStorage.removeItem('draft_invoiceView');
     }
     if (activePage === 'Purchase Orders') {
-      localStorage.removeItem('draft_poDetails');
-      localStorage.removeItem('draft_poItems');
-      localStorage.removeItem('draft_poEditingId');
-      localStorage.removeItem('draft_poView');
+      sessionStorage.removeItem('draft_poDetails');
+      sessionStorage.removeItem('draft_poItems');
+      sessionStorage.removeItem('draft_poEditingId');
+      sessionStorage.removeItem('draft_poView');
     }
     
     setVisitedPages(prev => {
@@ -145,7 +146,7 @@ export default function DesktopLayout() {
   };
 
   const navigationGroups = [
-    { title: "Workspace", pages: ['Dashboard', 'CRM', 'Projects', 'Task Board', 'Document Vault'] },
+    { title: "Workspace", pages: ['Dashboard', 'CRM', 'Projects', 'Task Board', 'Document Vault', 'CAD Studio'] },
     { title: "Site Execution", pages: ['Project Control', 'Daily Report', 'Site Snags', 'Measurement Sheet'] },
     { title: "Finance & Sales", pages: ['Estimation', 'Tax Invoice', 'Project P&L', 'Income', 'Petty Cash', 'GST Filing'] },
     { title: "Supply Chain", pages: ['Purchase Orders', 'Purchases', 'Vendors', 'Vendor Ledger', 'Inventory', 'Rate Book', 'Tools & Assets', 'Subcontractors'] },
@@ -326,9 +327,10 @@ export default function DesktopLayout() {
               {visitedPages.has('CRM') && <div className={activePage === 'CRM' ? 'block' : 'hidden'}><CRM /></div>}
               {visitedPages.has('Projects') && <div className={activePage === 'Projects' ? 'block' : 'hidden'}><Projects /></div>}
               {visitedPages.has('Task Board') && <div className={activePage === 'Task Board' ? 'block' : 'hidden'}><TaskBoard /></div>}
+              {visitedPages.has('Document Vault') && <div className={activePage === 'Document Vault' ? 'block' : 'hidden'}><DocumentVault /></div>}
+              {visitedPages.has('CAD Studio') && <div className={activePage === 'CAD Studio' ? 'block w-full h-full' : 'hidden'}><CADViewer /></div>}
               {visitedPages.has('Project Control') && <div className={activePage === 'Project Control' ? 'block' : 'hidden'}><ProjectControl /></div>}
               {visitedPages.has('Site Snags') && <div className={activePage === 'Site Snags' ? 'block' : 'hidden'}><SiteSnag companySettings={companySettings} /></div>}
-              {visitedPages.has('Document Vault') && <div className={activePage === 'Document Vault' ? 'block' : 'hidden'}><DocumentVault /></div>}
               {visitedPages.has('Project P&L') && <div className={activePage === 'Project P&L' ? 'block' : 'hidden'}><ProjectPnL /></div>}
               {visitedPages.has('Daily Report') && <div className={activePage === 'Daily Report' ? 'block' : 'hidden'}><SiteManager /></div>}
               {visitedPages.has('Petty Cash') && <div className={activePage === 'Petty Cash' ? 'block' : 'hidden'}><PettyCash /></div>}
