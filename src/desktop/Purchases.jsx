@@ -178,7 +178,6 @@ export default function Purchases({ companySettings = {} }) {
     try {
       await savePurchase(record);
       
-      // Save items to Rate Book for Price Comparison
       for (const item of items) {
         if (item.materialName && item.rate > 0) {
           await saveMaterialRate({
@@ -306,51 +305,48 @@ export default function Purchases({ companySettings = {} }) {
           </div>
         </div>
 
-        {/* Summary Cards */}
+        {/* Clean White Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 shrink-0">
-          <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm">
-            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Taxable Value (2B)</span>
-            <p className="text-2xl font-black text-zinc-900">₹ {totalTaxable.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+          <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm flex flex-col justify-center">
+            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Taxable Value (2B)</span>
+            <p className="text-xl font-bold text-zinc-900">₹ {totalTaxable.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
           </div>
-          <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm">
-            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Input Tax Credit (ITC)</span>
-            <p className="text-2xl font-black text-emerald-600">₹ {totalGst.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+          <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm flex flex-col justify-center">
+            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Input Tax Credit (ITC)</span>
+            <p className="text-xl font-bold text-emerald-600">₹ {totalGst.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
           </div>
-          <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm">
-            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Total Purchases</span>
-            <p className="text-2xl font-black text-[#B45309]">₹ {totalGross.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+          <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm flex flex-col justify-center">
+            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Total Purchases</span>
+            <p className="text-xl font-bold text-[#B45309]">₹ {totalGross.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
           </div>
         </div>
 
         {/* Table View */}
-        <div className="bg-white border border-zinc-200/80 rounded-2xl shadow-sm overflow-hidden flex-1 flex flex-col min-h-0">
+        <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden flex-1 flex flex-col min-h-0">
           <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <table className="w-full text-left border-collapse whitespace-nowrap">
               <thead>
-                <tr className="bg-zinc-50/80 text-zinc-400 text-[10px] uppercase tracking-wider border-b border-zinc-100">
-                  <th className="py-3.5 px-6 font-semibold">Date</th>
-                  <th className="py-3.5 px-6 font-semibold">Inv No.</th>
-                  <th className="py-3.5 px-6 font-semibold">Vendor</th>
-                  <th className="py-3.5 px-6 font-semibold">Project</th>
-                  <th className="py-3.5 px-6 font-semibold text-right">Taxable</th>
-                  <th className="py-3.5 px-6 font-semibold text-right">ITC (GST)</th>
-                  <th className="py-3.5 px-6 font-semibold text-right">Total Amt</th>
-                  <th className="py-3.5 px-6 font-semibold text-center">Status</th>
-                  <th className="py-3.5 px-6 font-semibold text-right">Actions</th>
+                <tr className="bg-white text-zinc-500 text-[10px] uppercase tracking-wider border-b border-zinc-200">
+                  <th className="py-4 px-6 font-bold">Date</th>
+                  <th className="py-4 px-6 font-bold">Inv No.</th>
+                  <th className="py-4 px-6 font-bold">Vendor</th>
+                  <th className="py-4 px-6 font-bold">Project</th>
+                  <th className="py-4 px-6 font-bold text-right">Taxable</th>
+                  <th className="py-4 px-6 font-bold text-right">ITC (GST)</th>
+                  <th className="py-4 px-6 font-bold text-right">Total Amt</th>
+                  <th className="py-4 px-6 font-bold text-center">Status</th>
+                  <th className="py-4 px-6 font-bold text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100 text-sm">
                 {loading ? (
                   <tr><td colSpan="9" className="py-12 text-center text-zinc-400 font-medium text-xs">Loading purchases...</td></tr>
                 ) : filteredPurchases.length === 0 ? (
-                  <tr><td colSpan="9" className="py-16 text-center">
-                    <div className="flex flex-col items-center justify-center space-y-3">
-                      <div className="w-12 h-12 bg-amber-50 rounded-full flex items-center justify-center text-amber-500">
-                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                      </div>
-                      <p className="text-zinc-500 font-medium text-xs">No purchases found for this period.</p>
-                    </div>
-                  </td></tr>
+                  <tr>
+                    <td colSpan="9" className="py-12 text-center text-zinc-400 font-medium text-xs">
+                      No purchases found for this period. Click '+ Log Purchase Bill' above.
+                    </td>
+                  </tr>
                 ) : (
                   filteredPurchases.map((pur) => (
                     <tr key={pur.id} className="transition-all hover:bg-zinc-50/80">
@@ -478,7 +474,7 @@ export default function Purchases({ companySettings = {} }) {
 
         {/* ITEMS TABLE */}
         <div className="mb-6 bg-white border border-zinc-200 rounded-2xl p-5 shadow-sm shrink-0">
-          <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mb-3 border-b border-zinc-100 pb-2">Material Items (Auto-Syncs to Rate Book)</p>
+          <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-3 border-b border-zinc-100 pb-2">Material Items (Auto-Syncs to Rate Book)</p>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse whitespace-nowrap min-w-[800px]">
               <thead>
