@@ -83,108 +83,122 @@ export default function Subcontractors() {
   };
 
   const filteredWos = workOrders.filter(wo => 
-    wo.subName.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    wo.projectName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    wo.trade.toLowerCase().includes(searchQuery.toLowerCase())
+    (wo.subName || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
+    (wo.projectName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (wo.trade || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const totalContracted = filteredWos.reduce((sum, wo) => sum + wo.contractValue, 0);
-  const totalPaid = filteredWos.reduce((sum, wo) => sum + wo.totalPaid, 0);
+  const totalContracted = filteredWos.reduce((sum, wo) => sum + (wo.contractValue || 0), 0);
+  const totalPaid = filteredWos.reduce((sum, wo) => sum + (wo.totalPaid || 0), 0);
   const totalBalance = totalContracted - totalPaid;
 
-  const inputClass = "w-full px-4 py-3 rounded-xl border border-zinc-200 bg-zinc-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] text-zinc-900 text-xs font-medium transition-all shadow-sm";
-  const labelClass = "block text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
+  const inputClass = "w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-white focus:outline-none focus:border-[#B45309] focus:ring-1 focus:ring-inset focus:ring-[#B45309] text-zinc-900 text-sm font-medium transition-all shadow-sm disabled:opacity-75 disabled:cursor-not-allowed";
+  const labelClass = "block text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5 ml-0.5";
 
   return (
-    <div className="w-full h-full font-['Poppins'] flex flex-col">
+    <div className="w-full h-full flex flex-col" style={{ fontFamily: 'Poppins, sans-serif' }}>
       
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end pb-4 border-b border-zinc-200 mb-6 gap-4 shrink-0">
+      {/* HEADER & CONTROLS */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center pb-5 mb-6 border-b border-zinc-200 shrink-0 gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Subcontractor Ledgers</h2>
-          <p className="text-zinc-500 text-xs mt-1 font-medium">Track work orders, running account (RA) bills, and advances.</p>
+          <h2 className="text-xl font-bold text-zinc-900 tracking-tight">Subcontractor Ledgers</h2>
+          <p className="text-zinc-500 text-sm mt-0.5 font-medium">Track work orders, running account (RA) bills, and site advances.</p>
         </div>
-        <div className="flex gap-2">
-          <button onClick={() => setIsSubModalOpen(true)} className="bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer">+ Add Subcontractor</button>
-          <button onClick={() => setIsWoModalOpen(true)} className="bg-[#1E3A8A] hover:bg-blue-900 text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer">+ New Work Order</button>
+        <div className="flex gap-3">
+          <button 
+            onClick={() => setIsSubModalOpen(true)} 
+            className="bg-white border border-zinc-200 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm cursor-pointer flex items-center gap-1.5 h-10"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+            Add Subcontractor
+          </button>
+          <button 
+            onClick={() => setIsWoModalOpen(true)} 
+            className="bg-[#B45309] hover:bg-[#92400E] text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm cursor-pointer flex items-center gap-1.5 h-10"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+            New Work Order
+          </button>
         </div>
       </div>
 
       {/* KPI STRIP */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6 shrink-0">
-        <div className="bg-white border border-zinc-200 p-6 rounded-[2rem] shadow-sm">
-          <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Active Work Orders</span>
-          <p className="text-2xl font-semibold text-[11px] text-zinc-900">{filteredWos.filter(w => w.status !== 'Completed').length}</p>
+        <div className="bg-white border border-zinc-200 p-5 rounded-2xl shadow-sm flex flex-col justify-center">
+          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Active Work Orders</span>
+          <p className="text-xl font-bold text-zinc-900">{filteredWos.filter(w => w.status !== 'Completed').length}</p>
         </div>
-        <div className="bg-white border border-zinc-200 p-6 rounded-[2rem] shadow-sm">
-          <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Total Contracted Value</span>
-          <p className="text-2xl font-semibold text-[11px] text-zinc-900">₹ {totalContracted.toLocaleString('en-IN')}</p>
+        <div className="bg-white border border-zinc-200 p-5 rounded-2xl shadow-sm flex flex-col justify-center">
+          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Total Contracted Value</span>
+          <p className="text-xl font-bold text-zinc-900">₹ {totalContracted.toLocaleString('en-IN')}</p>
         </div>
-        <div className="bg-emerald-50/70 border border-emerald-100 p-6 rounded-[2rem] shadow-sm">
-          <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest block mb-1">Total Paid (Advances)</span>
-          <p className="text-2xl font-semibold text-[11px] text-emerald-700">₹ {totalPaid.toLocaleString('en-IN')}</p>
+        <div className="bg-emerald-50 border border-emerald-100 p-5 rounded-2xl shadow-sm flex flex-col justify-center">
+          <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest block mb-1">Total Paid (Advances)</span>
+          <p className="text-xl font-bold text-emerald-700">₹ {totalPaid.toLocaleString('en-IN')}</p>
         </div>
-        <div className="bg-red-50/70 border border-red-100 p-6 rounded-[2rem] shadow-sm">
-          <span className="text-[9px] font-bold text-red-600 uppercase tracking-widest block mb-1">Pending Balance To Pay</span>
-          <p className="text-2xl font-semibold text-[11px] text-red-600">₹ {totalBalance.toLocaleString('en-IN')}</p>
+        <div className="bg-white border border-red-200/80 p-5 rounded-2xl shadow-sm flex flex-col justify-center">
+          <span className="text-[10px] font-bold text-red-500 uppercase tracking-widest block mb-1">Pending Balance To Pay</span>
+          <p className="text-xl font-bold text-red-500">₹ {totalBalance.toLocaleString('en-IN')}</p>
         </div>
       </div>
 
-      {/* SEARCH */}
-      <div className="flex items-center h-10 bg-white border border-zinc-200 rounded-2xl px-3.5 shadow-sm w-full max-w-sm mb-6 shrink-0">
-        <span className="text-xs text-zinc-400">🔍</span>
+      {/* SEARCH BAR */}
+      <div className="flex items-center h-10 bg-white border border-zinc-200 rounded-xl px-3.5 shadow-sm w-full max-w-sm mb-6 shrink-0">
+        <span className="text-sm text-zinc-400">🔍</span>
         <input 
           type="text" 
-          placeholder="Search subcontractor or project..." 
+          placeholder="Search subcontractor, trade, project..." 
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
-          className="bg-transparent border-none text-xs font-medium text-zinc-800 outline-none px-3 w-full placeholder:text-zinc-400"
+          className="bg-transparent border-none text-sm font-medium text-zinc-800 outline-none px-2 w-full placeholder:text-zinc-400"
         />
       </div>
 
       {/* WORK ORDERS TABLE */}
-      <div className="bg-white border border-zinc-200 rounded-[2rem] shadow-sm flex-1 flex flex-col min-h-0 overflow-hidden">
+      <div className="bg-white border border-zinc-200/80 rounded-2xl shadow-sm overflow-hidden flex-1 flex flex-col min-h-0">
         <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           <table className="w-full text-left border-collapse whitespace-nowrap min-w-[1000px]">
             <thead>
-              <tr className="text-zinc-400 text-[9px] uppercase tracking-widest border-b border-zinc-100 bg-zinc-50/50 sticky top-0 bg-zinc-50 z-10">
-                <th className="py-3.5 px-4 w-8"></th>
-                <th className="py-3.5 px-4 font-bold w-48">Project Site</th>
-                <th className="py-3.5 px-4 font-bold min-w-[200px]">Subcontractor & Trade</th>
-                <th className="py-3.5 px-4 font-bold text-right w-32">Contract Val</th>
-                <th className="py-3.5 px-4 font-bold text-right w-32">Paid (Advances)</th>
-                <th className="py-3.5 px-4 font-bold text-right w-32">Balance</th>
-                <th className="py-3.5 px-4 font-bold text-center w-32">Status</th>
+              <tr className="bg-zinc-50/80 text-zinc-500 text-[11px] uppercase tracking-wider border-b border-zinc-200 sticky top-0 bg-zinc-50 z-10">
+                <th className="py-4 px-4 w-8"></th>
+                <th className="py-4 px-4 font-semibold w-48">Project Site</th>
+                <th className="py-4 px-4 font-semibold min-w-[200px]">Subcontractor & Trade</th>
+                <th className="py-4 px-4 font-semibold text-right w-32">Contract Val</th>
+                <th className="py-4 px-4 font-semibold text-right w-32">Paid (Advances)</th>
+                <th className="py-4 px-4 font-semibold text-right w-32">Balance</th>
+                <th className="py-4 px-4 font-semibold text-center w-32">Status</th>
               </tr>
             </thead>
-            <tbody className="text-xs text-zinc-800 divide-y divide-zinc-100">
+            <tbody className="text-sm divide-y divide-zinc-100">
               {loading ? (
-                <tr><td colSpan="7" className="py-12 text-center text-zinc-400 font-medium text-xs">Loading ledgers...</td></tr>
+                <tr><td colSpan="7" className="py-12 text-center text-zinc-400 font-medium text-sm">Loading ledgers...</td></tr>
               ) : filteredWos.length === 0 ? (
-                <tr><td colSpan="7" className="py-12 text-center text-zinc-400 font-medium text-xs">No active work orders. Assign one above.</td></tr>
+                <tr><td colSpan="7" className="py-12 text-center text-zinc-400 font-medium text-sm">No active work orders. Assign one above.</td></tr>
               ) : (
                 filteredWos.map(wo => (
                   <React.Fragment key={wo.id}>
                     <tr className={`hover:bg-zinc-50 transition-colors cursor-pointer ${expandedRows.includes(wo.id) ? 'bg-zinc-50/80' : ''}`} onClick={() => toggleRow(wo.id)}>
-                      <td className="py-4 px-4 text-center text-zinc-400 font-bold text-xs">{expandedRows.includes(wo.id) ? 'v' : '>'}</td>
-                      <td className="py-4 px-4 font-bold text-zinc-900">{wo.projectName}</td>
+                      <td className="py-4 px-4 text-center text-zinc-400 font-semibold text-xs">
+                        <svg className={`w-4 h-4 transition-transform ${expandedRows.includes(wo.id) ? 'rotate-90 text-[#B45309]' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                      </td>
+                      <td className="py-4 px-4 font-semibold text-zinc-900">{wo.projectName}</td>
                       <td className="py-4 px-4">
                         <div className="flex flex-col">
-                          <span className="font-bold text-[#1E3A8A]">{wo.subName}</span>
-                          <span className="text-[10px] text-zinc-500 font-medium mt-0.5">{wo.trade} | {wo.scope}</span>
+                          <span className="font-bold text-[#B45309]">{wo.subName}</span>
+                          <span className="text-xs text-zinc-500 font-medium mt-0.5">{wo.trade} | {wo.scope}</span>
                         </div>
                       </td>
-                      <td className="py-4 px-4 text-right font-semibold text-[11px] text-zinc-900">₹{wo.contractValue.toLocaleString('en-IN')}</td>
-                      <td className="py-4 px-4 text-right font-bold text-emerald-600">₹{wo.totalPaid.toLocaleString('en-IN')}</td>
-                      <td className="py-4 px-4 text-right font-semibold text-[11px] text-red-500">₹{wo.balance.toLocaleString('en-IN')}</td>
+                      <td className="py-4 px-4 text-right font-medium text-sm text-zinc-900">₹{(wo.contractValue || 0).toLocaleString('en-IN')}</td>
+                      <td className="py-4 px-4 text-right font-bold text-sm text-emerald-600">₹{(wo.totalPaid || 0).toLocaleString('en-IN')}</td>
+                      <td className="py-4 px-4 text-right font-bold text-sm text-red-500">₹{(wo.balance || 0).toLocaleString('en-IN')}</td>
                       <td className="py-4 px-4 text-center" onClick={(e) => e.stopPropagation()}>
                         <select 
-                          value={wo.status} 
+                          value={wo.status || 'Ongoing'} 
                           onChange={(e) => handleStatusChange(wo.id, e.target.value)}
-                          className={`px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-widest border border-zinc-200 outline-none cursor-pointer appearance-none ${
-                            wo.status === 'Completed' ? 'bg-emerald-50 text-emerald-700' :
-                            wo.status === 'On Hold' ? 'bg-red-50 text-red-600' :
-                            'bg-amber-50 text-amber-700'
+                          className={`appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23A1A1AA%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%223%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_0.6rem_center] bg-[length:0.8rem_0.8rem] pr-7 pl-3 py-1.5 rounded-full border outline-none cursor-pointer transition-all text-[10px] font-semibold uppercase tracking-wider ${
+                            wo.status === 'Completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                            wo.status === 'On Hold' ? 'bg-red-50 text-red-600 border-red-200' :
+                            'bg-amber-50 text-[#B45309] border-amber-200'
                           }`}
                         >
                           <option value="Ongoing">Ongoing</option>
@@ -196,38 +210,39 @@ export default function Subcontractors() {
 
                     {/* EXPANDED ROW FOR PAYMENTS */}
                     {expandedRows.includes(wo.id) && (
-                      <tr className="bg-zinc-50 border-b border-zinc-200">
+                      <tr className="bg-zinc-50/60 border-b border-zinc-200">
                         <td></td>
                         <td colSpan="6" className="py-4 pr-6">
-                          <div className="bg-white border border-zinc-200 rounded-2xl p-5 shadow-sm">
-                            <div className="flex justify-between items-center mb-4 border-b border-zinc-100 pb-3">
-                              <h4 className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Payment & Advance History</h4>
-                              <button onClick={() => openPayModal(wo.id)} className="bg-[#1E3A8A] hover:bg-blue-900 text-white px-3.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer">
-                                + Log Payment
+                          <div className="bg-white border border-zinc-200 rounded-2xl p-5 shadow-sm space-y-3">
+                            <div className="flex justify-between items-center border-b border-zinc-100 pb-3">
+                              <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Payment & Advance History</h4>
+                              <button onClick={() => openPayModal(wo.id)} className="px-3 py-1.5 bg-[#B45309] hover:bg-[#92400E] text-white rounded-lg text-xs font-semibold shadow-sm transition-all flex items-center gap-1 cursor-pointer">
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                                Log Payment
                               </button>
                             </div>
                             
-                            {wo.payments.length === 0 ? (
-                              <p className="text-xs text-zinc-400 italic font-medium">No payments logged yet. Contract is unpaid.</p>
+                            {(!wo.payments || wo.payments.length === 0) ? (
+                              <p className="text-xs text-zinc-400 italic font-medium py-2">No payments logged yet. Contract is currently unpaid.</p>
                             ) : (
                               <table className="w-full text-left">
                                 <thead>
-                                  <tr className="text-[9px] text-zinc-400 uppercase tracking-widest border-b border-zinc-100">
-                                    <th className="pb-2 font-bold">Date</th>
-                                    <th className="pb-2 font-bold">Mode</th>
-                                    <th className="pb-2 font-bold">Ref No</th>
-                                    <th className="pb-2 font-bold">Notes</th>
-                                    <th className="pb-2 font-bold text-right">Amount Paid</th>
+                                  <tr className="text-[11px] text-zinc-500 uppercase tracking-wider border-b border-zinc-100">
+                                    <th className="pb-2 font-semibold">Date</th>
+                                    <th className="pb-2 font-semibold">Mode</th>
+                                    <th className="pb-2 font-semibold">Ref No</th>
+                                    <th className="pb-2 font-semibold">Notes</th>
+                                    <th className="pb-2 font-semibold text-right">Amount Paid</th>
                                   </tr>
                                 </thead>
-                                <tbody className="text-xs text-zinc-800">
+                                <tbody className="text-xs text-zinc-800 divide-y divide-zinc-50">
                                   {wo.payments.map(pay => (
-                                    <tr key={pay.id} className="border-t border-zinc-50 hover:bg-zinc-50 transition-colors">
+                                    <tr key={pay.id} className="hover:bg-zinc-50 transition-colors">
                                       <td className="py-2.5 font-medium text-zinc-600">{pay.date}</td>
-                                      <td className="py-2.5"><span className="bg-zinc-100 px-2 py-0.5 rounded text-[9px] font-bold text-zinc-700">{pay.mode}</span></td>
-                                      <td className="py-2.5 text-zinc-500 font-mono text-[10px]">{pay.ref || '-'}</td>
+                                      <td className="py-2.5"><span className="bg-zinc-100 px-2 py-0.5 rounded text-[10px] font-semibold text-zinc-700">{pay.mode}</span></td>
+                                      <td className="py-2.5 text-zinc-500 font-mono text-xs">{pay.ref || '-'}</td>
                                       <td className="py-2.5 text-zinc-500 font-medium">{pay.notes || '-'}</td>
-                                      <td className="py-2.5 text-right font-semibold text-[11px] text-emerald-600">₹{Number(pay.amount).toLocaleString('en-IN')}</td>
+                                      <td className="py-2.5 text-right font-bold text-emerald-600">₹{Number(pay.amount).toLocaleString('en-IN')}</td>
                                     </tr>
                                   ))}
                                 </tbody>
@@ -248,38 +263,58 @@ export default function Subcontractors() {
       {/* --- ADD SUBCONTRACTOR MODAL --- */}
       {isSubModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-sm rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in-95 duration-200">
-            <h2 className="text-xl font-bold text-zinc-900 mb-1">Add Subcontractor</h2>
-            <p className="text-zinc-500 text-[10px] font-bold mb-6 uppercase tracking-widest">Register agency to master list.</p>
-
-            <form onSubmit={handleSaveSub} className="space-y-4">
+          <div className="bg-white w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+            
+            <div className="px-6 py-5 border-b border-zinc-200 flex justify-between items-center bg-zinc-50 shrink-0">
               <div>
-                <label className={labelClass}>Agency / Contractor Name <span className="text-red-500">*</span></label>
-                <input type="text" required value={subForm.name} onChange={e => setSubForm({...subForm, name: e.target.value})} className={inputClass} placeholder="e.g. Ramesh Carpentry" />
+                <h2 className="text-xl font-semibold text-zinc-900">Add Subcontractor</h2>
+                <p className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider mt-0.5">Register agency to master list</p>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <button onClick={() => setIsSubModalOpen(false)} className="text-zinc-400 hover:text-zinc-700 cursor-pointer">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <form id="subForm" onSubmit={handleSaveSub} className="space-y-4">
                 <div>
-                  <label className={labelClass}>Trade Speciality</label>
-                  <select value={subForm.trade} onChange={e => setSubForm({...subForm, trade: e.target.value})} className={`${inputClass} cursor-pointer`}>
-                    <option value="Painter">Painter</option>
-                    <option value="Electrician">Electrician</option>
-                    <option value="Plumber">Plumber</option>
-                    <option value="False Ceiling">False Ceiling</option>
-                    <option value="Civil/Mason">Civil / Mason</option>
-                    <option value="Carpenter">Carpenter</option>
-                    <option value="Other">Other</option>
-                  </select>
+                  <label className={labelClass}>Agency / Contractor Name <span className="text-red-500">*</span></label>
+                  <input type="text" required value={subForm.name} onChange={e => setSubForm({...subForm, name: e.target.value})} className={inputClass} placeholder="e.g. Ramesh Carpentry" />
                 </div>
-                <div>
-                  <label className={labelClass}>Phone Number</label>
-                  <input type="text" value={subForm.phone} onChange={e => setSubForm({...subForm, phone: e.target.value})} className={inputClass} placeholder="+91..." />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelClass}>Trade Speciality</label>
+                    <select 
+                      value={subForm.trade} 
+                      onChange={e => setSubForm({...subForm, trade: e.target.value})} 
+                      className={`${inputClass} cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23B45309%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.25rem_1.25rem] pr-10`}
+                    >
+                      <option value="Painter">Painter</option>
+                      <option value="Electrician">Electrician</option>
+                      <option value="Plumber">Plumber</option>
+                      <option value="False Ceiling">False Ceiling</option>
+                      <option value="Civil/Mason">Civil / Mason</option>
+                      <option value="Carpenter">Carpenter</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className={labelClass}>Phone Number</label>
+                    <input type="text" value={subForm.phone} onChange={e => setSubForm({...subForm, phone: e.target.value})} className={inputClass} placeholder="+91..." />
+                  </div>
                 </div>
-              </div>
-              <div className="flex gap-3 pt-6 border-t border-zinc-100 mt-2">
-                <button type="button" onClick={() => setIsSubModalOpen(false)} className="flex-1 py-3.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold rounded-xl text-[10px] uppercase tracking-wider transition-all cursor-pointer">Cancel</button>
-                <button type="submit" className="flex-1 py-3.5 bg-[#1E3A8A] hover:bg-blue-900 text-white font-bold rounded-xl text-[10px] uppercase tracking-wider transition-all shadow-md cursor-pointer">Save</button>
-              </div>
-            </form>
+              </form>
+            </div>
+
+            <div className="px-6 py-4 border-t border-zinc-200 flex justify-end gap-3 bg-zinc-50 shrink-0">
+              <button type="button" onClick={() => setIsSubModalOpen(false)} className="px-5 py-2.5 bg-white border border-zinc-300 hover:bg-zinc-100 text-zinc-700 font-semibold rounded-xl text-sm transition-all cursor-pointer">
+                Cancel
+              </button>
+              <button type="submit" form="subForm" className="px-6 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer">
+                Save
+              </button>
+            </div>
+
           </div>
         </div>
       )}
@@ -287,38 +322,67 @@ export default function Subcontractors() {
       {/* --- ADD WORK ORDER MODAL --- */}
       {isWoModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in-95 duration-200">
-            <h2 className="text-xl font-bold text-zinc-900 mb-1">Assign Work Order</h2>
-            <p className="text-zinc-500 text-[10px] font-bold mb-6 uppercase tracking-widest">Lock in contract value for site.</p>
+          <div className="bg-white w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+            
+            <div className="px-6 py-5 border-b border-zinc-200 flex justify-between items-center bg-zinc-50 shrink-0">
+              <div>
+                <h2 className="text-xl font-semibold text-zinc-900">Assign Work Order</h2>
+                <p className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider mt-0.5">Lock in contract value for site</p>
+              </div>
+              <button onClick={() => setIsWoModalOpen(false)} className="text-zinc-400 hover:text-zinc-700 cursor-pointer">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
 
-            <form onSubmit={handleSaveWo} className="space-y-4">
-              <div>
-                <label className={labelClass}>Select Subcontractor <span className="text-red-500">*</span></label>
-                <select required value={woForm.subcontractorId} onChange={e => setWoForm({...woForm, subcontractorId: e.target.value})} className={`${inputClass} cursor-pointer`}>
-                  <option value="" disabled>Choose agency...</option>
-                  {subcontractors.map(s => <option key={s.id} value={s.id}>{s.name} ({s.trade})</option>)}
-                </select>
-              </div>
-              <div>
-                <label className={labelClass}>Select Project Site <span className="text-red-500">*</span></label>
-                <select required value={woForm.projectId} onChange={e => setWoForm({...woForm, projectId: e.target.value})} className={`${inputClass} cursor-pointer`}>
-                  <option value="" disabled>Choose active project...</option>
-                  {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className={labelClass}>Scope of Work</label>
-                <input type="text" placeholder="e.g. Entire Villa Putty & Paint" value={woForm.scope} onChange={e => setWoForm({...woForm, scope: e.target.value})} className={inputClass} />
-              </div>
-              <div>
-                <label className={labelClass}>Total Contract Value (₹) <span className="text-red-500">*</span></label>
-                <input type="number" required placeholder="0.00" value={woForm.contractValue} onChange={e => setWoForm({...woForm, contractValue: e.target.value})} className={inputClass} />
-              </div>
-              <div className="flex gap-3 pt-6 border-t border-zinc-100 mt-2">
-                <button type="button" onClick={() => setIsWoModalOpen(false)} className="flex-1 py-3.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold rounded-xl text-[10px] uppercase tracking-wider transition-all cursor-pointer">Cancel</button>
-                <button type="submit" className="flex-1 py-3.5 bg-[#1E3A8A] hover:bg-blue-900 text-white font-bold rounded-xl text-[10px] uppercase tracking-wider transition-all shadow-md cursor-pointer">Assign Contract</button>
-              </div>
-            </form>
+            <div className="p-6 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <form id="woForm" onSubmit={handleSaveWo} className="space-y-4">
+                <div>
+                  <label className={labelClass}>Select Subcontractor <span className="text-red-500">*</span></label>
+                  <select 
+                    required 
+                    value={woForm.subcontractorId} 
+                    onChange={e => setWoForm({...woForm, subcontractorId: e.target.value})} 
+                    className={`${inputClass} cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23B45309%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.25rem_1.25rem] pr-10`}
+                  >
+                    <option value="" disabled>Choose agency...</option>
+                    {subcontractors.map(s => <option key={s.id} value={s.id}>{s.name} ({s.trade})</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <label className={labelClass}>Select Project Site <span className="text-red-500">*</span></label>
+                  <select 
+                    required 
+                    value={woForm.projectId} 
+                    onChange={e => setWoForm({...woForm, projectId: e.target.value})} 
+                    className={`${inputClass} cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23B45309%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.25rem_1.25rem] pr-10`}
+                  >
+                    <option value="" disabled>Choose active project...</option>
+                    {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <label className={labelClass}>Scope of Work</label>
+                  <input type="text" placeholder="e.g. Entire Villa Putty & Paint" value={woForm.scope} onChange={e => setWoForm({...woForm, scope: e.target.value})} className={inputClass} />
+                </div>
+
+                <div>
+                  <label className={labelClass}>Total Contract Value (₹) <span className="text-red-500">*</span></label>
+                  <input type="number" step="any" required placeholder="0.00" value={woForm.contractValue} onChange={e => setWoForm({...woForm, contractValue: e.target.value})} className={inputClass} />
+                </div>
+              </form>
+            </div>
+
+            <div className="px-6 py-4 border-t border-zinc-200 flex justify-end gap-3 bg-zinc-50 shrink-0">
+              <button type="button" onClick={() => setIsWoModalOpen(false)} className="px-5 py-2.5 bg-white border border-zinc-300 hover:bg-zinc-100 text-zinc-700 font-semibold rounded-xl text-sm transition-all cursor-pointer">
+                Cancel
+              </button>
+              <button type="submit" form="woForm" className="px-6 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer">
+                Assign Contract
+              </button>
+            </div>
+
           </div>
         </div>
       )}
@@ -326,45 +390,67 @@ export default function Subcontractors() {
       {/* --- LOG PAYMENT MODAL --- */}
       {isPayModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-sm rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in-95 duration-200">
-            <h2 className="text-xl font-bold text-zinc-900 mb-1">Log Payment / Advance</h2>
-            <p className="text-zinc-500 text-[10px] font-bold mb-6 uppercase tracking-widest">Funds transferred to subcontractor.</p>
-
-            <form onSubmit={handleSavePay} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className={labelClass}>Date <span className="text-red-500">*</span></label>
-                  <input type="date" required value={payForm.date} onChange={e => setPayForm({...payForm, date: e.target.value})} className={inputClass} />
-                </div>
-                <div>
-                  <label className={labelClass}>Amount (₹) <span className="text-red-500">*</span></label>
-                  <input type="number" required placeholder="0.00" value={payForm.amount} onChange={e => setPayForm({...payForm, amount: e.target.value})} className={inputClass} />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className={labelClass}>Mode</label>
-                  <select value={payForm.mode} onChange={e => setPayForm({...payForm, mode: e.target.value})} className={`${inputClass} cursor-pointer`}>
-                    <option value="UPI">UPI</option>
-                    <option value="Cash">Cash</option>
-                    <option value="Bank Transfer">Bank Transfer</option>
-                    <option value="Cheque">Cheque</option>
-                  </select>
-                </div>
-                <div>
-                  <label className={labelClass}>Ref No.</label>
-                  <input type="text" placeholder="Txn ID" value={payForm.referenceNo} onChange={e => setPayForm({...payForm, referenceNo: e.target.value})} className={inputClass} />
-                </div>
-              </div>
+          <div className="bg-white w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+            
+            <div className="px-6 py-5 border-b border-zinc-200 flex justify-between items-center bg-zinc-50 shrink-0">
               <div>
-                <label className={labelClass}>Notes</label>
-                <input type="text" placeholder="e.g. Advance for materials" value={payForm.notes} onChange={e => setPayForm({...payForm, notes: e.target.value})} className={inputClass} />
+                <h2 className="text-xl font-semibold text-zinc-900">Log Payment / Advance</h2>
+                <p className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider mt-0.5">Funds transferred to subcontractor</p>
               </div>
-              <div className="flex gap-3 pt-6 border-t border-zinc-100 mt-2">
-                <button type="button" onClick={() => setIsPayModalOpen(false)} className="flex-1 py-3.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold rounded-xl text-[10px] uppercase tracking-wider transition-all cursor-pointer">Cancel</button>
-                <button type="submit" className="flex-1 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-[10px] uppercase tracking-wider transition-all shadow-md cursor-pointer">Record Payment</button>
-              </div>
-            </form>
+              <button onClick={() => setIsPayModalOpen(false)} className="text-zinc-400 hover:text-zinc-700 cursor-pointer">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <form id="payForm" onSubmit={handleSavePay} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelClass}>Date <span className="text-red-500">*</span></label>
+                    <input type="date" required value={payForm.date} onChange={e => setPayForm({...payForm, date: e.target.value})} className={inputClass} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Amount (₹) <span className="text-red-500">*</span></label>
+                    <input type="number" step="any" required placeholder="0.00" value={payForm.amount} onChange={e => setPayForm({...payForm, amount: e.target.value})} className={inputClass} />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelClass}>Mode</label>
+                    <select 
+                      value={payForm.mode} 
+                      onChange={e => setPayForm({...payForm, mode: e.target.value})} 
+                      className={`${inputClass} cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23B45309%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.25rem_1.25rem] pr-10`}
+                    >
+                      <option value="UPI">UPI</option>
+                      <option value="Cash">Cash</option>
+                      <option value="Bank Transfer">Bank Transfer</option>
+                      <option value="Cheque">Cheque</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className={labelClass}>Ref No.</label>
+                    <input type="text" placeholder="Txn ID" value={payForm.referenceNo} onChange={e => setPayForm({...payForm, referenceNo: e.target.value})} className={inputClass} />
+                  </div>
+                </div>
+
+                <div>
+                  <label className={labelClass}>Notes</label>
+                  <input type="text" placeholder="e.g. Advance for material mobilization" value={payForm.notes} onChange={e => setPayForm({...payForm, notes: e.target.value})} className={inputClass} />
+                </div>
+              </form>
+            </div>
+
+            <div className="px-6 py-4 border-t border-zinc-200 flex justify-end gap-3 bg-zinc-50 shrink-0">
+              <button type="button" onClick={() => setIsPayModalOpen(false)} className="px-5 py-2.5 bg-white border border-zinc-300 hover:bg-zinc-100 text-zinc-700 font-semibold rounded-xl text-sm transition-all cursor-pointer">
+                Cancel
+              </button>
+              <button type="submit" form="payForm" className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer">
+                Record Payment
+              </button>
+            </div>
+
           </div>
         </div>
       )}
