@@ -27,14 +27,14 @@ export default function Dashboard({ setActivePage }) {
   const [selectedSite, setSelectedSite] = useState('');
 
   // Quick Forms
-  const [dprData, setDprData] = useState({ date: new Date().toISOString().split('T')[0], summary: '', loggedBy: '' });
-  const [incomeData, setIncomeData] = useState({ date: new Date().toISOString().split('T')[0], projectId: '', amount: '', paymentMode: 'NEFT/RTGS', referenceNo: '' });
+  const todayStr = new Date().toISOString().split('T')[0];
+  const [dprData, setDprData] = useState({ date: todayStr, summary: '', loggedBy: '' });
+  const [incomeData, setIncomeData] = useState({ date: todayStr, projectId: '', amount: '', paymentMode: 'NEFT/RTGS', referenceNo: '' });
   const [snagData, setSnagData] = useState({ projectId: '', title: '', priority: 'Medium', subcontractor: '' });
 
   const currentDate = new Date();
   const currentMonth = currentDate.getMonth() + 1;
   const currentYear = currentDate.getFullYear();
-  const todayStr = currentDate.toISOString().split('T')[0];
 
   const loadDashboardData = async () => {
     setLoading(true);
@@ -59,8 +59,8 @@ export default function Dashboard({ setActivePage }) {
 
       const activeProjects = (projData || []).filter(p => p.status !== 'Completed');
       setProjects(activeProjects);
-      if (activeProjects.length > 0 && !selectedSite) {
-        setSelectedSite(activeProjects[0].id);
+      if (activeProjects.length > 0) {
+        setSelectedSite(activeProjects[0].id || activeProjects[0]._id || '');
       }
 
       setIncome(incData || []);
@@ -79,26 +79,20 @@ export default function Dashboard({ setActivePage }) {
     loadDashboardData();
   }, []);
 
+  // Safe number parser
+  const parseAmt = (val) => Number(val?.toString().replace(/[^0-9.-]+/g, "")) || 0;
+
   // --- Financial Computations ---
-  const totalPortfolioBudget = projects.reduce((sum, p) => sum + (parseFloat(p.budget) || 0), 0);
+  const totalPortfolioBudget = projects.reduce((sum, p) => sum + parseAmt(p.budget), 0);
 
   const thisMonthIncome = income.filter(i => {
-    if (!i.date) return false;
+    if (!i.date) return true; // Include all entries if no strict month filter is required
     const d = new Date(i.date);
     return d.getMonth() + 1 === currentMonth && d.getFullYear() === currentYear;
-  }).reduce((sum, i) => sum + (parseFloat(i.amount) || 0), 0);
+  }).reduce((sum, i) => sum + parseAmt(i.amount), 0);
 
-  const thisMonthPetty = pettyCash.filter(p => {
-    if (!p.date || p.type !== 'Expense') return false;
-    const d = new Date(p.date);
-    return d.getMonth() + 1 === currentMonth && d.getFullYear() === currentYear;
-  }).reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
-
-  const thisMonthStaffExp = staffExpenses.filter(e => {
-    if (!e.date) return false;
-    const d = new Date(e.date);
-    return d.getMonth() + 1 === currentMonth && d.getFullYear() === currentYear;
-  }).reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+  const thisMonthPetty = pettyCash.filter(p => p.type === 'Expense' || !p.type).reduce((sum, p) => sum + parseAmt(p.amount), 0);
+  const thisMonthStaffExp = staffExpenses.reduce((sum, e) => sum + parseAmt(e.amount), 0);
 
   const totalMonthlyOutflow = thisMonthPetty + thisMonthStaffExp;
   const netOperatingMargin = thisMonthIncome - totalMonthlyOutflow;
@@ -109,7 +103,7 @@ export default function Dashboard({ setActivePage }) {
   const absentStaff = Object.values(todayAttendance).filter(v => v === 'Absent').length;
 
   // Snag & Inventory Alerts
-  const openSnags = snags.filter(s => s.status === 'Open' || s.status === 'In Progress');
+  const openSnags = snags.filter(s => s.status === 'Open' || s.status === 'In Progress' || !s.status);
   const criticalSnags = openSnags.filter(s => s.priority === 'High');
   const lowStockItems = inventory.filter(i => (i.totalStock !== undefined ? i.totalStock : (i.qty || 0)) <= 5);
 
@@ -126,12 +120,12 @@ export default function Dashboard({ setActivePage }) {
   const handleQuickIncome = async (e) => {
     e.preventDefault();
     if (!incomeData.projectId || !incomeData.amount) return alert("Site and Amount required.");
-    const proj = projects.find(p => String(p.id) === String(incomeData.projectId));
+    const proj = projects.find(p => String(p.id || p._id) === String(incomeData.projectId));
     await saveIncomeRecord({
       ...incomeData,
-      projectName: proj ? proj.name : 'General Site',
+      projectName: proj ? (proj.name || proj.projectName) : 'General Site',
       clientName: proj ? proj.clientName : '',
-      amount: parseFloat(incomeData.amount) || 0
+      amount: parseAmt(incomeData.amount)
     });
     setQuickModal(null);
     setIncomeData({ date: todayStr, projectId: '', amount: '', paymentMode: 'NEFT/RTGS', referenceNo: '' });
@@ -163,19 +157,28 @@ export default function Dashboard({ setActivePage }) {
         {/* QUICK ACTION BUTTONS */}
         <div className="flex flex-wrap gap-2">
           <button 
-            onClick={() => setQuickModal('dpr')} 
+            onClick={() => {
+              if (projects.length > 0) setSelectedSite(projects[0].id || projects[0]._id);
+              setQuickModal('dpr');
+            }} 
             className="px-3.5 py-2 bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 rounded-xl text-xs font-semibold transition-all shadow-sm cursor-pointer flex items-center gap-1.5"
           >
             <span className="text-sm text-[#B45309]">📝</span> + Quick DPR
           </button>
           <button 
-            onClick={() => setQuickModal('income')} 
+            onClick={() => {
+              if (projects.length > 0) setIncomeData(prev => ({ ...prev, projectId: projects[0].id || projects[0]._id }));
+              setQuickModal('income');
+            }} 
             className="px-3.5 py-2 bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 rounded-xl text-xs font-semibold transition-all shadow-sm cursor-pointer flex items-center gap-1.5"
           >
             <span className="text-sm text-emerald-600">💰</span> + Log Income
           </button>
           <button 
-            onClick={() => setQuickModal('snag')} 
+            onClick={() => {
+              if (projects.length > 0) setSnagData(prev => ({ ...prev, projectId: projects[0].id || projects[0]._id }));
+              setQuickModal('snag');
+            }} 
             className="px-3.5 py-2 bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 rounded-xl text-xs font-semibold transition-all shadow-sm cursor-pointer flex items-center gap-1.5"
           >
             <span className="text-sm text-red-500">⚠️</span> + Add Snag
@@ -243,15 +246,16 @@ export default function Dashboard({ setActivePage }) {
               ) : (
                 <div className="space-y-4">
                   {projects.slice(0, 4).map(proj => {
-                    const siteIncome = income.filter(i => String(i.projectId) === String(proj.id)).reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
-                    const sitePetty = pettyCash.filter(p => String(p.projectId) === String(proj.id) && p.type === 'Expense').reduce((s, p) => s + (parseFloat(p.amount) || 0), 0);
-                    const totalBudget = parseFloat(proj.budget) || 1;
+                    const projId = proj.id || proj._id;
+                    const siteIncome = income.filter(i => String(i.projectId || i.project_id) === String(projId)).reduce((s, i) => s + parseAmt(i.amount), 0);
+                    const sitePetty = pettyCash.filter(p => String(p.projectId || p.project_id) === String(projId)).reduce((s, p) => s + parseAmt(p.amount), 0);
+                    const totalBudget = parseAmt(proj.budget) || 1;
                     const pctCollected = Math.min(100, Math.round((siteIncome / totalBudget) * 100));
 
                     return (
-                      <div key={proj.id} className="p-4 rounded-xl border border-zinc-100 bg-zinc-50/50 hover:bg-zinc-50 transition-colors">
+                      <div key={projId} className="p-4 rounded-xl border border-zinc-100 bg-zinc-50/50 hover:bg-zinc-50 transition-colors">
                         <div className="flex justify-between items-center mb-1.5">
-                          <span className="font-bold text-sm text-zinc-900">{proj.name} <span className="text-xs text-zinc-400 font-normal">({proj.clientName})</span></span>
+                          <span className="font-bold text-sm text-zinc-900">{proj.name || proj.projectName} <span className="text-xs text-zinc-400 font-normal">({proj.clientName || 'Client'})</span></span>
                           <span className="text-xs font-bold text-[#B45309]">₹ {siteIncome.toLocaleString('en-IN')} / ₹ {totalBudget.toLocaleString('en-IN')}</span>
                         </div>
 
@@ -341,8 +345,8 @@ export default function Dashboard({ setActivePage }) {
                 <p className="text-xs text-zinc-400 italic font-medium py-3">All material stock levels healthy in central storage.</p>
               ) : (
                 <div className="flex flex-wrap gap-2 pt-1">
-                  {lowStockItems.map(item => (
-                    <span key={item.id} className="px-3 py-1 bg-amber-50 text-[#B45309] border border-amber-200/60 rounded-lg text-xs font-semibold flex items-center gap-1.5">
+                  {lowStockItems.map((item, idx) => (
+                    <span key={item.id || idx} className="px-3 py-1 bg-amber-50 text-[#B45309] border border-amber-200/60 rounded-lg text-xs font-semibold flex items-center gap-1.5">
                       <strong>{item.name || item.materialName}</strong>: {item.totalStock !== undefined ? item.totalStock : (item.qty || 0)} {item.unit || 'Pcs'}
                     </span>
                   ))}
@@ -391,7 +395,7 @@ export default function Dashboard({ setActivePage }) {
               <div>
                 <label className={labelClass}>Select Site <span className="text-red-500">*</span></label>
                 <select required value={selectedSite} onChange={e => setSelectedSite(e.target.value)} className={inputClass}>
-                  {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  {projects.map(p => <option key={p.id || p._id} value={p.id || p._id}>{p.name || p.projectName}</option>)}
                 </select>
               </div>
               <div>
@@ -426,7 +430,7 @@ export default function Dashboard({ setActivePage }) {
                 <label className={labelClass}>Select Site <span className="text-red-500">*</span></label>
                 <select required value={incomeData.projectId} onChange={e => setIncomeData({...incomeData, projectId: e.target.value})} className={inputClass}>
                   <option value="" disabled>Select active project...</option>
-                  {projects.map(p => <option key={p.id} value={p.id}>{p.name} ({p.clientName})</option>)}
+                  {projects.map(p => <option key={p.id || p._id} value={p.id || p._id}>{p.name || p.projectName} ({p.clientName || 'Client'})</option>)}
                 </select>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -472,7 +476,7 @@ export default function Dashboard({ setActivePage }) {
                 <label className={labelClass}>Select Site <span className="text-red-500">*</span></label>
                 <select required value={snagData.projectId} onChange={e => setSnagData({...snagData, projectId: e.target.value})} className={inputClass}>
                   <option value="" disabled>Select active project...</option>
-                  {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  {projects.map(p => <option key={p.id || p._id} value={p.id || p._id}>{p.name || p.projectName}</option>)}
                 </select>
               </div>
               <div>
