@@ -38,7 +38,7 @@ export default function Estimation({ companySettings = {} }) {
     {
       id: 1,
       date: '2026-08-10',
-      estimateNo: 'EST-001',
+      estimateNo: 'EST/FY26-27/001',
       client: 'Reliance Retail',
       projectName: 'Flagship Store Interior',
       partyAddress: '123 Commercial Street, Mumbai',
@@ -95,6 +95,25 @@ export default function Estimation({ companySettings = {} }) {
     }
   }, [companySettings, editingId]);
 
+  // --- AUTO INCREMENT ESTIMATE NO ---
+  const generateNextEstimateNo = () => {
+    const prefix = companySettings.estimatePrefix || 'EST/FY26-27/';
+    let maxNum = 0;
+    
+    estimationsList.forEach(est => {
+      if (est.estimateNo && est.estimateNo.startsWith(prefix)) {
+        const numStr = est.estimateNo.replace(prefix, '');
+        const num = parseInt(numStr, 10);
+        if (!isNaN(num) && num > maxNum) {
+          maxNum = num;
+        }
+      }
+    });
+    
+    const nextNum = maxNum + 1;
+    return `${prefix}${nextNum.toString().padStart(3, '0')}`;
+  };
+
   const addItem = () => setItems([...items, { id: Date.now(), description: '', unit: 'Sq.Ft.', sizeL: '', sizeB: '', no: '', qty: '', rate: '', gst: 18 }]);
   
   const updateItem = (id, field, value) => {
@@ -102,7 +121,6 @@ export default function Estimation({ companySettings = {} }) {
       if (item.id !== id) return item;
       const updated = { ...item, [field]: value };
 
-      // Auto-calculate QTY if dimensions are modified
       if (['sizeL', 'sizeB', 'no'].includes(field)) {
         const l = parseFloat(updated.sizeL);
         const b = parseFloat(updated.sizeB);
@@ -117,7 +135,6 @@ export default function Estimation({ companySettings = {} }) {
           updated.qty = ''; 
         }
       }
-
       return updated;
     }));
   };
@@ -126,8 +143,6 @@ export default function Estimation({ companySettings = {} }) {
 
   const calculateRow = (item) => {
     let quantity = 0;
-    
-    // Priority: Explicit Qty > Calculated from L*B*No
     if (item.qty !== undefined && item.qty !== '') {
       quantity = parseFloat(item.qty) || 0;
     } else {
@@ -155,7 +170,6 @@ export default function Estimation({ companySettings = {} }) {
     return { subtotal: acc.subtotal + rowCalc.baseAmount, totalGst: acc.totalGst + rowCalc.gstAmount, grandTotal: acc.grandTotal + rowCalc.totalAmount };
   }, { subtotal: 0, totalGst: 0, grandTotal: 0 });
 
-  // Strictly Estimate Final Amount (No advances or balances)
   const finalAmount = totals.grandTotal - (parseFloat(estimateDetails.discount) || 0);
 
   const saveEstimationToState = () => {
@@ -169,7 +183,6 @@ export default function Estimation({ companySettings = {} }) {
     }
 
     setErrors({});
-    
     const existingEst = estimationsList.find(e => e.id === editingId);
 
     const record = {
@@ -252,13 +265,13 @@ export default function Estimation({ companySettings = {} }) {
     const newEst = { 
       ...est, 
       id: Date.now(), 
-      estimateNo: `${est.estimateNo}-COPY`, 
+      estimateNo: generateNextEstimateNo(), // Auto-generate next sequence for the duplicate
       date: new Date().toISOString().split('T')[0],
       status: 'Pending', 
       isCancelled: false
     };
     setEstimationsList([newEst, ...estimationsList]);
-    alert('Estimate successfully duplicated!');
+    alert(`Estimate duplicated as ${newEst.estimateNo}!`);
   };
 
   const handleConvertToInvoice = (est) => {
@@ -279,8 +292,27 @@ export default function Estimation({ companySettings = {} }) {
     localStorage.setItem('draft_invoiceDetails', JSON.stringify(invoiceDraft));
     localStorage.setItem('draft_items', JSON.stringify(est.items || []));
     localStorage.setItem('draft_taxMode', est.taxMode || 'CGST_SGST');
-    
     alert('Estimate details copied! Navigate to the "Tax Invoice" module and click "+ New Invoice" to complete the conversion.');
+  };
+
+  // --- NEW: PUSH TO CRM ---
+  const handlePushToCRM = (est) => {
+    const existingLeads = JSON.parse(localStorage.getItem('jyanipur_crm_leads') || '[]');
+    const newLead = {
+      id: Date.now(),
+      dateAdded: new Date().toISOString().split('T')[0],
+      name: est.client,
+      company: est.projectName || 'Estimation Lead',
+      email: '',
+      phone: '',
+      address: est.partyAddress,
+      status: 'Negotiation', // Put them in negotiation phase by default
+      value: est.amount,
+      source: 'Estimation'
+    };
+    existingLeads.push(newLead);
+    localStorage.setItem('jyanipur_crm_leads', JSON.stringify(existingLeads));
+    alert(`${est.client} has been added to your CRM leads!`);
   };
 
   const handleToggleCancel = (id) => {
@@ -305,7 +337,9 @@ export default function Estimation({ companySettings = {} }) {
     if (!askConfirm || window.confirm('Clear the entire estimation?')) {
       setEditingId(null);
       setEstimateDetails({ 
-        partyName: '', partyAddress: '', projectName: '', date: new Date().toISOString().split('T')[0], estimateNo: '', validUntil: '', description: '', terms: companySettings.defaultEstimateTerms || '1. 50% Mobilization advance upon booking.\n2. 40% against material delivery at site.\n3. 10% upon final hand-over.', 
+        partyName: '', partyAddress: '', projectName: '', date: new Date().toISOString().split('T')[0], 
+        estimateNo: generateNextEstimateNo(), // Pre-fill with the auto-generated number
+        validUntil: '', description: '', terms: companySettings.defaultEstimateTerms || '1. 50% Mobilization advance upon booking.\n2. 40% against material delivery at site.\n3. 10% upon final hand-over.', 
         bankName: companySettings.bankName || '', accountName: companySettings.accountName || '', accountNo: companySettings.accountNo || '', ifscCode: companySettings.ifscCode || '', discount: '' 
       });
       setItems([{ id: 1, description: '', unit: 'Sq.Ft.', sizeL: '', sizeB: '', no: '', qty: '', rate: '', gst: 18 }]);
@@ -313,7 +347,6 @@ export default function Estimation({ companySettings = {} }) {
     }
   };
 
-  // Fixed input class: Added focus:ring-inset to prevent clipping on edges
   const inputClass = "w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-white focus:outline-none focus:border-[#B45309] focus:ring-1 focus:ring-inset focus:ring-[#B45309] text-zinc-900 text-xs font-medium transition-all disabled:opacity-75 disabled:cursor-not-allowed";
   const labelClass = "block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1.5 ml-0.5";
 
@@ -420,6 +453,13 @@ export default function Estimation({ companySettings = {} }) {
                                 </svg>
                                 View
                               </button>
+
+                              <button onClick={() => handlePushToCRM(est)} title="Send to CRM as Lead" className="px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white border border-indigo-200 rounded-lg font-black cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                                </svg>
+                                <span className="hidden xl:inline">To CRM</span>
+                              </button>
                               
                               <button onClick={() => handleDirectPrint(est)} title="Print or Save PDF" className="px-3 py-1.5 bg-zinc-50 text-zinc-600 hover:bg-zinc-200 border border-zinc-200 rounded-lg font-black cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
                                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -432,14 +472,14 @@ export default function Estimation({ companySettings = {} }) {
                                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" />
                                 </svg>
-                                Copy
+                                <span className="hidden xl:inline">Copy</span>
                               </button>
 
                               <button onClick={() => handleConvertToInvoice(est)} title="Convert to Tax Invoice" className="px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white border border-emerald-200 rounded-lg font-black cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
                                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                                 </svg>
-                                To Invoice
+                                <span className="hidden xl:inline">To Invoice</span>
                               </button>
                               
                               <button onClick={() => handleToggleCancel(est.id)} title="Cancel/Reject Estimate" className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white border border-red-200 rounded-lg font-black cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
@@ -692,7 +732,7 @@ export default function Estimation({ companySettings = {} }) {
               <div className="border-t border-zinc-100 pt-3 space-y-2">
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-zinc-500">Discount:</span>
-                  <input disabled={isReadOnly} type="number" value={estimateDetails.discount} onChange={(e) => setEstimateDetails({...estimateDetails, discount: e.target.value})} placeholder="0" className="w-24 bg-zinc-50 text-zinc-900 rounded-lg px-2.5 py-1 text-right outline-none border border-zinc-200 focus:border-[#B45309]" />
+                  <input disabled={isReadOnly} type="number" value={estimateDetails.discount} onChange={(e) => setEstimateDetails({...estimateDetails, discount: e.target.value})} placeholder="0" className="w-24 bg-zinc-50 text-zinc-900 rounded-lg px-2.5 py-1 text-right outline-none border border-zinc-200 focus:border-[#B45309] focus:ring-1 focus:ring-inset focus:ring-[#B45309]" />
                 </div>
               </div>
 
