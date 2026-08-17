@@ -256,7 +256,7 @@ export default function DesktopLayout() {
                 </button>
 
                 <button 
-                  onClick={() => handlePageSwitch('Purchase Orders')}
+                  onClick={() => handlePageSwitch('Purchases')}
                   className="px-3.5 py-2 bg-[#B45309]/10 hover:bg-[#B45309] text-[#B45309] hover:text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
                 >
                   <span className="text-sm leading-none">+</span> Add Purchase
