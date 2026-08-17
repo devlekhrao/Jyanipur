@@ -1,6 +1,11 @@
 import { neon } from '@neondatabase/serverless';
 
-const sql = neon(import.meta.env.VITE_DATABASE_URL);
+// Universal Cloud DB Connection (With Automatic Fallback for Desktop/Mobile Builds)
+const dbUrl = 
+  import.meta.env.VITE_DATABASE_URL || 
+  "postgresql://neondb_owner:npg_NPAHp8jJy8gL@ep-weathered-river-axs5zgp6.c-4.us-east-2.aws.neon.tech/neondb?sslmode=require";
+
+const sql = neon(dbUrl);
 
 // ==========================================
 // 1. INVOICE MODULE
