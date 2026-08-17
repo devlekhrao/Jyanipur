@@ -159,14 +159,14 @@ export default function App() {
           </div>
         )}
 
-        {/* FORMS WITH AUTOCOMPLETE TURNED OFF */}
-        <form onSubmit={handleLogin} className="space-y-5" autoComplete="off">
+        {/* FORMS WITH STANDARD AUTOCOMPLETE */}
+        <form onSubmit={handleLogin} className="space-y-5">
           <div>
             <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2 ml-1">Work Email</label>
             <input 
-              type="text" 
-              name="email_hidden"
-              autoComplete="off"
+              type="email" 
+              name="email"
+              autoComplete="email"
               placeholder="Enter your registered email"
               value={email} 
               onChange={(e) => setEmail(e.target.value)} 
@@ -178,8 +178,8 @@ export default function App() {
             <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2 ml-1">Passkey</label>
             <input 
               type="password" 
-              name="password_hidden"
-              autoComplete="new-password"
+              name="password"
+              autoComplete="current-password"
               placeholder="Enter your secure passkey"
               value={password} 
               onChange={(e) => setPassword(e.target.value)} 
