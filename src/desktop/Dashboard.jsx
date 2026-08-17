@@ -1,272 +1,501 @@
 import React, { useState, useEffect } from 'react';
-import { getInvoices, getPurchases, getVendorLedgers, getProjects } from '../db';
+import { 
+  getProjects, 
+  getIncomeRecords, 
+  getPettyCash, 
+  getEmployeeExpenses, 
+  getSnags, 
+  getInventoryItems, 
+  getTodayAttendance,
+  saveDPR,
+  saveIncomeRecord,
+  saveSnag
+} from '../db';
 
 export default function Dashboard({ setActivePage }) {
   const [loading, setLoading] = useState(true);
-  const [metrics, setMetrics] = useState({
-    totalReceived: 0,
-    pendingInvoices: 0,
-    unpaidPurchases: 0,
-    availableFunds: 0,
-    urgentPayables: [],
-    chartData: [],
-    cashDistribution: { avail: 100, exp: 0, pend: 0, gradient: '' },
-    activeProjects: []
-  });
+  const [projects, setProjects] = useState([]);
+  const [income, setIncome] = useState([]);
+  const [pettyCash, setPettyCash] = useState([]);
+  const [staffExpenses, setStaffExpenses] = useState([]);
+  const [snags, setSnags] = useState([]);
+  const [inventory, setInventory] = useState([]);
+  const [todayAttendance, setTodayAttendance] = useState({});
+
+  // Quick Action Modals
+  const [quickModal, setQuickModal] = useState(null); // 'dpr', 'income', 'snag'
+  const [selectedSite, setSelectedSite] = useState('');
+
+  // Quick Forms
+  const [dprData, setDprData] = useState({ date: new Date().toISOString().split('T')[0], summary: '', loggedBy: '' });
+  const [incomeData, setIncomeData] = useState({ date: new Date().toISOString().split('T')[0], projectId: '', amount: '', paymentMode: 'NEFT/RTGS', referenceNo: '' });
+  const [snagData, setSnagData] = useState({ projectId: '', title: '', priority: 'Medium', subcontractor: '' });
+
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth() + 1;
+  const currentYear = currentDate.getFullYear();
+  const todayStr = currentDate.toISOString().split('T')[0];
+
+  const loadDashboardData = async () => {
+    setLoading(true);
+    try {
+      const [
+        projData, 
+        incData, 
+        pettyData, 
+        empExpData, 
+        snagDataList, 
+        invData, 
+        attData
+      ] = await Promise.all([
+        getProjects(),
+        getIncomeRecords(),
+        getPettyCash(),
+        getEmployeeExpenses(),
+        getSnags(),
+        getInventoryItems(),
+        getTodayAttendance(todayStr)
+      ]);
+
+      const activeProjects = (projData || []).filter(p => p.status !== 'Completed');
+      setProjects(activeProjects);
+      if (activeProjects.length > 0 && !selectedSite) {
+        setSelectedSite(activeProjects[0].id);
+      }
+
+      setIncome(incData || []);
+      setPettyCash(pettyData || []);
+      setStaffExpenses(empExpData || []);
+      setSnags(snagDataList || []);
+      setInventory(invData || []);
+      setTodayAttendance(attData || {});
+    } catch (err) {
+      console.warn("Ensure database helper functions exist in db.js", err);
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
-    async function loadDashboard() {
-      setLoading(true);
-      try {
-        const [invoices, purchases, vendors, projects] = await Promise.all([
-          getInvoices(), getPurchases(), getVendorLedgers(), getProjects()
-        ]);
-
-        // Helper to safely extract numbers from formatted currency strings (e.g., "₹ 24,190.00" -> 24190)
-        const parseAmt = (val) => Number(val?.toString().replace(/[^0-9.-]+/g, "")) || 0;
-
-        // --- 1. KPI CALCULATIONS ---
-        const received = invoices.filter(i => !i.isCancelled).reduce((sum, i) => sum + parseAmt(i.advanceReceived), 0);
-        
-        const pendingInv = invoices.filter(i => !i.isCancelled).reduce((sum, i) => {
-          const total = parseAmt(i.amount);
-          const adv = parseAmt(i.advanceReceived);
-          return sum + (total > adv ? total - adv : 0);
-        }, 0);
-
-        const unpaid = vendors.reduce((sum, v) => sum + (parseAmt(v.balance) > 0 ? parseAmt(v.balance) : 0), 0);
-
-        // Assume paid purchases (either from amountPaid field, or totalAmount if no balance)
-        const paidPurchases = purchases.reduce((sum, p) => sum + parseAmt(p.amountPaid || p.paidAmount || 0), 0);
-        
-        const funds = Math.max(received - paidPurchases, 0); // Basic cash-on-hand formula
-
-        // --- 2. BAR CHART (Last 6 Months Dynamic) ---
-        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        const last6Months = [];
-        const rawChartData = [];
-        const d = new Date();
-        d.setMonth(d.getMonth() - 5); // Go back 5 months + current month = 6
-        
-        for(let i = 0; i < 6; i++) {
-          last6Months.push({ month: d.getMonth(), year: d.getFullYear(), label: monthNames[d.getMonth()] });
-          d.setMonth(d.getMonth() + 1);
-        }
-
-        last6Months.forEach(m => {
-          const mInvs = invoices.filter(inv => {
-            if (!inv.date || inv.isCancelled) return false;
-            const idate = new Date(inv.date);
-            return idate.getMonth() === m.month && idate.getFullYear() === m.year;
-          });
-          const mPur = purchases.filter(p => {
-            if (!p.date) return false;
-            const pdate = new Date(p.date);
-            return pdate.getMonth() === m.month && pdate.getFullYear() === m.year;
-          });
-
-          const rev = mInvs.reduce((sum, inv) => sum + parseAmt(inv.amount), 0);
-          const cost = mPur.reduce((sum, p) => sum + parseAmt(p.totalAmount || p.amount), 0);
-          rawChartData.push({ label: m.label, rev, cost });
-        });
-
-        // Normalize bar heights relative to the highest value in the 6-month period
-        const maxVal = Math.max(...rawChartData.map(d => Math.max(d.rev, d.cost)), 1); 
-        const chartData = rawChartData.map(d => ({
-          ...d,
-          revHeight: (d.rev / maxVal) * 100,
-          costHeight: (d.cost / maxVal) * 100
-        }));
-
-        // --- 3. CASH DISTRIBUTION (Doughnut Chart) ---
-        const totalCashFlow = (funds + paidPurchases + unpaid) || 1; // Prevent div by 0
-        const pctAvail = Math.round((funds / totalCashFlow) * 100);
-        const pctExp = Math.round((paidPurchases / totalCashFlow) * 100);
-        const pctPend = 100 - pctAvail - pctExp; 
-        
-        const gradient = `conic-gradient(#34d399 0% ${pctAvail}%, #fbbf24 ${pctAvail}% ${pctAvail + pctExp}%, #f87171 ${pctAvail + pctExp}% 100%)`;
-
-        // --- 4. TOP ACTIVE PROJECTS ---
-        const activeProjects = projects.slice(0, 3).map(p => ({
-          name: p.projectName || 'Unnamed Project',
-          budget: parseAmt(p.budget),
-          cost: parseAmt(p.actualCost || 0)
-        }));
-
-        setMetrics({
-          totalReceived: received,
-          pendingInvoices: pendingInv,
-          unpaidPurchases: unpaid,
-          availableFunds: funds,
-          urgentPayables: vendors.filter(v => parseAmt(v.balance) > 0).sort((a,b) => parseAmt(b.balance) - parseAmt(a.balance)).slice(0, 3),
-          chartData,
-          cashDistribution: { avail: pctAvail, exp: pctExp, pend: pctPend, gradient },
-          activeProjects
-        });
-      } catch (e) {
-        console.warn("Dashboard data loaded with fallback defaults.", e);
-      }
-      setLoading(false);
-    }
-    loadDashboard();
+    loadDashboardData();
   }, []);
 
-  if (loading) return <div className="py-20 text-center text-zinc-400 font-medium text-xs">Syncing real-time financials...</div>;
+  // --- Financial Computations ---
+  const totalPortfolioBudget = projects.reduce((sum, p) => sum + (parseFloat(p.budget) || 0), 0);
 
-  const cardClass = "bg-white border border-zinc-200 p-6 rounded-[2rem] shadow-sm";
+  const thisMonthIncome = income.filter(i => {
+    if (!i.date) return false;
+    const d = new Date(i.date);
+    return d.getMonth() + 1 === currentMonth && d.getFullYear() === currentYear;
+  }).reduce((sum, i) => sum + (parseFloat(i.amount) || 0), 0);
+
+  const thisMonthPetty = pettyCash.filter(p => {
+    if (!p.date || p.type !== 'Expense') return false;
+    const d = new Date(p.date);
+    return d.getMonth() + 1 === currentMonth && d.getFullYear() === currentYear;
+  }).reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+
+  const thisMonthStaffExp = staffExpenses.filter(e => {
+    if (!e.date) return false;
+    const d = new Date(e.date);
+    return d.getMonth() + 1 === currentMonth && d.getFullYear() === currentYear;
+  }).reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+
+  const totalMonthlyOutflow = thisMonthPetty + thisMonthStaffExp;
+  const netOperatingMargin = thisMonthIncome - totalMonthlyOutflow;
+
+  // Attendance Metrics
+  const presentStaff = Object.values(todayAttendance).filter(v => v === 'Present').length;
+  const halfDayStaff = Object.values(todayAttendance).filter(v => v === 'Half Day').length;
+  const absentStaff = Object.values(todayAttendance).filter(v => v === 'Absent').length;
+
+  // Snag & Inventory Alerts
+  const openSnags = snags.filter(s => s.status === 'Open' || s.status === 'In Progress');
+  const criticalSnags = openSnags.filter(s => s.priority === 'High');
+  const lowStockItems = inventory.filter(i => (i.totalStock !== undefined ? i.totalStock : (i.qty || 0)) <= 5);
+
+  // --- Handlers for Quick Action Modals ---
+  const handleQuickDpr = async (e) => {
+    e.preventDefault();
+    if (!selectedSite || !dprData.summary) return alert("Site and summary required.");
+    await saveDPR({ ...dprData, projectId: selectedSite });
+    setQuickModal(null);
+    setDprData({ date: todayStr, summary: '', loggedBy: '' });
+    loadDashboardData();
+  };
+
+  const handleQuickIncome = async (e) => {
+    e.preventDefault();
+    if (!incomeData.projectId || !incomeData.amount) return alert("Site and Amount required.");
+    const proj = projects.find(p => String(p.id) === String(incomeData.projectId));
+    await saveIncomeRecord({
+      ...incomeData,
+      projectName: proj ? proj.name : 'General Site',
+      clientName: proj ? proj.clientName : '',
+      amount: parseFloat(incomeData.amount) || 0
+    });
+    setQuickModal(null);
+    setIncomeData({ date: todayStr, projectId: '', amount: '', paymentMode: 'NEFT/RTGS', referenceNo: '' });
+    loadDashboardData();
+  };
+
+  const handleQuickSnag = async (e) => {
+    e.preventDefault();
+    if (!snagData.projectId || !snagData.title) return alert("Site and Defect Title required.");
+    await saveSnag(snagData);
+    setQuickModal(null);
+    setSnagData({ projectId: '', title: '', priority: 'Medium', subcontractor: '' });
+    loadDashboardData();
+  };
+
+  const inputClass = "w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-white focus:outline-none focus:border-[#B45309] focus:ring-1 focus:ring-inset focus:ring-[#B45309] text-zinc-900 text-sm font-medium transition-all shadow-sm";
+  const labelClass = "block text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5 ml-0.5";
 
   return (
-    <div className="w-full font-['Poppins'] flex flex-col">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Graphical Command Center</h2>
-        <p className="text-zinc-500 text-xs mt-1 font-medium">Real-time charts and job costing visualizations.</p>
+    <div className="w-full h-full flex flex-col" style={{ fontFamily: 'Poppins, sans-serif' }}>
+      
+      {/* HEADER & GLOBAL CONTROLS */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center pb-5 mb-6 border-b border-zinc-200 shrink-0 gap-4">
+        <div>
+          <h2 className="text-xl font-bold text-zinc-900 tracking-tight">Executive Command Center</h2>
+          <p className="text-zinc-500 text-sm mt-0.5 font-medium">Real-time overview of active portfolio, cash flow, site operations, and inventory.</p>
+        </div>
+
+        {/* QUICK ACTION BUTTONS */}
+        <div className="flex flex-wrap gap-2">
+          <button 
+            onClick={() => setQuickModal('dpr')} 
+            className="px-3.5 py-2 bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 rounded-xl text-xs font-semibold transition-all shadow-sm cursor-pointer flex items-center gap-1.5"
+          >
+            <span className="text-sm text-[#B45309]">📝</span> + Quick DPR
+          </button>
+          <button 
+            onClick={() => setQuickModal('income')} 
+            className="px-3.5 py-2 bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 rounded-xl text-xs font-semibold transition-all shadow-sm cursor-pointer flex items-center gap-1.5"
+          >
+            <span className="text-sm text-emerald-600">💰</span> + Log Income
+          </button>
+          <button 
+            onClick={() => setQuickModal('snag')} 
+            className="px-3.5 py-2 bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 rounded-xl text-xs font-semibold transition-all shadow-sm cursor-pointer flex items-center gap-1.5"
+          >
+            <span className="text-sm text-red-500">⚠️</span> + Add Snag
+          </button>
+        </div>
       </div>
 
-      {/* TOP KPI CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className={cardClass}>
-          <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Total Received</span>
-          <p className="text-2xl font-semibold text-[11px] text-emerald-600">₹ {metrics.totalReceived.toLocaleString('en-IN')}</p>
+      {loading ? (
+        <div className="py-20 text-center text-zinc-400 font-medium text-sm flex flex-col items-center justify-center space-y-3 flex-1">
+          <div className="w-10 h-10 border-4 border-zinc-200 border-t-[#B45309] rounded-full animate-spin"></div>
+          <p>Syncing command center telemetry...</p>
         </div>
-        <div className={cardClass}>
-          <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Pending Invoices</span>
-          <p className="text-2xl font-semibold text-[11px] text-blue-600">₹ {metrics.pendingInvoices.toLocaleString('en-IN')}</p>
-        </div>
-        <div className={cardClass}>
-          <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Unpaid Purchases</span>
-          <p className="text-2xl font-semibold text-[11px] text-amber-600">₹ {metrics.unpaidPurchases.toLocaleString('en-IN')}</p>
-        </div>
-        <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-[2rem] shadow-lg">
-          <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Available Funds</span>
-          <p className="text-2xl font-semibold text-[11px] text-emerald-400">₹ {metrics.availableFunds.toLocaleString('en-IN')}</p>
-        </div>
-      </div>
-
-      {/* MIDDLE SECTION: CHARTS */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        
-        {/* BAR CHART */}
-        <div className={`lg:col-span-2 ${cardClass} flex flex-col`}>
-          <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-widest mb-6">Revenue vs Cost (Last 6 Months)</h3>
-          <div className="flex-1 relative flex items-end justify-around pb-6 pt-8 border-b border-zinc-100">
-            {/* Grid Lines */}
-            <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
-              <div className="border-b border-dashed border-zinc-200 w-full h-0"></div>
-              <div className="border-b border-dashed border-zinc-200 w-full h-0"></div>
-              <div className="border-b border-dashed border-zinc-200 w-full h-0"></div>
-              <div className="border-b border-dashed border-zinc-200 w-full h-0"></div>
-            </div>
-            
-            {/* Dynamic Data Bars */}
-            {metrics.chartData.map((d, i) => (
-              <div key={i} className="flex flex-col items-center gap-2 z-10 h-48 justify-end group">
-                <div className="flex gap-2 items-end h-full">
-                  <div 
-                    title={`Cost: ₹${d.cost.toLocaleString('en-IN')}`}
-                    className="w-4 sm:w-6 bg-zinc-800 rounded-t-md transition-all duration-300 hover:opacity-80" 
-                    style={{ height: `${Math.max(d.costHeight, 2)}%` }}
-                  ></div>
-                  <div 
-                    title={`Revenue: ₹${d.rev.toLocaleString('en-IN')}`}
-                    className="w-4 sm:w-6 bg-emerald-400 rounded-t-md transition-all duration-300 hover:opacity-80" 
-                    style={{ height: `${Math.max(d.revHeight, 2)}%` }}
-                  ></div>
-                </div>
-                <span className="text-[10px] font-bold text-zinc-500 uppercase">{d.label}</span>
+      ) : (
+        <div className="flex-1 overflow-y-auto space-y-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          
+          {/* ZONE 1: EXECUTIVE KPI DECK */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="bg-white border border-zinc-200 p-5 rounded-2xl shadow-sm flex flex-col justify-center">
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Active Sites Portfolio</span>
+                <span className="text-xs font-bold bg-amber-50 text-[#B45309] px-2 py-0.5 rounded border border-amber-200/60">{projects.length} Sites</span>
               </div>
-            ))}
-          </div>
-          <div className="flex justify-center gap-8 mt-4">
-            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-zinc-800"></span><span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Expense Flow</span></div>
-            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-emerald-400"></span><span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Income Flow</span></div>
-          </div>
-        </div>
+              <p className="text-xl font-bold text-zinc-900">₹ {totalPortfolioBudget.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+              <span className="text-xs font-medium text-zinc-400 mt-1">Total Contract Budget</span>
+            </div>
 
-        {/* DOUGHNUT CHART */}
-        <div className={`${cardClass} flex flex-col items-center justify-between`}>
-          <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-widest w-full text-left mb-6">Cash Distribution</h3>
-          
-          <div className="relative w-48 h-48 rounded-full flex items-center justify-center my-4 shadow-inner transition-all duration-500" 
-               style={{ background: metrics.cashDistribution.gradient }}>
-            <div className="w-32 h-32 bg-white rounded-full flex flex-col items-center justify-center shadow-md">
-              <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Health</span>
-              <span className="text-sm font-semibold text-[11px] text-emerald-500">{metrics.cashDistribution.avail}%</span>
+            <div className="bg-emerald-50 border border-emerald-100 p-5 rounded-2xl shadow-sm flex flex-col justify-center">
+              <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest block mb-1">Collections (This Month)</span>
+              <p className="text-xl font-bold text-emerald-700">₹ {thisMonthIncome.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+              <span className="text-xs font-semibold text-emerald-600/80 mt-1">Client Milestone Payments</span>
+            </div>
+
+            <div className="bg-white border border-red-200/80 p-5 rounded-2xl shadow-sm flex flex-col justify-center">
+              <span className="text-[10px] font-bold text-red-500 uppercase tracking-widest block mb-1">Direct Outflow (This Month)</span>
+              <p className="text-xl font-bold text-red-500">₹ {totalMonthlyOutflow.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+              <span className="text-xs font-medium text-zinc-400 mt-1">Petty Cash + Staff Expenses</span>
+            </div>
+
+            <div className="bg-white border border-amber-200/80 p-5 rounded-2xl shadow-sm flex flex-col justify-center">
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-[10px] font-bold text-[#B45309] uppercase tracking-widest">Net Operating Cash</span>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${netOperatingMargin >= 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-600 border border-red-200'}`}>
+                  {netOperatingMargin >= 0 ? 'Surplus' : 'Deficit'}
+                </span>
+              </div>
+              <p className="text-xl font-bold text-[#B45309]">₹ {netOperatingMargin.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+              <span className="text-xs font-medium text-zinc-400 mt-1">Net Monthly Liquidity</span>
             </div>
           </div>
 
-          <div className="w-full space-y-3 pt-4 border-t border-zinc-100">
-            <div className="flex justify-between items-center text-xs">
-              <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-emerald-400"></span><span className="font-semibold text-zinc-600">Funds Available</span></div>
-              <span className="font-bold text-zinc-900">{metrics.cashDistribution.avail}%</span>
-            </div>
-            <div className="flex justify-between items-center text-xs">
-              <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-amber-400"></span><span className="font-semibold text-zinc-600">Expenses Paid</span></div>
-              <span className="font-bold text-zinc-900">{metrics.cashDistribution.exp}%</span>
-            </div>
-            <div className="flex justify-between items-center text-xs">
-              <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-red-400"></span><span className="font-semibold text-zinc-600">Pending Dues</span></div>
-              <span className="font-bold text-zinc-900">{metrics.cashDistribution.pend}%</span>
-            </div>
-          </div>
-        </div>
-      </div>
+          {/* ZONE 2: SITE PORTFOLIO & WORKFORCE RADAR */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            {/* LEFT 2 COLUMNS: ACTIVE PROJECTS & P&L STATUS */}
+            <div className="lg:col-span-2 bg-white border border-zinc-200/80 rounded-2xl p-6 shadow-sm flex flex-col justify-between space-y-4">
+              <div className="flex justify-between items-center border-b border-zinc-100 pb-3">
+                <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">Active Site Progress & P&L Utilization</h3>
+                <button onClick={() => setActivePage('Projects')} className="text-xs font-semibold text-[#B45309] hover:underline cursor-pointer">
+                  View All Sites &rarr;
+                </button>
+              </div>
 
-      {/* BOTTOM SECTION */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        <div className={`lg:col-span-2 ${cardClass}`}>
-          <div className="flex justify-between items-center mb-5">
-            <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-widest">Active Projects Snapshot</h3>
-            <button onClick={() => setActivePage('Projects')} className="text-[10px] font-bold text-[#1E3A8A] hover:underline uppercase tracking-wider cursor-pointer">All Projects &rarr;</button>
-          </div>
-          
-          {metrics.activeProjects.length === 0 ? (
-            <p className="text-xs text-zinc-500 font-medium">No active projects found. Start creating projects to track costs.</p>
-          ) : (
-            <div className="space-y-4">
-              {metrics.activeProjects.map((p, idx) => (
-                <div key={idx} className="flex justify-between items-center border-b border-zinc-100 pb-3 last:border-0 last:pb-0">
-                  <div className="flex-1">
-                    <p className="text-xs font-bold text-zinc-900 truncate pr-4">{p.name}</p>
-                    <p className="text-[10px] text-zinc-500 font-medium mt-0.5">
-                      Cost: <span className="text-amber-600 font-bold">₹{p.cost.toLocaleString('en-IN')}</span> / Budget: ₹{p.budget.toLocaleString('en-IN')}
-                    </p>
+              {projects.length === 0 ? (
+                <div className="text-center text-zinc-400 text-sm font-medium py-10">No active projects running.</div>
+              ) : (
+                <div className="space-y-4">
+                  {projects.slice(0, 4).map(proj => {
+                    const siteIncome = income.filter(i => String(i.projectId) === String(proj.id)).reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+                    const sitePetty = pettyCash.filter(p => String(p.projectId) === String(proj.id) && p.type === 'Expense').reduce((s, p) => s + (parseFloat(p.amount) || 0), 0);
+                    const totalBudget = parseFloat(proj.budget) || 1;
+                    const pctCollected = Math.min(100, Math.round((siteIncome / totalBudget) * 100));
+
+                    return (
+                      <div key={proj.id} className="p-4 rounded-xl border border-zinc-100 bg-zinc-50/50 hover:bg-zinc-50 transition-colors">
+                        <div className="flex justify-between items-center mb-1.5">
+                          <span className="font-bold text-sm text-zinc-900">{proj.name} <span className="text-xs text-zinc-400 font-normal">({proj.clientName})</span></span>
+                          <span className="text-xs font-bold text-[#B45309]">₹ {siteIncome.toLocaleString('en-IN')} / ₹ {totalBudget.toLocaleString('en-IN')}</span>
+                        </div>
+
+                        {/* Progress Bar */}
+                        <div className="w-full h-2.5 bg-zinc-200 rounded-full overflow-hidden flex">
+                          <div className="bg-[#B45309] h-full transition-all duration-500" style={{ width: `${pctCollected}%` }}></div>
+                        </div>
+
+                        <div className="flex justify-between items-center text-[11px] font-medium text-zinc-500 mt-2">
+                          <span>Collected: <strong>{pctCollected}%</strong></span>
+                          <span>Site Petty Cash Spent: <strong className="text-red-500">₹ {sitePetty.toLocaleString('en-IN')}</strong></span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* RIGHT COLUMN: WORKFORCE & SNAG RADAR */}
+            <div className="space-y-6">
+              
+              {/* TODAY'S ATTENDANCE SUMMARY */}
+              <div className="bg-white border border-zinc-200/80 rounded-2xl p-5 shadow-sm space-y-3">
+                <div className="flex justify-between items-center border-b border-zinc-100 pb-2">
+                  <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">Today's Attendance Radar</h3>
+                  <button onClick={() => setActivePage('Employee Attendance')} className="text-xs font-semibold text-[#B45309] hover:underline cursor-pointer">
+                    Manage &rarr;
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="bg-emerald-50 border border-emerald-100 p-3 rounded-xl">
+                    <span className="text-[10px] font-bold text-emerald-600 uppercase block">Present</span>
+                    <span className="text-lg font-bold text-emerald-700">{presentStaff}</span>
                   </div>
-                  <div className="w-24 bg-zinc-100 h-2.5 rounded-full overflow-hidden">
-                    <div 
-                      className={`h-full rounded-full ${p.cost > p.budget ? 'bg-red-500' : 'bg-emerald-400'}`} 
-                      style={{ width: `${Math.min((p.cost / (p.budget || 1)) * 100, 100)}%` }}
-                    ></div>
+                  <div className="bg-amber-50 border border-amber-200/60 p-3 rounded-xl">
+                    <span className="text-[10px] font-bold text-[#B45309] uppercase block">Half Day</span>
+                    <span className="text-lg font-bold text-[#B45309]">{halfDayStaff}</span>
+                  </div>
+                  <div className="bg-red-50 border border-red-100 p-3 rounded-xl">
+                    <span className="text-[10px] font-bold text-red-500 uppercase block">Absent</span>
+                    <span className="text-lg font-bold text-red-500">{absentStaff}</span>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+              </div>
 
-        <div className={cardClass}>
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-widest">Urgent Payables</h3>
-            <span className="bg-red-100 text-red-600 text-[10px] font-bold px-2.5 py-0.5 rounded-full">{metrics.urgentPayables.length}</span>
-          </div>
-          {metrics.urgentPayables.length === 0 ? (
-            <p className="text-xs text-zinc-500 font-medium pt-2">No urgent vendor dues. You're all clear!</p>
-          ) : (
-            <div className="space-y-3">
-              {metrics.urgentPayables.map((v, idx) => (
-                <div key={idx} className="flex justify-between items-center border-b border-zinc-100 pb-2.5 last:border-0 last:pb-0">
+              {/* QUALITY SNAG BAROMETER */}
+              <div className="bg-white border border-zinc-200/80 rounded-2xl p-5 shadow-sm space-y-3">
+                <div className="flex justify-between items-center border-b border-zinc-100 pb-2">
+                  <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">Handover Quality Snags</h3>
+                  <button onClick={() => setActivePage('Site Snags')} className="text-xs font-semibold text-[#B45309] hover:underline cursor-pointer">
+                    Punch List &rarr;
+                  </button>
+                </div>
+
+                <div className="flex justify-between items-center bg-zinc-50 p-3 rounded-xl border border-zinc-100">
                   <div>
-                    <p className="text-xs font-bold text-zinc-900 max-w-[140px] truncate">{v.vendorName || v.name}</p>
-                    <button onClick={() => setActivePage('Vendor Ledger')} className="text-[9px] font-bold text-[#1E3A8A] uppercase hover:underline mt-0.5 block cursor-pointer">Resolve &rarr;</button>
+                    <span className="text-xs font-bold text-zinc-800">Total Unresolved Snags</span>
+                    <p className="text-[11px] text-zinc-400 font-medium">{criticalSnags.length} Critical High-Priority</p>
                   </div>
-                  <span className="text-xs font-semibold text-[11px] text-red-500">₹{Number(v.balance).toLocaleString('en-IN')}</span>
+                  <span className="text-xl font-bold text-red-500 bg-red-50 border border-red-200 px-3 py-1 rounded-xl">
+                    {openSnags.length}
+                  </span>
                 </div>
-              ))}
+              </div>
+
             </div>
-          )}
+
+          </div>
+
+          {/* ZONE 3: GODOWN INVENTORY & VENDOR ALERTS */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            {/* LOW STOCK ALERT WATCH */}
+            <div className="bg-white border border-zinc-200/80 rounded-2xl p-5 shadow-sm space-y-3">
+              <div className="flex justify-between items-center border-b border-zinc-100 pb-2">
+                <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider flex items-center gap-1.5">
+                  <span>📦</span> Godown Low-Stock Watch
+                </h3>
+                <button onClick={() => setActivePage('Inventory')} className="text-xs font-semibold text-[#B45309] hover:underline cursor-pointer">
+                  Godown &rarr;
+                </button>
+              </div>
+
+              {lowStockItems.length === 0 ? (
+                <p className="text-xs text-zinc-400 italic font-medium py-3">All material stock levels healthy in central storage.</p>
+              ) : (
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {lowStockItems.map(item => (
+                    <span key={item.id} className="px-3 py-1 bg-amber-50 text-[#B45309] border border-amber-200/60 rounded-lg text-xs font-semibold flex items-center gap-1.5">
+                      <strong>{item.name || item.materialName}</strong>: {item.totalStock !== undefined ? item.totalStock : (item.qty || 0)} {item.unit || 'Pcs'}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* QUICK LINK HUB */}
+            <div className="bg-white border border-zinc-200/80 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+              <div className="border-b border-zinc-100 pb-2">
+                <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">Frequent Workflows</h3>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-3">
+                <button onClick={() => setActivePage('Tax Invoice')} className="p-3 bg-zinc-50 hover:bg-amber-50 hover:border-amber-200 text-zinc-800 rounded-xl border border-zinc-200 text-xs font-semibold text-left transition-all cursor-pointer">
+                  📑 Draft Tax Invoice
+                </button>
+                <button onClick={() => setActivePage('Purchase Orders')} className="p-3 bg-zinc-50 hover:bg-amber-50 hover:border-amber-200 text-zinc-800 rounded-xl border border-zinc-200 text-xs font-semibold text-left transition-all cursor-pointer">
+                  🛒 Issue Purchase Order
+                </button>
+                <button onClick={() => setActivePage('Subcontractors')} className="p-3 bg-zinc-50 hover:bg-amber-50 hover:border-amber-200 text-zinc-800 rounded-xl border border-zinc-200 text-xs font-semibold text-left transition-all cursor-pointer">
+                  👷 Subcontractor Ledgers
+                </button>
+                <button onClick={() => setActivePage('Project P&L')} className="p-3 bg-zinc-50 hover:bg-amber-50 hover:border-amber-200 text-zinc-800 rounded-xl border border-zinc-200 text-xs font-semibold text-left transition-all cursor-pointer">
+                  📈 Project P&L Report
+                </button>
+              </div>
+            </div>
+
+          </div>
+
         </div>
-        
-      </div>
+      )}
+
+      {/* QUICK DPR MODAL */}
+      {quickModal === 'dpr' && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col">
+            <div className="px-6 py-5 border-b border-zinc-200 flex justify-between items-center bg-zinc-50">
+              <h2 className="text-xl font-semibold text-zinc-900">Quick Daily Report (DPR)</h2>
+              <button onClick={() => setQuickModal(null)} className="text-zinc-400 hover:text-zinc-700 cursor-pointer">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <form onSubmit={handleQuickDpr} className="p-6 space-y-4">
+              <div>
+                <label className={labelClass}>Select Site <span className="text-red-500">*</span></label>
+                <select required value={selectedSite} onChange={e => setSelectedSite(e.target.value)} className={inputClass}>
+                  {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className={labelClass}>Work Completed Summary <span className="text-red-500">*</span></label>
+                <textarea required rows="3" value={dprData.summary} onChange={e => setDprData({...dprData, summary: e.target.value})} className={`${inputClass} resize-y min-h-[80px]`} placeholder="Summary of site work executed today..."></textarea>
+              </div>
+              <div>
+                <label className={labelClass}>Supervisor Name</label>
+                <input type="text" value={dprData.loggedBy} onChange={e => setDprData({...dprData, loggedBy: e.target.value})} className={inputClass} placeholder="Your name..." />
+              </div>
+              <div className="pt-4 flex justify-end gap-3 border-t border-zinc-200">
+                <button type="button" onClick={() => setQuickModal(null)} className="px-5 py-2.5 bg-white border border-zinc-300 hover:bg-zinc-100 text-zinc-700 font-semibold rounded-xl text-sm transition-all cursor-pointer">Cancel</button>
+                <button type="submit" className="px-6 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer">Submit DPR</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* QUICK INCOME MODAL */}
+      {quickModal === 'income' && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col">
+            <div className="px-6 py-5 border-b border-zinc-200 flex justify-between items-center bg-zinc-50">
+              <h2 className="text-xl font-semibold text-zinc-900">Log Client Payment</h2>
+              <button onClick={() => setQuickModal(null)} className="text-zinc-400 hover:text-zinc-700 cursor-pointer">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <form onSubmit={handleQuickIncome} className="p-6 space-y-4">
+              <div>
+                <label className={labelClass}>Select Site <span className="text-red-500">*</span></label>
+                <select required value={incomeData.projectId} onChange={e => setIncomeData({...incomeData, projectId: e.target.value})} className={inputClass}>
+                  <option value="" disabled>Select active project...</option>
+                  {projects.map(p => <option key={p.id} value={p.id}>{p.name} ({p.clientName})</option>)}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={labelClass}>Amount (₹) <span className="text-red-500">*</span></label>
+                  <input type="number" step="any" required placeholder="0.00" value={incomeData.amount} onChange={e => setIncomeData({...incomeData, amount: e.target.value})} className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>Payment Mode</label>
+                  <select value={incomeData.paymentMode} onChange={e => setIncomeData({...incomeData, paymentMode: e.target.value})} className={inputClass}>
+                    <option value="NEFT/RTGS">NEFT / RTGS</option>
+                    <option value="IMPS/UPI">IMPS / UPI</option>
+                    <option value="Cheque">Cheque</option>
+                    <option value="Cash">Cash</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className={labelClass}>Reference / Transaction No.</label>
+                <input type="text" placeholder="UTR or Txn ID" value={incomeData.referenceNo} onChange={e => setIncomeData({...incomeData, referenceNo: e.target.value})} className={inputClass} />
+              </div>
+              <div className="pt-4 flex justify-end gap-3 border-t border-zinc-200">
+                <button type="button" onClick={() => setQuickModal(null)} className="px-5 py-2.5 bg-white border border-zinc-300 hover:bg-zinc-100 text-zinc-700 font-semibold rounded-xl text-sm transition-all cursor-pointer">Cancel</button>
+                <button type="submit" className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer">Record Income</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* QUICK SNAG MODAL */}
+      {quickModal === 'snag' && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col">
+            <div className="px-6 py-5 border-b border-zinc-200 flex justify-between items-center bg-zinc-50">
+              <h2 className="text-xl font-semibold text-zinc-900">Add Quality Snag</h2>
+              <button onClick={() => setQuickModal(null)} className="text-zinc-400 hover:text-zinc-700 cursor-pointer">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <form onSubmit={handleQuickSnag} className="p-6 space-y-4">
+              <div>
+                <label className={labelClass}>Select Site <span className="text-red-500">*</span></label>
+                <select required value={snagData.projectId} onChange={e => setSnagData({...snagData, projectId: e.target.value})} className={inputClass}>
+                  <option value="" disabled>Select active project...</option>
+                  {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className={labelClass}>Defect Title <span className="text-red-500">*</span></label>
+                <input type="text" required value={snagData.title} onChange={e => setSnagData({...snagData, title: e.target.value})} placeholder="e.g. Loose door hinge on master bed wardrobe" className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Priority</label>
+                <select value={snagData.priority} onChange={e => setSnagData({...snagData, priority: e.target.value})} className={inputClass}>
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High (Critical Handover)</option>
+                </select>
+              </div>
+              <div className="pt-4 flex justify-end gap-3 border-t border-zinc-200">
+                <button type="button" onClick={() => setQuickModal(null)} className="px-5 py-2.5 bg-white border border-zinc-300 hover:bg-zinc-100 text-zinc-700 font-semibold rounded-xl text-sm transition-all cursor-pointer">Cancel</button>
+                <button type="submit" className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer">Log Defect</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
