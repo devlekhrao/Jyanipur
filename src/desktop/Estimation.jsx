@@ -38,7 +38,7 @@ export default function Estimation({ companySettings = {} }) {
     {
       id: 1,
       date: '2026-08-10',
-      estimateNo: 'EST/FY26-27/001',
+      estimateNo: 'EST-001',
       client: 'Reliance Retail',
       projectName: 'Flagship Store Interior',
       partyAddress: '123 Commercial Street, Mumbai',
@@ -95,25 +95,6 @@ export default function Estimation({ companySettings = {} }) {
     }
   }, [companySettings, editingId]);
 
-  // --- AUTO INCREMENT ESTIMATE NO ---
-  const generateNextEstimateNo = () => {
-    const prefix = companySettings.estimatePrefix || 'EST/FY26-27/';
-    let maxNum = 0;
-    
-    estimationsList.forEach(est => {
-      if (est.estimateNo && est.estimateNo.startsWith(prefix)) {
-        const numStr = est.estimateNo.replace(prefix, '');
-        const num = parseInt(numStr, 10);
-        if (!isNaN(num) && num > maxNum) {
-          maxNum = num;
-        }
-      }
-    });
-    
-    const nextNum = maxNum + 1;
-    return `${prefix}${nextNum.toString().padStart(3, '0')}`;
-  };
-
   const addItem = () => setItems([...items, { id: Date.now(), description: '', unit: 'Sq.Ft.', sizeL: '', sizeB: '', no: '', qty: '', rate: '', gst: 18 }]);
   
   const updateItem = (id, field, value) => {
@@ -135,6 +116,7 @@ export default function Estimation({ companySettings = {} }) {
           updated.qty = ''; 
         }
       }
+
       return updated;
     }));
   };
@@ -265,13 +247,13 @@ export default function Estimation({ companySettings = {} }) {
     const newEst = { 
       ...est, 
       id: Date.now(), 
-      estimateNo: generateNextEstimateNo(), // Auto-generate next sequence for the duplicate
+      estimateNo: `${est.estimateNo}-COPY`, 
       date: new Date().toISOString().split('T')[0],
       status: 'Pending', 
       isCancelled: false
     };
     setEstimationsList([newEst, ...estimationsList]);
-    alert(`Estimate duplicated as ${newEst.estimateNo}!`);
+    alert('Estimate successfully duplicated!');
   };
 
   const handleConvertToInvoice = (est) => {
@@ -293,26 +275,6 @@ export default function Estimation({ companySettings = {} }) {
     localStorage.setItem('draft_items', JSON.stringify(est.items || []));
     localStorage.setItem('draft_taxMode', est.taxMode || 'CGST_SGST');
     alert('Estimate details copied! Navigate to the "Tax Invoice" module and click "+ New Invoice" to complete the conversion.');
-  };
-
-  // --- NEW: PUSH TO CRM ---
-  const handlePushToCRM = (est) => {
-    const existingLeads = JSON.parse(localStorage.getItem('jyanipur_crm_leads') || '[]');
-    const newLead = {
-      id: Date.now(),
-      dateAdded: new Date().toISOString().split('T')[0],
-      name: est.client,
-      company: est.projectName || 'Estimation Lead',
-      email: '',
-      phone: '',
-      address: est.partyAddress,
-      status: 'Negotiation', // Put them in negotiation phase by default
-      value: est.amount,
-      source: 'Estimation'
-    };
-    existingLeads.push(newLead);
-    localStorage.setItem('jyanipur_crm_leads', JSON.stringify(existingLeads));
-    alert(`${est.client} has been added to your CRM leads!`);
   };
 
   const handleToggleCancel = (id) => {
@@ -337,9 +299,7 @@ export default function Estimation({ companySettings = {} }) {
     if (!askConfirm || window.confirm('Clear the entire estimation?')) {
       setEditingId(null);
       setEstimateDetails({ 
-        partyName: '', partyAddress: '', projectName: '', date: new Date().toISOString().split('T')[0], 
-        estimateNo: generateNextEstimateNo(), // Pre-fill with the auto-generated number
-        validUntil: '', description: '', terms: companySettings.defaultEstimateTerms || '1. 50% Mobilization advance upon booking.\n2. 40% against material delivery at site.\n3. 10% upon final hand-over.', 
+        partyName: '', partyAddress: '', projectName: '', date: new Date().toISOString().split('T')[0], estimateNo: '', validUntil: '', description: '', terms: companySettings.defaultEstimateTerms || '1. 50% Mobilization advance upon booking.\n2. 40% against material delivery at site.\n3. 10% upon final hand-over.', 
         bankName: companySettings.bankName || '', accountName: companySettings.accountName || '', accountNo: companySettings.accountNo || '', ifscCode: companySettings.ifscCode || '', discount: '' 
       });
       setItems([{ id: 1, description: '', unit: 'Sq.Ft.', sizeL: '', sizeB: '', no: '', qty: '', rate: '', gst: 18 }]);
@@ -453,13 +413,6 @@ export default function Estimation({ companySettings = {} }) {
                                 </svg>
                                 View
                               </button>
-
-                              <button onClick={() => handlePushToCRM(est)} title="Send to CRM as Lead" className="px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white border border-indigo-200 rounded-lg font-black cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
-                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
-                                </svg>
-                                <span className="hidden xl:inline">To CRM</span>
-                              </button>
                               
                               <button onClick={() => handleDirectPrint(est)} title="Print or Save PDF" className="px-3 py-1.5 bg-zinc-50 text-zinc-600 hover:bg-zinc-200 border border-zinc-200 rounded-lg font-black cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
                                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -472,14 +425,14 @@ export default function Estimation({ companySettings = {} }) {
                                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" />
                                 </svg>
-                                <span className="hidden xl:inline">Copy</span>
+                                Copy
                               </button>
 
                               <button onClick={() => handleConvertToInvoice(est)} title="Convert to Tax Invoice" className="px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white border border-emerald-200 rounded-lg font-black cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
                                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                                 </svg>
-                                <span className="hidden xl:inline">To Invoice</span>
+                                To Invoice
                               </button>
                               
                               <button onClick={() => handleToggleCancel(est.id)} title="Cancel/Reject Estimate" className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white border border-red-200 rounded-lg font-black cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
@@ -630,7 +583,6 @@ export default function Estimation({ companySettings = {} }) {
                     <td className="py-2 px-2"><input disabled={isReadOnly} type="number" step="any" value={item.sizeB} onChange={(e) => updateItem(item.id, 'sizeB', e.target.value)} className={`${tInp} text-center`} /></td>
                     <td className="py-2 px-2"><input disabled={isReadOnly} type="number" step="any" value={item.no} onChange={(e) => updateItem(item.id, 'no', e.target.value)} className={`${tInp} text-center`} /></td>
                     
-                    {/* QTY FREE TEXT INPUT */}
                     <td className="py-2 px-2">
                       <input 
                         disabled={isReadOnly} 
@@ -751,73 +703,75 @@ export default function Estimation({ companySettings = {} }) {
         </div>
       </div>
 
-      {/* PERFECT A4 PDF DOCUMENT ENGINE (HIDDEN ON SCREEN) */}
-      <div className="hidden print:block w-full bg-white text-zinc-900 font-['Poppins'] text-[11px] leading-tight print:p-0 print:m-0">
+      {/* ========================================== */}
+      {/* PERFECT A4 PDF DOCUMENT ENGINE (CLEAN CORPORATE STYLE) */}
+      {/* ========================================== */}
+      <div className="hidden print:block w-full bg-white text-black font-sans text-xs print:p-0 print:m-0">
         
         <style dangerouslySetInnerHTML={{__html: `
           @media print {
-            @page { margin: 10mm; size: A4 portrait; }
-            body { padding: 0 !important; background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            @page { margin: 15mm; size: A4 portrait; }
+            body { padding: 0 !important; background: white !important; color: black !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             img { mix-blend-mode: multiply !important; }
           }
         `}} />
 
-        <div className="max-w-[210mm] min-h-[297mm] mx-auto bg-white">
+        <div className="max-w-[210mm] mx-auto bg-white">
           
           {/* Header Branding */}
-          <div className="flex justify-between items-start border-b-2 border-zinc-800 pb-5 mb-5">
+          <div className="flex justify-between items-start border-b border-gray-300 pb-5 mb-6">
             <div className="flex items-center gap-4">
               {companySettings?.logoUrl && (
                 <img src={companySettings.logoUrl} className="h-14 w-auto object-contain shrink-0" alt="Logo" />
               )}
               <div>
-                <h1 className="text-xl font-black tracking-tight text-zinc-900">{companySettings?.companyName || 'Company Name'}</h1>
-                <p className="text-[10px] text-zinc-600 whitespace-pre-wrap mt-0.5 max-w-xs">{companySettings?.companyAddress}</p>
-                <p className="text-[10px] text-zinc-800 mt-1 font-bold">
-                  GSTIN: <span className="font-medium text-zinc-600 mr-2">{companySettings?.companyGst}</span> 
-                  Phone: <span className="font-medium text-zinc-600">{companySettings?.companyPhone}</span>
+                <h1 className="text-lg font-bold text-black">{companySettings?.companyName || 'Company Name'}</h1>
+                <p className="text-[10px] text-gray-600 whitespace-pre-wrap mt-0.5 max-w-xs">{companySettings?.companyAddress}</p>
+                <p className="text-[10px] text-gray-800 mt-1">
+                  <span className="font-semibold">GSTIN:</span> {companySettings?.companyGst} <span className="mx-2">|</span> 
+                  <span className="font-semibold">Phone:</span> {companySettings?.companyPhone}
                 </p>
               </div>
             </div>
             
             <div className="text-right">
-              <span className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] block mb-1">Estimation / BOQ</span>
-              <h2 className="text-xl font-bold text-zinc-900 tracking-tight">{estimateDetails.estimateNo || 'EST-000'}</h2>
-              <p className="text-[10px] font-bold text-zinc-800 mt-1">Date: <span className="font-medium text-zinc-600">{estimateDetails.date}</span></p>
+              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1">Estimation / BOQ</span>
+              <h2 className="text-lg font-bold text-black">{estimateDetails.estimateNo || 'EST-000'}</h2>
+              <p className="text-[10px] text-gray-800 mt-1"><span className="font-semibold">Date:</span> {estimateDetails.date}</p>
             </div>
           </div>
 
           {/* Client & Project Info */}
-          <div className="grid grid-cols-2 gap-8 mb-6 pb-4 border-b border-zinc-200">
+          <div className="flex justify-between mb-8">
             <div>
-              <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1.5">Prepared For</span>
-              <h3 className="text-sm font-bold text-zinc-900 uppercase">{estimateDetails.partyName || 'Client Name'}</h3>
-              <p className="text-[10px] text-zinc-600 whitespace-pre-wrap mt-1 leading-relaxed">{estimateDetails.partyAddress}</p>
+              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">To</span>
+              <h3 className="text-sm font-bold text-black uppercase">{estimateDetails.partyName || 'Client Name'}</h3>
+              <p className="text-[10px] text-gray-700 whitespace-pre-wrap mt-1 leading-relaxed">{estimateDetails.partyAddress}</p>
             </div>
 
-            <div className="text-right space-y-1">
-              <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1.5">Project Details</span>
-              <p className="text-[10px] text-zinc-800 font-bold">Project: <span className="font-medium text-zinc-600">{estimateDetails.projectName || 'Interior Estimation'}</span></p>
-              {estimateDetails.validUntil && <p className="text-[10px] text-zinc-800 font-bold">Valid Until: <span className="font-medium text-zinc-600">{estimateDetails.validUntil}</span></p>}
+            <div className="text-right space-y-1 text-[10px]">
+              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Project Details</span>
+              <p className="text-gray-800"><span className="font-semibold">Project:</span> {estimateDetails.projectName || 'Interior Estimation'}</p>
+              {estimateDetails.validUntil && <p className="text-gray-800"><span className="font-semibold">Valid Until:</span> {estimateDetails.validUntil}</p>}
             </div>
           </div>
 
           {/* CLEAN ITEM TABLE */}
-          <table className="w-full text-left border-collapse mb-6">
-            <thead>
-              <tr className="bg-zinc-800 text-white text-[9px] uppercase tracking-wider">
-                <th className="py-2.5 px-2 font-bold text-center w-8 rounded-tl-md">#</th>
-                <th className="py-2.5 px-3 font-bold">Scope of Work / Material Details</th>
-                <th className="py-2.5 px-2 font-bold text-center w-12">Unit</th>
-                <th className="py-2.5 px-2 font-bold text-center w-16">L x B</th>
-                <th className="py-2.5 px-2 font-bold text-center w-10">No</th>
-                <th className="py-2.5 px-2 font-bold text-center w-12">Qty</th>
-                <th className="py-2.5 px-2 font-bold text-right w-20">Rate</th>
-                {taxMode !== 'NONE' && <th className="py-2.5 px-2 font-bold text-center w-12">Tax</th>}
-                <th className="py-2.5 px-3 font-bold text-right w-24 rounded-tr-md">Amount</th>
+          <table className="w-full text-left border-collapse border border-gray-300 mb-6">
+            <thead className="bg-gray-50 border-b border-gray-300">
+              <tr className="text-gray-700 text-[10px] uppercase font-semibold">
+                <th className="py-2 px-2 text-center w-8 border-r border-gray-200">#</th>
+                <th className="py-2 px-3 border-r border-gray-200">Scope of Work / Material Details</th>
+                <th className="py-2 px-2 text-center w-12 border-r border-gray-200">Unit</th>
+                <th className="py-2 px-2 text-center w-16 border-r border-gray-200">L x B</th>
+                <th className="py-2 px-2 text-center w-10 border-r border-gray-200">No</th>
+                <th className="py-2 px-2 text-center w-12 border-r border-gray-200">Qty</th>
+                <th className="py-2 px-2 text-right w-20 border-r border-gray-200">Rate</th>
+                {taxMode !== 'NONE' && <th className="py-2 px-2 text-center w-12 border-r border-gray-200">Tax</th>}
+                <th className="py-2 px-3 text-right w-24">Amount</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-200 text-[10px]">
+            <tbody className="divide-y divide-gray-200 text-[10px] text-black">
               {items.map((item, index) => {
                 const row = calculateRow(item);
                 if (!item.description) return null;
@@ -825,64 +779,61 @@ export default function Estimation({ companySettings = {} }) {
 
                 return (
                   <tr key={item.id} className="break-inside-avoid">
-                    <td className="py-3 px-2 text-center text-zinc-500">{index + 1}</td>
-                    <td className="py-3 px-3 font-bold text-zinc-900">{item.description}</td>
-                    <td className="py-3 px-2 text-center text-zinc-600">{item.unit}</td>
-                    <td className="py-3 px-2 text-center text-zinc-600">{measurement}</td>
-                    <td className="py-3 px-2 text-center text-zinc-600">{item.no || '-'}</td>
-                    
-                    {/* QTY PRINT DISPLAY */}
-                    <td className="py-3 px-2 text-center font-bold text-zinc-800">{row.quantity.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
-                    
-                    <td className="py-3 px-2 text-right text-zinc-800">₹{parseFloat(item.rate || 0).toLocaleString('en-IN')}</td>
-                    {taxMode !== 'NONE' && <td className="py-3 px-2 text-center text-zinc-500">{item.gst}%</td>}
-                    <td className="py-3 px-3 text-right font-black text-zinc-900">₹{row.totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                    <td className="py-2 px-2 text-center text-gray-500 border-r border-gray-200">{index + 1}</td>
+                    <td className="py-2 px-3 border-r border-gray-200">{item.description}</td>
+                    <td className="py-2 px-2 text-center border-r border-gray-200">{item.unit}</td>
+                    <td className="py-2 px-2 text-center border-r border-gray-200">{measurement}</td>
+                    <td className="py-2 px-2 text-center border-r border-gray-200">{item.no || '-'}</td>
+                    <td className="py-2 px-2 text-center font-medium border-r border-gray-200">{row.quantity.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
+                    <td className="py-2 px-2 text-right border-r border-gray-200">₹{parseFloat(item.rate || 0).toLocaleString('en-IN')}</td>
+                    {taxMode !== 'NONE' && <td className="py-2 px-2 text-center border-r border-gray-200">{item.gst}%</td>}
+                    <td className="py-2 px-3 text-right font-medium">₹{row.totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
 
-          {/* Amount in Words & Totals Box */}
-          <div className="border-t-2 border-zinc-800 pt-3 mb-6 flex justify-between items-start break-inside-avoid">
-            <div className="w-1/2 pr-4">
-              <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Estimated Amount in Words</span>
-              <p className="text-[10px] font-bold text-zinc-900 capitalize">{numberToWords(finalAmount > 0 ? finalAmount : totals.grandTotal)}</p>
+          {/* Amount in Words & Totals Block */}
+          <div className="flex justify-between items-start break-inside-avoid mb-10">
+            <div className="w-1/2 pr-4 pt-2">
+              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Estimated Amount in Words</span>
+              <p className="text-[10px] font-medium text-black capitalize">{numberToWords(finalAmount > 0 ? finalAmount : totals.grandTotal)}</p>
             </div>
             
-            <div className="w-1/3 text-xs space-y-1.5 border border-zinc-200 bg-zinc-50 rounded-lg p-3">
-              <div className="flex justify-between text-zinc-600">
-                <span>Taxable BOQ Total:</span>
-                <span className="font-bold text-zinc-900">₹{totals.subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+            <div className="w-64 space-y-1.5 text-xs text-black">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Taxable BOQ Total:</span>
+                <span>₹{totals.subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
               </div>
               
               {taxMode === 'IGST' ? (
-                <div className="flex justify-between text-zinc-600">
-                  <span>IGST Total:</span>
-                  <span className="font-bold text-zinc-900">₹{totals.totalGst.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">IGST Total:</span>
+                  <span>₹{totals.totalGst.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
                 </div>
               ) : taxMode === 'CGST_SGST' ? (
                 <>
-                  <div className="flex justify-between text-zinc-600">
-                    <span>CGST:</span><span className="font-bold text-zinc-900">₹{(totals.totalGst / 2).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">CGST:</span><span>₹{(totals.totalGst / 2).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
                   </div>
-                  <div className="flex justify-between text-zinc-600">
-                    <span>SGST:</span><span className="font-bold text-zinc-900">₹{(totals.totalGst / 2).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                  <div className="flex justify-between border-b border-gray-200 pb-1.5">
+                    <span className="text-gray-600">SGST:</span><span>₹{(totals.totalGst / 2).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
                   </div>
                 </>
               ) : null}
               
-              <div className="flex justify-between font-bold text-zinc-900 border-t border-zinc-300 pt-1.5 mt-1.5 text-sm">
+              <div className="flex justify-between font-semibold pt-1">
                 <span>Grand Total:</span><span>₹{totals.grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
               </div>
 
               {(estimateDetails.discount > 0) && (
-                <div className="flex justify-between text-zinc-500 text-[10px] pt-1">
+                <div className="flex justify-between text-gray-500 text-[10px]">
                   <span>Discount:</span><span>- ₹{parseFloat(estimateDetails.discount).toLocaleString('en-IN')}</span>
                 </div>
               )}
 
-              <div className="flex justify-between font-black text-zinc-900 bg-zinc-200 px-2 py-1.5 rounded mt-2 text-sm">
+              <div className="flex justify-between font-bold text-base border-t-2 border-black pt-2 mt-2">
                 <span>Final Estimate:</span><span>₹{finalAmount > 0 ? finalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2}) : 0}</span>
               </div>
             </div>
@@ -890,50 +841,50 @@ export default function Estimation({ companySettings = {} }) {
 
           {/* Footer Info */}
           <div className="grid grid-cols-2 gap-8 text-[10px] break-inside-avoid">
-            <div className="space-y-4">
+            <div className="space-y-5">
               {companySettings?.showBankDetailsOnPdf !== false && (
                 <div>
-                  <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1">Bank Details</span>
-                  <div className="grid grid-cols-[50px_1fr] gap-y-0.5 text-zinc-800">
-                    <span className="font-bold">Bank:</span><span>{estimateDetails.bankName}</span>
-                    <span className="font-bold">Name:</span><span>{estimateDetails.accountName}</span>
-                    <span className="font-bold">A/C No:</span><span>{estimateDetails.accountNo}</span>
-                    <span className="font-bold">IFSC:</span><span>{estimateDetails.ifscCode}</span>
+                  <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Bank Details</span>
+                  <div className="grid grid-cols-[50px_1fr] gap-y-0.5 text-black">
+                    <span className="font-semibold">Bank:</span><span>{estimateDetails.bankName}</span>
+                    <span className="font-semibold">Name:</span><span>{estimateDetails.accountName}</span>
+                    <span className="font-semibold">A/C No:</span><span>{estimateDetails.accountNo}</span>
+                    <span className="font-semibold">IFSC:</span><span>{estimateDetails.ifscCode}</span>
                   </div>
                 </div>
               )}
               
               {companySettings?.showTermsOnPdf !== false && (
                 <div>
-                  <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1">Payment Terms & Schedule</span>
-                  <p className="whitespace-pre-wrap text-zinc-500 leading-tight">{estimateDetails.terms}</p>
+                  <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Payment Terms & Schedule</span>
+                  <p className="whitespace-pre-wrap text-gray-600 leading-tight">{estimateDetails.terms}</p>
                 </div>
               )}
 
               {companySettings?.showRemarksOnPdf !== false && estimateDetails.description && (
                 <div>
-                  <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1">Scope Remarks</span>
-                  <p className="text-zinc-600 font-medium">{estimateDetails.description}</p>
+                  <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Scope Remarks</span>
+                  <p className="text-gray-800">{estimateDetails.description}</p>
                 </div>
               )}
             </div>
 
             {companySettings?.showSignatoryOnPdf !== false && (
-              <div className="flex flex-col items-end justify-end text-right">
+              <div className="flex flex-col items-end justify-end text-right pt-6">
                 {companySettings?.showSignatureImage && companySettings?.signatureUrl ? (
                   <img src={companySettings.signatureUrl} alt="Signature" className="h-16 w-auto object-contain mb-2 mix-blend-multiply" />
                 ) : <div className="h-16"></div>}
-                <div className="border-t-2 border-zinc-800 pt-2 w-48">
-                  <p className="font-bold text-zinc-900">For {companySettings?.companyName}</p>
-                  <p className="text-[9px] text-zinc-500 mt-0.5 uppercase tracking-wider">Authorized Signatory</p>
+                <div className="border-t border-gray-400 pt-1 w-48">
+                  <p className="font-bold text-black">For {companySettings?.companyName}</p>
+                  <p className="text-[9px] text-gray-500 mt-0.5 uppercase tracking-wider">Authorized Signatory</p>
                 </div>
               </div>
             )}
           </div>
 
           {companySettings?.pdfFooterDisclaimer && (
-            <div className="mt-8 pt-4 border-t border-zinc-200 text-center">
-              <p className="text-[8px] font-bold text-zinc-400 uppercase tracking-[0.2em]">{companySettings.pdfFooterDisclaimer}</p>
+            <div className="mt-10 pt-4 border-t border-gray-200 text-center">
+              <p className="text-[8px] font-semibold text-gray-400 uppercase tracking-widest">{companySettings.pdfFooterDisclaimer}</p>
             </div>
           )}
 
