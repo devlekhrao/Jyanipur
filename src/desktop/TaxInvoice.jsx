@@ -82,7 +82,7 @@ export default function TaxInvoice({ companySettings = {}, updateDirtyState }) {
     if (saved && saved !== 'undefined') {
       try { return JSON.parse(saved); } catch (e) {}
     }
-    return [{ id: 1, description: '', hsn: companySettings.defaultHsnSac || '', sizeL: '', sizeB: '', no: '', rate: '', gst: companySettings.defaultGstRate || 18 }];
+    return [{ id: 1, description: '', hsn: companySettings.defaultHsnSac || '', sizeL: '', sizeB: '', no: '', qty: '', rate: '', gst: companySettings.defaultGstRate || 18 }];
   });
 
   const [errors, setErrors] = useState({});
@@ -123,6 +123,25 @@ export default function TaxInvoice({ companySettings = {}, updateDirtyState }) {
 
   useEffect(() => { loadInvoicesFromDb(); }, []);
 
+  // --- AUTO INCREMENT INVOICE NO ---
+  const generateNextInvoiceNo = () => {
+    const prefix = companySettings.invoicePrefix || 'FY26-27/';
+    let maxNum = 0;
+    
+    invoiceList.forEach(inv => {
+      if (inv.invoiceNo && inv.invoiceNo.startsWith(prefix)) {
+        const numStr = inv.invoiceNo.replace(prefix, '');
+        const num = parseInt(numStr, 10);
+        if (!isNaN(num) && num > maxNum) {
+          maxNum = num;
+        }
+      }
+    });
+    
+    const nextNum = maxNum + 1;
+    return `${prefix}${nextNum}`;
+  };
+
   useEffect(() => {
     if (!editingId && currentView === 'form') {
       setInvoiceDetails(prev => ({
@@ -131,11 +150,11 @@ export default function TaxInvoice({ companySettings = {}, updateDirtyState }) {
         accountName: companySettings.accountName || prev.accountName,
         accountNo: companySettings.accountNo || prev.accountNo,
         ifscCode: companySettings.ifscCode || prev.ifscCode,
-        invoiceNo: prev.invoiceNo === '' ? (companySettings.invoicePrefix || '') : prev.invoiceNo,
+        invoiceNo: prev.invoiceNo === '' ? (generateNextInvoiceNo()) : prev.invoiceNo,
         terms: prev.terms === '' ? (companySettings.defaultInvoiceTerms || '') : prev.terms
       }));
     }
-  }, [companySettings, editingId, currentView]);
+  }, [companySettings, editingId, currentView, invoiceList]);
 
   useEffect(() => {
     const clientStateCode = invoiceDetails.gstNo.trim().substring(0, 2);
@@ -161,21 +180,55 @@ export default function TaxInvoice({ companySettings = {}, updateDirtyState }) {
     id: Date.now(), 
     description: '', 
     hsn: companySettings.defaultHsnSac || '', 
-    sizeL: '', sizeB: '', no: '', rate: '', 
+    sizeL: '', sizeB: '', no: '', qty: '', rate: '', 
     gst: companySettings.defaultGstRate || 18 
   }]);
   
-  const updateItem = (id, field, value) => setItems(items.map(item => item.id === id ? { ...item, [field]: value } : item));
+  const updateItem = (id, field, value) => {
+    setItems(items.map(item => {
+      if (item.id !== id) return item;
+      const updated = { ...item, [field]: value };
+
+      if (['sizeL', 'sizeB', 'no'].includes(field)) {
+        const l = parseFloat(updated.sizeL);
+        const b = parseFloat(updated.sizeB);
+        const n = parseFloat(updated.no);
+
+        if (!isNaN(l) || !isNaN(b) || !isNaN(n)) {
+          const effL = !isNaN(l) ? l : 1;
+          const effB = !isNaN(b) ? b : 1;
+          const effN = !isNaN(n) ? n : 1;
+          updated.qty = parseFloat((effL * effB * effN).toFixed(2)).toString();
+        } else {
+          updated.qty = ''; 
+        }
+      }
+
+      return updated;
+    }));
+  };
+
   const removeItem = (id) => setItems(items.filter(item => item.id !== id));
 
   const calculateRow = (item) => {
-    const l = parseFloat(item.sizeL) || 1;
-    const b = parseFloat(item.sizeB) || 1;
-    const no = parseFloat(item.no) || 0;
+    let quantity = 0;
+    if (item.qty !== undefined && item.qty !== '') {
+      quantity = parseFloat(item.qty) || 0;
+    } else {
+      const l = parseFloat(item.sizeL);
+      const b = parseFloat(item.sizeB);
+      const n = parseFloat(item.no);
+      if (!isNaN(l) || !isNaN(b) || !isNaN(n)) {
+        const effL = !isNaN(l) ? l : 1;
+        const effB = !isNaN(b) ? b : 1;
+        const effN = !isNaN(n) ? n : 1;
+        quantity = effL * effB * effN;
+      }
+    }
+
     const rate = parseFloat(item.rate) || 0;
-    const gstRate = parseFloat(item.gst) || 0;
-    
-    const quantity = (item.sizeL !== '' || item.sizeB !== '') ? (l * b * no) : no;
+    const gstRate = taxMode === 'NONE' ? 0 : (parseFloat(item.gst) || 0);
+
     const baseAmount = quantity * rate;
     const gstAmount = (baseAmount * gstRate) / 100;
     return { quantity, baseAmount, gstAmount, totalAmount: baseAmount + gstAmount };
@@ -188,7 +241,7 @@ export default function TaxInvoice({ companySettings = {}, updateDirtyState }) {
 
   const netPayable = totals.grandTotal - (parseFloat(invoiceDetails.discount) || 0) - (parseFloat(invoiceDetails.advanceReceived) || 0);
 
-  const saveInvoiceToState = async () => {
+  const saveInvoiceToState = async (forcedStatus = null) => {
     const newErrors = {};
     if (!invoiceDetails.partyName) newErrors.partyName = true;
     if (!invoiceDetails.invoiceNo) newErrors.invoiceNo = true;
@@ -199,7 +252,11 @@ export default function TaxInvoice({ companySettings = {}, updateDirtyState }) {
     }
 
     setErrors({});
+    const existingInv = invoiceList.find(e => e.id === editingId);
+
     const record = {
+      id: editingId || Date.now(),
+      client: invoiceDetails.partyName,
       partyName: invoiceDetails.partyName,
       invoiceNo: invoiceDetails.invoiceNo,
       date: invoiceDetails.date,
@@ -218,7 +275,9 @@ export default function TaxInvoice({ companySettings = {}, updateDirtyState }) {
       description: invoiceDetails.description,
       discount: invoiceDetails.discount,
       advanceReceived: invoiceDetails.advanceReceived,
-      amount: '₹ ' + (netPayable > 0 ? netPayable : 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      amount: '₹ ' + (netPayable > 0 ? netPayable : 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      status: forcedStatus || (existingInv ? existingInv.status : 'Pending'),
+      isCancelled: existingInv ? existingInv.isCancelled : false
     };
 
     try {
@@ -249,7 +308,7 @@ export default function TaxInvoice({ companySettings = {}, updateDirtyState }) {
     setEditingId(inv.id);
     setTaxMode(inv.taxMode || 'CGST_SGST');
     setInvoiceDetails({
-      partyName: inv.client || '',
+      partyName: inv.client || inv.partyName || '',
       partyAddress: inv.partyAddress || '',
       gstNo: inv.gstNo || '',
       placeOfSupply: inv.placeOfSupply || 'Telangana (36)',
@@ -266,7 +325,7 @@ export default function TaxInvoice({ companySettings = {}, updateDirtyState }) {
       advanceReceived: inv.advanceReceived || '',
       discount: inv.discount || ''
     });
-    setItems(inv.items && inv.items.length > 0 ? inv.items : [{ id: 1, description: '', hsn: companySettings.defaultHsnSac || '', sizeL: '', sizeB: '', no: '', rate: '', gst: companySettings.defaultGstRate || 18 }]);
+    setItems(inv.items && inv.items.length > 0 ? inv.items : [{ id: 1, description: '', hsn: companySettings.defaultHsnSac || '', sizeL: '', sizeB: '', no: '', qty: '', rate: '', gst: 18 }]);
     setCurrentView('form');
   };
 
@@ -280,6 +339,32 @@ export default function TaxInvoice({ companySettings = {}, updateDirtyState }) {
     setTimeout(() => window.print(), 150);
   };
 
+  const handleDuplicate = (inv) => {
+    setEditingId(null);
+    setTaxMode(inv.taxMode || 'CGST_SGST');
+    setInvoiceDetails({
+      partyName: inv.client || inv.partyName || '',
+      partyAddress: inv.partyAddress || '',
+      gstNo: inv.gstNo || '',
+      placeOfSupply: inv.placeOfSupply || 'Telangana (36)',
+      date: new Date().toISOString().split('T')[0],
+      invoiceNo: generateNextInvoiceNo(), 
+      poNumber: inv.poNumber || '',
+      poDate: inv.poDate || '',
+      description: inv.description || '',
+      terms: inv.terms || '',
+      bankName: inv.bankName || companySettings.bankName || '',
+      accountName: inv.accountName || companySettings.accountName || '',
+      accountNo: inv.accountNo || companySettings.accountNo || '',
+      ifscCode: inv.ifscCode || companySettings.ifscCode || '',
+      advanceReceived: inv.advanceReceived || '',
+      discount: inv.discount || ''
+    });
+    setItems(inv.items && inv.items.length > 0 ? inv.items : [{ id: 1, description: '', hsn: companySettings.defaultHsnSac || '', sizeL: '', sizeB: '', no: '', qty: '', rate: '', gst: 18 }]);
+    setCurrentView('form');
+    alert('Invoice duplicated. You can now make changes and save as new.');
+  };
+
   const handleSendWhatsApp = (inv) => {
     const template = companySettings.waInvoiceTemplate || 'Hello! Attached is your latest invoice.';
     const finalMessage = `${template}\n\n*Invoice No:* ${inv.invoiceNo || 'INV'}\n*Amount:* ${inv.amount || '0'}\n*Company:* ${companySettings.companyName || 'Jyanipur Interiors'}`;
@@ -291,17 +376,27 @@ export default function TaxInvoice({ companySettings = {}, updateDirtyState }) {
     await loadInvoicesFromDb();
   };
 
+  const handleStatusChange = async (inv, newStatus) => {
+    try {
+      const record = { ...inv, status: newStatus };
+      await saveInvoice(record);
+      await loadInvoicesFromDb();
+    } catch (e) {
+      console.error("Failed to update status", e);
+    }
+  };
+
   const handleClear = (askConfirm = true) => {
     if (!askConfirm || window.confirm('Clear the entire invoice?')) {
       setEditingId(null);
       setInvoiceDetails({ 
         partyName: '', partyAddress: '', gstNo: '', placeOfSupply: 'Telangana (36)', date: new Date().toISOString().split('T')[0], 
-        invoiceNo: companySettings.invoicePrefix || '', 
+        invoiceNo: generateNextInvoiceNo(), 
         poNumber: '', poDate: '', description: '', 
         terms: companySettings.defaultInvoiceTerms || '', 
         bankName: companySettings.bankName || '', accountName: companySettings.accountName || '', accountNo: companySettings.accountNo || '', ifscCode: companySettings.ifscCode || '', advanceReceived: '', discount: '' 
       });
-      setItems([{ id: 1, description: '', hsn: companySettings.defaultHsnSac || '', sizeL: '', sizeB: '', no: '', rate: '', gst: companySettings.defaultGstRate || 18 }]);
+      setItems([{ id: 1, description: '', hsn: companySettings.defaultHsnSac || '', sizeL: '', sizeB: '', no: '', qty: '', rate: '', gst: companySettings.defaultGstRate || 18 }]);
       setErrors({});
       
       localStorage.removeItem('draft_invoiceDetails');
@@ -312,67 +407,129 @@ export default function TaxInvoice({ companySettings = {}, updateDirtyState }) {
     }
   };
 
-  const inputClass = "w-full px-3 py-2.5 rounded-xl border border-zinc-200 bg-zinc-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] text-zinc-900 text-xs font-medium transition-all shadow-sm disabled:opacity-75 disabled:cursor-not-allowed";
-  const labelClass = "block text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
+  const inputClass = "w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-white focus:outline-none focus:border-[#B45309] focus:ring-1 focus:ring-inset focus:ring-[#B45309] text-zinc-900 text-xs font-medium transition-all disabled:opacity-75 disabled:cursor-not-allowed";
+  const labelClass = "block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1.5 ml-0.5";
 
   if (currentView === 'list') {
     return (
       <div className="w-full h-full font-['Poppins'] flex flex-col print:hidden">
-        <div className="flex justify-between items-end pb-4 border-b border-zinc-200 mb-6 shrink-0">
+        <div className="flex justify-between items-center pb-5 mb-6 border-b border-zinc-200 shrink-0">
           <div>
-            <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Tax Invoices</h2>
-            <p className="text-zinc-500 text-xs mt-1 font-medium">Manage and track your issued invoices.</p>
+            <h2 className="text-xl font-bold text-zinc-900 tracking-tight">Tax Invoices</h2>
+            <p className="text-zinc-500 text-xs mt-0.5 font-medium">Manage and track your issued invoices.</p>
           </div>
           <button 
             onClick={() => { handleClear(false); setCurrentView('form'); }}
-            className="bg-[#1E3A8A] hover:bg-blue-900 text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-md"
+            className="bg-[#B45309] hover:bg-[#92400E] text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm flex items-center gap-1.5"
           >
-            + Create Invoice
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Create Invoice
           </button>
         </div>
 
-        <div className="bg-white border border-zinc-200 rounded-[2rem] shadow-sm overflow-hidden flex-1 flex flex-col min-h-0">
+        <div className="bg-white border border-zinc-200/80 rounded-2xl shadow-sm overflow-hidden flex-1 flex flex-col min-h-0">
           <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <table className="w-full text-left border-collapse whitespace-nowrap">
               <thead>
-                <tr className="bg-zinc-50/50 text-zinc-400 text-[10px] uppercase tracking-[0.15em] border-b border-zinc-100">
-                  <th className="py-4 px-6 font-semibold">Date</th>
-                  <th className="py-4 px-6 font-semibold">Inv No.</th>
-                  <th className="py-4 px-6 font-semibold">Client / Party</th>
-                  <th className="py-4 px-6 font-semibold text-right">Total Amount</th>
-                  <th className="py-4 px-6 font-semibold text-center">Actions</th>
+                <tr className="bg-zinc-50/80 text-zinc-400 text-[10px] uppercase tracking-wider border-b border-zinc-100">
+                  <th className="py-3.5 px-6 font-semibold">Date</th>
+                  <th className="py-3.5 px-6 font-semibold">Inv No.</th>
+                  <th className="py-3.5 px-6 font-semibold">Client / Party</th>
+                  <th className="py-3.5 px-6 font-semibold">Status</th>
+                  <th className="py-3.5 px-6 font-semibold text-right">Total Amount</th>
+                  <th className="py-3.5 px-6 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100 text-sm">
                 {loading ? (
-                  <tr><td colSpan="5" className="py-12 text-center text-zinc-400 font-medium text-xs">Loading invoices...</td></tr>
+                  <tr><td colSpan="6" className="py-12 text-center text-zinc-400 font-medium text-xs">Loading invoices...</td></tr>
                 ) : invoiceList.length === 0 ? (
-                  <tr><td colSpan="5" className="py-12 text-center text-zinc-400 font-medium text-xs">No invoices created yet. Click "+ Create Invoice" above.</td></tr>
+                  <tr><td colSpan="6" className="py-16 text-center">
+                    <div className="flex flex-col items-center justify-center space-y-3">
+                      <div className="w-12 h-12 bg-amber-50 rounded-full flex items-center justify-center text-amber-500">
+                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                      </div>
+                      <p className="text-zinc-500 font-medium text-xs">No invoices created yet.</p>
+                    </div>
+                  </td></tr>
                 ) : (
                   invoiceList.map((inv) => (
-                    <tr key={inv.id} className={`transition-all ${inv.isCancelled ? 'bg-red-50/20 opacity-60' : 'hover:bg-zinc-50'}`}>
+                    <tr key={inv.id} className={`transition-all ${inv.isCancelled ? 'bg-red-50/20 opacity-60' : 'hover:bg-zinc-50/80'}`}>
                       <td className={`py-4 px-6 text-xs font-medium ${inv.isCancelled ? 'line-through text-zinc-400' : 'text-zinc-600'}`}>{inv.date}</td>
-                      <td className={`py-4 px-6 font-extrabold text-xs ${inv.isCancelled ? 'line-through text-zinc-400' : 'text-[#1E3A8A]'}`}>
+                      <td className={`py-4 px-6 font-bold text-xs ${inv.isCancelled ? 'line-through text-zinc-400' : 'text-[#B45309]'}`}>
                         {inv.invoiceNo}
-                        {inv.isCancelled && <span className="ml-2 px-2 py-0.5 rounded-md text-[9px] font-bold bg-red-100 text-red-600 border border-red-200 uppercase tracking-widest inline-block">Cancelled</span>}
+                        {inv.isCancelled && <span className="ml-2 px-2 py-0.5 rounded text-[9px] font-bold bg-red-100 text-red-600 border border-red-200 uppercase tracking-wider inline-block">Cancelled</span>}
                       </td>
-                      <td className={`py-4 px-6 text-xs font-semibold ${inv.isCancelled ? 'line-through text-zinc-400' : 'text-zinc-800'}`}>{inv.client}</td>
-                      <td className={`py-4 px-6 text-right font-black text-xs ${inv.isCancelled ? 'line-through text-zinc-400' : 'text-emerald-600'}`}>{inv.amount}</td>
-                      <td className="py-4 px-6 text-center space-x-3">
-                        {!inv.isCancelled ? (
-                          <>
-                            <button onClick={() => handleEdit(inv)} className="text-[#1E3A8A] hover:text-blue-900 font-bold cursor-pointer text-[10px] uppercase tracking-wider">Edit</button>
-                            <button onClick={() => handleView(inv)} className="text-zinc-600 hover:text-zinc-900 font-bold cursor-pointer text-[10px] uppercase tracking-wider">View</button>
-                            <button onClick={() => handleDirectPrint(inv)} className="text-amber-600 hover:text-amber-700 font-bold cursor-pointer text-[10px] uppercase tracking-wider">Print</button>
-                            <button onClick={() => handleSendWhatsApp(inv)} className="text-emerald-600 hover:text-emerald-700 font-bold cursor-pointer text-[10px] uppercase tracking-wider">💬 WhatsApp</button>
-                            <button onClick={() => handleToggleCancel(inv)} className="text-red-500 hover:text-red-700 font-bold cursor-pointer text-[10px] uppercase tracking-wider">Cancel</button>
-                          </>
-                        ) : (
-                          <>
-                            <button onClick={() => handleView(inv)} className="text-zinc-500 hover:text-zinc-900 font-bold cursor-pointer text-[10px] uppercase tracking-wider">View</button>
-                            <button onClick={() => handleToggleCancel(inv)} className="text-emerald-600 hover:text-emerald-700 font-bold cursor-pointer text-[10px] uppercase tracking-wider">Restore</button>
-                          </>
-                        )}
+                      <td className={`py-4 px-6 text-xs font-semibold ${inv.isCancelled ? 'line-through text-zinc-400' : 'text-zinc-800'}`}>{inv.client || inv.partyName}</td>
+                      
+                      <td className="py-4 px-6">
+                        <select
+                          value={inv.status || 'Pending'}
+                          onChange={(e) => handleStatusChange(inv, e.target.value)}
+                          disabled={inv.isCancelled}
+                          className={`appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23A1A1AA%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%223%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_0.6rem_center] bg-[length:0.8rem_0.8rem] pr-7 pl-3 py-1.5 rounded-full border outline-none cursor-pointer transition-all text-[10px] font-black uppercase tracking-widest ${
+                            inv.isCancelled ? 'bg-zinc-100 text-zinc-400 border-zinc-200 cursor-not-allowed' :
+                            inv.status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 focus:ring-2 focus:ring-emerald-500/20' :
+                            inv.status === 'Overdue' ? 'bg-red-50 text-red-700 border-red-200 focus:ring-2 focus:ring-red-500/20' :
+                            'bg-amber-50 text-[#B45309] border-amber-200 focus:ring-2 focus:ring-[#B45309]/20'
+                          }`}
+                        >
+                          <option value="Pending">Pending</option>
+                          <option value="Paid">Paid</option>
+                          <option value="Overdue">Overdue</option>
+                        </select>
+                      </td>
+
+                      <td className={`py-4 px-6 text-right font-bold text-xs ${inv.isCancelled ? 'line-through text-zinc-400' : 'text-zinc-900'}`}>{inv.amount}</td>
+                      
+                      <td className="py-4 px-6 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          {!inv.isCancelled ? (
+                            <>
+                              <button onClick={() => handleEdit(inv)} title="Edit Invoice" className="px-3 py-1.5 bg-amber-50 text-[#B45309] hover:bg-[#B45309] hover:text-white border border-amber-200/60 rounded-lg font-black cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" /></svg>
+                                Edit
+                              </button>
+                              
+                              <button onClick={() => handleView(inv)} title="View Detail" className="px-3 py-1.5 bg-zinc-50 text-zinc-600 hover:bg-zinc-200 border border-zinc-200 rounded-lg font-black cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                View
+                              </button>
+                              
+                              <button onClick={() => handleDirectPrint(inv)} title="Print or Save PDF" className="px-3 py-1.5 bg-zinc-50 text-zinc-600 hover:bg-zinc-200 border border-zinc-200 rounded-lg font-black cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0v-2.25a2.25 2.25 0 012.25-2.25h6a2.25 2.25 0 012.25 2.25v2.25z" /></svg>
+                                Print
+                              </button>
+                              
+                              <button onClick={() => handleDuplicate(inv)} title="Duplicate Invoice" className="px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white border border-blue-200 rounded-lg font-black cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" /></svg>
+                                Copy
+                              </button>
+
+                              <button onClick={() => handleSendWhatsApp(inv)} title="Send via WhatsApp" className="px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white border border-emerald-200 rounded-lg font-black cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" /></svg>
+                                WA
+                              </button>
+                              
+                              <button onClick={() => handleToggleCancel(inv)} title="Cancel Invoice" className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white border border-red-200 rounded-lg font-black cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button onClick={() => handleView(inv)} className="px-3 py-1.5 bg-zinc-50 text-zinc-600 hover:bg-zinc-200 border border-zinc-200 rounded-lg font-black cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                View
+                              </button>
+                              <button onClick={() => handleToggleCancel(inv)} className="px-3 py-1.5 bg-amber-50 text-[#B45309] hover:bg-[#B45309] hover:text-white border border-amber-200/60 rounded-lg font-black cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" /></svg>
+                                Restore
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -390,119 +547,131 @@ export default function TaxInvoice({ companySettings = {}, updateDirtyState }) {
   return (
     <div className="w-full h-full font-['Poppins'] flex flex-col">
       
-      {/* INTERACTIVE UI (Hidden on Print) */}
+      {/* SCREEN FORM VIEW (HIDDEN ON PRINT) */}
       <div className="print:hidden flex-1 flex flex-col min-h-0 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <div className="flex items-center justify-between border-b border-zinc-200 pb-4 mb-6 shrink-0">
-          <h2 className="text-xl font-extrabold text-zinc-900 tracking-tight">
-            {isReadOnly ? `Viewing Invoice ${invoiceDetails.invoiceNo}` : editingId ? `Edit Invoice ${invoiceDetails.invoiceNo}` : 'Create New Invoice'}
+          <h2 className="text-xl font-bold text-zinc-900 tracking-tight">
+            {isReadOnly ? `Viewing Invoice ${invoiceDetails.invoiceNo}` : editingId ? `Edit Invoice ${invoiceDetails.invoiceNo}` : 'New Tax Invoice'}
           </h2>
           <div className="flex gap-2">
-            <button onClick={() => { setCurrentView('list'); handleClear(false); }} className="text-zinc-600 hover:text-zinc-900 text-[10px] font-bold uppercase tracking-[0.15em] transition-colors cursor-pointer bg-white px-4 py-2 rounded-xl shadow-sm border border-zinc-200">
-              &larr; Back
+            <button onClick={() => { setCurrentView('list'); handleClear(false); }} className="text-zinc-600 hover:text-zinc-900 text-xs font-bold transition-colors cursor-pointer bg-white px-4 py-2 rounded-xl border border-zinc-200 flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Back
             </button>
             {isReadOnly && (
-              <>
-                <button 
-                  onClick={() => {
-                    const template = companySettings.waInvoiceTemplate || 'Hello! Attached is your latest invoice.';
-                    const msg = `${template}\n\n*Invoice No:* ${invoiceDetails.invoiceNo || 'INV'}\n*Amount:* ₹ ${(netPayable > 0 ? netPayable : 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\n*Company:* ${companySettings.companyName || 'Jyanipur Interiors'}`;
-                    sendWhatsAppMessage('', msg);
-                  }} 
-                  className="bg-emerald-600 text-white px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider shadow-md hover:bg-emerald-500 transition-all flex items-center gap-1 cursor-pointer"
-                >
-                  💬 WhatsApp
-                </button>
-                <button onClick={() => window.print()} className="bg-[#1E3A8A] text-white px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider shadow-md hover:bg-blue-900 transition-all cursor-pointer">
-                  🖨️ Print / Save PDF
-                </button>
-              </>
+              <button onClick={() => window.print()} className="bg-[#B45309] text-white px-5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer hover:bg-[#92400E] flex items-center gap-1.5">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0v-2.25a2.25 2.25 0 012.25-2.25h6a2.25 2.25 0 012.25 2.25v2.25z" />
+                </svg>
+                Print / Save PDF
+              </button>
             )}
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-4 mb-4 shrink-0">
-          <div className="flex-1 min-w-[150px]">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 shrink-0">
+          <div>
             <label className={labelClass}>GST No.</label>
-            <input disabled={isReadOnly} type="text" value={invoiceDetails.gstNo} onChange={(e) => setInvoiceDetails({...invoiceDetails, gstNo: e.target.value.toUpperCase()})} className={`${inputClass} uppercase`} maxLength={15} />
+            <input disabled={isReadOnly} type="text" value={invoiceDetails.gstNo} onChange={(e) => setInvoiceDetails({...invoiceDetails, gstNo: e.target.value.toUpperCase()})} className={`${inputClass} uppercase`} maxLength={15} placeholder="e.g. 29AABC..." />
           </div>
-          <div className="flex-[2] min-w-[200px]">
+          <div>
             <label className={labelClass}>Party Name <span className="text-red-500">*</span></label>
-            <input disabled={isReadOnly} type="text" value={invoiceDetails.partyName} onChange={(e) => { setInvoiceDetails({...invoiceDetails, partyName: e.target.value}); if(errors.partyName) setErrors({...errors, partyName: false}); }} className={`${inputClass} ${errors.partyName ? 'ring-1 ring-red-400 bg-red-50' : ''}`} />
+            <input disabled={isReadOnly} type="text" value={invoiceDetails.partyName} onChange={(e) => { setInvoiceDetails({...invoiceDetails, partyName: e.target.value}); if(errors.partyName) setErrors({...errors, partyName: false}); }} className={`${inputClass} ${errors.partyName ? 'border-red-400 focus:border-red-500 focus:ring-red-500 bg-red-50/20' : ''}`} placeholder="e.g. Dodla Dairy Ltd" />
           </div>
-          <div className="flex-[3] min-w-[250px]">
+          <div>
             <label className={labelClass}>Party Address</label>
-            <input disabled={isReadOnly} type="text" value={invoiceDetails.partyAddress} onChange={(e) => setInvoiceDetails({...invoiceDetails, partyAddress: e.target.value})} className={inputClass} />
+            <input disabled={isReadOnly} type="text" value={invoiceDetails.partyAddress} onChange={(e) => setInvoiceDetails({...invoiceDetails, partyAddress: e.target.value})} className={inputClass} placeholder="Billing Address" />
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-4 mb-8 shrink-0">
-          <div className="flex-1 min-w-[100px]">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6 shrink-0">
+          <div>
             <label className={labelClass}>Inv No. <span className="text-red-500">*</span></label>
-            <input disabled={isReadOnly} type="text" value={invoiceDetails.invoiceNo} onChange={(e) => { setInvoiceDetails({...invoiceDetails, invoiceNo: e.target.value}); if(errors.invoiceNo) setErrors({...errors, invoiceNo: false}); }} className={`${inputClass} ${errors.invoiceNo ? 'ring-1 ring-red-400 bg-red-50' : ''}`} />
+            <input disabled={isReadOnly} type="text" value={invoiceDetails.invoiceNo} onChange={(e) => { setInvoiceDetails({...invoiceDetails, invoiceNo: e.target.value}); if(errors.invoiceNo) setErrors({...errors, invoiceNo: false}); }} className={`${inputClass} ${errors.invoiceNo ? 'border-red-400 focus:border-red-500 focus:ring-red-500 bg-red-50/20' : ''}`} />
           </div>
-          <div className="flex-1 min-w-[120px]">
+          <div>
             <label className={labelClass}>Inv Date</label>
             <input disabled={isReadOnly} type="date" value={invoiceDetails.date} onChange={(e) => setInvoiceDetails({...invoiceDetails, date: e.target.value})} className={inputClass} />
           </div>
-          <div className="flex-1 min-w-[140px]">
+          <div className="md:col-span-2">
             <label className={labelClass}>Tax Calculation Type</label>
-            <select disabled={isReadOnly} value={taxMode} onChange={(e) => setTaxMode(e.target.value)} className={`${inputClass} cursor-pointer font-bold text-zinc-900 bg-amber-50/50 border-amber-200`}>
+            <select 
+              disabled={isReadOnly} 
+              value={taxMode} 
+              onChange={(e) => setTaxMode(e.target.value)} 
+              className={`${inputClass} cursor-pointer font-bold text-[#B45309] appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23B45309%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.25rem_1.25rem] pr-10`}
+            >
               <option value="CGST_SGST">CGST + SGST (In State)</option>
               <option value="IGST">IGST (Out of State)</option>
             </select>
           </div>
-          <div className="flex-1 min-w-[150px]">
+          <div>
             <label className={labelClass}>Place of Supply</label>
             <input disabled={isReadOnly} type="text" value={invoiceDetails.placeOfSupply} onChange={(e) => setInvoiceDetails({...invoiceDetails, placeOfSupply: e.target.value})} className={inputClass} />
           </div>
-          <div className="flex-1 min-w-[100px]">
+          <div>
             <label className={labelClass}>PO No.</label>
-            <input disabled={isReadOnly} type="text" value={invoiceDetails.poNumber} onChange={(e) => setInvoiceDetails({...invoiceDetails, poNumber: e.target.value})} className={inputClass} />
-          </div>
-          <div className="flex-1 min-w-[120px]">
-            <label className={labelClass}>PO Date</label>
-            <input disabled={isReadOnly} type="date" value={invoiceDetails.poDate} onChange={(e) => setInvoiceDetails({...invoiceDetails, poDate: e.target.value})} className={inputClass} />
+            <input disabled={isReadOnly} type="text" value={invoiceDetails.poNumber} onChange={(e) => setInvoiceDetails({...invoiceDetails, poNumber: e.target.value})} className={inputClass} placeholder="Optional" />
           </div>
         </div>
 
-        <div className="mb-6 overflow-x-auto bg-white border border-zinc-200 rounded-[2rem] p-5 shadow-sm shrink-0">
+        <div className="mb-6 bg-white border border-zinc-200 rounded-2xl p-5 shadow-sm shrink-0">
           <table className="w-full text-left border-collapse whitespace-nowrap">
             <thead>
-              <tr className="text-zinc-400 text-[9px] uppercase tracking-widest border-b border-zinc-100">
-                <th className="py-3 pr-4 font-bold">Description</th>
-                <th className="py-3 px-2 font-bold w-16 text-center">HSN</th>
-                <th className="py-3 px-2 font-bold w-16 text-center">L</th>
-                <th className="py-3 px-2 font-bold w-16 text-center">B</th>
-                <th className="py-3 px-2 font-bold w-16 text-center">NO</th>
-                <th className="py-3 px-2 font-bold w-24 text-right">Rate</th>
-                <th className="py-3 px-2 font-bold w-28 text-right">Amount</th>
-                <th className="py-3 px-2 font-bold w-20 text-center">GST %</th>
-                <th className="py-3 px-2 font-bold w-28 text-right">Total</th>
-                {!isReadOnly && <th className="py-3 pl-2 w-6"></th>}
+              <tr className="text-zinc-400 text-[10px] uppercase tracking-wider border-b border-zinc-100 pb-3">
+                <th className="py-2.5 pr-4 font-bold">Item Description</th>
+                <th className="py-2.5 px-2 font-bold w-16 text-center">HSN</th>
+                <th className="py-2.5 px-2 font-bold w-16 text-center">L</th>
+                <th className="py-2.5 px-2 font-bold w-16 text-center">B</th>
+                <th className="py-2.5 px-2 font-bold w-16 text-center">NO</th>
+                <th className="py-2.5 px-2 font-bold w-24 text-center">Qty</th>
+                <th className="py-2.5 px-2 font-bold w-24 text-right">Rate</th>
+                <th className="py-2.5 px-2 font-bold w-28 text-right">Amount</th>
+                <th className="py-2.5 px-2 font-bold w-20 text-center">GST %</th>
+                <th className="py-2.5 px-2 font-bold w-28 text-right">Total</th>
+                {!isReadOnly && <th className="py-2.5 pl-2 w-6"></th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
               {items.map((item) => {
                 const rowCalc = calculateRow(item);
-                const tInp = "w-full border-b border-transparent hover:border-zinc-300 focus:border-[#1E3A8A] bg-transparent focus:outline-none py-1.5 px-1 text-xs transition-all font-medium text-zinc-900 placeholder-zinc-400 disabled:opacity-75";
+                const tInp = "w-full border-b border-transparent hover:border-zinc-300 focus:border-[#B45309] bg-transparent focus:outline-none py-2 px-1 text-xs transition-all font-medium text-zinc-900 placeholder-zinc-300 disabled:opacity-75";
                 return (
-                  <tr key={item.id} className="group hover:bg-zinc-50 transition-colors">
-                    <td className="py-2 pr-4"><input disabled={isReadOnly} type="text" placeholder="Item description" value={item.description} onChange={(e) => updateItem(item.id, 'description', e.target.value)} className={tInp} /></td>
+                  <tr key={item.id} className="group hover:bg-zinc-50/50 transition-colors">
+                    <td className="py-2 pr-4"><input disabled={isReadOnly} type="text" placeholder="Item details..." value={item.description} onChange={(e) => updateItem(item.id, 'description', e.target.value)} className={tInp} /></td>
                     <td className="py-2 px-2"><input disabled={isReadOnly} type="text" value={item.hsn} onChange={(e) => updateItem(item.id, 'hsn', e.target.value)} className={`${tInp} text-center`} /></td>
                     <td className="py-2 px-2"><input disabled={isReadOnly} type="number" step="any" value={item.sizeL} onChange={(e) => updateItem(item.id, 'sizeL', e.target.value)} className={`${tInp} text-center`} /></td>
                     <td className="py-2 px-2"><input disabled={isReadOnly} type="number" step="any" value={item.sizeB} onChange={(e) => updateItem(item.id, 'sizeB', e.target.value)} className={`${tInp} text-center`} /></td>
                     <td className="py-2 px-2"><input disabled={isReadOnly} type="number" step="any" value={item.no} onChange={(e) => updateItem(item.id, 'no', e.target.value)} className={`${tInp} text-center`} /></td>
+                    
+                    {/* QTY FREE TEXT INPUT */}
+                    <td className="py-2 px-2">
+                      <input 
+                        disabled={isReadOnly} 
+                        type="number" 
+                        step="any" 
+                        value={item.qty !== undefined ? item.qty : rowCalc.quantity} 
+                        onChange={(e) => updateItem(item.id, 'qty', e.target.value)} 
+                        className={`${tInp} text-center font-bold text-[#B45309]`} 
+                        placeholder="0"
+                      />
+                    </td>
+                    
                     <td className="py-2 px-2"><input disabled={isReadOnly} type="number" step="any" value={item.rate} onChange={(e) => updateItem(item.id, 'rate', e.target.value)} className={`${tInp} text-right`} /></td>
                     <td className="py-2 px-2 text-right text-xs font-semibold text-zinc-800">{rowCalc.baseAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
                     <td className="py-2 px-2">
-                      <select disabled={isReadOnly} value={item.gst} onChange={(e) => updateItem(item.id, 'gst', e.target.value)} className={`${tInp} text-center appearance-none cursor-pointer`}>
+                      <select disabled={isReadOnly} value={item.gst} onChange={(e) => updateItem(item.id, 'gst', e.target.value)} className={`${tInp} text-center appearance-none cursor-pointer bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%2371717A%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_0.25rem_center] bg-[length:0.75rem_0.75rem] pr-4`}>
                         <option value="0">0%</option><option value="5">5%</option><option value="12">12%</option><option value="18">18%</option><option value="28">28%</option>
                       </select>
                     </td>
                     <td className="py-2 px-2 text-right text-xs font-bold text-zinc-900">{rowCalc.totalAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
                     {!isReadOnly && (
                       <td className="py-2 pl-2 text-center">
-                        <button onClick={() => removeItem(item.id)} className="text-zinc-400 hover:text-red-500 font-bold opacity-0 group-hover:opacity-100 transition-all cursor-pointer">&times;</button>
+                        <button onClick={() => removeItem(item.id)} className="text-zinc-300 hover:text-red-500 font-bold opacity-0 group-hover:opacity-100 transition-all cursor-pointer text-base flex items-center justify-center">
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
                       </td>
                     )}
                   </tr>
@@ -511,8 +680,9 @@ export default function TaxInvoice({ companySettings = {}, updateDirtyState }) {
             </tbody>
           </table>
           {!isReadOnly && (
-            <button onClick={addItem} className="mt-4 px-4 py-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 text-[10px] font-bold uppercase tracking-[0.15em] rounded-xl transition-all cursor-pointer">
-              + Add Row
+            <button onClick={addItem} className="mt-4 text-[#B45309] hover:text-[#92400E] text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+              Add Row
             </button>
           )}
         </div>
@@ -523,9 +693,9 @@ export default function TaxInvoice({ companySettings = {}, updateDirtyState }) {
               <label className={labelClass}>Remarks</label>
               <textarea disabled={isReadOnly} value={invoiceDetails.description} onChange={(e) => setInvoiceDetails({...invoiceDetails, description: e.target.value})} className={`${inputClass} resize-y min-h-[40px] py-2`} rows="1"></textarea>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-white rounded-2xl p-4 border border-zinc-200 shadow-sm">
-                <h3 className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest mb-3">Bank Details</h3>
+                <h3 className="text-[10px] font-bold text-[#B45309] uppercase tracking-wider mb-3">Bank Details</h3>
                 <div className="space-y-2 text-xs">
                   <div className="flex items-center border-b border-zinc-100 pb-1"><span className="text-[10px] font-bold text-zinc-400 w-16 uppercase shrink-0">Bank:</span><input disabled={isReadOnly} type="text" value={invoiceDetails.bankName} onChange={(e) => setInvoiceDetails({...invoiceDetails, bankName: e.target.value})} className="w-full bg-transparent focus:outline-none font-medium text-zinc-900" /></div>
                   <div className="flex items-center border-b border-zinc-100 pb-1"><span className="text-[10px] font-bold text-zinc-400 w-16 uppercase shrink-0">Name:</span><input disabled={isReadOnly} type="text" value={invoiceDetails.accountName} onChange={(e) => setInvoiceDetails({...invoiceDetails, accountName: e.target.value})} className="w-full bg-transparent focus:outline-none font-medium text-zinc-900" /></div>
@@ -541,227 +711,241 @@ export default function TaxInvoice({ companySettings = {}, updateDirtyState }) {
           </div>
 
           <div className="w-full lg:w-80 flex flex-col justify-between">
-            <div className="bg-zinc-900 p-6 rounded-[2rem] shadow-xl text-zinc-300 border border-zinc-800">
-              <div className="flex justify-between text-xs px-1 mb-2"><span>Basic:</span><span className="text-white font-medium">₹ {totals.subtotal.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span></div>
+            <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm text-zinc-700 space-y-3">
+              <div className="flex justify-between text-xs"><span className="text-zinc-500">Basic Value:</span><span className="text-zinc-900 font-semibold">₹ {totals.subtotal.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span></div>
               {taxMode === 'IGST' ? (
-                <div className="flex justify-between text-xs px-1 mb-2"><span>IGST:</span><span className="text-white font-medium">₹ {totals.totalGst.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span></div>
+                <div className="flex justify-between text-xs"><span>IGST:</span><span className="text-zinc-900 font-semibold">₹ {totals.totalGst.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span></div>
               ) : (
                 <>
-                  <div className="flex justify-between text-xs px-1 mb-2"><span>CGST:</span><span className="text-white font-medium">₹ {(totals.totalGst / 2).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span></div>
-                  <div className="flex justify-between text-xs px-1 mb-2"><span>SGST:</span><span className="text-white font-medium">₹ {(totals.totalGst / 2).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span></div>
+                  <div className="flex justify-between text-xs"><span className="text-zinc-500">CGST:</span><span className="text-zinc-900 font-semibold">₹ {(totals.totalGst / 2).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span></div>
+                  <div className="flex justify-between text-xs"><span className="text-zinc-500">SGST:</span><span className="text-zinc-900 font-semibold">₹ {(totals.totalGst / 2).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span></div>
                 </>
               )}
-              <div className="flex justify-between text-sm font-bold text-white border-t border-zinc-700/50 pt-3 px-1 mt-2">
-                <span>Total:</span><span>₹ {totals.grandTotal.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
+              <div className="flex justify-between text-sm font-bold text-zinc-900 border-t border-zinc-100 pt-3">
+                <span>Grand Total:</span><span>₹ {totals.grandTotal.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
               </div>
-              <div className="border-t border-zinc-700/50 pt-4 space-y-3 mt-3">
-                <div className="flex justify-between items-center text-xs px-1">
-                  <span>Discount:</span><input disabled={isReadOnly} type="number" value={invoiceDetails.discount} onChange={(e) => setInvoiceDetails({...invoiceDetails, discount: e.target.value})} placeholder="0" className="w-24 bg-zinc-800/80 text-white rounded-lg px-2 py-1.5 text-right outline-none focus:ring-1 focus:ring-zinc-500 border border-zinc-700 disabled:opacity-50" />
+              <div className="border-t border-zinc-100 pt-3 space-y-2">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-zinc-500">Discount:</span><input disabled={isReadOnly} type="number" value={invoiceDetails.discount} onChange={(e) => setInvoiceDetails({...invoiceDetails, discount: e.target.value})} placeholder="0" className="w-24 bg-zinc-50 text-zinc-900 rounded-lg px-2.5 py-1 text-right outline-none border border-zinc-200 focus:border-[#B45309] focus:ring-1 focus:ring-inset focus:ring-[#B45309]" />
                 </div>
-                <div className="flex justify-between items-center text-xs px-1">
-                  <span>Advance:</span><input disabled={isReadOnly} type="number" value={invoiceDetails.advanceReceived} onChange={(e) => setInvoiceDetails({...invoiceDetails, advanceReceived: e.target.value})} placeholder="0" className="w-24 bg-zinc-800/80 text-white rounded-lg px-2 py-1.5 text-right outline-none focus:ring-1 focus:ring-zinc-500 border border-zinc-700 disabled:opacity-50" />
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-zinc-500">Advance:</span><input disabled={isReadOnly} type="number" value={invoiceDetails.advanceReceived} onChange={(e) => setInvoiceDetails({...invoiceDetails, advanceReceived: e.target.value})} placeholder="0" className="w-24 bg-zinc-50 text-zinc-900 rounded-lg px-2.5 py-1 text-right outline-none border border-zinc-200 focus:border-[#B45309] focus:ring-1 focus:ring-inset focus:ring-[#B45309]" />
                 </div>
               </div>
-              <div className="flex justify-between text-base font-extrabold text-emerald-400 border-t-2 border-zinc-600 pt-4 px-1 mt-4">
-                <span>Due:</span><span>₹ {netPayable > 0 ? netPayable.toLocaleString('en-IN', { maximumFractionDigits: 2 }) : 0}</span>
+              <div className="flex justify-between text-base font-extrabold text-[#B45309] border-t border-zinc-200 pt-3">
+                <span>Balance Due:</span><span>₹ {netPayable > 0 ? netPayable.toLocaleString('en-IN', { maximumFractionDigits: 2 }) : 0}</span>
               </div>
             </div>
 
             {!isReadOnly && (
               <div className="flex gap-2 mt-4">
-                <button onClick={handleSaveOnly} className="flex-1 py-3.5 bg-zinc-900 hover:bg-black text-white rounded-2xl font-bold text-[10px] uppercase tracking-wider transition-all shadow-md cursor-pointer">Save</button>
-                <button onClick={handleSaveAndPrint} className="flex-[2] py-3.5 bg-emerald-500 hover:bg-emerald-400 text-zinc-900 rounded-2xl font-bold text-[10px] uppercase tracking-wider transition-all shadow-[0_8px_16px_rgba(16,185,129,0.2)] cursor-pointer">Save & Print PDF</button>
+                <button onClick={handleSaveOnly} className="flex-1 py-3 bg-zinc-900 hover:bg-black text-white rounded-xl font-bold text-xs transition-all shadow-sm cursor-pointer">Save</button>
+                <button onClick={handleSaveAndPrint} className="flex-[1.5] py-3 bg-[#B45309] hover:bg-[#92400E] text-white rounded-xl font-bold text-xs transition-all shadow-sm cursor-pointer">Save & Print PDF</button>
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* PERFECT A4 PDF DOCUMENT (Hidden on screen) */}
-      <div className="hidden print:block w-full bg-white text-zinc-900 font-['Poppins'] text-[11px] leading-tight print:p-0 print:m-0">
+      {/* ========================================== */}
+      {/* PERFECT A4 PDF DOCUMENT ENGINE (CLEAN CORPORATE STYLE) */}
+      {/* ========================================== */}
+      <div className="hidden print:flex w-full bg-white text-black font-sans text-xs print:p-0 print:m-0 flex-col items-center justify-between" style={{ minHeight: '100vh' }}>
+        
+        {/* DISABLES BROWSER HEADERS AND FOOTERS */}
         <style dangerouslySetInnerHTML={{__html: `
           @media print {
-            @page { margin: 10mm; size: A4 portrait; }
-            body { padding: 0 !important; background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            @page { margin: 0; size: A4 portrait; }
+            body { padding: 0 !important; background: white !important; color: black !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             img { mix-blend-mode: multiply !important; }
           }
         `}} />
 
-        <div className="max-w-[210mm] min-h-[297mm] mx-auto bg-white">
+        <div className="w-full bg-white flex flex-col relative flex-1 print:p-[15mm]">
           
-          {/* Header */}
-          <div className="flex justify-between items-start border-b-2 border-zinc-800 pb-5 mb-5">
+          {/* Header Branding */}
+          <div className="flex justify-between items-start border-b border-gray-300 pb-5 mb-6">
             <div className="flex items-center gap-4">
-              {companySettings?.logoUrl && <img src={companySettings.logoUrl} className="h-14 w-auto object-contain shrink-0" alt="Logo" />}
+              {companySettings?.logoUrl && (
+                <img src={companySettings.logoUrl} className="h-14 w-auto object-contain shrink-0" alt="Logo" />
+              )}
               <div>
-                <h1 className="text-xl font-black tracking-tight text-zinc-900">{companySettings?.companyName || 'Company Name'}</h1>
-                <p className="text-[10px] text-zinc-600 whitespace-pre-wrap mt-0.5 max-w-xs">{companySettings?.companyAddress}</p>
-                <p className="text-[10px] text-zinc-800 mt-1 font-bold">
-                  GSTIN: <span className="font-medium text-zinc-600 mr-2">{companySettings?.companyGst}</span> 
-                  Phone: <span className="font-medium text-zinc-600">{companySettings?.companyPhone}</span>
+                <h1 className="text-lg font-bold text-black">{companySettings?.companyName || 'Company Name'}</h1>
+                <p className="text-[10px] text-gray-600 whitespace-pre-wrap mt-0.5 max-w-xs">{companySettings?.companyAddress}</p>
+                <p className="text-[10px] text-gray-800 mt-1">
+                  <span className="font-semibold">GSTIN:</span> {companySettings?.companyGst} <span className="mx-2">|</span> 
+                  <span className="font-semibold">Phone:</span> {companySettings?.companyPhone}
                 </p>
               </div>
             </div>
+            
             <div className="text-right">
-              <span className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] block mb-1">Tax Invoice</span>
-              <h2 className="text-xl font-bold text-zinc-900 tracking-tight">{invoiceDetails.invoiceNo || 'INV-000'}</h2>
-              <p className="text-[10px] font-bold text-zinc-800 mt-1">Date: <span className="font-medium text-zinc-600">{invoiceDetails.date}</span></p>
+              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1">Tax Invoice</span>
+              <h2 className="text-lg font-bold text-black">{invoiceDetails.invoiceNo || 'INV-000'}</h2>
+              <p className="text-[10px] text-gray-800 mt-1"><span className="font-semibold">Date:</span> {invoiceDetails.date}</p>
             </div>
           </div>
 
           {/* Client & Reference Info */}
-          <div className="grid grid-cols-2 gap-8 mb-6 pb-4 border-b border-zinc-200">
+          <div className="flex justify-between mb-8">
             <div>
-              <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1.5">Billed To</span>
-              <h3 className="text-sm font-bold text-zinc-900 uppercase">{invoiceDetails.partyName || 'Client Name'}</h3>
-              <p className="text-[10px] text-zinc-600 whitespace-pre-wrap mt-1 leading-relaxed">{invoiceDetails.partyAddress}</p>
-              {invoiceDetails.gstNo && <p className="text-[10px] text-zinc-800 font-bold mt-1.5">GSTIN: <span className="font-medium text-zinc-600">{invoiceDetails.gstNo.toUpperCase()}</span></p>}
+              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Billed To</span>
+              <h3 className="text-sm font-bold text-black uppercase">{invoiceDetails.partyName || 'Client Name'}</h3>
+              <p className="text-[10px] text-gray-700 whitespace-pre-wrap mt-1 leading-relaxed">{invoiceDetails.partyAddress}</p>
+              {invoiceDetails.gstNo && <p className="text-[10px] text-gray-800 font-bold mt-1.5">GSTIN: <span className="font-medium text-gray-600">{invoiceDetails.gstNo.toUpperCase()}</span></p>}
             </div>
-            <div className="text-right space-y-1">
-              <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1.5">Reference Info</span>
-              {invoiceDetails.poNumber && <p className="text-[10px] text-zinc-800 font-bold">PO Number: <span className="font-medium text-zinc-600">{invoiceDetails.poNumber}</span></p>}
-              {invoiceDetails.poDate && <p className="text-[10px] text-zinc-800 font-bold">PO Date: <span className="font-medium text-zinc-600">{invoiceDetails.poDate}</span></p>}
-              <p className="text-[10px] text-zinc-800 font-bold">Place of Supply: <span className="font-medium text-zinc-600">{invoiceDetails.placeOfSupply}</span></p>
+
+            <div className="text-right space-y-1 text-[10px]">
+              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Reference Info</span>
+              {invoiceDetails.poNumber && <p className="text-gray-800"><span className="font-semibold">PO Number:</span> {invoiceDetails.poNumber}</p>}
+              {invoiceDetails.poDate && <p className="text-gray-800"><span className="font-semibold">PO Date:</span> {invoiceDetails.poDate}</p>}
+              <p className="text-gray-800"><span className="font-semibold">Place of Supply:</span> {invoiceDetails.placeOfSupply}</p>
             </div>
           </div>
 
-          {/* Itemized Table */}
-          <table className="w-full text-left border-collapse mb-6">
-            <thead>
-              <tr className="bg-zinc-800 text-white text-[9px] uppercase tracking-wider">
-                <th className="py-2.5 px-2 font-bold text-center w-8 rounded-tl-md">#</th>
-                <th className="py-2.5 px-3 font-bold">Item Description</th>
-                <th className="py-2.5 px-2 font-bold text-center w-12">HSN</th>
-                <th className="py-2.5 px-2 font-bold text-center w-16">L x B</th>
-                <th className="py-2.5 px-2 font-bold text-center w-10">No</th>
-                <th className="py-2.5 px-2 font-bold text-center w-12">Qty</th>
-                <th className="py-2.5 px-2 font-bold text-right w-20">Rate</th>
-                <th className="py-2.5 px-2 font-bold text-center w-12">Tax</th>
-                <th className="py-2.5 px-3 font-bold text-right w-24 rounded-tr-md">Amount</th>
+          {/* CLEAN ITEM TABLE */}
+          <table className="w-full text-left border-collapse border border-gray-300 mb-6">
+            <thead className="bg-gray-50 border-b border-gray-300">
+              <tr className="text-gray-700 text-[10px] uppercase font-semibold">
+                <th className="py-2 px-2 text-center w-8 border-r border-gray-200">#</th>
+                <th className="py-2 px-3 border-r border-gray-200">Item Description</th>
+                <th className="py-2 px-2 text-center w-12 border-r border-gray-200">HSN</th>
+                <th className="py-2 px-2 text-center w-16 border-r border-gray-200">L x B</th>
+                <th className="py-2 px-2 text-center w-10 border-r border-gray-200">No</th>
+                <th className="py-2 px-2 text-center w-12 border-r border-gray-200">Qty</th>
+                <th className="py-2 px-2 text-right w-20 border-r border-gray-200">Rate</th>
+                <th className="py-2 px-2 text-center w-12 border-r border-gray-200">Tax</th>
+                <th className="py-2 px-3 text-right w-24">Amount</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-200 text-[10px]">
+            <tbody className="divide-y divide-gray-200 text-[10px] text-black">
               {items.map((item, index) => {
                 const row = calculateRow(item);
                 if (!item.description) return null;
                 const measurement = (item.sizeL || item.sizeB) ? `${item.sizeL || '-'} x ${item.sizeB || '-'}` : '-';
-                
+
                 return (
                   <tr key={item.id} className="break-inside-avoid">
-                    <td className="py-3 px-2 text-center text-zinc-500">{index + 1}</td>
-                    <td className="py-3 px-3 font-bold text-zinc-900">{item.description}</td>
-                    <td className="py-3 px-2 text-center text-zinc-600">{item.hsn || '-'}</td>
-                    <td className="py-3 px-2 text-center text-zinc-600">{measurement}</td>
-                    <td className="py-3 px-2 text-center text-zinc-600">{item.no || '-'}</td>
-                    <td className="py-3 px-2 text-center font-bold text-zinc-800">{row.quantity}</td>
-                    <td className="py-3 px-2 text-right text-zinc-800">₹{parseFloat(item.rate || 0).toLocaleString('en-IN')}</td>
-                    <td className="py-3 px-2 text-center text-zinc-500">{item.gst}%</td>
-                    <td className="py-3 px-3 text-right font-black text-zinc-900">₹{row.totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                    <td className="py-2 px-2 text-center text-gray-500 border-r border-gray-200">{index + 1}</td>
+                    <td className="py-2 px-3 border-r border-gray-200">{item.description}</td>
+                    <td className="py-2 px-2 text-center border-r border-gray-200">{item.hsn || '-'}</td>
+                    <td className="py-2 px-2 text-center border-r border-gray-200">{measurement}</td>
+                    <td className="py-2 px-2 text-center border-r border-gray-200">{item.no || '-'}</td>
+                    <td className="py-2 px-2 text-center font-medium border-r border-gray-200">{row.quantity.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
+                    <td className="py-2 px-2 text-right border-r border-gray-200">₹{parseFloat(item.rate || 0).toLocaleString('en-IN')}</td>
+                    <td className="py-2 px-2 text-center border-r border-gray-200">{item.gst}%</td>
+                    <td className="py-2 px-3 text-right font-medium">₹{row.totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
 
-          {/* Amount in words */}
-          <div className="border-t-2 border-zinc-800 pt-3 mb-6 flex justify-between items-start">
-            <div className="w-1/2 pr-4">
-              <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Amount in Words</span>
-              <p className="text-[10px] font-bold text-zinc-900 capitalize">{numberToWords(netPayable > 0 ? netPayable : totals.grandTotal)}</p>
+          {/* Amount in Words & Totals Block */}
+          <div className="flex justify-between items-start break-inside-avoid mb-10">
+            <div className="w-1/2 pr-4 pt-2">
+              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Amount in Words</span>
+              <p className="text-[10px] font-medium text-black capitalize">{numberToWords(netPayable > 0 ? netPayable : totals.grandTotal)}</p>
             </div>
             
-            {/* Totals Box */}
-            <div className="w-1/3 text-xs space-y-1.5 border border-zinc-200 bg-zinc-50 rounded-lg p-3">
-              <div className="flex justify-between text-zinc-600">
-                <span>Taxable Value:</span>
-                <span className="font-bold text-zinc-900">₹{totals.subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+            <div className="w-64 space-y-1.5 text-xs text-black">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Taxable Value:</span>
+                <span>₹{totals.subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
               </div>
+              
               {taxMode === 'IGST' ? (
-                <div className="flex justify-between text-zinc-600">
-                  <span>IGST:</span>
-                  <span className="font-bold text-zinc-900">₹{totals.totalGst.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">IGST:</span>
+                  <span>₹{totals.totalGst.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
                 </div>
               ) : (
                 <>
-                  <div className="flex justify-between text-zinc-600">
-                    <span>CGST:</span><span className="font-bold text-zinc-900">₹{(totals.totalGst / 2).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">CGST:</span><span>₹{(totals.totalGst / 2).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
                   </div>
-                  <div className="flex justify-between text-zinc-600">
-                    <span>SGST:</span><span className="font-bold text-zinc-900">₹{(totals.totalGst / 2).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                  <div className="flex justify-between border-b border-gray-200 pb-1.5">
+                    <span className="text-gray-600">SGST:</span><span>₹{(totals.totalGst / 2).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
                   </div>
                 </>
               )}
               
-              <div className="flex justify-between font-bold text-zinc-900 border-t border-zinc-300 pt-1.5 mt-1.5 text-sm">
+              <div className="flex justify-between font-semibold pt-1">
                 <span>Grand Total:</span><span>₹{totals.grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
               </div>
 
               {(invoiceDetails.discount > 0) && (
-                <div className="flex justify-between text-zinc-500 text-[10px] pt-1">
+                <div className="flex justify-between text-gray-500 text-[10px]">
                   <span>Discount:</span><span>- ₹{parseFloat(invoiceDetails.discount).toLocaleString('en-IN')}</span>
                 </div>
               )}
+
               {(invoiceDetails.advanceReceived > 0) && (
-                <div className="flex justify-between text-zinc-500 text-[10px]">
+                <div className="flex justify-between text-gray-500 text-[10px]">
                   <span>Advance Received:</span><span>- ₹{parseFloat(invoiceDetails.advanceReceived).toLocaleString('en-IN')}</span>
                 </div>
               )}
-              <div className="flex justify-between font-black text-zinc-900 bg-zinc-200 px-2 py-1.5 rounded mt-2 text-sm">
+
+              <div className="flex justify-between font-bold text-base border-t-2 border-black pt-2 mt-2">
                 <span>Balance Due:</span><span>₹{netPayable > 0 ? netPayable.toLocaleString('en-IN', {minimumFractionDigits: 2}) : 0}</span>
               </div>
             </div>
           </div>
 
-          {/* Footer Info */}
+          {/* Terms, Remarks, and Signatures */}
           <div className="grid grid-cols-2 gap-8 text-[10px] break-inside-avoid">
-            <div className="space-y-4">
+            <div className="space-y-5">
               {companySettings?.showBankDetailsOnPdf !== false && (
                 <div>
-                  <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1">Bank Details</span>
-                  <div className="grid grid-cols-[50px_1fr] gap-y-0.5 text-zinc-800">
-                    <span className="font-bold">Bank:</span><span>{invoiceDetails.bankName}</span>
-                    <span className="font-bold">Name:</span><span>{invoiceDetails.accountName}</span>
-                    <span className="font-bold">A/C No:</span><span>{invoiceDetails.accountNo}</span>
-                    <span className="font-bold">IFSC:</span><span>{invoiceDetails.ifscCode}</span>
+                  <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Bank Details</span>
+                  <div className="grid grid-cols-[50px_1fr] gap-y-0.5 text-black">
+                    <span className="font-semibold">Bank:</span><span>{invoiceDetails.bankName}</span>
+                    <span className="font-semibold">Name:</span><span>{invoiceDetails.accountName}</span>
+                    <span className="font-semibold">A/C No:</span><span>{invoiceDetails.accountNo}</span>
+                    <span className="font-semibold">IFSC:</span><span>{invoiceDetails.ifscCode}</span>
                   </div>
                 </div>
               )}
               
               {companySettings?.showTermsOnPdf !== false && (
                 <div>
-                  <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1">Terms & Conditions</span>
-                  <p className="whitespace-pre-wrap text-zinc-500 leading-tight">{invoiceDetails.terms}</p>
+                  <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Terms & Conditions</span>
+                  <p className="whitespace-pre-wrap text-gray-600 leading-tight">{invoiceDetails.terms}</p>
                 </div>
               )}
 
               {companySettings?.showRemarksOnPdf !== false && invoiceDetails.description && (
                 <div>
-                  <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-1">Remarks</span>
-                  <p className="text-zinc-600 font-medium">{invoiceDetails.description}</p>
+                  <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Remarks</span>
+                  <p className="text-gray-800">{invoiceDetails.description}</p>
                 </div>
               )}
             </div>
 
             {companySettings?.showSignatoryOnPdf !== false && (
-              <div className="flex flex-col items-end justify-end text-right">
+              <div className="flex flex-col items-end justify-end text-right pt-6">
                 {companySettings?.showSignatureImage && companySettings?.signatureUrl ? (
                   <img src={companySettings.signatureUrl} alt="Signature" className="h-16 w-auto object-contain mb-2 mix-blend-multiply" />
                 ) : <div className="h-16"></div>}
-                <div className="border-t-2 border-zinc-800 pt-2 w-48">
-                  <p className="font-bold text-zinc-900">For {companySettings?.companyName}</p>
-                  <p className="text-[9px] text-zinc-500 mt-0.5 uppercase tracking-wider">Authorized Signatory</p>
+                <div className="border-t border-gray-400 pt-1 w-48">
+                  <p className="font-bold text-black">For {companySettings?.companyName}</p>
+                  <p className="text-[9px] text-gray-500 mt-0.5 uppercase tracking-wider">Authorized Signatory</p>
                 </div>
               </div>
             )}
           </div>
 
-          {companySettings?.pdfFooterDisclaimer && (
-            <div className="mt-8 pt-4 border-t border-zinc-200 text-center">
-              <p className="text-[8px] font-bold text-zinc-400 uppercase tracking-[0.2em]">{companySettings.pdfFooterDisclaimer}</p>
-            </div>
-          )}
-
         </div>
+
+        {/* Persistent Anchored Footer */}
+        {companySettings?.pdfFooterDisclaimer && (
+          <div className="mt-auto pt-4 pb-2 border-t border-gray-200 text-center w-full">
+            <p className="text-[10px] text-gray-500">
+              {companySettings.pdfFooterDisclaimer}
+            </p>
+          </div>
+        )}
+
       </div>
     </div>
   );
