@@ -197,7 +197,7 @@ export default function DesktopLayout() {
 
         {/* LIGHT SIDEBAR WITH TEAK ACCENTS */}
         <aside className="print:hidden w-[260px] h-full bg-white text-zinc-800 flex flex-col flex-shrink-0 z-20 shadow-sm border-r border-[#B45309]/20">            
-        <div className="p-6 flex items-center justify-center gap-3 border-b border-zinc-100">
+          <div className="p-6 flex items-center justify-center gap-3 border-b border-zinc-100">
             <img 
               src={companySettings.logoUrl} 
               alt="Logo" 
@@ -239,6 +239,51 @@ export default function DesktopLayout() {
 
         {/* FULL WIDTH MAIN CONTENT AREA */}
         <main className="print:w-full print:ml-0 print:block flex-1 h-full overflow-hidden flex flex-col relative bg-zinc-50">
+          
+          {/* TOP BAR WITH QUICK SHORTCUTS */}
+          <header className="print:hidden w-full h-16 bg-white border-b border-zinc-200/80 px-8 flex items-center justify-between z-10 flex-shrink-0 shadow-sm">
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest">Quick Shortcuts</span>
+              <div className="h-4 w-[1px] bg-zinc-200 mx-1"></div>
+              
+              {/* Shortcut Action Buttons */}
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => handlePageSwitch('Tax Invoice')}
+                  className="px-3.5 py-2 bg-[#B45309]/10 hover:bg-[#B45309] text-[#B45309] hover:text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <span className="text-sm leading-none">+</span> Add Tax Invoice
+                </button>
+
+                <button 
+                  onClick={() => handlePageSwitch('Purchase Orders')}
+                  className="px-3.5 py-2 bg-[#B45309]/10 hover:bg-[#B45309] text-[#B45309] hover:text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <span className="text-sm leading-none">+</span> Add Purchase
+                </button>
+
+                <button 
+                  onClick={() => handlePageSwitch('Estimation')}
+                  className="px-3.5 py-2 bg-[#B45309]/10 hover:bg-[#B45309] text-[#B45309] hover:text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <span className="text-sm leading-none">+</span> Add Estimation
+                </button>
+              </div>
+            </div>
+
+            {/* Profile Info */}
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <p className="text-xs font-bold text-zinc-800">Accounts Portal</p>
+                <p className="text-[10px] font-semibold text-zinc-400">accounts@jyanipur.in</p>
+              </div>
+              <div className="w-9 h-9 rounded-xl bg-[#B45309] text-white flex items-center justify-center font-bold text-xs shadow-sm">
+                JIC
+              </div>
+            </div>
+          </header>
+
+          {/* PAGE CONTENT */}
           <div className="print:p-0 print:overflow-visible flex-1 overflow-y-auto p-6 lg:p-8 custom-scrollbar">
             <div className="w-full h-full">
               {visitedPages.has('Dashboard') && <div className={activePage === 'Dashboard' ? 'block' : 'hidden'}><Dashboard setActivePage={handlePageSwitch} /></div>}
