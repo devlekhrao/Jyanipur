@@ -201,11 +201,13 @@ export default function DesktopLayout() {
             <img 
               src={companySettings.logoUrl} 
               alt="Logo" 
-              className="h-9 w-auto object-contain drop-shadow-sm" 
+              className="h-12 w-auto object-contain drop-shadow-sm" 
               style={{ filter: teakTintFilter }} 
               onError={(e) => { e.target.style.display='none'; }} 
             />
-            <span className="font-bold text-base tracking-[0.2em] uppercase text-[#B45309]">Jyanipur</span>
+            <span className="font-bold text-xl tracking-[0.2em] uppercase text-[#B45309] leading-none flex items-center">
+              Jyanipur
+            </span>
           </div>
 
           <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-2 [&::-webkit-scrollbar]:hidden">
