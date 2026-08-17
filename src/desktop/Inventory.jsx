@@ -3,6 +3,7 @@ import { getProjects, getInventoryItems, getInventoryMovements, saveInventoryIte
 
 export default function Inventory() {
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('Godown'); // 'Godown' or 'Movements'
   
   const [items, setItems] = useState([]);
@@ -29,7 +30,7 @@ export default function Inventory() {
       setMovements(fetchedMovements || []);
       setProjects((fetchedProjects || []).filter(p => p.status !== 'Completed'));
     } catch (e) {
-      console.warn("Ensure inventory functions exist in db.js");
+      console.error("Error loading inventory from cloud DB:", e);
       setItems([]);
       setMovements([]);
       setProjects([]);
@@ -44,14 +45,16 @@ export default function Inventory() {
   const handleSaveItem = async (e) => {
     e.preventDefault();
     if (!itemForm.name) return alert("Item name required.");
+    setSubmitting(true);
     try {
       await saveInventoryItem(itemForm);
       setIsItemModalOpen(false);
       setItemForm({ name: '', category: 'Electrical', unit: 'Pcs' });
       await loadData();
     } catch (err) {
-      alert("Failed to save item.");
+      alert("Failed to save item to cloud DB.");
     }
+    setSubmitting(false);
   };
 
   const handleRecordMovement = async (e) => {
@@ -60,25 +63,28 @@ export default function Inventory() {
     if (movementForm.type === 'OUT' && !movementForm.projectId) return alert("Project Site is required for dispatches.");
     
     if (movementForm.type === 'OUT') {
-      const currentItem = items.find(i => i.id === parseInt(movementForm.itemId));
-      const availableStock = currentItem ? (currentItem.totalStock || currentItem.qty || 0) : 0;
+      const currentItem = items.find(i => String(i.id) === String(movementForm.itemId));
+      const availableStock = currentItem ? (currentItem.totalStock !== undefined ? currentItem.totalStock : (currentItem.qty || 0)) : 0;
       if (currentItem && parseFloat(movementForm.quantity) > availableStock) {
-        return alert(`Insufficient stock in Godown. You only have ${availableStock} ${currentItem.unit} available.`);
+        return alert(`Insufficient stock in Godown. You only have ${availableStock} ${currentItem.unit || 'Pcs'} available.`);
       }
     }
 
+    setSubmitting(true);
     try {
       await recordInventoryMovement({
         ...movementForm,
+        itemId: Number(movementForm.itemId) || movementForm.itemId,
         quantity: parseFloat(movementForm.quantity),
-        projectId: movementForm.type === 'OUT' ? parseInt(movementForm.projectId) : null
+        projectId: movementForm.type === 'OUT' ? (Number(movementForm.projectId) || movementForm.projectId) : null
       });
       setIsMovementModalOpen(false);
       setMovementForm({ itemId: '', type: 'IN', quantity: '', projectId: '', date: new Date().toISOString().split('T')[0], notes: '' });
       await loadData();
     } catch (err) {
-      alert("Failed to record movement.");
+      alert("Failed to record movement. Check DB connection.");
     }
+    setSubmitting(false);
   };
 
   const openMovementModal = (item = null, forceType = 'OUT') => {
@@ -93,14 +99,14 @@ export default function Inventory() {
     setIsMovementModalOpen(true);
   };
 
-  const filteredItems = items.filter(i => (i.name || '').toLowerCase().includes(searchQuery.toLowerCase()) || (i.category || '').toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredItems = items.filter(i => (i.name || i.materialName || '').toLowerCase().includes(searchQuery.toLowerCase()) || (i.category || '').toLowerCase().includes(searchQuery.toLowerCase()));
   const filteredMovements = movements.filter(m => (m.itemName || '').toLowerCase().includes(searchQuery.toLowerCase()) || (m.projectName && m.projectName.toLowerCase().includes(searchQuery.toLowerCase())));
 
   const inputClass = "w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-white focus:outline-none focus:border-[#B45309] focus:ring-1 focus:ring-inset focus:ring-[#B45309] text-zinc-900 text-sm font-medium transition-all shadow-sm disabled:opacity-75 disabled:cursor-not-allowed";
   const labelClass = "block text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5 ml-0.5";
 
-  const lowStockCount = items.filter(i => (i.totalStock || i.qty || 0) <= 5 && (i.totalStock || i.qty || 0) > 0).length;
-  const outOfStockCount = items.filter(i => (i.totalStock || i.qty || 0) === 0).length;
+  const lowStockCount = items.filter(i => (i.totalStock !== undefined ? i.totalStock : (i.qty || 0)) <= 5 && (i.totalStock !== undefined ? i.totalStock : (i.qty || 0)) > 0).length;
+  const outOfStockCount = items.filter(i => (i.totalStock !== undefined ? i.totalStock : (i.qty || 0)) === 0).length;
   const dispatchesThisMonth = movements.filter(m => m.type === 'OUT' && m.date && m.date.startsWith(new Date().toISOString().slice(0, 7))).length;
 
   return (
@@ -168,7 +174,7 @@ export default function Inventory() {
         {loading ? (
           <div className="py-20 text-center text-zinc-400 font-medium text-sm flex flex-col items-center justify-center space-y-3">
             <div className="w-10 h-10 border-4 border-zinc-200 border-t-[#B45309] rounded-full animate-spin"></div>
-            <p>Loading inventory...</p>
+            <p>Syncing inventory with cloud database...</p>
           </div>
         ) : activeTab === 'Godown' ? (
           
@@ -323,8 +329,8 @@ export default function Inventory() {
               <button type="button" onClick={() => setIsItemModalOpen(false)} className="px-5 py-2.5 bg-white border border-zinc-300 hover:bg-zinc-100 text-zinc-700 font-semibold rounded-xl text-sm transition-all cursor-pointer">
                 Cancel
               </button>
-              <button type="submit" form="itemForm" className="px-6 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer">
-                Save Item
+              <button type="submit" form="itemForm" disabled={submitting} className="px-6 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer disabled:opacity-50">
+                {submitting ? 'Saving...' : 'Save Item'}
               </button>
             </div>
 
@@ -397,7 +403,7 @@ export default function Inventory() {
                       className={`${inputClass} cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23B45309%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.25rem_1.25rem] pr-10`}
                     >
                       <option value="" disabled>Select active project...</option>
-                      {projects.map(p => <option key={p.id} value={p.id}>{p.name} ({p.clientName})</option>)}
+                      {projects.map(p => <option key={p.id || p._id} value={p.id || p._id}>{p.name || p.projectName} ({p.clientName || 'Client'})</option>)}
                     </select>
                   </div>
                 )}
@@ -414,8 +420,8 @@ export default function Inventory() {
               <button type="button" onClick={() => setIsMovementModalOpen(false)} className="px-5 py-2.5 bg-white border border-zinc-300 hover:bg-zinc-100 text-zinc-700 font-semibold rounded-xl text-sm transition-all cursor-pointer">
                 Cancel
               </button>
-              <button type="submit" form="movementForm" className={`px-6 py-2.5 text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer ${movementForm.type === 'IN' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-[#B45309] hover:bg-[#92400E]'}`}>
-                Confirm {movementForm.type === 'IN' ? 'Inward' : 'Dispatch'}
+              <button type="submit" form="movementForm" disabled={submitting} className={`px-6 py-2.5 text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer disabled:opacity-50 ${movementForm.type === 'IN' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-[#B45309] hover:bg-[#92400E]'}`}>
+                {submitting ? 'Recording...' : `Confirm ${movementForm.type === 'IN' ? 'Inward' : 'Dispatch'}`}
               </button>
             </div>
 

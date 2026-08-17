@@ -27,13 +27,14 @@ function numberToWords(num) {
 }
 
 export default function PurchaseOrders({ companySettings = {}, updateDirtyState }) {
-  const [currentView, setCurrentView] = useState(() => localStorage.getItem('draft_poView') || 'list');
+  const [currentView, setCurrentView] = useState(() => sessionStorage.getItem('draft_poView') || 'list');
   const [editingId, setEditingId] = useState(() => {
-    const saved = localStorage.getItem('draft_poEditingId');
+    const saved = sessionStorage.getItem('draft_poEditingId');
     return saved && saved !== 'undefined' ? JSON.parse(saved) : null;
   });
 
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [poList, setPoList] = useState([]);
   
   // Vendor Autocomplete State
@@ -43,7 +44,7 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
   const vendorDropdownRef = useRef(null);
 
   const [poDetails, setPoDetails] = useState(() => {
-    const saved = localStorage.getItem('draft_poDetails');
+    const saved = sessionStorage.getItem('draft_poDetails');
     if (saved && saved !== 'undefined') {
       try { return JSON.parse(saved); } catch (e) {}
     }
@@ -58,7 +59,7 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
   });
 
   const [items, setItems] = useState(() => {
-    const saved = localStorage.getItem('draft_poItems');
+    const saved = sessionStorage.getItem('draft_poItems');
     if (saved && saved !== 'undefined') {
       try { return JSON.parse(saved); } catch (e) {}
     }
@@ -68,10 +69,10 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    localStorage.setItem('draft_poView', currentView);
-    localStorage.setItem('draft_poEditingId', JSON.stringify(editingId));
-    localStorage.setItem('draft_poDetails', JSON.stringify(poDetails));
-    localStorage.setItem('draft_poItems', JSON.stringify(items));
+    sessionStorage.setItem('draft_poView', currentView);
+    sessionStorage.setItem('draft_poEditingId', JSON.stringify(editingId));
+    sessionStorage.setItem('draft_poDetails', JSON.stringify(poDetails));
+    sessionStorage.setItem('draft_poItems', JSON.stringify(items));
   }, [currentView, editingId, poDetails, items]);
 
   useEffect(() => {
@@ -98,7 +99,7 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
       setPoList(poData || []);
       setVendorsList(vData || []);
     } catch (e) {
-      console.warn("getPurchaseOrders or getVendors not yet implemented in db.js");
+      console.error("Error loading Purchase Orders from cloud DB:", e);
       setPoList([]);
       setVendorsList([]);
     }
@@ -190,7 +191,7 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
     setErrors({});
     
     const record = {
-      id: editingId || Date.now(),
+      id: editingId || undefined,
       vendorName: poDetails.vendorName,
       vendorAddress: poDetails.vendorAddress,
       vendorGst: poDetails.vendorGst,
@@ -205,12 +206,16 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
       amount: '₹ ' + totals.grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     };
 
+    setSubmitting(true);
     try {
       await savePurchaseOrder(record);
       await loadPOsFromDb();
+      setSubmitting(false);
       return true;
     } catch (err) {
-      alert('Saved locally. (Ensure savePurchaseOrder is added to db.js)');
+      console.error("Error saving PO to database:", err);
+      alert('Failed to save PO to cloud database.');
+      setSubmitting(false);
       return false;
     }
   };
@@ -264,11 +269,13 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
   };
 
   const handleToggleCancel = async (po) => {
+    setLoading(true);
     try {
       await toggleCancelPurchaseOrder(po.id, po.isCancelled);
       await loadPOsFromDb();
     } catch(e) {
-      alert("Status toggled locally. Make sure toggleCancelPurchaseOrder is in db.js");
+      console.error("Error toggling PO cancellation status:", e);
+      setLoading(false);
     }
   };
 
@@ -283,9 +290,9 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
       setItems([{ id: 1, description: '', uom: 'Nos', qty: '', rate: '', tax: companySettings.defaultGstRate || 18 }]);
       setErrors({});
       setShowVendorDropdown(false);
-      localStorage.removeItem('draft_poDetails');
-      localStorage.removeItem('draft_poItems');
-      localStorage.removeItem('draft_poEditingId');
+      sessionStorage.removeItem('draft_poDetails');
+      sessionStorage.removeItem('draft_poItems');
+      sessionStorage.removeItem('draft_poEditingId');
       if (updateDirtyState) updateDirtyState('Purchase Orders', false);
     }
   };
@@ -329,7 +336,7 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
               </thead>
               <tbody className="divide-y divide-zinc-100 text-sm">
                 {loading ? (
-                  <tr><td colSpan="5" className="py-12 text-center text-zinc-400 font-medium text-xs">Loading Purchase Orders...</td></tr>
+                  <tr><td colSpan="5" className="py-12 text-center text-zinc-400 font-medium text-xs">Syncing Purchase Orders from cloud DB...</td></tr>
                 ) : poList.length === 0 ? (
                   <tr><td colSpan="5" className="py-12 text-center text-zinc-400 font-medium text-xs">No POs created yet. Click "+ Create PO" above.</td></tr>
                 ) : (
@@ -579,7 +586,7 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
                 <span className="font-semibold text-emerald-600">₹ {totals.totalTax.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
               </div>
               
-              <div className="flex justify-between text-base font-bold text-[11px] border-t border-zinc-200 pt-3">
+              <div className="flex justify-between text-base font-bold border-t border-zinc-200 pt-3">
                 <span>Grand Total:</span>
                 <span className="text-[#B45309]">₹ {totals.grandTotal.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
               </div>
@@ -587,11 +594,11 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
 
             {!isReadOnly && (
               <div className="flex gap-2 mt-4">
-                <button onClick={handleSaveOnly} className="flex-1 py-3 bg-white border border-zinc-300 hover:bg-zinc-50 text-zinc-800 rounded-xl font-semibold text-xs transition-all cursor-pointer">
-                  Save Draft
+                <button onClick={handleSaveOnly} disabled={submitting} className="flex-1 py-3 bg-white border border-zinc-300 hover:bg-zinc-50 text-zinc-800 rounded-xl font-semibold text-xs transition-all cursor-pointer disabled:opacity-50">
+                  {submitting ? 'Saving...' : 'Save Draft'}
                 </button>
-                <button onClick={handleSaveAndPrint} className="flex-1 py-3 bg-[#B45309] hover:bg-[#92400E] text-white rounded-xl font-medium text-xs transition-all shadow-sm cursor-pointer">
-                  Save & Print
+                <button onClick={handleSaveAndPrint} disabled={submitting} className="flex-1 py-3 bg-[#B45309] hover:bg-[#92400E] text-white rounded-xl font-medium text-xs transition-all shadow-sm cursor-pointer disabled:opacity-50">
+                  {submitting ? 'Saving...' : 'Save & Print'}
                 </button>
               </div>
             )}

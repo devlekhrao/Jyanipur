@@ -40,7 +40,7 @@ export default function Salaries() {
       setAdvances(monthlyAdvances);
       setSelectedEmps(new Set()); 
     } catch (e) {
-      console.warn("Ensure salary and payroll functions exist in db.js");
+      console.error("Error loading payroll telemetry from cloud DB:", e);
       setEmployees([]);
       setAttendance({});
       setPayouts({});
@@ -126,7 +126,7 @@ export default function Salaries() {
       return;
     }
 
-    if (window.confirm(`Initiate ICICI NEFT batch payout for ${selectedEmps.size} employees totaling ₹${selectedPayrollAmount.toLocaleString('en-IN')}?`)) {
+    if (window.confirm(`Initiate batch payout for ${selectedEmps.size} employees totaling ₹${selectedPayrollAmount.toLocaleString('en-IN')}?`)) {
       const employeesToPay = payrollData.filter(emp => selectedEmps.has(emp.id));
 
       const optimisticPayouts = { ...payouts };
@@ -142,11 +142,11 @@ export default function Salaries() {
             initiatePayout(emp.id, selectedMonth, selectedYear, emp.netPayable)
           )
         );
-        alert(`Batch Payout API Triggered for ${employeesToPay.length} employees!`);
-        loadData();
+        alert(`Batch Payout Triggered for ${employeesToPay.length} employees!`);
+        await loadData();
       } catch (err) {
-        alert("Failed to initiate batch payout.");
-        loadData();
+        alert("Failed to initiate batch payout. Please check DB connection.");
+        await loadData();
       }
     }
   };
@@ -246,7 +246,7 @@ export default function Salaries() {
         {loading ? (
           <div className="py-20 text-center text-zinc-400 font-medium text-sm flex flex-col items-center justify-center space-y-3 flex-1">
             <div className="w-10 h-10 border-4 border-zinc-200 border-t-[#B45309] rounded-full animate-spin"></div>
-            <p>Calculating payroll...</p>
+            <p>Syncing payroll telemetry with cloud DB...</p>
           </div>
         ) : payrollData.length === 0 ? (
           <div className="py-20 text-center text-zinc-400 font-medium text-sm bg-white border border-dashed border-zinc-200 rounded-2xl flex-1 flex items-center justify-center">
@@ -325,7 +325,7 @@ export default function Salaries() {
                     <span className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
                       emp.payoutStatus.status === 'API_PENDING' ? 'bg-amber-50 text-[#B45309] border-amber-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                     }`}>
-                      {emp.payoutStatus.status === 'API_PENDING' ? 'Syncing ICICI...' : 'Paid'}
+                      {emp.payoutStatus.status === 'API_PENDING' ? 'Syncing...' : 'Paid'}
                     </span>
                   ) : emp.netPayable === 0 ? (
                     <span className="px-3 py-1.5 rounded-full text-[10px] font-semibold text-zinc-400 bg-zinc-100 uppercase tracking-wider">No Dues</span>

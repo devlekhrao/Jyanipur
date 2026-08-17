@@ -25,6 +25,7 @@ export default function Dashboard({ setActivePage }) {
   // Quick Action Modals
   const [quickModal, setQuickModal] = useState(null); // 'dpr', 'income', 'snag'
   const [selectedSite, setSelectedSite] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   // Quick Forms
   const todayStr = new Date().toISOString().split('T')[0];
@@ -70,7 +71,7 @@ export default function Dashboard({ setActivePage }) {
       setInventory(invData || []);
       setTodayAttendance(attData || {});
     } catch (err) {
-      console.warn("Ensure database helper functions exist in db.js", err);
+      console.error("Error syncing dashboard telemetry with Neon DB:", err);
     }
     setLoading(false);
   };
@@ -110,34 +111,52 @@ export default function Dashboard({ setActivePage }) {
   const handleQuickDpr = async (e) => {
     e.preventDefault();
     if (!selectedSite || !dprData.summary) return alert("Site and summary required.");
-    await saveDPR({ ...dprData, projectId: selectedSite });
-    setQuickModal(null);
-    setDprData({ date: todayStr, summary: '', loggedBy: '' });
-    loadDashboardData();
+    setSubmitting(true);
+    try {
+      await saveDPR({ ...dprData, projectId: selectedSite });
+      setQuickModal(null);
+      setDprData({ date: todayStr, summary: '', loggedBy: '' });
+      await loadDashboardData();
+    } catch (err) {
+      alert("Failed to submit DPR.");
+    }
+    setSubmitting(false);
   };
 
   const handleQuickIncome = async (e) => {
     e.preventDefault();
     if (!incomeData.projectId || !incomeData.amount) return alert("Site and Amount required.");
     const proj = projects.find(p => String(p.id || p._id) === String(incomeData.projectId));
-    await saveIncomeRecord({
-      ...incomeData,
-      projectName: proj ? (proj.name || proj.projectName) : 'General Site',
-      clientName: proj ? proj.clientName : '',
-      amount: parseAmt(incomeData.amount)
-    });
-    setQuickModal(null);
-    setIncomeData({ date: todayStr, projectId: '', amount: '', paymentMode: 'NEFT/RTGS', referenceNo: '' });
-    loadDashboardData();
+    setSubmitting(true);
+    try {
+      await saveIncomeRecord({
+        ...incomeData,
+        projectName: proj ? (proj.name || proj.projectName) : 'General Site',
+        clientName: proj ? proj.clientName : '',
+        amount: parseAmt(incomeData.amount)
+      });
+      setQuickModal(null);
+      setIncomeData({ date: todayStr, projectId: '', amount: '', paymentMode: 'NEFT/RTGS', referenceNo: '' });
+      await loadDashboardData();
+    } catch (err) {
+      alert("Failed to record income.");
+    }
+    setSubmitting(false);
   };
 
   const handleQuickSnag = async (e) => {
     e.preventDefault();
     if (!snagData.projectId || !snagData.title) return alert("Site and Defect Title required.");
-    await saveSnag(snagData);
-    setQuickModal(null);
-    setSnagData({ projectId: '', title: '', priority: 'Medium', subcontractor: '' });
-    loadDashboardData();
+    setSubmitting(true);
+    try {
+      await saveSnag(snagData);
+      setQuickModal(null);
+      setSnagData({ projectId: '', title: '', priority: 'Medium', subcontractor: '' });
+      await loadDashboardData();
+    } catch (err) {
+      alert("Failed to log snag.");
+    }
+    setSubmitting(false);
   };
 
   const inputClass = "w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-white focus:outline-none focus:border-[#B45309] focus:ring-1 focus:ring-inset focus:ring-[#B45309] text-zinc-900 text-sm font-medium transition-all shadow-sm";
@@ -407,7 +426,9 @@ export default function Dashboard({ setActivePage }) {
               </div>
               <div className="pt-4 flex justify-end gap-3 border-t border-zinc-200">
                 <button type="button" onClick={() => setQuickModal(null)} className="px-5 py-2.5 bg-white border border-zinc-300 hover:bg-zinc-100 text-zinc-700 font-semibold rounded-xl text-sm transition-all cursor-pointer">Cancel</button>
-                <button type="submit" className="px-6 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer">Submit DPR</button>
+                <button type="submit" disabled={submitting} className="px-6 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer disabled:opacity-50">
+                  {submitting ? 'Submitting...' : 'Submit DPR'}
+                </button>
               </div>
             </form>
           </div>
@@ -453,7 +474,9 @@ export default function Dashboard({ setActivePage }) {
               </div>
               <div className="pt-4 flex justify-end gap-3 border-t border-zinc-200">
                 <button type="button" onClick={() => setQuickModal(null)} className="px-5 py-2.5 bg-white border border-zinc-300 hover:bg-zinc-100 text-zinc-700 font-semibold rounded-xl text-sm transition-all cursor-pointer">Cancel</button>
-                <button type="submit" className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer">Record Income</button>
+                <button type="submit" disabled={submitting} className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer disabled:opacity-50">
+                  {submitting ? 'Recording...' : 'Record Income'}
+                </button>
               </div>
             </form>
           </div>
@@ -492,7 +515,9 @@ export default function Dashboard({ setActivePage }) {
               </div>
               <div className="pt-4 flex justify-end gap-3 border-t border-zinc-200">
                 <button type="button" onClick={() => setQuickModal(null)} className="px-5 py-2.5 bg-white border border-zinc-300 hover:bg-zinc-100 text-zinc-700 font-semibold rounded-xl text-sm transition-all cursor-pointer">Cancel</button>
-                <button type="submit" className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer">Log Defect</button>
+                <button type="submit" disabled={submitting} className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer disabled:opacity-50">
+                  {submitting ? 'Logging...' : 'Log Defect'}
+                </button>
               </div>
             </form>
           </div>

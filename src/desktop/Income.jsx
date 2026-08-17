@@ -3,6 +3,7 @@ import { getProjects, getIncomeRecords, saveIncomeRecord, deleteIncomeRecord } f
 
 export default function Income() {
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [projects, setProjects] = useState([]);
   const [income, setIncome] = useState([]);
   
@@ -29,7 +30,7 @@ export default function Income() {
       setProjects(projData || []);
       setIncome(incData || []);
     } catch (e) {
-      console.warn("Ensure income functions exist in db.js");
+      console.error("Error fetching income records from cloud DB:", e);
       setProjects([]);
       setIncome([]);
     }
@@ -59,11 +60,13 @@ export default function Income() {
       return;
     }
 
+    setSubmitting(true);
     try {
-      const selectedProj = projects.find(p => String(p.id) === String(newEntry.projectId));
+      const selectedProj = projects.find(p => String(p.id || p._id) === String(newEntry.projectId));
       await saveIncomeRecord({
         ...newEntry,
-        projectName: selectedProj ? selectedProj.name : 'General Project',
+        projectId: newEntry.projectId ? (Number(newEntry.projectId) || newEntry.projectId) : '',
+        projectName: selectedProj ? (selectedProj.name || selectedProj.projectName) : 'General Project',
         clientName: selectedProj ? selectedProj.clientName : '',
         amount: parseFloat(newEntry.amount) || 0
       });
@@ -75,18 +78,20 @@ export default function Income() {
         notes: ''
       });
     } catch (err) {
-      alert("Failed to save income record.");
+      alert("Failed to save income record. Please check database connection.");
     }
+    setSubmitting(false);
   };
 
   const handleDelete = async (id) => {
     if (window.confirm("Delete this income record?")) {
+      setLoading(true);
       await deleteIncomeRecord(id);
       await loadData();
     }
   };
 
-  const inputClass = "w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white focus:outline-none focus:border-[#B45309] focus:ring-1 focus:ring-inset focus:ring-[#B45309] text-zinc-900 text-xs font-medium transition-all shadow-sm";
+  const inputClass = "w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white focus:outline-none focus:border-[#B45309] focus:ring-1 focus:ring-inset focus:ring-[#B45309] text-zinc-900 text-xs font-medium transition-all shadow-sm disabled:opacity-75";
 
   return (
     <div className="w-full h-full flex flex-col" style={{ fontFamily: 'Poppins, sans-serif' }}>
@@ -163,7 +168,7 @@ export default function Income() {
                     className={`${inputClass} cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23B45309%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_0.8rem_center] bg-[length:1rem_1rem] pr-8 font-semibold text-zinc-900`}
                   >
                     <option value="" disabled>Select Project...</option>
-                    {projects.map(p => <option key={p.id} value={p.id}>{p.name} ({p.clientName})</option>)}
+                    {projects.map(p => <option key={p.id || p._id} value={p.id || p._id}>{p.name || p.projectName} ({p.clientName || 'Client'})</option>)}
                   </select>
                 </td>
                 <td className="py-3 px-3">
@@ -182,16 +187,16 @@ export default function Income() {
                 <td className="py-3 px-3"><input type="text" placeholder="Milestone / Notes" value={newEntry.notes} onChange={e => setNewEntry({...newEntry, notes: e.target.value})} className={inputClass} /></td>
                 <td className="py-3 px-3"><input type="number" step="any" placeholder="₹ 0.00" value={newEntry.amount} onChange={e => setNewEntry({...newEntry, amount: e.target.value})} className={`${inputClass} text-right font-bold text-emerald-600`} /></td>
                 <td className="py-3 px-6 text-right">
-                  <button onClick={handleAddIncome} className="px-4 py-2 bg-[#B45309] hover:bg-[#92400E] text-white rounded-xl font-semibold text-xs transition-all shadow-sm cursor-pointer flex items-center justify-center gap-1 ml-auto">
+                  <button onClick={handleAddIncome} disabled={submitting} className="px-4 py-2 bg-[#B45309] hover:bg-[#92400E] text-white rounded-xl font-semibold text-xs transition-all shadow-sm cursor-pointer flex items-center justify-center gap-1 ml-auto disabled:opacity-50">
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
-                    Add
+                    {submitting ? 'Adding...' : 'Add'}
                   </button>
                 </td>
               </tr>
 
               {/* SAVED RECORDS */}
               {loading ? (
-                <tr><td colSpan="7" className="py-12 text-center text-zinc-400 font-medium text-sm">Loading income records...</td></tr>
+                <tr><td colSpan="7" className="py-12 text-center text-zinc-400 font-medium text-sm">Syncing income records from cloud DB...</td></tr>
               ) : monthlyIncome.length === 0 ? (
                 <tr><td colSpan="7" className="py-12 text-center text-zinc-400 font-medium text-sm">No income recorded for this month. Use the top row above to add one.</td></tr>
               ) : (

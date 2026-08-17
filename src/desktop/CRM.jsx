@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getLeads, saveLead, updateLeadStatus, deleteLead } from '../db';
+import { getLeads, saveLead, deleteLead } from '../db';
 import { exportToCSV } from '../utils';
 
 export default function CRM() {
@@ -28,11 +28,10 @@ export default function CRM() {
     setLoading(true);
     try {
       const data = await getLeads();
-      // Sort by newest first based on dateAdded or id
       const sortedData = (data || []).sort((a, b) => (b.id || 0) - (a.id || 0));
       setLeads(sortedData);
     } catch (e) {
-      console.warn("Ensure getLeads is in db.js");
+      console.error("Error loading leads from cloud database:", e);
       setLeads([]);
     }
     setLoading(false);
@@ -71,6 +70,7 @@ export default function CRM() {
 
   const handleSave = async (e) => {
     e.preventDefault();
+    setLoading(true);
     await saveLead({ 
       ...formData, 
       estimatedValue: parseFloat(formData.estimatedValue) || 0,
@@ -112,7 +112,7 @@ export default function CRM() {
   const handleStatusMove = async (id, newStatus) => {
     try {
       const lead = leads.find(l => l.id === id);
-      if(lead) {
+      if (lead) {
         await saveLead({ ...lead, status: newStatus });
         await loadData();
       }
@@ -133,6 +133,7 @@ export default function CRM() {
 
   const handleDelete = async (id) => {
     if (window.confirm("Delete this lead permanently?")) {
+      setLoading(true);
       await deleteLead(id);
       await loadData();
     }
@@ -145,8 +146,8 @@ export default function CRM() {
       projectName: lead.occupation || lead.projectType || '',
       description: lead.notes || ''
     };
-    localStorage.setItem('crm_to_estimation', JSON.stringify(draft));
-    alert(`Details for ${lead.clientName} saved to clipboard memory! Navigate to "Estimation" and create a new estimate to use this data.`);
+    sessionStorage.setItem('crm_to_estimation', JSON.stringify(draft));
+    alert(`Details for ${lead.clientName} pre-filled! Navigate to "Estimation" and click "+ New Estimate" to continue.`);
   };
 
   const handleExport = () => {
@@ -235,7 +236,7 @@ export default function CRM() {
             </thead>
             <tbody className="divide-y divide-zinc-100 text-sm">
               {loading ? (
-                <tr><td colSpan="8" className="py-12 text-center text-zinc-400 font-medium text-sm">Loading leads...</td></tr>
+                <tr><td colSpan="8" className="py-12 text-center text-zinc-400 font-medium text-sm">Syncing leads with cloud database...</td></tr>
               ) : filteredLeads.length === 0 ? (
                 <tr>
                   <td colSpan="8" className="py-16 text-center">
@@ -297,13 +298,11 @@ export default function CRM() {
                     </td>
 
                     <td className="py-4 px-6 text-right font-medium text-sm text-[#B45309]">
-                      ₹{(lead.estimatedValue || 0).toLocaleString('en-IN')}
+                      ₹{(Number(lead.estimatedValue) || 0).toLocaleString('en-IN')}
                     </td>
                     
                     <td className="py-4 px-6 text-right">
                       <div className="flex items-center justify-end gap-1.5">
-                        
-                        {/* Direct Communication Buttons */}
                         {lead.phone && (
                           <a href={`tel:${lead.phone}`} title="Call Client" className="p-1.5 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white border border-blue-200 rounded-lg transition-all">
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
@@ -429,8 +428,8 @@ export default function CRM() {
               <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 bg-white border border-zinc-300 hover:bg-zinc-100 text-zinc-700 font-semibold rounded-xl text-sm transition-all cursor-pointer">
                 Cancel
               </button>
-              <button type="submit" form="leadForm" className="px-6 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer">
-                {formData.id ? 'Update Lead' : 'Save Lead'}
+              <button type="submit" form="leadForm" disabled={loading} className="px-6 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer disabled:opacity-50">
+                {loading ? 'Saving to Cloud...' : formData.id ? 'Update Lead' : 'Save Lead'}
               </button>
             </div>
 

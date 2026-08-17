@@ -4,6 +4,7 @@ import { exportToCSV } from '../utils';
 
 export default function Vendors() {
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [vendors, setVendors] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -26,7 +27,7 @@ export default function Vendors() {
       const data = await getVendors();
       setVendors(data || []);
     } catch (e) {
-      console.warn("Ensure getVendors is in db.js");
+      console.error("Error fetching vendors from cloud DB:", e);
       setVendors([]);
     }
     setLoading(false);
@@ -42,13 +43,21 @@ export default function Vendors() {
       alert("Vendor Name is required.");
       return;
     }
-    await saveVendor({
-      ...formData,
-      gstin: (formData.gstin || '').toUpperCase()
-    });
-    setIsModalOpen(false);
-    resetForm();
-    await loadData();
+
+    setSubmitting(true);
+    try {
+      await saveVendor({
+        ...formData,
+        id: formData.id ? (Number(formData.id) || formData.id) : undefined,
+        gstin: (formData.gstin || '').toUpperCase()
+      });
+      setIsModalOpen(false);
+      resetForm();
+      await loadData();
+    } catch (err) {
+      alert("Failed to save vendor to cloud database.");
+    }
+    setSubmitting(false);
   };
 
   const handleEdit = (vendor) => {
@@ -82,6 +91,7 @@ export default function Vendors() {
 
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this vendor?")) {
+      setLoading(true);
       await deleteVendor(id);
       await loadData();
     }
@@ -169,7 +179,7 @@ export default function Vendors() {
             </thead>
             <tbody className="divide-y divide-zinc-100 text-sm">
               {loading ? (
-                <tr><td colSpan="6" className="py-12 text-center text-zinc-400 font-medium text-sm">Loading vendors...</td></tr>
+                <tr><td colSpan="6" className="py-12 text-center text-zinc-400 font-medium text-sm">Syncing vendor directory from cloud DB...</td></tr>
               ) : filteredVendors.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="py-16 text-center">
@@ -330,8 +340,8 @@ export default function Vendors() {
               <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 bg-white border border-zinc-300 hover:bg-zinc-100 text-zinc-700 font-semibold rounded-xl text-sm transition-all cursor-pointer">
                 Cancel
               </button>
-              <button type="submit" form="vendorForm" className="px-6 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer">
-                {formData.id ? 'Update Vendor' : 'Save Vendor'}
+              <button type="submit" form="vendorForm" disabled={submitting} className="px-6 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer disabled:opacity-50">
+                {submitting ? 'Saving...' : formData.id ? 'Update Vendor' : 'Save Vendor'}
               </button>
             </div>
 

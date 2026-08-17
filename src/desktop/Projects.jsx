@@ -3,11 +3,12 @@ import { getProjects, saveProject, deleteProject } from '../db';
 
 export default function Projects() {
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [projects, setProjects] = useState([]);
   const [uniqueClients, setUniqueClients] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // View State (Replaces Modal)
+  // View State
   const [currentView, setCurrentView] = useState('list');
   const [isNewClient, setIsNewClient] = useState(false);
   
@@ -29,11 +30,11 @@ export default function Projects() {
       
       const enhancedProjects = (data || []).map(p => ({
         ...p,
-        invoicesCount: Math.floor(Math.random() * 5) + 1,
-        totalBilled: p.budget * (Math.random() * 0.5 + 0.4), 
-        totalReceived: p.budget * (Math.random() * 0.4 + 0.3), 
-        materialCost: p.budget * (Math.random() * 0.3 + 0.2), 
-        laborCost: p.budget * (Math.random() * 0.15 + 0.1), 
+        invoicesCount: p.invoicesCount || 0,
+        totalBilled: parseFloat(p.totalBilled) || 0, 
+        totalReceived: parseFloat(p.totalReceived) || 0, 
+        materialCost: parseFloat(p.materialCost) || 0, 
+        laborCost: parseFloat(p.laborCost) || 0, 
       }));
 
       setProjects(enhancedProjects);
@@ -43,14 +44,14 @@ export default function Projects() {
         if (p.clientName && !clientsMap[p.clientName]) {
           clientsMap[p.clientName] = { 
             name: p.clientName, 
-            gstin: p.clientGstin, 
-            phone: p.clientPhone 
+            gstin: p.clientGstin || '', 
+            phone: p.clientPhone || '' 
           };
         }
       });
       setUniqueClients(Object.values(clientsMap));
     } catch (e) {
-      console.warn("Ensure project functions exist in db.js");
+      console.error("Error fetching projects from cloud database:", e);
       setProjects([]);
       setUniqueClients([]);
     }
@@ -83,10 +84,10 @@ export default function Projects() {
       clientName: project.clientName,
       clientGstin: project.clientGstin || '',
       clientPhone: project.clientPhone || '',
-      name: project.name,
+      name: project.name || project.projectName,
       poDate: project.poDate || new Date().toISOString().split('T')[0],
       budget: project.budget,
-      status: project.status
+      status: project.status || 'Planning'
     });
     setCurrentView('form');
   };
@@ -115,26 +116,31 @@ export default function Projects() {
       return;
     }
 
+    setSubmitting(true);
     try {
       await saveProject({
         ...formData,
+        id: formData.id ? (Number(formData.id) || formData.id) : undefined,
         budget: parseFloat(formData.budget) || 0
       });
       setCurrentView('list');
       await loadData();
     } catch (err) {
-      alert("Failed to save project.");
+      alert("Failed to save project. Check DB connection.");
     }
+    setSubmitting(false);
   };
 
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this project? This cannot be undone.")) {
+      setLoading(true);
       try {
         await deleteProject(id);
         setCurrentView('list');
         await loadData();
       } catch (err) {
         alert("Failed to delete project.");
+        setLoading(false);
       }
     }
   };
@@ -145,9 +151,10 @@ export default function Projects() {
 
   const clients = {};
   projects.forEach(p => {
-    if (!clients[p.clientName]) {
-      clients[p.clientName] = {
-        name: p.clientName,
+    const cName = p.clientName || 'General Client';
+    if (!clients[cName]) {
+      clients[cName] = {
+        name: cName,
         gstin: p.clientGstin,
         phone: p.clientPhone,
         totalBudget: 0,
@@ -156,10 +163,15 @@ export default function Projects() {
         projects: []
       };
     }
-    clients[p.clientName].projects.push(p);
-    clients[p.clientName].totalBudget += p.budget;
-    clients[p.clientName].totalBilled += p.totalBilled;
-    clients[p.clientName].totalCost += (p.materialCost + p.laborCost);
+    const b = Number(p.budget) || 0;
+    const billed = Number(p.totalBilled) || 0;
+    const matCost = Number(p.materialCost) || 0;
+    const labCost = Number(p.laborCost) || 0;
+
+    clients[cName].projects.push(p);
+    clients[cName].totalBudget += b;
+    clients[cName].totalBilled += billed;
+    clients[cName].totalCost += (matCost + labCost);
   });
 
   Object.values(clients).forEach(c => {
@@ -169,12 +181,12 @@ export default function Projects() {
   const filteredClients = Object.values(clients).filter(c => {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
-    return c.name.toLowerCase().includes(q) || c.projects.some(p => p.name.toLowerCase().includes(q));
+    return c.name.toLowerCase().includes(q) || c.projects.some(p => (p.name || p.projectName || '').toLowerCase().includes(q));
   });
 
-  const globalBudget = projects.reduce((sum, p) => sum + p.budget, 0);
-  const globalBilled = projects.reduce((sum, p) => sum + p.totalBilled, 0);
-  const globalCost = projects.reduce((sum, p) => sum + p.materialCost + p.laborCost, 0);
+  const globalBudget = projects.reduce((sum, p) => sum + (Number(p.budget) || 0), 0);
+  const globalBilled = projects.reduce((sum, p) => sum + (Number(p.totalBilled) || 0), 0);
+  const globalCost = projects.reduce((sum, p) => sum + (Number(p.materialCost) || 0) + (Number(p.laborCost) || 0), 0);
 
   const inputClass = "w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-white focus:outline-none focus:border-[#B45309] focus:ring-1 focus:ring-inset focus:ring-[#B45309] text-zinc-900 text-sm font-medium transition-all disabled:opacity-75 disabled:cursor-not-allowed";
   const labelClass = "block text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5 ml-0.5";
@@ -239,7 +251,10 @@ export default function Projects() {
         {/* Client & Project Hierarchy */}
         <div className="flex-1 overflow-y-auto space-y-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {loading ? (
-            <div className="py-20 text-center text-zinc-400 font-medium text-sm">Loading project board...</div>
+            <div className="py-20 text-center text-zinc-400 font-medium text-sm flex flex-col items-center justify-center space-y-3">
+              <div className="w-10 h-10 border-4 border-zinc-200 border-t-[#B45309] rounded-full animate-spin"></div>
+              <p>Syncing projects from cloud database...</p>
+            </div>
           ) : filteredClients.length === 0 ? (
             <div className="py-20 text-center text-zinc-400 font-medium text-sm bg-white border border-dashed border-zinc-200 rounded-2xl">No clients or projects found.</div>
           ) : (
@@ -286,8 +301,10 @@ export default function Projects() {
                     </thead>
                     <tbody className="text-sm text-zinc-800 divide-y divide-zinc-50">
                       {client.projects.map((proj, index) => {
-                        const totalCost = proj.materialCost + proj.laborCost;
-                        const margin = proj.totalBilled - totalCost;
+                        const matCost = Number(proj.materialCost) || 0;
+                        const labCost = Number(proj.laborCost) || 0;
+                        const totalCost = matCost + labCost;
+                        const margin = (Number(proj.totalBilled) || 0) - totalCost;
                         
                         return (
                           <tr key={proj.id} className="hover:bg-zinc-50 transition-colors">
@@ -295,9 +312,9 @@ export default function Projects() {
                               <div className="flex items-center gap-2">
                                 <span className="text-xs font-semibold text-zinc-400 w-4">#{index + 1}</span>
                                 <div>
-                                  <p className="font-semibold text-zinc-900">{proj.name}</p>
+                                  <p className="font-semibold text-zinc-900">{proj.name || proj.projectName}</p>
                                   <p className="text-[11px] text-zinc-400 font-medium mt-0.5">
-                                    {proj.invoicesCount} Invoices Linked
+                                    {proj.invoicesCount || 0} Invoices Linked
                                   </p>
                                 </div>
                               </div>
@@ -311,19 +328,19 @@ export default function Projects() {
                                 proj.status === 'Completed' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
                                 'bg-amber-50 text-amber-700 border border-amber-100'
                               }`}>
-                                {proj.status}
+                                {proj.status || 'Planning'}
                               </span>
                             </td>
                             <td className="py-4 px-4 text-right font-medium text-sm text-zinc-900">
-                              ₹{proj.budget.toLocaleString('en-IN', {maximumFractionDigits: 0})}
+                              ₹{(Number(proj.budget) || 0).toLocaleString('en-IN', {maximumFractionDigits: 0})}
                             </td>
                             <td className="py-4 px-4 text-right">
-                              <p className="font-medium text-sm text-zinc-800">₹{proj.totalBilled.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
-                              <p className="text-[10px] text-zinc-400 font-medium mt-0.5">₹{proj.totalReceived.toLocaleString('en-IN', {maximumFractionDigits: 0})} Recv</p>
+                              <p className="font-medium text-sm text-zinc-800">₹{(Number(proj.totalBilled) || 0).toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+                              <p className="text-[10px] text-zinc-400 font-medium mt-0.5">₹{(Number(proj.totalReceived) || 0).toLocaleString('en-IN', {maximumFractionDigits: 0})} Recv</p>
                             </td>
                             <td className="py-4 px-4 text-right">
                               <p className="font-medium text-sm text-red-500">₹{totalCost.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
-                              <p className="text-[10px] text-zinc-400 font-medium mt-0.5">Mat: ₹{proj.materialCost.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+                              <p className="text-[10px] text-zinc-400 font-medium mt-0.5">Mat: ₹{matCost.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
                             </td>
                             <td className="py-4 px-4 text-right">
                               <span className={`font-semibold text-sm ${margin >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
@@ -335,7 +352,7 @@ export default function Projects() {
                                 <button onClick={() => handleEditProject(proj)} title="Edit Project" className="px-2.5 py-1.5 bg-amber-50 text-[#B45309] hover:bg-[#B45309] hover:text-white border border-amber-200/60 rounded-lg font-semibold cursor-pointer text-[11px] uppercase tracking-wider transition-all">
                                   Edit
                                 </button>
-                                <button onClick={() => handleView(proj.name)} title="View Project" className="px-2.5 py-1.5 bg-zinc-50 text-zinc-600 hover:bg-zinc-200 border border-zinc-200 rounded-lg font-semibold cursor-pointer text-[11px] uppercase tracking-wider transition-all">
+                                <button onClick={() => handleView(proj.name || proj.projectName)} title="View Project" className="px-2.5 py-1.5 bg-zinc-50 text-zinc-600 hover:bg-zinc-200 border border-zinc-200 rounded-lg font-semibold cursor-pointer text-[11px] uppercase tracking-wider transition-all">
                                   View
                                 </button>
                               </div>
@@ -515,9 +532,10 @@ export default function Projects() {
             </button>
             <button 
               type="submit" 
-              className="px-8 py-3 bg-[#B45309] hover:bg-[#92400E] text-white font-semibold rounded-xl transition-all shadow-sm text-sm cursor-pointer"
+              disabled={submitting}
+              className="px-8 py-3 bg-[#B45309] hover:bg-[#92400E] text-white font-semibold rounded-xl transition-all shadow-sm text-sm cursor-pointer disabled:opacity-50"
             >
-              Save Project
+              {submitting ? 'Saving...' : 'Save Project'}
             </button>
           </div>
         </form>

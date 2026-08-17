@@ -10,6 +10,7 @@ import {
 export default function ProjectControl() {
   const [activeTab, setActiveTab] = useState('RA Bills');
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   
   const [projects, setProjects] = useState([]);
   const [subcontractors, setSubcontractors] = useState([]);
@@ -55,7 +56,7 @@ export default function ProjectControl() {
       setMilestones(ms || []);
       setChangeOrders(cos || []);
     } catch (e) {
-      console.warn("Ensure project control functions exist in db.js");
+      console.error("Error fetching project control records from cloud DB:", e);
       setProjects([]);
       setSubcontractors([]);
       setRaBills([]);
@@ -92,10 +93,10 @@ export default function ProjectControl() {
   const syncDocumentToVault = async (projectId, docName, category, fileUrl, notes) => {
     if (!fileUrl) return;
     try {
-      const selectedProj = projects.find(p => p.id === Number(projectId));
+      const selectedProj = projects.find(p => String(p.id || p._id) === String(projectId));
       await saveVaultDocument({
-        projectId: projectId ? Number(projectId) : '',
-        projectName: selectedProj ? selectedProj.name : 'General Project',
+        projectId: projectId ? (Number(projectId) || projectId) : '',
+        projectName: selectedProj ? (selectedProj.name || selectedProj.projectName) : 'General Project',
         documentName: docName,
         category: category,
         fileUrl: fileUrl,
@@ -119,6 +120,8 @@ export default function ProjectControl() {
 
     const payload = {
       ...raForm,
+      projectId: raForm.projectId ? (Number(raForm.projectId) || raForm.projectId) : '',
+      subcontractorId: raForm.subcontractorId ? (Number(raForm.subcontractorId) || raForm.subcontractorId) : '',
       grossAmount: gross,
       retentionAmount: retAmt,
       previousPaid: prev,
@@ -126,22 +129,28 @@ export default function ProjectControl() {
       workDoneDetails: { note: raForm.notes }
     };
 
-    await saveRaBill(payload);
+    setSubmitting(true);
+    try {
+      await saveRaBill(payload);
 
-    // Sync attachment to Document Vault
-    if (raForm.fileUrl) {
-      await syncDocumentToVault(
-        raForm.projectId, 
-        `RA Bill ${raForm.billNo}`, 
-        'Contracts & Legal', 
-        raForm.fileUrl, 
-        `Contractor RA Bill - ${raForm.notes}`
-      );
+      // Sync attachment to Document Vault
+      if (raForm.fileUrl) {
+        await syncDocumentToVault(
+          raForm.projectId, 
+          `RA Bill ${raForm.billNo}`, 
+          'Contracts & Legal', 
+          raForm.fileUrl, 
+          `Contractor RA Bill - ${raForm.notes}`
+        );
+      }
+
+      setIsRaModalOpen(false);
+      setRaForm({ projectId: '', subcontractorId: '', billNo: '', billDate: new Date().toISOString().split('T')[0], grossAmount: '', retentionPercent: 5, previousPaid: '', notes: '', fileUrl: '', fileName: '' });
+      await loadData();
+    } catch (err) {
+      alert("Failed to save RA Bill. Check DB connection.");
     }
-
-    setIsRaModalOpen(false);
-    setRaForm({ projectId: '', subcontractorId: '', billNo: '', billDate: new Date().toISOString().split('T')[0], grossAmount: '', retentionPercent: 5, previousPaid: '', notes: '', fileUrl: '', fileName: '' });
-    await loadData();
+    setSubmitting(false);
   };
 
   // Handle Milestone Save
@@ -149,26 +158,33 @@ export default function ProjectControl() {
     e.preventDefault();
     const payload = {
       ...milestoneForm,
+      projectId: milestoneForm.projectId ? (Number(milestoneForm.projectId) || milestoneForm.projectId) : '',
       percentage: parseFloat(milestoneForm.percentage) || 0,
       amount: parseFloat(milestoneForm.amount) || 0
     };
 
-    await saveMilestone(payload);
+    setSubmitting(true);
+    try {
+      await saveMilestone(payload);
 
-    // Sync attachment to Document Vault
-    if (milestoneForm.fileUrl) {
-      await syncDocumentToVault(
-        milestoneForm.projectId, 
-        `Milestone Approval - ${milestoneForm.stageName}`, 
-        'Client Approvals', 
-        milestoneForm.fileUrl, 
-        milestoneForm.notes
-      );
+      // Sync attachment to Document Vault
+      if (milestoneForm.fileUrl) {
+        await syncDocumentToVault(
+          milestoneForm.projectId, 
+          `Milestone Approval - ${milestoneForm.stageName}`, 
+          'Client Approvals', 
+          milestoneForm.fileUrl, 
+          milestoneForm.notes
+        );
+      }
+
+      setIsMilestoneModalOpen(false);
+      setMilestoneForm({ projectId: '', stageName: '', percentage: '', amount: '', dueDate: '', status: 'Pending', notes: '', fileUrl: '', fileName: '' });
+      await loadData();
+    } catch (err) {
+      alert("Failed to save Milestone.");
     }
-
-    setIsMilestoneModalOpen(false);
-    setMilestoneForm({ projectId: '', stageName: '', percentage: '', amount: '', dueDate: '', status: 'Pending', notes: '', fileUrl: '', fileName: '' });
-    await loadData();
+    setSubmitting(false);
   };
 
   // Handle Change Order Save
@@ -176,26 +192,33 @@ export default function ProjectControl() {
     e.preventDefault();
     const payload = {
       ...coForm,
+      projectId: coForm.projectId ? (Number(coForm.projectId) || coForm.projectId) : '',
       additionalCost: parseFloat(coForm.additionalCost) || 0,
       extraDays: parseInt(coForm.extraDays) || 0
     };
 
-    await saveChangeOrder(payload);
+    setSubmitting(true);
+    try {
+      await saveChangeOrder(payload);
 
-    // Sync attachment to Document Vault
-    if (coForm.fileUrl) {
-      await syncDocumentToVault(
-        coForm.projectId, 
-        `Change Order - ${coForm.title}`, 
-        'Client Approvals', 
-        coForm.fileUrl, 
-        coForm.description
-      );
+      // Sync attachment to Document Vault
+      if (coForm.fileUrl) {
+        await syncDocumentToVault(
+          coForm.projectId, 
+          `Change Order - ${coForm.title}`, 
+          'Client Approvals', 
+          coForm.fileUrl, 
+          coForm.description
+        );
+      }
+
+      setIsCoModalOpen(false);
+      setCoForm({ projectId: '', title: '', description: '', additionalCost: '', extraDays: 0, date: new Date().toISOString().split('T')[0], fileUrl: '', fileName: '' });
+      await loadData();
+    } catch (err) {
+      alert("Failed to save Change Order.");
     }
-
-    setIsCoModalOpen(false);
-    setCoForm({ projectId: '', title: '', description: '', additionalCost: '', extraDays: 0, date: new Date().toISOString().split('T')[0], fileUrl: '', fileName: '' });
-    await loadData();
+    setSubmitting(false);
   };
 
   const inputClass = "w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-white focus:outline-none focus:border-[#B45309] focus:ring-1 focus:ring-inset focus:ring-[#B45309] text-zinc-900 text-sm font-medium transition-all shadow-sm disabled:opacity-75 disabled:cursor-not-allowed";
@@ -218,7 +241,7 @@ export default function ProjectControl() {
             className={`${inputClass} !w-auto cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23B45309%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_0.8rem_center] bg-[length:1.25rem_1.25rem] pr-9 h-10`}
           >
             <option value="">All Projects Filter</option>
-            {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            {projects.map(p => <option key={p.id || p._id} value={p.id || p._id}>{p.name || p.projectName}</option>)}
           </select>
 
           {activeTab === 'RA Bills' && (
@@ -262,7 +285,7 @@ export default function ProjectControl() {
         {loading ? (
           <div className="py-20 text-center text-zinc-400 font-medium text-sm flex flex-col items-center justify-center space-y-3">
             <div className="w-10 h-10 border-4 border-zinc-200 border-t-[#B45309] rounded-full animate-spin"></div>
-            <p>Loading financial records...</p>
+            <p>Syncing financial records from cloud DB...</p>
           </div>
         ) : activeTab === 'RA Bills' ? (
           
@@ -406,7 +429,7 @@ export default function ProjectControl() {
                   <label className={labelClass}>Project Site <span className="text-red-500">*</span></label>
                   <select required value={raForm.projectId} onChange={e => setRaForm({...raForm, projectId: e.target.value})} className={`${inputClass} appearance-none cursor-pointer bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23B45309%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.25rem_1.25rem] pr-10`}>
                     <option value="">Select Project...</option>
-                    {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    {projects.map(p => <option key={p.id || p._id} value={p.id || p._id}>{p.name || p.projectName}</option>)}
                   </select>
                 </div>
 
@@ -414,7 +437,7 @@ export default function ProjectControl() {
                   <label className={labelClass}>Subcontractor <span className="text-red-500">*</span></label>
                   <select required value={raForm.subcontractorId} onChange={e => setRaForm({...raForm, subcontractorId: e.target.value})} className={`${inputClass} appearance-none cursor-pointer bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23B45309%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.25rem_1.25rem] pr-10`}>
                     <option value="">Select Worker...</option>
-                    {subcontractors.map(s => <option key={s.id} value={s.id}>{s.name} ({s.trade})</option>)}
+                    {subcontractors.map(s => <option key={s.id || s._id} value={s.id || s._id}>{s.name} ({s.trade})</option>)}
                   </select>
                 </div>
 
@@ -457,8 +480,8 @@ export default function ProjectControl() {
               <button type="button" onClick={() => setIsRaModalOpen(false)} className="px-5 py-2.5 bg-white border border-zinc-300 hover:bg-zinc-100 text-zinc-700 font-semibold rounded-xl text-sm transition-all cursor-pointer">
                 Cancel
               </button>
-              <button type="submit" form="raForm" className="px-6 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer">
-                Save RA Bill
+              <button type="submit" form="raForm" disabled={submitting} className="px-6 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer disabled:opacity-50">
+                {submitting ? 'Saving...' : 'Save RA Bill'}
               </button>
             </div>
 
@@ -487,7 +510,7 @@ export default function ProjectControl() {
                   <label className={labelClass}>Project Site <span className="text-red-500">*</span></label>
                   <select required value={milestoneForm.projectId} onChange={e => setMilestoneForm({...milestoneForm, projectId: e.target.value})} className={`${inputClass} appearance-none cursor-pointer bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23B45309%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.25rem_1.25rem] pr-10`}>
                     <option value="">Select Project...</option>
-                    {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    {projects.map(p => <option key={p.id || p._id} value={p.id || p._id}>{p.name || p.projectName}</option>)}
                   </select>
                 </div>
 
@@ -529,8 +552,8 @@ export default function ProjectControl() {
               <button type="button" onClick={() => setIsMilestoneModalOpen(false)} className="px-5 py-2.5 bg-white border border-zinc-300 hover:bg-zinc-100 text-zinc-700 font-semibold rounded-xl text-sm transition-all cursor-pointer">
                 Cancel
               </button>
-              <button type="submit" form="milestoneForm" className="px-6 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer">
-                Save Milestone
+              <button type="submit" form="milestoneForm" disabled={submitting} className="px-6 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer disabled:opacity-50">
+                {submitting ? 'Saving...' : 'Save Milestone'}
               </button>
             </div>
 
@@ -559,7 +582,7 @@ export default function ProjectControl() {
                   <label className={labelClass}>Project Site <span className="text-red-500">*</span></label>
                   <select required value={coForm.projectId} onChange={e => setCoForm({...coForm, projectId: e.target.value})} className={`${inputClass} appearance-none cursor-pointer bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23B45309%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.25rem_1.25rem] pr-10`}>
                     <option value="">Select Project...</option>
-                    {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    {projects.map(p => <option key={p.id || p._id} value={p.id || p._id}>{p.name || p.projectName}</option>)}
                   </select>
                 </div>
 
@@ -596,8 +619,8 @@ export default function ProjectControl() {
               <button type="button" onClick={() => setIsCoModalOpen(false)} className="px-5 py-2.5 bg-white border border-zinc-300 hover:bg-zinc-100 text-zinc-700 font-semibold rounded-xl text-sm transition-all cursor-pointer">
                 Cancel
               </button>
-              <button type="submit" form="coForm" className="px-6 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer">
-                Save Variation
+              <button type="submit" form="coForm" disabled={submitting} className="px-6 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer disabled:opacity-50">
+                {submitting ? 'Saving...' : 'Save Variation'}
               </button>
             </div>
 

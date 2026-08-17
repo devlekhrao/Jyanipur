@@ -3,6 +3,7 @@ import { getPettyCash, savePettyCash, deletePettyCash, getProjects } from '../db
 
 export default function PettyCash() {
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [transactions, setTransactions] = useState([]);
   const [projects, setProjects] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -20,7 +21,7 @@ export default function PettyCash() {
       setTransactions(txns || []);
       setProjects((projs || []).filter(p => p.status !== 'Completed'));
     } catch (e) {
-      console.warn("Ensure petty cash functions exist in db.js");
+      console.error("Error loading petty cash records from cloud DB:", e);
       setTransactions([]);
       setProjects([]);
     }
@@ -31,19 +32,27 @@ export default function PettyCash() {
 
   const handleSave = async (e) => {
     e.preventDefault();
-    const selectedProj = projects.find(p => String(p.id) === String(formData.projectId));
-    await savePettyCash({ 
-      ...formData, 
-      projectName: selectedProj ? selectedProj.name : 'Office / General',
-      amount: parseFloat(formData.amount) || 0 
-    });
-    setIsModalOpen(false);
-    setFormData({ projectId: '', date: new Date().toISOString().split('T')[0], type: 'Expense', amount: '', description: '', loggedBy: '' });
-    await loadData();
+    setSubmitting(true);
+    try {
+      const selectedProj = projects.find(p => String(p.id || p._id) === String(formData.projectId));
+      await savePettyCash({ 
+        ...formData, 
+        projectId: formData.projectId ? (Number(formData.projectId) || formData.projectId) : '',
+        projectName: selectedProj ? (selectedProj.name || selectedProj.projectName) : 'Office / General',
+        amount: parseFloat(formData.amount) || 0 
+      });
+      setIsModalOpen(false);
+      setFormData({ projectId: '', date: new Date().toISOString().split('T')[0], type: 'Expense', amount: '', description: '', loggedBy: '' });
+      await loadData();
+    } catch (err) {
+      alert("Failed to save petty cash transaction. Check DB connection.");
+    }
+    setSubmitting(false);
   };
 
   const handleDelete = async (id) => {
     if (window.confirm("Delete this transaction?")) {
+      setLoading(true);
       await deletePettyCash(id);
       await loadData();
     }
@@ -154,7 +163,7 @@ export default function PettyCash() {
             </thead>
             <tbody className="divide-y divide-zinc-100 text-sm">
               {loading ? (
-                <tr><td colSpan="6" className="py-12 text-center text-zinc-400 font-medium text-sm">Loading wallet...</td></tr>
+                <tr><td colSpan="6" className="py-12 text-center text-zinc-400 font-medium text-sm">Syncing wallet records with cloud DB...</td></tr>
               ) : filteredTxns.length === 0 ? (
                 <tr><td colSpan="6" className="py-12 text-center text-zinc-400 font-medium text-sm">No petty cash transactions found.</td></tr>
               ) : (
@@ -227,7 +236,7 @@ export default function PettyCash() {
                     className={`${inputClass} cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23B45309%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.25rem_1.25rem] pr-10`}
                   >
                     <option value="">Office / General</option>
-                    {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    {projects.map(p => <option key={p.id || p._id} value={p.id || p._id}>{p.name || p.projectName}</option>)}
                   </select>
                 </div>
 
@@ -247,8 +256,8 @@ export default function PettyCash() {
               <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 bg-white border border-zinc-300 hover:bg-zinc-100 text-zinc-700 font-semibold rounded-xl text-sm transition-all cursor-pointer">
                 Cancel
               </button>
-              <button type="submit" form="pettyForm" className={`px-6 py-2.5 text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer ${formData.type === 'Advance' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-[#B45309] hover:bg-[#92400E]'}`}>
-                Save {formData.type}
+              <button type="submit" form="pettyForm" disabled={submitting} className={`px-6 py-2.5 text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer disabled:opacity-50 ${formData.type === 'Advance' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-[#B45309] hover:bg-[#92400E]'}`}>
+                {submitting ? 'Saving...' : `Save ${formData.type}`}
               </button>
             </div>
 

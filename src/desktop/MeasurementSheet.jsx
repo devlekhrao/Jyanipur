@@ -3,6 +3,7 @@ import { getProjects, getMeasurementSheets, saveMeasurementSheet, deleteMeasurem
 
 export default function MeasurementSheet() {
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [projects, setProjects] = useState([]);
   const [sheets, setSheets] = useState([]);
   
@@ -26,7 +27,7 @@ export default function MeasurementSheet() {
       setProjects((fetchedProjects || []).filter(p => p.status !== 'Completed'));
       setSheets(fetchedSheets || []);
     } catch (e) {
-      console.warn("Ensure measurement sheet functions exist in db.js");
+      console.error("Error loading measurement sheets from cloud DB:", e);
       setProjects([]);
       setSheets([]);
     }
@@ -37,10 +38,14 @@ export default function MeasurementSheet() {
     loadData();
   }, []);
 
+  const createEmptyRow = () => ({
+    location: '', description: '', unit: 'SqFt', nos: '', l: '', w: '', h: '', deduction: '', total: 0, remarks: ''
+  });
+
   const openNewSheet = () => {
     setCurrentSheet({
       id: null,
-      projectId: projects.length > 0 ? projects[0].id : '',
+      projectId: projects.length > 0 ? (projects[0].id || projects[0]._id) : '',
       title: 'New Measurement Sheet',
       date: new Date().toISOString().split('T')[0],
       data: Array.from({ length: 15 }, () => createEmptyRow())
@@ -52,10 +57,6 @@ export default function MeasurementSheet() {
     setCurrentSheet(sheet);
     setIsEditorOpen(true);
   };
-
-  const createEmptyRow = () => ({
-    location: '', description: '', unit: 'SqFt', nos: '', l: '', w: '', h: '', deduction: '', total: 0, remarks: ''
-  });
 
   const addRows = (count = 5) => {
     const newRows = Array.from({ length: count }, () => createEmptyRow());
@@ -94,17 +95,28 @@ export default function MeasurementSheet() {
       row.location || row.description || row.l || row.w || row.total > 0
     );
     
+    setSubmitting(true);
     try {
-      await saveMeasurementSheet({ ...currentSheet, data: cleanedData });
+      const selectedProj = projects.find(p => String(p.id || p._id) === String(currentSheet.projectId));
+      const payload = {
+        ...currentSheet,
+        projectId: currentSheet.projectId ? (Number(currentSheet.projectId) || currentSheet.projectId) : '',
+        projectName: selectedProj ? (selectedProj.name || selectedProj.projectName) : 'General Site',
+        data: cleanedData
+      };
+
+      await saveMeasurementSheet(payload);
       setIsEditorOpen(false);
       await loadData();
     } catch (err) {
-      alert("Failed to save sheet.");
+      alert("Failed to save measurement sheet to cloud DB.");
     }
+    setSubmitting(false);
   };
 
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this sheet permanently?")) {
+      setLoading(true);
       await deleteMeasurementSheet(id);
       await loadData();
     }
@@ -133,7 +145,7 @@ export default function MeasurementSheet() {
               className={`${inputClass} !w-full md:!w-56 cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23B45309%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_0.8rem_center] bg-[length:1rem_1rem] pr-8`}
             >
               <option value="" disabled>Select Project Site</option>
-              {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              {projects.map(p => <option key={p.id || p._id} value={p.id || p._id}>{p.name || p.projectName}</option>)}
             </select>
             <input 
               type="text" 
@@ -153,8 +165,8 @@ export default function MeasurementSheet() {
             <div className="px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-sm font-bold whitespace-nowrap">
               Total Quantity: {grandTotal.toFixed(2)}
             </div>
-            <button onClick={handleSave} className="bg-[#B45309] hover:bg-[#92400E] text-white px-6 py-2.5 rounded-xl text-sm font-medium shadow-sm cursor-pointer transition-all w-full md:w-auto">
-              Save Sheet
+            <button onClick={handleSave} disabled={submitting} className="bg-[#B45309] hover:bg-[#92400E] text-white px-6 py-2.5 rounded-xl text-sm font-medium shadow-sm cursor-pointer transition-all w-full md:w-auto disabled:opacity-50">
+              {submitting ? 'Saving...' : 'Save Sheet'}
             </button>
           </div>
         </div>
@@ -233,7 +245,7 @@ export default function MeasurementSheet() {
         {loading ? (
           <div className="py-20 text-center text-zinc-400 font-medium text-sm flex flex-col items-center justify-center space-y-3">
             <div className="w-10 h-10 border-4 border-zinc-200 border-t-[#B45309] rounded-full animate-spin"></div>
-            <p>Loading spreadsheets...</p>
+            <p>Syncing spreadsheets with cloud DB...</p>
           </div>
         ) : sheets.length === 0 ? (
           <div className="py-20 text-center bg-white border border-dashed border-zinc-200 rounded-2xl">

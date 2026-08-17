@@ -5,6 +5,7 @@ export default function EmployeeExpenses() {
   const [loading, setLoading] = useState(true);
   const [expenses, setExpenses] = useState([]);
   const [employees, setEmployees] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
   
   const currentDate = new Date();
   const currentMonth = currentDate.getMonth() + 1;
@@ -28,7 +29,7 @@ export default function EmployeeExpenses() {
       setExpenses(expData || []);
       setEmployees((empData || []).filter(e => e.status === 'Active'));
     } catch (e) {
-      console.warn("Ensure employee expense functions exist in db.js");
+      console.error("Error fetching employee expenses from cloud DB:", e);
       setExpenses([]);
       setEmployees([]);
     }
@@ -69,7 +70,7 @@ export default function EmployeeExpenses() {
 
   // Helper to get employee name from ID
   const getEmpName = (id) => {
-    const emp = employees.find(e => e.empId === id);
+    const emp = employees.find(e => e.empId === id || String(e.id) === String(id));
     return emp ? emp.fullName : id;
   };
 
@@ -84,6 +85,7 @@ export default function EmployeeExpenses() {
       amount: parseFloat(newExp.amount) || 0
     };
 
+    setSubmitting(true);
     try {
       await saveEmployeeExpense(payload);
       await loadData();
@@ -91,10 +93,12 @@ export default function EmployeeExpenses() {
     } catch (err) {
       alert("Failed to save expense. Check DB connection.");
     }
+    setSubmitting(false);
   };
 
   const handleDelete = async (id) => {
     if (window.confirm("Delete this expense record?")) {
+      setLoading(true);
       await deleteEmployeeExpense(id);
       await loadData();
     }
@@ -198,7 +202,7 @@ export default function EmployeeExpenses() {
                     className={`${inputClass} cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23B45309%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_0.8rem_center] bg-[length:1rem_1rem] pr-8 font-semibold text-zinc-900`}
                   >
                     <option value="" disabled>Select Staff...</option>
-                    {employees.map(e => <option key={e.empId} value={e.empId}>{e.fullName} ({e.empId})</option>)}
+                    {employees.map(e => <option key={e.empId || e.id} value={e.empId || e.id}>{e.fullName} ({e.empId})</option>)}
                   </select>
                 </td>
                 <td className="py-3 px-3">
@@ -217,16 +221,16 @@ export default function EmployeeExpenses() {
                 <td className="py-3 px-3"><input type="text" placeholder="Bill no, item details..." value={newExp.description} onChange={e => setNewExp({...newExp, description: e.target.value})} className={inputClass} /></td>
                 <td className="py-3 px-3"><input type="number" step="any" placeholder="₹ 0.00" value={newExp.amount} onChange={e => setNewExp({...newExp, amount: e.target.value})} className={`${inputClass} text-right font-bold text-red-500`} /></td>
                 <td className="py-3 px-6 text-right">
-                  <button onClick={handleAddExpense} className="px-4 py-2 bg-[#B45309] hover:bg-[#92400E] text-white rounded-xl font-semibold text-xs transition-all shadow-sm cursor-pointer flex items-center justify-center gap-1 ml-auto">
+                  <button onClick={handleAddExpense} disabled={submitting} className="px-4 py-2 bg-[#B45309] hover:bg-[#92400E] text-white rounded-xl font-semibold text-xs transition-all shadow-sm cursor-pointer flex items-center justify-center gap-1 ml-auto disabled:opacity-50">
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
-                    Add
+                    {submitting ? 'Adding...' : 'Add'}
                   </button>
                 </td>
               </tr>
 
               {/* SAVED RECORDS */}
               {loading ? (
-                <tr><td colSpan="6" className="py-12 text-center text-zinc-400 font-medium text-sm">Loading records...</td></tr>
+                <tr><td colSpan="6" className="py-12 text-center text-zinc-400 font-medium text-sm">Syncing expense records with cloud DB...</td></tr>
               ) : monthlyExpenses.length === 0 ? (
                 <tr><td colSpan="6" className="py-12 text-center text-zinc-400 font-medium text-sm">No expenses found for this month. Use the top row above to add one.</td></tr>
               ) : (

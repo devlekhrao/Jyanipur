@@ -7,6 +7,7 @@ export default function SiteManager() {
   const [activeTab, setActiveTab] = useState('DPR'); // DPR, VAULT, SNAGS
   const [data, setData] = useState({ dprs: [], docs: [], snags: [] });
   const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   // Forms
   const [dprForm, setDprForm] = useState({ date: new Date().toISOString().split('T')[0], summary: '', materials: '', photoLink: '', loggedBy: '' });
@@ -14,7 +15,13 @@ export default function SiteManager() {
   const [snagForm, setSnagForm] = useState({ description: '', assignedTo: '', photoLink: '' });
 
   useEffect(() => {
-    getProjects().then(p => setProjects((p || []).filter(proj => proj.status !== 'Completed')));
+    getProjects().then(p => {
+      const activeList = (p || []).filter(proj => proj.status !== 'Completed');
+      setProjects(activeList);
+      if (activeList.length > 0 && !activeProject) {
+        setActiveProject(String(activeList[0].id || activeList[0]._id));
+      }
+    });
   }, []);
 
   useEffect(() => {
@@ -23,14 +30,19 @@ export default function SiteManager() {
       getSiteOperations(activeProject).then(d => { 
         setData(d || { dprs: [], docs: [], snags: [] }); 
         setLoading(false); 
-      }).catch(() => {
+      }).catch(err => {
+        console.error("Error fetching site operations from cloud DB:", err);
         setData({ dprs: [], docs: [], snags: [] });
         setLoading(false);
       });
     }
   }, [activeProject]);
 
-  const refresh = () => getSiteOperations(activeProject).then(d => setData(d || { dprs: [], docs: [], snags: [] }));
+  const refresh = () => {
+    if (activeProject) {
+      getSiteOperations(activeProject).then(d => setData(d || { dprs: [], docs: [], snags: [] }));
+    }
+  };
 
   const handleFileUpload = (e, formSetter) => {
     const file = e.target.files[0];
@@ -49,23 +61,50 @@ export default function SiteManager() {
 
   const handleDprSubmit = async (e) => {
     e.preventDefault();
-    await saveDPR({ ...dprForm, projectId: activeProject });
-    setDprForm({ date: new Date().toISOString().split('T')[0], summary: '', materials: '', photoLink: '', loggedBy: '' });
-    refresh();
+    setSubmitting(true);
+    try {
+      await saveDPR({ 
+        ...dprForm, 
+        projectId: Number(activeProject) || activeProject 
+      });
+      setDprForm({ date: new Date().toISOString().split('T')[0], summary: '', materials: '', photoLink: '', loggedBy: '' });
+      await refresh();
+    } catch (err) {
+      alert("Failed to submit DPR.");
+    }
+    setSubmitting(false);
   };
 
   const handleDocSubmit = async (e) => {
     e.preventDefault();
-    await saveDocument({ ...docForm, projectId: activeProject });
-    setDocForm({ title: '', docType: 'AutoCAD 2D', fileLink: '', uploadedBy: '' });
-    refresh();
+    setSubmitting(true);
+    try {
+      await saveDocument({ 
+        ...docForm, 
+        projectId: Number(activeProject) || activeProject 
+      });
+      setDocForm({ title: '', docType: 'AutoCAD 2D', fileLink: '', uploadedBy: '' });
+      await refresh();
+    } catch (err) {
+      alert("Failed to save site document.");
+    }
+    setSubmitting(false);
   };
 
   const handleSnagSubmit = async (e) => {
     e.preventDefault();
-    await saveSnag({ ...snagForm, projectId: activeProject });
-    setSnagForm({ description: '', assignedTo: '', photoLink: '' });
-    refresh();
+    setSubmitting(true);
+    try {
+      await saveSnag({ 
+        ...snagForm, 
+        projectId: Number(activeProject) || activeProject 
+      });
+      setSnagForm({ description: '', assignedTo: '', photoLink: '' });
+      await refresh();
+    } catch (err) {
+      alert("Failed to log snag.");
+    }
+    setSubmitting(false);
   };
 
   const inputClass = "w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-white focus:outline-none focus:border-[#B45309] focus:ring-1 focus:ring-inset focus:ring-[#B45309] text-zinc-900 text-sm font-medium transition-all shadow-sm disabled:opacity-75 disabled:cursor-not-allowed";
@@ -88,7 +127,7 @@ export default function SiteManager() {
               className={`${inputClass} cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23B45309%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.25rem_1.25rem] pr-10 font-semibold`}
             >
               <option value="" disabled>Select Project Site...</option>
-              {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              {projects.map(p => <option key={p.id || p._id} value={p.id || p._id}>{p.name || p.projectName}</option>)}
             </select>
           </div>
         </div>
@@ -96,7 +135,7 @@ export default function SiteManager() {
     );
   }
 
-  const selectedProjObj = projects.find(p => String(p.id) === String(activeProject));
+  const selectedProjObj = projects.find(p => String(p.id || p._id) === String(activeProject));
 
   return (
     <div className="w-full h-full flex flex-col" style={{ fontFamily: 'Poppins, sans-serif' }}>
@@ -112,7 +151,7 @@ export default function SiteManager() {
               onChange={e => setActiveProject(e.target.value)} 
               className="bg-amber-50 text-[#B45309] font-bold border border-amber-200/80 rounded-lg px-2.5 py-0.5 text-xs outline-none cursor-pointer"
             >
-              {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              {projects.map(p => <option key={p.id || p._id} value={p.id || p._id}>{p.name || p.projectName}</option>)}
             </select>
           </div>
         </div>
@@ -135,7 +174,7 @@ export default function SiteManager() {
       {loading ? (
         <div className="py-20 text-center text-zinc-400 font-medium text-sm flex flex-col items-center justify-center space-y-3 flex-1">
           <div className="w-10 h-10 border-4 border-zinc-200 border-t-[#B45309] rounded-full animate-spin"></div>
-          <p>Loading site records...</p>
+          <p>Syncing site records with cloud DB...</p>
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto grid grid-cols-1 lg:grid-cols-3 gap-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
@@ -149,17 +188,17 @@ export default function SiteManager() {
                 <div className="flex justify-between items-center">
                   <span className="text-xs font-bold text-[#B45309]">{d.date}</span>
                   <span className="text-[10px] font-semibold text-zinc-600 bg-zinc-100 border border-zinc-200 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                    Supervisor: {d.logged_by || 'Staff'}
+                    Supervisor: {d.logged_by || d.loggedBy || 'Staff'}
                   </span>
                 </div>
                 <p className="text-sm text-zinc-800 font-medium leading-relaxed mt-1">{d.summary}</p>
-                {d.materials_needed && (
+                {(d.materials_needed || d.materialsNeeded) && (
                   <p className="text-xs text-amber-700 font-semibold mt-1 flex items-center gap-1.5 bg-amber-50 border border-amber-200/60 p-2 rounded-lg">
-                    <span>⚠️ Materials Needed:</span> {d.materials_needed}
+                    <span>⚠️ Materials Needed:</span> {d.materials_needed || d.materialsNeeded}
                   </p>
                 )}
-                {d.photo_link && (
-                  <a href={d.photo_link} target="_blank" rel="noreferrer" className="text-xs text-[#B45309] font-semibold mt-2 hover:underline inline-flex items-center gap-1">
+                {(d.photo_link || d.photoLink) && (
+                  <a href={d.photo_link || d.photoLink} target="_blank" rel="noreferrer" className="text-xs text-[#B45309] font-semibold mt-2 hover:underline inline-flex items-center gap-1">
                     View Site Photos / Attachment &rarr;
                   </a>
                 )}
@@ -171,12 +210,12 @@ export default function SiteManager() {
               <div key={d.id} className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm flex justify-between items-center gap-4">
                 <div>
                   <span className="bg-amber-50 text-[#B45309] border border-amber-200/60 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider mb-1 inline-block">
-                    {d.doc_type}
+                    {d.doc_type || d.docType || d.category}
                   </span>
-                  <h4 className="text-sm font-semibold text-zinc-900">{d.title}</h4>
-                  <p className="text-xs text-zinc-400 font-medium mt-1">Uploaded {d.uploaded_at} by {d.uploaded_by}</p>
+                  <h4 className="text-sm font-semibold text-zinc-900">{d.title || d.documentName}</h4>
+                  <p className="text-xs text-zinc-400 font-medium mt-1">Uploaded {d.uploaded_at || d.uploadedAt} by {d.uploaded_by || d.uploadedBy || 'Staff'}</p>
                 </div>
-                <a href={d.file_link} target="_blank" rel="noreferrer" className="px-3 py-1.5 bg-amber-50 text-[#B45309] hover:bg-[#B45309] hover:text-white border border-amber-200/60 rounded-lg font-semibold cursor-pointer text-[11px] uppercase tracking-wider transition-all shrink-0">
+                <a href={d.file_link || d.fileUrl} target="_blank" rel="noreferrer" className="px-3 py-1.5 bg-amber-50 text-[#B45309] hover:bg-[#B45309] hover:text-white border border-amber-200/60 rounded-lg font-semibold cursor-pointer text-[11px] uppercase tracking-wider transition-all shrink-0">
                   Open File
                 </a>
               </div>
@@ -186,15 +225,18 @@ export default function SiteManager() {
             {activeTab === 'SNAGS' && data.snags?.map(s => (
               <div key={s.id} className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm flex justify-between items-center gap-4">
                 <div className="flex-1">
-                  <p className={`text-sm font-semibold ${s.status === 'Resolved' ? 'line-through text-zinc-400' : 'text-zinc-900'}`}>{s.description}</p>
+                  <p className={`text-sm font-semibold ${s.status === 'Resolved' ? 'line-through text-zinc-400' : 'text-zinc-900'}`}>{s.description || s.title}</p>
                   <div className="flex items-center gap-3 mt-2">
-                    <span className="text-xs font-medium text-zinc-500">Assignee: <strong className="text-zinc-800">{s.assigned_to || 'Unassigned'}</strong></span>
-                    {s.photo_link && <a href={s.photo_link} target="_blank" rel="noreferrer" className="text-xs text-[#B45309] font-semibold hover:underline">Photo Attachment</a>}
+                    <span className="text-xs font-medium text-zinc-500">Assignee: <strong className="text-zinc-800">{s.assigned_to || s.assignedTo || s.subcontractor || 'Unassigned'}</strong></span>
+                    {(s.photo_link || s.photoLink) && <a href={s.photo_link || s.photoLink} target="_blank" rel="noreferrer" className="text-xs text-[#B45309] font-semibold hover:underline">Photo Attachment</a>}
                   </div>
                 </div>
                 <select 
                   value={s.status || 'Pending'} 
-                  onChange={e => { updateSnagStatus(s.id, e.target.value); refresh(); }}
+                  onChange={async e => { 
+                    await updateSnagStatus(s.id, e.target.value); 
+                    refresh(); 
+                  }}
                   className={`appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23A1A1AA%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%223%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_0.6rem_center] bg-[length:0.8rem_0.8rem] pr-7 pl-3 py-1.5 rounded-full border outline-none cursor-pointer transition-all text-[10px] font-semibold uppercase tracking-wider ${
                     s.status === 'Resolved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-600 border-red-200'
                   }`}
@@ -236,8 +278,8 @@ export default function SiteManager() {
                   <label className={labelClass}>Supervisor Name</label>
                   <input type="text" required value={dprForm.loggedBy} onChange={e => setDprForm({...dprForm, loggedBy: e.target.value})} className={inputClass} placeholder="Site Incharge Name..." />
                 </div>
-                <button type="submit" className="w-full py-3 bg-[#B45309] hover:bg-[#92400E] text-white font-semibold rounded-xl text-sm transition-all shadow-sm cursor-pointer mt-2">
-                  Submit DPR
+                <button type="submit" disabled={submitting} className="w-full py-3 bg-[#B45309] hover:bg-[#92400E] text-white font-semibold rounded-xl text-sm transition-all shadow-sm cursor-pointer mt-2 disabled:opacity-50">
+                  {submitting ? 'Submitting...' : 'Submit DPR'}
                 </button>
               </form>
             )}
@@ -271,8 +313,8 @@ export default function SiteManager() {
                   <label className={labelClass}>Uploaded By</label>
                   <input type="text" required value={docForm.uploadedBy} onChange={e => setDocForm({...docForm, uploadedBy: e.target.value})} className={inputClass} placeholder="Your name..." />
                 </div>
-                <button type="submit" className="w-full py-3 bg-[#B45309] hover:bg-[#92400E] text-white font-semibold rounded-xl text-sm transition-all shadow-sm cursor-pointer mt-2">
-                  Save Document
+                <button type="submit" disabled={submitting} className="w-full py-3 bg-[#B45309] hover:bg-[#92400E] text-white font-semibold rounded-xl text-sm transition-all shadow-sm cursor-pointer mt-2 disabled:opacity-50">
+                  {submitting ? 'Saving...' : 'Save Document'}
                 </button>
               </form>
             )}
@@ -292,8 +334,8 @@ export default function SiteManager() {
                   <label className={labelClass}>Photo Attachment</label>
                   <input type="file" accept="image/*" onChange={e => handleFileUpload(e, setSnagForm)} className="w-full text-xs text-zinc-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#B45309] file:text-white hover:file:bg-[#92400E] cursor-pointer" />
                 </div>
-                <button type="submit" className="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl text-sm transition-all shadow-sm cursor-pointer mt-2">
-                  Add to Snag List
+                <button type="submit" disabled={submitting} className="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl text-sm transition-all shadow-sm cursor-pointer mt-2 disabled:opacity-50">
+                  {submitting ? 'Adding...' : 'Add to Snag List'}
                 </button>
               </form>
             )}

@@ -15,6 +15,7 @@ export default function DocumentVault() {
   // Modals
   const [isUploadOpen, setIsModalOpen] = useState(false);
   const [previewDoc, setPreviewDoc] = useState(null); // For inline PDF/Image viewer
+  const [submitting, setSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
     projectId: '', 
@@ -34,7 +35,7 @@ export default function DocumentVault() {
       setDocuments(docs || []);
       setProjects(projs || []);
     } catch (e) {
-      console.warn("Ensure getVaultDocuments and getProjects exist in db.js");
+      console.error("Error loading Vault documents from cloud DB:", e);
       setDocuments([]);
       setProjects([]);
     }
@@ -72,23 +73,29 @@ export default function DocumentVault() {
       return;
     }
     
-    // Attach project name for quick rendering
-    const selectedProj = projects.find(p => p.id === Number(formData.projectId));
-    const payload = {
-      ...formData,
-      projectId: formData.projectId ? Number(formData.projectId) : '',
-      projectName: selectedProj ? selectedProj.name : 'General Document',
-      uploadedAt: new Date().toISOString().split('T')[0]
-    };
+    setSubmitting(true);
+    try {
+      const selectedProj = projects.find(p => String(p.id || p._id) === String(formData.projectId));
+      const payload = {
+        ...formData,
+        projectId: formData.projectId ? Number(formData.projectId) || formData.projectId : '',
+        projectName: selectedProj ? (selectedProj.name || selectedProj.projectName) : 'General Document',
+        uploadedAt: new Date().toISOString().split('T')[0]
+      };
 
-    await saveVaultDocument(payload);
-    setIsModalOpen(false);
-    setFormData({ projectId: currentFolder !== 'ALL' ? currentFolder : '', documentName: '', category: '2D Drawings', fileUrl: '', fileType: 'PDF', notes: '' });
-    await loadData();
+      await saveVaultDocument(payload);
+      setIsModalOpen(false);
+      setFormData({ projectId: currentFolder !== 'ALL' ? currentFolder : '', documentName: '', category: '2D Drawings', fileUrl: '', fileType: 'PDF', notes: '' });
+      await loadData();
+    } catch (err) {
+      alert("Failed to save document to cloud vault.");
+    }
+    setSubmitting(false);
   };
 
   const handleDelete = async (id) => {
     if (window.confirm("Remove this document from the vault?")) {
+      setLoading(true);
       await deleteVaultDocument(id);
       await loadData();
     }
@@ -96,7 +103,7 @@ export default function DocumentVault() {
 
   // Filter Logic
   const filteredDocs = documents.filter(doc => {
-    const matchesFolder = currentFolder === 'ALL' || doc.projectId === Number(currentFolder);
+    const matchesFolder = currentFolder === 'ALL' || String(doc.projectId) === String(currentFolder);
     const matchesCategory = activeCategory === 'All' || doc.category === activeCategory;
     const matchesSearch = searchQuery.trim() === '' || 
       (doc.documentName && doc.documentName.toLowerCase().includes(searchQuery.toLowerCase())) ||
@@ -105,7 +112,7 @@ export default function DocumentVault() {
     return matchesFolder && matchesCategory && matchesSearch;
   });
 
-  const activeProjectObj = projects.find(p => p.id === Number(currentFolder));
+  const activeProjectObj = projects.find(p => String(p.id || p._id) === String(currentFolder));
 
   const inputClass = "w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-white focus:outline-none focus:border-[#B45309] focus:ring-1 focus:ring-inset focus:ring-[#B45309] text-zinc-900 text-sm font-medium transition-all disabled:opacity-75 disabled:cursor-not-allowed";
   const labelClass = "block text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5 ml-0.5";
@@ -216,23 +223,24 @@ export default function DocumentVault() {
         {loading ? (
           <div className="py-20 text-center text-zinc-400 font-medium text-sm flex flex-col items-center justify-center space-y-3">
             <div className="w-10 h-10 border-4 border-zinc-200 border-t-[#B45309] rounded-full animate-spin"></div>
-            <p>Loading Vault files...</p>
+            <p>Loading Vault files from cloud database...</p>
           </div>
         ) : (
           <div className="space-y-8 pb-10">
             
-            {/* 1. PROJECT FOLDERS SECTION (Visible when in root 'ALL' folder) */}
+            {/* 1. PROJECT FOLDERS SECTION */}
             {currentFolder === 'ALL' && activeCategory === 'All' && searchQuery === '' && (
               <div>
                 <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-3">Project Folders</h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                   {projects.map(p => {
-                    const docCount = documents.filter(d => d.projectId === p.id).length;
+                    const pId = p.id || p._id;
+                    const docCount = documents.filter(d => String(d.projectId) === String(pId)).length;
                     
                     return (
                       <div 
-                        key={p.id} 
-                        onClick={() => setCurrentFolder(p.id)}
+                        key={pId} 
+                        onClick={() => setCurrentFolder(pId)}
                         className="bg-white border border-zinc-200 hover:border-[#B45309]/50 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
                       >
                         <div className="flex justify-between items-start mb-3">
@@ -246,7 +254,7 @@ export default function DocumentVault() {
                           </span>
                         </div>
                         <div>
-                          <h4 className="font-semibold text-zinc-900 text-sm truncate group-hover:text-[#B45309] transition-colors">{p.name}</h4>
+                          <h4 className="font-semibold text-zinc-900 text-sm truncate group-hover:text-[#B45309] transition-colors">{p.name || p.projectName}</h4>
                           <p className="text-[11px] text-zinc-400 font-medium truncate mt-0.5">{p.clientName || 'General Project'}</p>
                         </div>
                       </div>
@@ -260,7 +268,7 @@ export default function DocumentVault() {
             <div>
               <div className="flex justify-between items-center mb-3">
                 <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
-                  {currentFolder === 'ALL' ? 'All Files & Drawings' : `${activeProjectObj?.name} Files`}
+                  {currentFolder === 'ALL' ? 'All Files & Drawings' : `${activeProjectObj?.name || 'Project'} Files`}
                 </h3>
                 <span className="text-xs text-zinc-400 font-medium">{filteredDocs.length} items found</span>
               </div>
@@ -445,7 +453,7 @@ export default function DocumentVault() {
                     className={`${inputClass} cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23B45309%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.25rem_1.25rem] pr-10`}
                   >
                     <option value="">General Company Document</option>
-                    {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    {projects.map(p => <option key={p.id || p._id} value={p.id || p._id}>{p.name || p.projectName}</option>)}
                   </select>
                 </div>
                 
@@ -491,8 +499,8 @@ export default function DocumentVault() {
               <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 bg-white border border-zinc-300 hover:bg-zinc-100 text-zinc-700 font-semibold rounded-xl text-sm transition-all cursor-pointer">
                 Cancel
               </button>
-              <button type="submit" form="uploadForm" className="px-6 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer">
-                Save to Vault
+              <button type="submit" form="uploadForm" disabled={submitting} className="px-6 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer disabled:opacity-50">
+                {submitting ? 'Saving to Vault...' : 'Save to Vault'}
               </button>
             </div>
 

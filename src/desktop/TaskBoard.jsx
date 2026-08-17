@@ -4,6 +4,7 @@ import { exportToCSV } from '../utils';
 
 export default function TaskBoard() {
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [tasks, setTasks] = useState([]);
   const [projects, setProjects] = useState([]);
   const [employees, setEmployees] = useState([]);
@@ -21,7 +22,7 @@ export default function TaskBoard() {
       setProjects((p || []).filter(proj => proj.status !== 'Completed'));
       setEmployees((e || []).filter(emp => emp.status === 'Active'));
     } catch (err) {
-      console.warn("Ensure task functions exist in db.js");
+      console.error("Error loading tasks from cloud DB:", err);
       setTasks([]);
       setProjects([]);
       setEmployees([]);
@@ -33,19 +34,37 @@ export default function TaskBoard() {
 
   const handleSave = async (e) => {
     e.preventDefault();
-    await saveTask(formData);
-    setIsModalOpen(false);
-    setFormData({ projectId: '', title: '', description: '', status: 'To Do', dueDate: new Date().toISOString().split('T')[0], assignedTo: '' });
-    await loadData();
+    if (!formData.title) return alert("Task title is required.");
+
+    setSubmitting(true);
+    try {
+      const selectedProj = projects.find(p => String(p.id || p._id) === String(formData.projectId));
+      await saveTask({
+        ...formData,
+        projectId: formData.projectId ? (Number(formData.projectId) || formData.projectId) : '',
+        projectName: selectedProj ? (selectedProj.name || selectedProj.projectName) : 'General Office'
+      });
+      setIsModalOpen(false);
+      setFormData({ projectId: '', title: '', description: '', status: 'To Do', dueDate: new Date().toISOString().split('T')[0], assignedTo: '' });
+      await loadData();
+    } catch (err) {
+      alert("Failed to save task to cloud database.");
+    }
+    setSubmitting(false);
   };
 
   const handleStatusMove = async (id, newStatus) => {
-    await updateTaskStatus(id, newStatus);
-    await loadData();
+    try {
+      await updateTaskStatus(id, newStatus);
+      await loadData();
+    } catch (err) {
+      console.error("Failed to move task status:", err);
+    }
   };
 
   const handleDelete = async (id) => {
     if (window.confirm("Delete this task?")) {
+      setLoading(true);
       await deleteTask(id);
       await loadData();
     }
@@ -64,11 +83,11 @@ export default function TaskBoard() {
 
   const columns = ['To Do', 'In Progress', 'Done'];
 
-  const inputClass = "w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-white focus:outline-none focus:border-[#B45309] focus:ring-1 focus:ring-inset focus:ring-[#B45309] text-zinc-900 text-sm font-medium transition-all shadow-sm";
+  const inputClass = "w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-white focus:outline-none focus:border-[#B45309] focus:ring-1 focus:ring-inset focus:ring-[#B45309] text-zinc-900 text-sm font-medium transition-all shadow-sm disabled:opacity-75 disabled:cursor-not-allowed";
   const labelClass = "block text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5 ml-0.5";
 
   return (
-    <div className="w-full h-full flex flex-col">
+    <div className="w-full h-full flex flex-col" style={{ fontFamily: 'Poppins, sans-serif' }}>
       
       {/* HEADER CONTROLS */}
       <div className="flex justify-between items-center pb-5 mb-6 border-b border-zinc-200 shrink-0 print:hidden">
@@ -102,7 +121,7 @@ export default function TaskBoard() {
       {loading ? (
         <div className="py-20 text-center text-zinc-400 font-medium text-xs flex-1 flex flex-col items-center justify-center space-y-3">
           <div className="w-10 h-10 border-4 border-zinc-200 border-t-[#B45309] rounded-full animate-spin"></div>
-          <p>Loading board...</p>
+          <p>Syncing task board from cloud DB...</p>
         </div>
       ) : (
         <div className="flex w-full gap-5 flex-1 min-h-0 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] print:block">
@@ -126,7 +145,7 @@ export default function TaskBoard() {
               {/* Column Body */}
               <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 {tasks.filter(t => t.status === col).map(task => {
-                  const isOverdue = new Date(task.dueDate) < new Date() && task.status !== 'Done';
+                  const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'Done';
                   
                   return (
                     <div key={task.id} className="bg-white border border-zinc-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-[#B45309]/30 transition-all group relative print:border-b print:shadow-none print:rounded-none print:p-2 flex flex-col">
@@ -148,12 +167,14 @@ export default function TaskBoard() {
                       {/* Footer Metadata & Status */}
                       <div className="flex justify-between items-end mt-auto pt-3 border-t border-zinc-100">
                         <div className="flex flex-col gap-1.5">
-                          <span className={`flex items-center gap-1.5 text-[10px] font-bold px-2 py-1 rounded w-fit ${
-                            isOverdue ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-zinc-50 text-zinc-500 border border-zinc-100'
-                          }`}>
-                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                            {task.dueDate}
-                          </span>
+                          {task.dueDate && (
+                            <span className={`flex items-center gap-1.5 text-[10px] font-bold px-2 py-1 rounded w-fit ${
+                              isOverdue ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-zinc-50 text-zinc-500 border border-zinc-100'
+                            }`}>
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                              {task.dueDate}
+                            </span>
+                          )}
                           <span className="text-[10px] font-medium text-zinc-500 flex items-center gap-1.5 px-1">
                             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                             {task.assignedTo || 'Unassigned'}
@@ -161,7 +182,7 @@ export default function TaskBoard() {
                         </div>
                         
                         <select 
-                          value={task.status} 
+                          value={task.status || 'To Do'} 
                           onChange={(e) => handleStatusMove(task.id, e.target.value)}
                           className={`appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23A1A1AA%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%223%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_0.4rem_center] bg-[length:0.6rem_0.6rem] pr-6 pl-2 py-1 rounded text-[9px] font-bold uppercase tracking-wider border outline-none cursor-pointer transition-all print:hidden ${
                             task.status === 'Done' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' :
@@ -204,7 +225,7 @@ export default function TaskBoard() {
                   <label className={labelClass}>Project Site</label>
                   <select value={formData.projectId} onChange={e => setFormData({...formData, projectId: e.target.value})} className={`${inputClass} appearance-none cursor-pointer bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23B45309%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.25rem_1.25rem] pr-10`}>
                     <option value="">Office / General Admin</option>
-                    {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    {projects.map(p => <option key={p.id || p._id} value={p.id || p._id}>{p.name || p.projectName}</option>)}
                   </select>
                 </div>
                 <div>
@@ -224,7 +245,7 @@ export default function TaskBoard() {
                     <label className={labelClass}>Assign To</label>
                     <select value={formData.assignedTo} onChange={e => setFormData({...formData, assignedTo: e.target.value})} className={`${inputClass} appearance-none cursor-pointer bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23B45309%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.25rem_1.25rem] pr-10`}>
                       <option value="">Select Staff...</option>
-                      {employees.map(emp => <option key={emp.id} value={emp.fullName}>{emp.fullName}</option>)}
+                      {employees.map(emp => <option key={emp.id || emp._id} value={emp.fullName}>{emp.fullName}</option>)}
                     </select>
                   </div>
                 </div>
@@ -236,8 +257,8 @@ export default function TaskBoard() {
               <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 bg-white border border-zinc-300 hover:bg-zinc-100 text-zinc-700 font-semibold rounded-xl text-sm transition-all cursor-pointer">
                 Cancel
               </button>
-              <button type="submit" form="taskForm" className="px-6 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer">
-                Save Task
+              <button type="submit" form="taskForm" disabled={submitting} className="px-6 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer disabled:opacity-50">
+                {submitting ? 'Saving...' : 'Save Task'}
               </button>
             </div>
 

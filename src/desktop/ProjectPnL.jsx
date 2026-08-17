@@ -8,7 +8,13 @@ export default function ProjectPnL() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    getProjects().then(p => setProjects(p || []));
+    getProjects().then(p => {
+      const activeList = p || [];
+      setProjects(activeList);
+      if (activeList.length > 0 && !activeProject) {
+        setActiveProject(String(activeList[0].id || activeList[0]._id));
+      }
+    });
   }, []);
 
   useEffect(() => {
@@ -18,7 +24,7 @@ export default function ProjectPnL() {
         setPnLData(data);
         setLoading(false);
       }).catch(err => {
-        console.warn("Ensure getProjectPnL is implemented in db.js");
+        console.error("Error fetching P&L telemetry from cloud DB:", err);
         setPnLData(null);
         setLoading(false);
       });
@@ -44,7 +50,7 @@ export default function ProjectPnL() {
               className={`${inputClass} appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23B45309%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.25rem_1.25rem] pr-10 font-semibold`}
             >
               <option value="" disabled>Select Project Site...</option>
-              {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              {projects.map(p => <option key={p.id || p._id} value={p.id || p._id}>{p.name || p.projectName}</option>)}
             </select>
           </div>
         </div>
@@ -66,7 +72,7 @@ export default function ProjectPnL() {
               onChange={e => setActiveProject(e.target.value)} 
               className="bg-amber-50 text-[#B45309] font-bold border border-amber-200/80 rounded-lg px-2.5 py-0.5 text-xs outline-none cursor-pointer"
             >
-              {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              {projects.map(p => <option key={p.id || p._id} value={p.id || p._id}>{p.name || p.projectName}</option>)}
             </select>
           </div>
         </div>
@@ -82,7 +88,7 @@ export default function ProjectPnL() {
       {loading || !pnlData ? (
         <div className="py-20 text-center text-zinc-400 font-medium text-sm flex flex-col items-center justify-center space-y-3 flex-1">
           <div className="w-10 h-10 border-4 border-zinc-200 border-t-[#B45309] rounded-full animate-spin"></div>
-          <p>Crunching financial numbers...</p>
+          <p>Crunching financial numbers from cloud database...</p>
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto space-y-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">

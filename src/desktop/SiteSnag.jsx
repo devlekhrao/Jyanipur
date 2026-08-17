@@ -4,6 +4,7 @@ import { sendWhatsAppMessage } from '../WhatsAppHelper';
 
 export default function SiteSnag({ companySettings = {} }) {
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [snags, setSnags] = useState([]);
   const [projects, setProjects] = useState([]);
   const [subcontractors, setSubcontractors] = useState([]);
@@ -24,7 +25,7 @@ export default function SiteSnag({ companySettings = {} }) {
       setProjects(projData || []);
       setSubcontractors(subData || []);
     } catch (e) {
-      console.warn("Ensure snag functions exist in db.js");
+      console.error("Error loading quality snags from cloud DB:", e);
       setSnags([]);
       setProjects([]);
       setSubcontractors([]);
@@ -51,19 +52,34 @@ export default function SiteSnag({ companySettings = {} }) {
       alert("Please select a project site.");
       return;
     }
-    await saveSnag(formData);
-    setIsModalOpen(false);
-    setFormData({ projectId: '', title: '', description: '', subcontractor: '', priority: 'Medium', status: 'Open', photoUrl: '' });
-    await loadData();
+
+    setSubmitting(true);
+    try {
+      await saveSnag({
+        ...formData,
+        projectId: Number(formData.projectId) || formData.projectId
+      });
+      setIsModalOpen(false);
+      setFormData({ projectId: '', title: '', description: '', subcontractor: '', priority: 'Medium', status: 'Open', photoUrl: '' });
+      await loadData();
+    } catch (err) {
+      alert("Failed to save snag to cloud database.");
+    }
+    setSubmitting(false);
   };
 
   const handleStatusChange = async (id, newStatus) => {
-    await updateSnagStatus(id, newStatus);
-    await loadData();
+    try {
+      await updateSnagStatus(id, newStatus);
+      await loadData();
+    } catch (err) {
+      console.error("Failed to update snag status:", err);
+    }
   };
 
   const handleDelete = async (id) => {
     if (window.confirm("Delete this defect snag?")) {
+      setLoading(true);
       await deleteSnag(id);
       await loadData();
     }
@@ -167,7 +183,7 @@ export default function SiteSnag({ companySettings = {} }) {
             className="bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-800 outline-none cursor-pointer shadow-sm appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23B45309%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_0.8rem_center] bg-[length:1rem_1rem] pr-8"
           >
             <option value="All">All Sites</option>
-            {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            {projects.map(p => <option key={p.id || p._id} value={p.id || p._id}>{p.name || p.projectName}</option>)}
           </select>
         </div>
       </div>
@@ -176,7 +192,7 @@ export default function SiteSnag({ companySettings = {} }) {
       {loading ? (
         <div className="py-20 text-center text-zinc-400 font-medium text-sm flex flex-col items-center justify-center space-y-3 flex-1">
           <div className="w-10 h-10 border-4 border-zinc-200 border-t-[#B45309] rounded-full animate-spin"></div>
-          <p>Loading quality defects...</p>
+          <p>Syncing quality defects from cloud DB...</p>
         </div>
       ) : filteredSnags.length === 0 ? (
         <div className="bg-white border border-dashed border-zinc-200 rounded-2xl p-12 text-center text-zinc-400 text-sm font-medium flex-1 flex items-center justify-center">
@@ -209,9 +225,9 @@ export default function SiteSnag({ companySettings = {} }) {
                 <h4 className="font-bold text-zinc-900 text-base mb-1">{snag.title}</h4>
                 {snag.description && <p className="text-xs text-zinc-500 mb-3 leading-relaxed">{snag.description}</p>}
 
-                {snag.photoUrl && (
+                {(snag.photoUrl || snag.photo_link) && (
                   <div className="mb-4 rounded-xl overflow-hidden border border-zinc-200 h-36 bg-zinc-50 flex items-center justify-center">
-                    <img src={snag.photoUrl} alt="Snag Preview" className="w-full h-full object-cover" />
+                    <img src={snag.photoUrl || snag.photo_link} alt="Snag Preview" className="w-full h-full object-cover" />
                   </div>
                 )}
               </div>
@@ -219,7 +235,7 @@ export default function SiteSnag({ companySettings = {} }) {
               <div className="pt-3 border-t border-zinc-100 space-y-3 mt-2">
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-[10px] font-semibold text-zinc-400 uppercase">Assigned Worker:</span>
-                  <span className="font-semibold text-zinc-800">{snag.subcontractor || 'Unassigned'}</span>
+                  <span className="font-semibold text-zinc-800">{snag.subcontractor || snag.assignedTo || 'Unassigned'}</span>
                 </div>
 
                 <div className="flex justify-between items-center gap-2 print:hidden">
@@ -273,7 +289,7 @@ export default function SiteSnag({ companySettings = {} }) {
                     className={`${inputClass} cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23B45309%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.25rem_1.25rem] pr-10`}
                   >
                     <option value="" disabled>Select Project Site...</option>
-                    {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    {projects.map(p => <option key={p.id || p._id} value={p.id || p._id}>{p.name || p.projectName}</option>)}
                   </select>
                 </div>
 
@@ -296,7 +312,7 @@ export default function SiteSnag({ companySettings = {} }) {
                       className={`${inputClass} cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23B45309%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.25rem_1.25rem] pr-10`}
                     >
                       <option value="">Select Trade Worker...</option>
-                      {subcontractors.map(s => <option key={s.id} value={s.name}>{s.name} ({s.trade})</option>)}
+                      {subcontractors.map(s => <option key={s.id || s._id} value={s.name}>{s.name} ({s.trade})</option>)}
                     </select>
                   </div>
                   <div>
@@ -324,8 +340,8 @@ export default function SiteSnag({ companySettings = {} }) {
               <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 bg-white border border-zinc-300 hover:bg-zinc-100 text-zinc-700 font-semibold rounded-xl text-sm transition-all cursor-pointer">
                 Cancel
               </button>
-              <button type="submit" form="snagForm" className="px-6 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer">
-                Save Defect Snag
+              <button type="submit" form="snagForm" disabled={submitting} className="px-6 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer disabled:opacity-50">
+                {submitting ? 'Saving...' : 'Save Defect Snag'}
               </button>
             </div>
 

@@ -3,18 +3,19 @@ import { getTools, saveTool, updateToolStatus, deleteTool, getEmployees, getProj
 
 export default function Tools() {
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [tools, setTools] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [projects, setProjects] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     id: null, name: '', category: 'Power Tool', serialNumber: '', purchasePrice: '', purchaseDate: new Date().toISOString().split('T')[0]
   });
-  
+
   const [checkoutData, setCheckoutData] = useState({
     toolId: null, status: 'Checked Out', assignedTo: '', location: ''
   });
@@ -27,7 +28,7 @@ export default function Tools() {
       setEmployees((e || []).filter(emp => emp.status === 'Active'));
       setProjects((p || []).filter(proj => proj.status !== 'Completed'));
     } catch (err) {
-      console.warn("Ensure tool functions exist in db.js");
+      console.error("Error loading tools and assets from cloud DB:", err);
       setTools([]);
       setEmployees([]);
       setProjects([]);
@@ -41,17 +42,34 @@ export default function Tools() {
 
   const handleSave = async (e) => {
     e.preventDefault();
-    await saveTool({ ...formData, purchasePrice: parseFloat(formData.purchasePrice) || 0 });
-    setIsModalOpen(false);
-    setFormData({ id: null, name: '', category: 'Power Tool', serialNumber: '', purchasePrice: '', purchaseDate: new Date().toISOString().split('T')[0] });
-    await loadData();
+    if (!formData.name) return alert("Tool name required.");
+
+    setSubmitting(true);
+    try {
+      await saveTool({ 
+        ...formData, 
+        purchasePrice: parseFloat(formData.purchasePrice) || 0 
+      });
+      setIsModalOpen(false);
+      setFormData({ id: null, name: '', category: 'Power Tool', serialNumber: '', purchasePrice: '', purchaseDate: new Date().toISOString().split('T')[0] });
+      await loadData();
+    } catch (err) {
+      alert("Failed to save asset.");
+    }
+    setSubmitting(false);
   };
 
   const handleCheckout = async (e) => {
     e.preventDefault();
-    await updateToolStatus(checkoutData.toolId, checkoutData.status, checkoutData.assignedTo, checkoutData.location);
-    setIsCheckoutModalOpen(false);
-    await loadData();
+    setSubmitting(true);
+    try {
+      await updateToolStatus(checkoutData.toolId, checkoutData.status, checkoutData.assignedTo, checkoutData.location);
+      setIsCheckoutModalOpen(false);
+      await loadData();
+    } catch (err) {
+      alert("Failed to update checkout status.");
+    }
+    setSubmitting(false);
   };
 
   const openCheckout = (tool) => {
@@ -62,12 +80,14 @@ export default function Tools() {
   };
 
   const markAvailable = async (id) => {
+    setLoading(true);
     await updateToolStatus(id, 'Available', null, null);
     await loadData();
   };
 
   const handleDelete = async (id) => {
     if (window.confirm("Permanently remove this asset?")) {
+      setLoading(true);
       await deleteTool(id);
       await loadData();
     }
@@ -83,7 +103,7 @@ export default function Tools() {
 
   return (
     <div className="w-full h-full flex flex-col" style={{ fontFamily: 'Poppins, sans-serif' }}>
-      
+
       {/* HEADER & CONTROLS */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center pb-5 mb-6 border-b border-zinc-200 shrink-0 gap-4">
         <div>
@@ -146,7 +166,7 @@ export default function Tools() {
             </thead>
             <tbody className="divide-y divide-zinc-100 text-sm">
               {loading ? (
-                <tr><td colSpan="5" className="py-12 text-center text-zinc-400 font-medium text-sm">Loading assets...</td></tr>
+                <tr><td colSpan="5" className="py-12 text-center text-zinc-400 font-medium text-sm">Syncing assets with cloud DB...</td></tr>
               ) : filteredTools.length === 0 ? (
                 <tr><td colSpan="5" className="py-12 text-center text-zinc-400 font-medium text-sm">No tools found. Click "+ Add New Asset" above.</td></tr>
               ) : (
@@ -206,7 +226,7 @@ export default function Tools() {
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
           <div className="bg-white w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-            
+
             <div className="px-6 py-5 border-b border-zinc-200 flex justify-between items-center bg-zinc-50 shrink-0">
               <div>
                 <h2 className="text-xl font-semibold text-zinc-900">Add Asset</h2>
@@ -261,8 +281,8 @@ export default function Tools() {
               <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 bg-white border border-zinc-300 hover:bg-zinc-100 text-zinc-700 font-semibold rounded-xl text-sm transition-all cursor-pointer">
                 Cancel
               </button>
-              <button type="submit" form="toolForm" className="px-6 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer">
-                Save Asset
+              <button type="submit" form="toolForm" disabled={submitting} className="px-6 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer disabled:opacity-50">
+                {submitting ? 'Saving...' : 'Save Asset'}
               </button>
             </div>
 
@@ -274,7 +294,7 @@ export default function Tools() {
       {isCheckoutModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
           <div className="bg-white w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-            
+
             <div className="px-6 py-5 border-b border-zinc-200 flex justify-between items-center bg-zinc-50 shrink-0">
               <div>
                 <h2 className="text-xl font-semibold text-zinc-900">Check Out Tool</h2>
@@ -311,7 +331,7 @@ export default function Tools() {
                         className={`${inputClass} cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23B45309%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.25rem_1.25rem] pr-10`}
                       >
                         <option value="" disabled>Select Staff...</option>
-                        {employees.map(emp => <option key={emp.id} value={emp.fullName}>{emp.fullName}</option>)}
+                        {employees.map(emp => <option key={emp.id || emp._id} value={emp.fullName}>{emp.fullName}</option>)}
                       </select>
                     </div>
 
@@ -324,7 +344,7 @@ export default function Tools() {
                         className={`${inputClass} cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23B45309%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.25rem_1.25rem] pr-10`}
                       >
                         <option value="" disabled>Select Site...</option>
-                        {projects.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+                        {projects.map(p => <option key={p.id || p._id} value={p.name || p.projectName}>{p.name || p.projectName}</option>)}
                       </select>
                     </div>
                   </>
@@ -336,8 +356,8 @@ export default function Tools() {
               <button type="button" onClick={() => setIsCheckoutModalOpen(false)} className="px-5 py-2.5 bg-white border border-zinc-300 hover:bg-zinc-100 text-zinc-700 font-semibold rounded-xl text-sm transition-all cursor-pointer">
                 Cancel
               </button>
-              <button type="submit" form="checkoutForm" className="px-6 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer">
-                Update Status
+              <button type="submit" form="checkoutForm" disabled={submitting} className="px-6 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer disabled:opacity-50">
+                {submitting ? 'Updating...' : 'Update Status'}
               </button>
             </div>
 

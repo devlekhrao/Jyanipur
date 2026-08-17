@@ -32,7 +32,7 @@ export default function EmployeeAttendance({ companySettings = {} }) {
         setMonthlyAttendance(monthAtt || {});
       }
     } catch (e) {
-      console.warn("Ensure attendance functions exist in db.js");
+      console.error("Error loading attendance data from cloud database:", e);
     }
     setLoading(false);
   };
@@ -104,6 +104,7 @@ export default function EmployeeAttendance({ companySettings = {} }) {
       status: 'Active'
     };
 
+    setLoading(true);
     try {
       await saveEmployee(createdEmp);
       await loadData();
@@ -116,6 +117,7 @@ export default function EmployeeAttendance({ companySettings = {} }) {
       setCurrentView('directory');
     } catch (err) {
       alert('Failed to register employee. Check DB connection.');
+      setLoading(false);
     }
   };
 
@@ -234,7 +236,7 @@ export default function EmployeeAttendance({ companySettings = {} }) {
                 </thead>
                 <tbody className="divide-y divide-zinc-100 text-sm">
                   {loading ? (
-                    <tr><td colSpan="4" className="text-center py-12 text-zinc-400 font-medium">Loading staff data...</td></tr>
+                    <tr><td colSpan="4" className="text-center py-12 text-zinc-400 font-medium">Syncing attendance with cloud database...</td></tr>
                   ) : employees.length === 0 ? (
                     <tr><td colSpan="4" className="text-center py-12 text-zinc-400 font-medium">No staff registered yet.</td></tr>
                   ) : (
@@ -348,7 +350,7 @@ export default function EmployeeAttendance({ companySettings = {} }) {
                 </thead>
                 <tbody className="divide-y divide-zinc-100 text-sm">
                   {loading ? (
-                    <tr><td colSpan={daysArray.length + 1} className="text-center py-12 text-zinc-400 font-medium">Loading Master Register...</td></tr>
+                    <tr><td colSpan={daysArray.length + 1} className="text-center py-12 text-zinc-400 font-medium">Syncing Master Register from cloud DB...</td></tr>
                   ) : employees.map(emp => {
                     const empRecord = monthlyAttendance[emp.id] || {};
                     
@@ -383,7 +385,7 @@ export default function EmployeeAttendance({ companySettings = {} }) {
                           );
                         })}
                       </tr>
-                    )
+                    );
                   })}
                 </tbody>
               </table>
@@ -543,8 +545,8 @@ export default function EmployeeAttendance({ companySettings = {} }) {
               <button type="button" onClick={() => setCurrentView('monthly')} className="px-5 py-2.5 bg-white border border-zinc-300 hover:bg-zinc-100 text-zinc-700 font-semibold rounded-xl text-sm transition-all cursor-pointer">
                 Cancel
               </button>
-              <button type="submit" className="px-6 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer">
-                Complete Registration
+              <button type="submit" disabled={loading} className="px-6 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer disabled:opacity-50">
+                {loading ? 'Registering...' : 'Complete Registration'}
               </button>
             </div>
           </form>

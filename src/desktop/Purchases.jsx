@@ -37,9 +37,14 @@ function numberToWords(num) {
 }
 
 export default function Purchases({ companySettings = {} }) {
-  const [currentView, setCurrentView] = useState('list');
-  const [editingId, setEditingId] = useState(null);
+  const [currentView, setCurrentView] = useState(() => sessionStorage.getItem('draft_purView') || 'list');
+  const [editingId, setEditingId] = useState(() => {
+    const saved = sessionStorage.getItem('draft_purEditingId');
+    return saved && saved !== 'undefined' ? JSON.parse(saved) : null;
+  });
+
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [purchases, setPurchases] = useState([]);
   
   // Vendor Suggestions State
@@ -62,20 +67,37 @@ export default function Purchases({ companySettings = {} }) {
   const [endDate, setEndDate] = useState(getLastDay(currentYear, currentMonth));
 
   const [taxMode, setTaxMode] = useState('CGST_SGST');
-  const [purchaseDetails, setPurchaseDetails] = useState({
-    vendorName: '', 
-    gstin: '', 
-    projectName: '', 
-    invoiceNo: '', 
-    invoiceDate: new Date().toISOString().split('T')[0], 
-    remarks: ''
+  const [purchaseDetails, setPurchaseDetails] = useState(() => {
+    const saved = sessionStorage.getItem('draft_purDetails');
+    if (saved && saved !== 'undefined') {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return {
+      vendorName: '', 
+      gstin: '', 
+      projectName: '', 
+      invoiceNo: '', 
+      invoiceDate: new Date().toISOString().split('T')[0], 
+      remarks: ''
+    };
   });
 
-  const [items, setItems] = useState([
-    { id: 1, materialName: '', hsn: '', qty: '', unit: 'Pcs', rate: '', gst: 18 },
-  ]);
+  const [items, setItems] = useState(() => {
+    const saved = sessionStorage.getItem('draft_purItems');
+    if (saved && saved !== 'undefined') {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return [{ id: 1, materialName: '', hsn: '', qty: '', unit: 'Pcs', rate: '', gst: 18 }];
+  });
 
   const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    sessionStorage.setItem('draft_purView', currentView);
+    sessionStorage.setItem('draft_purEditingId', JSON.stringify(editingId));
+    sessionStorage.setItem('draft_purDetails', JSON.stringify(purchaseDetails));
+    sessionStorage.setItem('draft_purItems', JSON.stringify(items));
+  }, [currentView, editingId, purchaseDetails, items]);
 
   const loadData = async () => {
     setLoading(true);
@@ -87,7 +109,7 @@ export default function Purchases({ companySettings = {} }) {
       setPurchases(purData || []);
       setVendorsList(vData || []);
     } catch (e) {
-      console.warn("Ensure getPurchases & getVendors are implemented in db.js");
+      console.error("Error fetching purchases from cloud DB:", e);
       setPurchases([]);
       setVendorsList([]);
     }
@@ -108,8 +130,6 @@ export default function Purchases({ companySettings = {} }) {
 
   const handleVendorInputChange = (e) => {
     const val = e.target.value;
-    
-    // Check if user selected an item or typed exact name
     const exactMatch = vendorsList.find(v => v.name && v.name.toLowerCase() === val.toLowerCase());
     
     if (exactMatch) {
@@ -174,9 +194,9 @@ export default function Purchases({ companySettings = {} }) {
     return true;
   });
 
-  const totalTaxable = filteredPurchases.reduce((sum, p) => sum + (p.taxableAmount || 0), 0);
-  const totalGst = filteredPurchases.reduce((sum, p) => sum + (p.gstAmount || 0), 0);
-  const totalGross = filteredPurchases.reduce((sum, p) => sum + (p.totalAmount || 0), 0);
+  const totalTaxable = filteredPurchases.reduce((sum, p) => sum + (parseFloat(p.taxableAmount) || 0), 0);
+  const totalGst = filteredPurchases.reduce((sum, p) => sum + (parseFloat(p.gstAmount) || 0), 0);
+  const totalGross = filteredPurchases.reduce((sum, p) => sum + (parseFloat(p.totalAmount) || 0), 0);
 
   const addItem = () => setItems([...items, { id: Date.now(), materialName: '', hsn: '', qty: '', unit: 'Pcs', rate: '', gst: 18 }]);
   
@@ -212,10 +232,10 @@ export default function Purchases({ companySettings = {} }) {
     }
 
     setErrors({});
-    const existingPur = purchases.find(e => e.id === editingId);
+    const existingPur = purchases.find(e => String(e.id) === String(editingId));
 
     const record = {
-      id: editingId || Date.now(),
+      id: editingId || undefined,
       vendorName: purchaseDetails.vendorName,
       gstin: purchaseDetails.gstin,
       projectName: purchaseDetails.projectName,
@@ -232,11 +252,12 @@ export default function Purchases({ companySettings = {} }) {
       isCancelled: existingPur ? existingPur.isCancelled : false
     };
 
+    setSubmitting(true);
     try {
       await savePurchase(record);
       
       for (const item of items) {
-        if (item.materialName && item.rate > 0) {
+        if (item.materialName && parseFloat(item.rate) > 0) {
           await saveMaterialRate({
             materialName: item.materialName,
             vendorName: purchaseDetails.vendorName,
@@ -249,9 +270,12 @@ export default function Purchases({ companySettings = {} }) {
       }
 
       await loadData();
+      setSubmitting(false);
       return true;
     } catch (err) {
-      alert('Failed to save to Database. Check connection.');
+      console.error("Error saving purchase bill:", err);
+      alert('Failed to save Purchase Bill to cloud DB. Check connection.');
+      setSubmitting(false);
       return false;
     }
   };
@@ -291,6 +315,7 @@ export default function Purchases({ companySettings = {} }) {
 
   const handleDelete = async (id) => {
     if (window.confirm("Permanently delete this purchase record?")) {
+      setLoading(true);
       await deletePurchase(id);
       await loadData();
     }
@@ -314,6 +339,9 @@ export default function Purchases({ companySettings = {} }) {
       setItems([{ id: 1, materialName: '', hsn: '', qty: '', unit: 'Pcs', rate: '', gst: 18 }]);
       setErrors({});
       setShowVendorDropdown(false);
+      sessionStorage.removeItem('draft_purDetails');
+      sessionStorage.removeItem('draft_purItems');
+      sessionStorage.removeItem('draft_purEditingId');
     }
   };
 
@@ -392,7 +420,7 @@ export default function Purchases({ companySettings = {} }) {
               </thead>
               <tbody className="divide-y divide-zinc-100 text-sm">
                 {loading ? (
-                  <tr><td colSpan="9" className="py-12 text-center text-zinc-400 font-medium text-xs">Loading purchases...</td></tr>
+                  <tr><td colSpan="9" className="py-12 text-center text-zinc-400 font-medium text-xs">Syncing purchases from cloud DB...</td></tr>
                 ) : filteredPurchases.length === 0 ? (
                   <tr>
                     <td colSpan="9" className="py-12 text-center text-zinc-400 font-medium text-xs">
@@ -406,9 +434,9 @@ export default function Purchases({ companySettings = {} }) {
                       <td className="py-4 px-6 font-bold text-xs text-[#B45309]">{pur.invoiceNo}</td>
                       <td className="py-4 px-6 text-xs font-semibold text-zinc-800">{pur.vendorName}</td>
                       <td className="py-4 px-6 text-xs font-medium text-zinc-500 truncate max-w-[120px]">{pur.projectName || '-'}</td>
-                      <td className="py-4 px-6 text-right font-medium text-xs text-zinc-700">₹{pur.taxableAmount?.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-                      <td className="py-4 px-6 text-right font-bold text-xs text-emerald-600">₹{pur.gstAmount?.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-                      <td className="py-4 px-6 text-right font-semibold text-xs text-zinc-900">₹{pur.totalAmount?.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                      <td className="py-4 px-6 text-right font-medium text-xs text-zinc-700">₹{parseFloat(pur.taxableAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                      <td className="py-4 px-6 text-right font-bold text-xs text-emerald-600">₹{parseFloat(pur.gstAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                      <td className="py-4 px-6 text-right font-semibold text-xs text-zinc-900">₹{parseFloat(pur.totalAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                       
                       <td className="py-4 px-6 text-center">
                         <select
@@ -522,7 +550,7 @@ export default function Purchases({ companySettings = {} }) {
                   <div
                     key={v.id || v.name}
                     onMouseDown={(e) => {
-                      e.preventDefault(); // Prevents input blur before click registers
+                      e.preventDefault();
                       handleSelectVendor(v);
                     }}
                     className="px-4 py-2.5 hover:bg-amber-50 cursor-pointer flex justify-between items-center transition-colors border-b border-zinc-50 last:border-none"
@@ -675,7 +703,9 @@ export default function Purchases({ companySettings = {} }) {
 
             {!isReadOnly && (
               <div className="flex gap-2 mt-4">
-                <button onClick={handleSaveOnly} className="flex-1 py-3 bg-[#B45309] hover:bg-[#92400E] text-white rounded-xl font-bold text-xs transition-all shadow-sm cursor-pointer">Save Purchase Bill</button>
+                <button onClick={handleSaveOnly} disabled={submitting} className="flex-1 py-3 bg-[#B45309] hover:bg-[#92400E] text-white rounded-xl font-bold text-xs transition-all shadow-sm cursor-pointer disabled:opacity-50">
+                  {submitting ? 'Saving...' : 'Save Purchase Bill'}
+                </button>
               </div>
             )}
           </div>

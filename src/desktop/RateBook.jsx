@@ -3,6 +3,7 @@ import { getMaterialRates, saveMaterialRate, deleteMaterialRate, getVendors } fr
 
 export default function RateBook() {
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [rates, setRates] = useState([]);
   const [vendorsList, setVendorsList] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -32,7 +33,7 @@ export default function RateBook() {
       setRates(rateData || []);
       setVendorsList(vData || []);
     } catch (e) {
-      console.warn("Ensure getMaterialRates and getVendors exist in db.js");
+      console.error("Error loading material rates from cloud DB:", e);
       setRates([]);
       setVendorsList([]);
     }
@@ -80,21 +81,25 @@ export default function RateBook() {
     if (!formData.materialName || !formData.vendorName || !formData.rate) {
       return alert("Material, Vendor, and Rate are required.");
     }
+
+    setSubmitting(true);
     try {
       await saveMaterialRate({
         ...formData,
-        rate: parseFloat(formData.rate)
+        rate: parseFloat(formData.rate) || 0
       });
       setIsModalOpen(false);
       setFormData({ materialName: '', vendorName: '', rate: '', unit: 'Pcs', date: new Date().toISOString().split('T')[0], notes: '' });
       await loadData();
     } catch (err) {
-      alert("Failed to save rate.");
+      alert("Failed to save rate to cloud database.");
     }
+    setSubmitting(false);
   };
 
   const handleDelete = async (id) => {
     if (window.confirm("Delete this rate record?")) {
+      setLoading(true);
       await deleteMaterialRate(id);
       await loadData();
     }
@@ -102,15 +107,16 @@ export default function RateBook() {
 
   // Filter and group by search query
   const filteredRates = rates.filter(r => 
-    r.materialName.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    r.vendorName.toLowerCase().includes(searchQuery.toLowerCase())
+    (r.materialName || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
+    (r.vendorName || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Grouping logic to identify the best rate for the searched material
   const groupedRates = {};
   filteredRates.forEach(r => {
-    if (!groupedRates[r.materialName]) groupedRates[r.materialName] = [];
-    groupedRates[r.materialName].push(r);
+    const matName = r.materialName || 'Uncategorized Material';
+    if (!groupedRates[matName]) groupedRates[matName] = [];
+    groupedRates[matName].push(r);
   });
 
   const inputClass = "w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-white focus:outline-none focus:border-[#B45309] focus:ring-1 focus:ring-inset focus:ring-[#B45309] text-zinc-900 text-sm font-medium transition-all shadow-sm disabled:opacity-75 disabled:cursor-not-allowed";
@@ -156,7 +162,7 @@ export default function RateBook() {
         {loading ? (
           <div className="py-20 text-center text-zinc-400 font-medium text-sm flex flex-col items-center justify-center space-y-3">
             <div className="w-10 h-10 border-4 border-zinc-200 border-t-[#B45309] rounded-full animate-spin"></div>
-            <p>Loading rate book...</p>
+            <p>Syncing rate book from cloud DB...</p>
           </div>
         ) : Object.keys(groupedRates).length === 0 ? (
           <div className="py-20 text-center text-zinc-400 font-medium bg-white rounded-2xl border border-dashed border-zinc-200 text-sm">
@@ -165,7 +171,7 @@ export default function RateBook() {
         ) : (
           Object.keys(groupedRates).map(material => {
             const materialRates = groupedRates[material];
-            materialRates.sort((a, b) => a.rate - b.rate);
+            materialRates.sort((a, b) => (parseFloat(a.rate) || 0) - (parseFloat(b.rate) || 0));
             const bestRateId = materialRates[0].id;
 
             return (
@@ -209,9 +215,9 @@ export default function RateBook() {
 
                           <td className="py-3.5 px-4 text-right">
                             <span className={`font-semibold text-sm ${rateObj.id === bestRateId ? 'text-emerald-600' : 'text-zinc-900'}`}>
-                              ₹{rateObj.rate.toLocaleString('en-IN', {minimumFractionDigits: 2})}
+                              ₹{(parseFloat(rateObj.rate) || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}
                             </span>
-                            <span className="text-xs text-zinc-400 ml-1 font-medium">/ {rateObj.unit}</span>
+                            <span className="text-xs text-zinc-400 ml-1 font-medium">/ {rateObj.unit || 'Pcs'}</span>
                           </td>
 
                           <td className="py-3.5 px-4 text-xs font-medium text-zinc-500">{rateObj.date}</td>
@@ -334,8 +340,8 @@ export default function RateBook() {
               <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 bg-white border border-zinc-300 hover:bg-zinc-100 text-zinc-700 font-semibold rounded-xl text-sm transition-all cursor-pointer">
                 Cancel
               </button>
-              <button type="submit" form="rateForm" className="px-6 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer">
-                Save Rate
+              <button type="submit" form="rateForm" disabled={submitting} className="px-6 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer disabled:opacity-50">
+                {submitting ? 'Saving...' : 'Save Rate'}
               </button>
             </div>
 

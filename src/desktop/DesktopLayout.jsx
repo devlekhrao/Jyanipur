@@ -27,6 +27,46 @@ import SiteManager from './SiteManager';
 import PettyCash from './PettyCash';
 import Settings from './Settings';
 
+const APP_VERSION = "1.0.0"; // Local Desktop App Build Version
+
+// Version & Sync Status Badge Component
+export function VersionBadge() {
+  const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [latestVer, setLatestVer] = useState(APP_VERSION);
+
+  useEffect(() => {
+    async function checkVersion() {
+      try {
+        const res = await fetch("https://www.jyanipur.org.in/version.json");
+        const data = await res.json();
+        if (data.version && data.version !== APP_VERSION) {
+          setUpdateAvailable(true);
+          setLatestVer(data.version);
+        }
+      } catch (e) {
+        // Suppress check if offline or local network
+      }
+    }
+    checkVersion();
+  }, []);
+
+  return (
+    <div className="flex items-center justify-between px-3 py-2 bg-zinc-100/80 rounded-xl text-xs font-semibold text-zinc-600 border border-zinc-200/60">
+      <span>Version v{APP_VERSION}</span>
+      {updateAvailable ? (
+        <span className="bg-amber-500 text-zinc-900 text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">
+          v{latestVer} Ready
+        </span>
+      ) : (
+        <span className="text-emerald-600 text-[10px] font-bold flex items-center gap-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          Synced
+        </span>
+      )}
+    </div>
+  );
+}
+
 export default function DesktopLayout() {
   // --- AUTHENTICATION STATE ---
   const [email, setEmail] = useState('');
@@ -229,8 +269,9 @@ export default function DesktopLayout() {
           </div>
 
           <div className="p-4 bg-zinc-50 border-t border-zinc-100 flex flex-col gap-2">
-            <button onClick={() => handlePageSwitch('Settings')} className={`w-full py-3 rounded-xl text-[10px] uppercase font-bold cursor-pointer transition-all ${activePage === 'Settings' ? 'bg-[#B45309] text-white shadow-md' : 'bg-white text-[#B45309] border border-[#B45309]/20 hover:bg-[#B45309]/10'}`}>Settings</button>
-            <button onClick={handleLogout} className="w-full bg-white text-red-600 border border-red-200 hover:bg-red-500 hover:text-white py-3 rounded-xl text-[10px] uppercase font-bold cursor-pointer transition-colors">Log Out</button>
+            <VersionBadge />
+            <button onClick={() => handlePageSwitch('Settings')} className={`w-full py-2.5 rounded-xl text-[10px] uppercase font-bold cursor-pointer transition-all ${activePage === 'Settings' ? 'bg-[#B45309] text-white shadow-md' : 'bg-white text-[#B45309] border border-[#B45309]/20 hover:bg-[#B45309]/10'}`}>Settings</button>
+            <button onClick={handleLogout} className="w-full bg-white text-red-600 border border-red-200 hover:bg-red-500 hover:text-white py-2.5 rounded-xl text-[10px] uppercase font-bold cursor-pointer transition-colors">Log Out</button>
           </div>
         </aside>
 

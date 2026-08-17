@@ -6,6 +6,7 @@ import {
 
 export default function Subcontractors() {
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [projects, setProjects] = useState([]);
   const [subcontractors, setSubcontractors] = useState([]);
   const [workOrders, setWorkOrders] = useState([]);
@@ -32,7 +33,7 @@ export default function Subcontractors() {
       setSubcontractors(fetchedSubs || []);
       setWorkOrders(fetchedWos || []);
     } catch (e) {
-      console.warn("Ensure subcontractor & work order functions exist in db.js");
+      console.error("Error loading subcontractor ledgers from cloud DB:", e);
       setProjects([]);
       setSubcontractors([]);
       setWorkOrders([]);
@@ -46,31 +47,62 @@ export default function Subcontractors() {
 
   const handleSaveSub = async (e) => {
     e.preventDefault();
-    await saveSubcontractor(subForm);
-    setIsSubModalOpen(false);
-    setSubForm({ name: '', trade: 'Painter', phone: '' });
-    await loadData();
+    setSubmitting(true);
+    try {
+      await saveSubcontractor(subForm);
+      setIsSubModalOpen(false);
+      setSubForm({ name: '', trade: 'Painter', phone: '' });
+      await loadData();
+    } catch (err) {
+      alert("Failed to save subcontractor agency.");
+    }
+    setSubmitting(false);
   };
 
   const handleSaveWo = async (e) => {
     e.preventDefault();
-    await saveWorkOrder({ ...woForm, contractValue: parseFloat(woForm.contractValue) });
-    setIsWoModalOpen(false);
-    setWoForm({ subcontractorId: '', projectId: '', scope: '', contractValue: '' });
-    await loadData();
+    setSubmitting(true);
+    try {
+      await saveWorkOrder({ 
+        ...woForm, 
+        subcontractorId: Number(woForm.subcontractorId) || woForm.subcontractorId,
+        projectId: Number(woForm.projectId) || woForm.projectId,
+        contractValue: parseFloat(woForm.contractValue) || 0 
+      });
+      setIsWoModalOpen(false);
+      setWoForm({ subcontractorId: '', projectId: '', scope: '', contractValue: '' });
+      await loadData();
+    } catch (err) {
+      alert("Failed to assign work order contract.");
+    }
+    setSubmitting(false);
   };
 
   const handleSavePay = async (e) => {
     e.preventDefault();
-    await saveWoPayment({ ...payForm, amount: parseFloat(payForm.amount) });
-    setIsPayModalOpen(false);
-    setPayForm({ workOrderId: '', date: new Date().toISOString().split('T')[0], amount: '', mode: 'UPI', referenceNo: '', notes: '' });
-    await loadData();
+    setSubmitting(true);
+    try {
+      await saveWoPayment({ 
+        ...payForm, 
+        workOrderId: Number(payForm.workOrderId) || payForm.workOrderId,
+        amount: parseFloat(payForm.amount) || 0 
+      });
+      setIsPayModalOpen(false);
+      setPayForm({ workOrderId: '', date: new Date().toISOString().split('T')[0], amount: '', mode: 'UPI', referenceNo: '', notes: '' });
+      await loadData();
+    } catch (err) {
+      alert("Failed to record subcontractor payment.");
+    }
+    setSubmitting(false);
   };
 
   const handleStatusChange = async (id, status) => {
-    await updateWorkOrderStatus(id, status);
-    await loadData();
+    try {
+      await updateWorkOrderStatus(id, status);
+      await loadData();
+    } catch (err) {
+      console.error("Failed to update work order status:", err);
+    }
   };
 
   const toggleRow = (id) => {
@@ -88,8 +120,8 @@ export default function Subcontractors() {
     (wo.trade || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const totalContracted = filteredWos.reduce((sum, wo) => sum + (wo.contractValue || 0), 0);
-  const totalPaid = filteredWos.reduce((sum, wo) => sum + (wo.totalPaid || 0), 0);
+  const totalContracted = filteredWos.reduce((sum, wo) => sum + (parseFloat(wo.contractValue) || 0), 0);
+  const totalPaid = filteredWos.reduce((sum, wo) => sum + (parseFloat(wo.totalPaid) || 0), 0);
   const totalBalance = totalContracted - totalPaid;
 
   const inputClass = "w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-white focus:outline-none focus:border-[#B45309] focus:ring-1 focus:ring-inset focus:ring-[#B45309] text-zinc-900 text-sm font-medium transition-all shadow-sm disabled:opacity-75 disabled:cursor-not-allowed";
@@ -171,7 +203,7 @@ export default function Subcontractors() {
             </thead>
             <tbody className="text-sm divide-y divide-zinc-100">
               {loading ? (
-                <tr><td colSpan="7" className="py-12 text-center text-zinc-400 font-medium text-sm">Loading ledgers...</td></tr>
+                <tr><td colSpan="7" className="py-12 text-center text-zinc-400 font-medium text-sm">Syncing ledgers with cloud DB...</td></tr>
               ) : filteredWos.length === 0 ? (
                 <tr><td colSpan="7" className="py-12 text-center text-zinc-400 font-medium text-sm">No active work orders. Assign one above.</td></tr>
               ) : (
@@ -188,9 +220,9 @@ export default function Subcontractors() {
                           <span className="text-xs text-zinc-500 font-medium mt-0.5">{wo.trade} | {wo.scope}</span>
                         </div>
                       </td>
-                      <td className="py-4 px-4 text-right font-medium text-sm text-zinc-900">₹{(wo.contractValue || 0).toLocaleString('en-IN')}</td>
-                      <td className="py-4 px-4 text-right font-bold text-sm text-emerald-600">₹{(wo.totalPaid || 0).toLocaleString('en-IN')}</td>
-                      <td className="py-4 px-4 text-right font-bold text-sm text-red-500">₹{(wo.balance || 0).toLocaleString('en-IN')}</td>
+                      <td className="py-4 px-4 text-right font-medium text-sm text-zinc-900">₹{(parseFloat(wo.contractValue) || 0).toLocaleString('en-IN')}</td>
+                      <td className="py-4 px-4 text-right font-bold text-sm text-emerald-600">₹{(parseFloat(wo.totalPaid) || 0).toLocaleString('en-IN')}</td>
+                      <td className="py-4 px-4 text-right font-bold text-sm text-red-500">₹{(parseFloat(wo.balance) || 0).toLocaleString('en-IN')}</td>
                       <td className="py-4 px-4 text-center" onClick={(e) => e.stopPropagation()}>
                         <select 
                           value={wo.status || 'Ongoing'} 
@@ -240,7 +272,7 @@ export default function Subcontractors() {
                                     <tr key={pay.id} className="hover:bg-zinc-50 transition-colors">
                                       <td className="py-2.5 font-medium text-zinc-600">{pay.date}</td>
                                       <td className="py-2.5"><span className="bg-zinc-100 px-2 py-0.5 rounded text-[10px] font-semibold text-zinc-700">{pay.mode}</span></td>
-                                      <td className="py-2.5 text-zinc-500 font-mono text-xs">{pay.ref || '-'}</td>
+                                      <td className="py-2.5 text-zinc-500 font-mono text-xs">{pay.ref || pay.referenceNo || '-'}</td>
                                       <td className="py-2.5 text-zinc-500 font-medium">{pay.notes || '-'}</td>
                                       <td className="py-2.5 text-right font-bold text-emerald-600">₹{Number(pay.amount).toLocaleString('en-IN')}</td>
                                     </tr>
@@ -310,8 +342,8 @@ export default function Subcontractors() {
               <button type="button" onClick={() => setIsSubModalOpen(false)} className="px-5 py-2.5 bg-white border border-zinc-300 hover:bg-zinc-100 text-zinc-700 font-semibold rounded-xl text-sm transition-all cursor-pointer">
                 Cancel
               </button>
-              <button type="submit" form="subForm" className="px-6 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer">
-                Save
+              <button type="submit" form="subForm" disabled={submitting} className="px-6 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer disabled:opacity-50">
+                {submitting ? 'Saving...' : 'Save'}
               </button>
             </div>
 
@@ -345,7 +377,7 @@ export default function Subcontractors() {
                     className={`${inputClass} cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23B45309%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.25rem_1.25rem] pr-10`}
                   >
                     <option value="" disabled>Choose agency...</option>
-                    {subcontractors.map(s => <option key={s.id} value={s.id}>{s.name} ({s.trade})</option>)}
+                    {subcontractors.map(s => <option key={s.id || s._id} value={s.id || s._id}>{s.name} ({s.trade})</option>)}
                   </select>
                 </div>
 
@@ -358,7 +390,7 @@ export default function Subcontractors() {
                     className={`${inputClass} cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23B45309%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.25rem_1.25rem] pr-10`}
                   >
                     <option value="" disabled>Choose active project...</option>
-                    {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    {projects.map(p => <option key={p.id || p._id} value={p.id || p._id}>{p.name || p.projectName}</option>)}
                   </select>
                 </div>
 
@@ -378,8 +410,8 @@ export default function Subcontractors() {
               <button type="button" onClick={() => setIsWoModalOpen(false)} className="px-5 py-2.5 bg-white border border-zinc-300 hover:bg-zinc-100 text-zinc-700 font-semibold rounded-xl text-sm transition-all cursor-pointer">
                 Cancel
               </button>
-              <button type="submit" form="woForm" className="px-6 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer">
-                Assign Contract
+              <button type="submit" form="woForm" disabled={submitting} className="px-6 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer disabled:opacity-50">
+                {submitting ? 'Assigning...' : 'Assign Contract'}
               </button>
             </div>
 
@@ -446,8 +478,8 @@ export default function Subcontractors() {
               <button type="button" onClick={() => setIsPayModalOpen(false)} className="px-5 py-2.5 bg-white border border-zinc-300 hover:bg-zinc-100 text-zinc-700 font-semibold rounded-xl text-sm transition-all cursor-pointer">
                 Cancel
               </button>
-              <button type="submit" form="payForm" className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer">
-                Record Payment
+              <button type="submit" form="payForm" disabled={submitting} className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl text-sm shadow-sm transition-all cursor-pointer disabled:opacity-50">
+                {submitting ? 'Recording...' : 'Record Payment'}
               </button>
             </div>
 
