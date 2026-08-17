@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { getPurchases, savePurchase, deletePurchase, updatePurchaseStatus, saveMaterialRate } from '../db';
+import React, { useState, useEffect, useRef } from 'react';
+import { getPurchases, savePurchase, deletePurchase, updatePurchaseStatus, saveMaterialRate, getVendors } from '../db';
 
 function getFinancialYear(dateStr) {
   if (!dateStr) return '';
@@ -42,6 +42,12 @@ export default function Purchases({ companySettings = {} }) {
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [purchases, setPurchases] = useState([]);
+  
+  // Vendor Suggestions State
+  const [vendorsList, setVendorsList] = useState([]);
+  const [vendorSuggestions, setVendorSuggestions] = useState([]);
+  const [showVendorDropdown, setShowVendorDropdown] = useState(false);
+  const vendorDropdownRef = useRef(null);
 
   // Filters for GSTR-2B
   const currentDate = new Date();
@@ -75,16 +81,60 @@ export default function Purchases({ companySettings = {} }) {
   const loadData = async () => {
     setLoading(true);
     try {
-      const data = await getPurchases();
-      setPurchases(data || []);
+      const [purData, vData] = await Promise.all([
+        getPurchases(),
+        getVendors ? getVendors() : Promise.resolve([])
+      ]);
+      setPurchases(purData || []);
+      setVendorsList(vData || []);
     } catch (e) {
-      console.warn("Ensure getPurchases is implemented in db.js");
+      console.warn("Ensure getPurchases & getVendors are implemented in db.js");
       setPurchases([]);
+      setVendorsList([]);
     }
     setLoading(false);
   };
 
   useEffect(() => { loadData(); }, []);
+
+  // Close vendor suggestions on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (vendorDropdownRef.current && !vendorDropdownRef.current.contains(event.target)) {
+        setShowVendorDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleVendorInputChange = (e) => {
+    const val = e.target.value;
+    setPurchaseDetails(prev => ({ ...prev, vendorName: val }));
+    if (errors.vendorName) setErrors(prev => ({ ...prev, vendorName: false }));
+
+    if (val.trim().length > 0) {
+      const matches = vendorsList.filter(v => 
+        v.name && v.name.toLowerCase().includes(val.toLowerCase())
+      );
+      setVendorSuggestions(matches);
+      setShowVendorDropdown(matches.length > 0);
+    } else {
+      setVendorSuggestions([]);
+      setShowVendorDropdown(false);
+    }
+  };
+
+  const handleSelectVendor = (vendor) => {
+    const isIgst = vendor.state && vendor.state.includes('IGST');
+    setPurchaseDetails(prev => ({
+      ...prev,
+      vendorName: vendor.name,
+      gstin: vendor.gstin || ''
+    }));
+    setTaxMode(isIgst ? 'IGST' : 'CGST_SGST');
+    setShowVendorDropdown(false);
+  };
 
   const handleMonthChange = (e) => {
     const m = Number(e.target.value);
@@ -178,12 +228,13 @@ export default function Purchases({ companySettings = {} }) {
     try {
       await savePurchase(record);
       
+      // Auto-feed line items to Rate Book
       for (const item of items) {
         if (item.materialName && item.rate > 0) {
           await saveMaterialRate({
             materialName: item.materialName,
             vendorName: purchaseDetails.vendorName,
-            rate: item.rate,
+            rate: parseFloat(item.rate),
             unit: item.unit,
             date: purchaseDetails.invoiceDate,
             notes: `Auto-logged from Bill ${purchaseDetails.invoiceNo || 'N/A'}${item.hsn ? ` (HSN: ${item.hsn})` : ''}`
@@ -201,7 +252,7 @@ export default function Purchases({ companySettings = {} }) {
 
   const handleSaveOnly = async () => {
     if (await savePurchaseToState()) {
-      alert(`Purchase Bill ${purchaseDetails.invoiceNo} saved!`);
+      alert(`Purchase Bill ${purchaseDetails.invoiceNo} saved! Rate Book updated.`);
       handleClear(false);
       setCurrentView('list');
     }
@@ -262,6 +313,7 @@ export default function Purchases({ companySettings = {} }) {
       });
       setItems([{ id: 1, materialName: '', hsn: '', qty: '', unit: 'Pcs', rate: '', gst: 18 }]);
       setErrors({});
+      setShowVendorDropdown(false);
     }
   };
 
@@ -305,7 +357,7 @@ export default function Purchases({ companySettings = {} }) {
           </div>
         </div>
 
-        {/* Clean White Summary Cards */}
+        {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 shrink-0">
           <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm flex flex-col justify-center">
             <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Taxable Value (2B)</span>
@@ -356,13 +408,13 @@ export default function Purchases({ companySettings = {} }) {
                       <td className="py-4 px-6 text-xs font-medium text-zinc-500 truncate max-w-[120px]">{pur.projectName || '-'}</td>
                       <td className="py-4 px-6 text-right font-medium text-xs text-zinc-700">₹{pur.taxableAmount?.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                       <td className="py-4 px-6 text-right font-bold text-xs text-emerald-600">₹{pur.gstAmount?.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-                      <td className="py-4 px-6 text-right font-semibold text-[11px] text-xs text-zinc-900">₹{pur.totalAmount?.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                      <td className="py-4 px-6 text-right font-semibold text-xs text-zinc-900">₹{pur.totalAmount?.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                       
                       <td className="py-4 px-6 text-center">
                         <select
                           value={pur.returnStatus || 'Pending'}
                           onChange={(e) => handleStatusChange(pur, e.target.value)}
-                          className={`appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23A1A1AA%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%223%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_0.6rem_center] bg-[length:0.8rem_0.8rem] pr-7 pl-3 py-1.5 rounded-full border outline-none cursor-pointer transition-all text-[10px] font-semibold text-[11px] uppercase tracking-widest ${
+                          className={`appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23A1A1AA%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%223%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_0.6rem_center] bg-[length:0.8rem_0.8rem] pr-7 pl-3 py-1.5 rounded-full border outline-none cursor-pointer transition-all text-[11px] uppercase tracking-widest ${
                             pur.returnStatus === '2B Matched' ? 'bg-blue-50 text-blue-700 border-blue-200 focus:ring-2 focus:ring-blue-500/20' :
                             pur.returnStatus === 'ITC Claimed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 focus:ring-2 focus:ring-emerald-500/20' :
                             'bg-amber-50 text-[#B45309] border-amber-200 focus:ring-2 focus:ring-[#B45309]/20'
@@ -376,19 +428,19 @@ export default function Purchases({ companySettings = {} }) {
                       
                       <td className="py-4 px-6 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <button onClick={() => handleEdit(pur)} title="Edit Bill" className="px-3 py-1.5 bg-amber-50 text-[#B45309] hover:bg-[#B45309] hover:text-white border border-amber-200/60 rounded-lg font-semibold text-[11px] cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
+                          <button onClick={() => handleEdit(pur)} title="Edit Bill" className="px-3 py-1.5 bg-amber-50 text-[#B45309] hover:bg-[#B45309] hover:text-white border border-amber-200/60 rounded-lg font-semibold text-[10px] cursor-pointer uppercase tracking-widest transition-all flex items-center gap-1.5">
                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" /></svg>
                             Edit
                           </button>
-                          <button onClick={() => handleView(pur)} title="View Detail" className="px-3 py-1.5 bg-zinc-50 text-zinc-600 hover:bg-zinc-200 border border-zinc-200 rounded-lg font-semibold text-[11px] cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
+                          <button onClick={() => handleView(pur)} title="View Detail" className="px-3 py-1.5 bg-zinc-50 text-zinc-600 hover:bg-zinc-200 border border-zinc-200 rounded-lg font-semibold text-[10px] cursor-pointer uppercase tracking-widest transition-all flex items-center gap-1.5">
                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                             View
                           </button>
-                          <button onClick={() => handleDirectPrint(pur)} title="Print Voucher" className="px-3 py-1.5 bg-zinc-50 text-zinc-600 hover:bg-zinc-200 border border-zinc-200 rounded-lg font-semibold text-[11px] cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
+                          <button onClick={() => handleDirectPrint(pur)} title="Print Voucher" className="px-3 py-1.5 bg-zinc-50 text-zinc-600 hover:bg-zinc-200 border border-zinc-200 rounded-lg font-semibold text-[10px] cursor-pointer uppercase tracking-widest transition-all flex items-center gap-1.5">
                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0v-2.25a2.25 2.25 0 012.25-2.25h6a2.25 2.25 0 012.25 2.25v2.25z" /></svg>
                             Print
                           </button>
-                          <button onClick={() => handleDelete(pur.id)} title="Delete Purchase" className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white border border-red-200 rounded-lg font-semibold text-[11px] cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
+                          <button onClick={() => handleDelete(pur.id)} title="Delete Purchase" className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white border border-red-200 rounded-lg font-semibold text-[10px] cursor-pointer uppercase tracking-widest transition-all flex items-center gap-1.5">
                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                           </button>
                         </div>
@@ -432,12 +484,52 @@ export default function Purchases({ companySettings = {} }) {
           </div>
         </div>
 
-        {/* METADATA */}
+        {/* METADATA WITH VENDOR AUTOCOMPLETE */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 shrink-0">
-          <div className="md:col-span-2">
+          <div className="md:col-span-2 relative" ref={vendorDropdownRef}>
             <label className={labelClass}>Vendor Name <span className="text-red-500">*</span></label>
-            <input disabled={isReadOnly} type="text" value={purchaseDetails.vendorName} onChange={(e) => { setPurchaseDetails({...purchaseDetails, vendorName: e.target.value}); if(errors.vendorName) setErrors({...errors, vendorName: false}); }} className={`${inputClass} ${errors.vendorName ? 'border-red-400 focus:border-red-500 focus:ring-red-500 bg-red-50/20' : ''}`} placeholder="Supplier / Shop Name" />
+            <input 
+              disabled={isReadOnly} 
+              type="text" 
+              value={purchaseDetails.vendorName} 
+              onChange={handleVendorInputChange} 
+              onFocus={() => {
+                if (vendorSuggestions.length > 0) setShowVendorDropdown(true);
+              }}
+              className={`${inputClass} ${errors.vendorName ? 'border-red-400 focus:border-red-500 focus:ring-red-500 bg-red-50/20' : ''}`} 
+              placeholder="Supplier / Shop Name (Type to search)" 
+              autoComplete="off"
+            />
+            
+            {/* VENDOR AUTOCOMPLETE DROPDOWN */}
+            {showVendorDropdown && !isReadOnly && (
+              <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-zinc-200 rounded-xl shadow-xl z-[120] max-h-52 overflow-y-auto">
+                <div className="p-2 border-b border-zinc-100 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+                  Saved Vendors ({vendorSuggestions.length})
+                </div>
+                {vendorSuggestions.map((v) => (
+                  <div
+                    key={v.id || v.name}
+                    onClick={() => handleSelectVendor(v)}
+                    className="px-4 py-2.5 hover:bg-amber-50 cursor-pointer flex justify-between items-center transition-colors border-b border-zinc-50 last:border-none"
+                  >
+                    <div>
+                      <p className="font-semibold text-xs text-zinc-900">{v.name}</p>
+                      {v.tradeCategory && <p className="text-[10px] text-zinc-400 font-medium">{v.tradeCategory}</p>}
+                    </div>
+                    {v.gstin ? (
+                      <span className="text-[10px] font-mono bg-zinc-100 px-2 py-0.5 rounded text-zinc-600 font-semibold">
+                        {v.gstin}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-zinc-400 italic">No GST</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
+
           <div>
             <label className={labelClass}>Vendor GSTIN</label>
             <input disabled={isReadOnly} type="text" value={purchaseDetails.gstin} onChange={(e) => setPurchaseDetails({...purchaseDetails, gstin: e.target.value.toUpperCase()})} className={`${inputClass} font-mono uppercase`} maxLength="15" placeholder="Optional" />
@@ -577,9 +669,7 @@ export default function Purchases({ companySettings = {} }) {
         </div>
       </div>
 
-      {/* ========================================== */}
-      {/* PERFECT A4 PRINT VIEW (INTERNAL PURCHASE VOUCHER) */}
-      {/* ========================================== */}
+      {/* PERFECT A4 PRINT VIEW */}
       <div className="hidden print:flex w-full bg-white text-black font-['Poppins'] text-xs print:p-0 print:m-0 flex-col items-center justify-between" style={{ minHeight: '100vh' }}>
         
         <style dangerouslySetInnerHTML={{__html: `
