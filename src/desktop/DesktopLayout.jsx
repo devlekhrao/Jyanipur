@@ -6,6 +6,7 @@ import Estimation from './Estimation';
 import EmployeeAttendance from './EmployeeAttendance';
 import PurchaseOrders from './PurchaseOrders';
 import Purchases from './Purchases';
+import Vendors from './Vendors';
 import VendorLedger from './VendorLedger';
 import Inventory from './Inventory';
 import Tools from './Tools';
@@ -107,7 +108,7 @@ export default function DesktopLayout() {
     { title: "Workspace", pages: ['Dashboard', 'CRM', 'Projects', 'Task Board', 'Document Vault'] },
     { title: "Site Execution", pages: ['Project Control', 'Daily Report', 'Site Snags', 'Measurement Sheet'] },
     { title: "Finance & Sales", pages: ['Estimation', 'Tax Invoice', 'Project P&L', 'Income', 'Petty Cash', 'GST Filing'] },
-    { title: "Supply Chain", pages: ['Purchase Orders', 'Purchases', 'Vendor Ledger', 'Inventory', 'Rate Book', 'Tools & Assets', 'Subcontractors'] },
+    { title: "Supply Chain", pages: ['Purchase Orders', 'Purchases', 'Vendors', 'Vendor Ledger', 'Inventory', 'Rate Book', 'Tools & Assets', 'Subcontractors'] },
     { title: "Team & HR", pages: ['Employee Attendance', 'Staff Expenses', 'Salaries'] }
   ];
 
@@ -139,11 +140,9 @@ export default function DesktopLayout() {
     return defaultSettings;
   });
 
-  // --- REVISED LOGIN HANDLER (Fixes Double Login & Keeps Signed In) ---
   const handleLogin = (e) => {
     e.preventDefault();
     
-    // Read directly from the HTML form elements to bypass the React Autofill glitch
     const enteredEmail = e.target.email.value;
     const enteredPassword = e.target.password.value;
 
@@ -151,7 +150,6 @@ export default function DesktopLayout() {
       setError('');
       setIsLoggedIn(true);
       
-      // Save session if "Keep me signed in" is checked
       if (rememberMe) {
         localStorage.setItem('jyanipur_auth', 'true');
       }
@@ -164,7 +162,6 @@ export default function DesktopLayout() {
     setIsLoggedIn(false);
     setEmail('');
     setPassword('');
-    // Clear the saved session so they stay logged out
     localStorage.removeItem('jyanipur_auth');
     setActivePage('Dashboard');
     setVisitedPages(new Set(['Dashboard']));
@@ -237,16 +234,15 @@ export default function DesktopLayout() {
           </div>
         </aside>
 
-        {/* FULL WIDTH MAIN CONTENT AREA */}
+        {/* MAIN CONTENT AREA */}
         <main className="print:w-full print:ml-0 print:block flex-1 h-full overflow-hidden flex flex-col relative bg-zinc-50">
           
-          {/* TOP BAR WITH QUICK SHORTCUTS */}
+          {/* TOP BAR */}
           <header className="print:hidden w-full h-16 bg-white border-b border-zinc-200/80 px-8 flex items-center justify-between z-10 flex-shrink-0 shadow-sm">
             <div className="flex items-center gap-3">
               <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Quick Shortcuts</span>
               <div className="h-4 w-[1px] bg-zinc-200 mx-1"></div>
               
-              {/* Shortcut Action Buttons */}
               <div className="flex items-center gap-2">
                 <button 
                   onClick={() => handlePageSwitch('Tax Invoice')}
@@ -271,7 +267,6 @@ export default function DesktopLayout() {
               </div>
             </div>
 
-            {/* Profile Info */}
             <div className="flex items-center gap-3">
               <div className="text-right">
                 <p className="text-xs font-bold text-zinc-800">Accounts Portal</p>
@@ -301,6 +296,7 @@ export default function DesktopLayout() {
               {visitedPages.has('Tax Invoice') && <div className={activePage === 'Tax Invoice' ? 'block' : 'hidden'}><TaxInvoice companySettings={companySettings} updateDirtyState={updateDirtyState} /></div>}
               {visitedPages.has('Estimation') && <div className={activePage === 'Estimation' ? 'block' : 'hidden'}><Estimation companySettings={companySettings} /></div>}
               {visitedPages.has('Purchases') && <div className={activePage === 'Purchases' ? 'block' : 'hidden'}><Purchases /></div>}
+              {visitedPages.has('Vendors') && <div className={activePage === 'Vendors' ? 'block' : 'hidden'}><Vendors /></div>}
               {visitedPages.has('Vendor Ledger') && <div className={activePage === 'Vendor Ledger' ? 'block' : 'hidden'}><VendorLedger /></div>}
               {visitedPages.has('Inventory') && <div className={activePage === 'Inventory' ? 'block' : 'hidden'}><Inventory /></div>}
               {visitedPages.has('Tools & Assets') && <div className={activePage === 'Tools & Assets' ? 'block' : 'hidden'}><Tools /></div>}
@@ -323,19 +319,14 @@ export default function DesktopLayout() {
     );
   }
 
-  // ==========================================
-  // LOGGED OUT: LOGIN SCREEN (Teak Theme + Stay Signed In)
-  // ==========================================
   return (
     <div className="fixed inset-0 w-screen h-[100dvh] flex items-center justify-center bg-[url('/background.png')] bg-cover bg-center bg-no-repeat px-4 font-['Poppins'] overflow-hidden overscroll-none bg-zinc-900">
       
-      {/* TEAK TINT OVERLAY INSTEAD OF BLUR */}
       <div className="absolute inset-0 bg-[#B45309]/30 mix-blend-multiply"></div>
       <div className="absolute inset-0 bg-black/40"></div>
 
       <div className="max-w-md w-full bg-white/95 backdrop-blur-3xl rounded-[2.5rem] shadow-[0_40px_80px_rgba(0,0,0,0.5)] border border-white/40 p-10 relative z-10">
         
-        {/* ENLARGED TEAK LOGO (NAME REMOVED) */}
         <div className="mb-12 flex flex-col items-center text-center">
           <img 
             src="/jyanipur.png" 
@@ -353,7 +344,6 @@ export default function DesktopLayout() {
           </div>
         )}
 
-        {/* FORMS WITH STANDARD AUTOCOMPLETE */}
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
             <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2 ml-1">Work Email</label>
@@ -382,7 +372,6 @@ export default function DesktopLayout() {
             />
           </div>
 
-          {/* KEEP ME SIGNED IN CHECKBOX */}
           <div className="flex items-center pt-2 pb-2 ml-1">
             <input 
               type="checkbox" 
