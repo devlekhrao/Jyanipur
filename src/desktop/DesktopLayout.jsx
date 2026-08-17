@@ -139,7 +139,7 @@ export default function DesktopLayout() {
     return defaultSettings;
   });
 
-  // --- REVISED LOGIN HANDLER (Fixes Double Login) ---
+  // --- REVISED LOGIN HANDLER (Fixes Double Login & Keeps Signed In) ---
   const handleLogin = (e) => {
     e.preventDefault();
     
@@ -164,7 +164,7 @@ export default function DesktopLayout() {
     setIsLoggedIn(false);
     setEmail('');
     setPassword('');
-    // Clear the saved session
+    // Clear the saved session so they stay logged out
     localStorage.removeItem('jyanipur_auth');
     setActivePage('Dashboard');
     setVisitedPages(new Set(['Dashboard']));
