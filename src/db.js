@@ -73,7 +73,7 @@ export async function toggleCancelInvoice(id, currentStatus) {
 }
 
 // ==========================================
-// 2. PURCHASE ORDERS MODULE (NEON POSTGRES)
+// 2. PURCHASE ORDERS MODULE
 // ==========================================
 export async function getPurchaseOrders() {
   try {
@@ -286,7 +286,7 @@ export async function savePurchase(p) {
         taxable_amount, gst_percent, gst_type, gst_amount, total_amount, return_status, items
       ) VALUES (
         ${p.fy}, ${p.invoiceDate}, ${p.invoiceNo}, ${p.vendorName}, ${p.gstin}, ${p.hsn},
-        ${p.taxableAmount}, ${p.gstPercent}, ${p.gstType}, ${p.gstAmount}, ${p.totalAmount}, ${p.returnStatus}, ${p.items || null}
+        ${p.taxableAmount}, ${p.gstPercent}, ${p.gstType}, ${p.gstAmount}, ${p.totalAmount}, ${p.returnStatus}, ${JSON.stringify(p.items || [])}
       )
       RETURNING *;
     `;
@@ -492,7 +492,60 @@ export async function deleteIncomeRecord(id) {
 }
 
 // ==========================================
-// 9. INVENTORY & GODOWN MODULE
+// 9. ESTIMATIONS & BOQS MODULE
+// ==========================================
+export async function getEstimations() {
+  try {
+    const data = await sql`SELECT * FROM estimations ORDER BY date DESC, id DESC`;
+    return data.map(est => ({
+      id: est.id,
+      estimateNo: est.estimate_no,
+      clientName: est.client_name,
+      partyAddress: est.party_address,
+      date: est.date ? new Date(est.date).toISOString().split('T')[0] : '',
+      status: est.status || 'PENDING',
+      totalAmount: Number(est.total_amount || 0),
+      items: typeof est.items === 'string' ? JSON.parse(est.items) : (est.items || [])
+    }));
+  } catch (err) {
+    console.error('DB fetch error for estimations:', err);
+    return [];
+  }
+}
+
+export async function saveEstimation(est) {
+  try {
+    const result = await sql`
+      INSERT INTO estimations (
+        estimate_no, client_name, party_address, date, status, total_amount, items
+      ) VALUES (
+        ${est.estimateNo}, ${est.clientName || est.client}, ${est.partyAddress || ''}, 
+        ${est.date}, ${est.status || 'PENDING'}, ${parseFloat(est.totalAmount) || parseFloat(est.amount) || 0}, 
+        ${JSON.stringify(est.items || [])}
+      )
+      ON CONFLICT (estimate_no) DO UPDATE SET
+        client_name = EXCLUDED.client_name, party_address = EXCLUDED.party_address, 
+        date = EXCLUDED.date, status = EXCLUDED.status, 
+        total_amount = EXCLUDED.total_amount, items = EXCLUDED.items
+      RETURNING *;
+    `;
+    return result[0];
+  } catch (err) {
+    console.error('Neon DB save error for estimation:', err);
+    throw err;
+  }
+}
+
+export async function deleteEstimation(id) {
+  try {
+    await sql`DELETE FROM estimations WHERE id = ${id}`;
+  } catch (err) {
+    console.error('Error deleting estimation:', err);
+  }
+}
+
+// ==========================================
+// 10. INVENTORY & GODOWN MODULE
 // ==========================================
 export async function getInventoryItems() {
   try {
@@ -500,9 +553,11 @@ export async function getInventoryItems() {
     return data.map(item => ({
       id: item.id,
       name: item.name,
+      materialName: item.name,
       category: item.category,
       unit: item.unit,
-      totalStock: Number(item.total_stock || 0)
+      totalStock: Number(item.total_stock || 0),
+      qty: Number(item.total_stock || 0)
     }));
   } catch (err) {
     console.error('Error fetching inventory items:', err);
@@ -514,7 +569,8 @@ export async function saveInventoryItem(item) {
   try {
     const result = await sql`
       INSERT INTO inventory_items (name, category, unit, total_stock)
-      VALUES (${item.name}, ${item.category}, ${item.unit}, 0)
+      VALUES (${item.name || item.materialName}, ${item.category || 'General'}, ${item.unit || 'Pcs'}, ${item.qty || 0})
+      ON CONFLICT (name) DO UPDATE SET total_stock = inventory_items.total_stock + EXCLUDED.total_stock
       RETURNING *;
     `;
     return result[0];
@@ -571,7 +627,7 @@ export async function recordInventoryMovement(movement) {
 }
 
 // ==========================================
-// 10. MATERIAL RATE BOOK (PROCUREMENT)
+// 11. MATERIAL RATE BOOK (PROCUREMENT)
 // ==========================================
 export async function getMaterialRates() {
   try {
@@ -615,7 +671,187 @@ export async function deleteMaterialRate(id) {
 }
 
 // ==========================================
-// 11. SUBCONTRACTORS & WORK ORDERS MODULE
+// 12. VENDORS & VENDOR LEDGER MODULE
+// ==========================================
+export async function getVendors() {
+  try {
+    const data = await sql`SELECT * FROM vendors ORDER BY name ASC`;
+    return data.map(v => ({
+      id: v.id,
+      name: v.name,
+      gstin: v.gstin,
+      state: v.state,
+      tradeCategory: v.trade_category,
+      phone: v.phone
+    }));
+  } catch (err) {
+    console.error('Error fetching vendors:', err);
+    return [];
+  }
+}
+
+export async function saveVendor(vendor) {
+  try {
+    const result = await sql`
+      INSERT INTO vendors (name, gstin, state, trade_category, phone)
+      VALUES (${vendor.name}, ${vendor.gstin}, ${vendor.state}, ${vendor.tradeCategory}, ${vendor.phone})
+      ON CONFLICT (name) DO UPDATE SET 
+        gstin = EXCLUDED.gstin, state = EXCLUDED.state, trade_category = EXCLUDED.trade_category, phone = EXCLUDED.phone
+      RETURNING *;
+    `;
+    return result[0];
+  } catch (err) {
+    console.error('Error saving vendor:', err);
+    throw err;
+  }
+}
+
+export async function deleteVendor(id) {
+  try {
+    await sql`DELETE FROM vendors WHERE id = ${id}`;
+  } catch (err) {
+    console.error('Error deleting vendor:', err);
+  }
+}
+
+export async function getVendorLedgers() {
+  try {
+    const purchases = await sql`SELECT vendor_name, SUM(total_amount) as total_billed FROM purchases GROUP BY vendor_name`;
+    const payments = await sql`SELECT vendor_name, SUM(amount) as total_paid FROM vendor_payments GROUP BY vendor_name`;
+    const paymentList = await sql`SELECT * FROM vendor_payments ORDER BY date DESC`;
+
+    const ledgers = {};
+    purchases.forEach(p => ledgers[p.vendor_name] = { vendorName: p.vendor_name, totalBilled: Number(p.total_billed || 0), totalPaid: 0, payments: [] });
+    payments.forEach(p => {
+      if (!ledgers[p.vendor_name]) ledgers[p.vendor_name] = { vendorName: p.vendor_name, totalBilled: 0, totalPaid: 0, payments: [] };
+      ledgers[p.vendor_name].totalPaid = Number(p.total_paid || 0);
+    });
+    paymentList.forEach(p => {
+      if (ledgers[p.vendor_name]) {
+        ledgers[p.vendor_name].payments.push({
+          id: p.id, date: p.date ? new Date(p.date).toISOString().split('T')[0] : '', amount: Number(p.amount || 0), mode: p.payment_mode, ref: p.reference_no, notes: p.notes
+        });
+      }
+    });
+
+    return Object.values(ledgers).map(l => ({ ...l, balance: l.totalBilled - l.totalPaid })).sort((a, b) => b.balance - a.balance);
+  } catch (err) {
+    console.error('Error fetching vendor ledgers:', err);
+    return [];
+  }
+}
+
+export async function saveVendorPayment(payment) {
+  try {
+    const result = await sql`
+      INSERT INTO vendor_payments (vendor_name, date, amount, payment_mode, reference_no, notes)
+      VALUES (${payment.vendorName}, ${payment.date}, ${payment.amount}, ${payment.mode}, ${payment.referenceNo}, ${payment.notes})
+      RETURNING *;
+    `;
+    return result[0];
+  } catch (err) {
+    console.error('Error saving vendor payment:', err);
+    throw err;
+  }
+}
+
+// ==========================================
+// 13. CENTRALIZED PURCHASES & AUTO-SYNC
+// ==========================================
+export async function savePurchaseWithSync(record) {
+  // 1. Save Purchase
+  await savePurchase(record);
+
+  // 2. Auto-Sync Vendor Directory
+  if (record.vendorName) {
+    await saveVendor({
+      name: record.vendorName,
+      gstin: record.gstin || '',
+      state: record.taxMode === 'IGST' ? 'Out-of-State (IGST)' : 'In-State (CGST+SGST)',
+      tradeCategory: 'General Supplier'
+    });
+  }
+
+  // 3. Auto-Sync Inventory & Rate Book Line Items
+  if (record.items && Array.isArray(record.items)) {
+    for (const item of record.items) {
+      if (!item.materialName) continue;
+
+      if (item.rate > 0) {
+        await saveMaterialRate({
+          materialName: item.materialName,
+          vendorName: record.vendorName,
+          rate: parseFloat(item.rate),
+          unit: item.unit || 'Pcs',
+          date: record.invoiceDate || new Date().toISOString().split('T')[0],
+          notes: `Auto-logged from Bill ${record.invoiceNo || 'N/A'}`
+        });
+      }
+
+      const addedQty = parseFloat(item.qty) || 0;
+      await saveInventoryItem({
+        name: item.materialName,
+        category: 'General Material',
+        unit: item.unit || 'Pcs',
+        qty: addedQty
+      });
+    }
+  }
+
+  return true;
+}
+
+// ==========================================
+// 14. PETTY CASH WALLET MODULE
+// ==========================================
+export async function getPettyCash() {
+  try {
+    const data = await sql`
+      SELECT pc.*, p.name as project_name 
+      FROM petty_cash pc
+      LEFT JOIN projects p ON pc.project_id = p.id
+      ORDER BY pc.date DESC, pc.id DESC
+    `;
+    return data.map(row => ({
+      id: row.id,
+      projectId: row.project_id,
+      projectName: row.project_name || 'Office / Unassigned',
+      date: row.date ? new Date(row.date).toISOString().split('T')[0] : '',
+      type: row.type,
+      amount: Number(row.amount || 0),
+      description: row.description,
+      loggedBy: row.logged_by
+    }));
+  } catch (err) {
+    console.error('Error fetching petty cash:', err);
+    return [];
+  }
+}
+
+export async function savePettyCash(txn) {
+  try {
+    const result = await sql`
+      INSERT INTO petty_cash (project_id, date, type, amount, description, logged_by)
+      VALUES (${txn.projectId || null}, ${txn.date}, ${txn.type}, ${txn.amount}, ${txn.description}, ${txn.loggedBy})
+      RETURNING *;
+    `;
+    return result[0];
+  } catch (err) {
+    console.error('Error saving petty cash:', err);
+    throw err;
+  }
+}
+
+export async function deletePettyCash(id) {
+  try {
+    await sql`DELETE FROM petty_cash WHERE id = ${id}`;
+  } catch (err) {
+    console.error('Error deleting petty cash:', err);
+  }
+}
+
+// ==========================================
+// 15. SUBCONTRACTORS & WORK ORDERS MODULE
 // ==========================================
 export async function getSubcontractors() {
   try {
@@ -663,7 +899,7 @@ export async function getWorkOrders() {
       GROUP BY wo.id, s.name, s.trade, p.name
       ORDER BY wo.id DESC
     `;
-    
+
     return data.map(wo => ({
       id: wo.id,
       subName: wo.sub_name,
@@ -720,7 +956,7 @@ export async function saveWoPayment(payment) {
 }
 
 // ==========================================
-// 12. MEASUREMENT SHEETS (JMS) MODULE
+// 16. MEASUREMENT SHEETS (JMS) MODULE
 // ==========================================
 export async function getMeasurementSheets() {
   try {
@@ -779,7 +1015,7 @@ export async function deleteMeasurementSheet(id) {
 }
 
 // ==========================================
-// 13. CRM & LEADS MODULE
+// 17. CRM & LEADS MODULE
 // ==========================================
 export async function getLeads() {
   try {
@@ -841,7 +1077,7 @@ export async function deleteLead(id) {
 }
 
 // ==========================================
-// 14. TOOLS & ASSET MANAGEMENT MODULE
+// 18. TOOLS & ASSETS MODULE
 // ==========================================
 export async function getTools() {
   try {
@@ -909,51 +1145,7 @@ export async function deleteTool(id) {
 }
 
 // ==========================================
-// 15. VENDOR LEDGER MODULE
-// ==========================================
-export async function getVendorLedgers() {
-  try {
-    const purchases = await sql`SELECT vendor_name, SUM(total_amount) as total_billed FROM purchases GROUP BY vendor_name`;
-    const payments = await sql`SELECT vendor_name, SUM(amount) as total_paid FROM vendor_payments GROUP BY vendor_name`;
-    const paymentList = await sql`SELECT * FROM vendor_payments ORDER BY date DESC`;
-
-    const ledgers = {};
-    purchases.forEach(p => ledgers[p.vendor_name] = { vendorName: p.vendor_name, totalBilled: Number(p.total_billed || 0), totalPaid: 0, payments: [] });
-    payments.forEach(p => {
-      if (!ledgers[p.vendor_name]) ledgers[p.vendor_name] = { vendorName: p.vendor_name, totalBilled: 0, totalPaid: 0, payments: [] };
-      ledgers[p.vendor_name].totalPaid = Number(p.total_paid || 0);
-    });
-    paymentList.forEach(p => {
-      if (ledgers[p.vendor_name]) {
-        ledgers[p.vendor_name].payments.push({
-          id: p.id, date: p.date ? new Date(p.date).toISOString().split('T')[0] : '', amount: Number(p.amount || 0), mode: p.payment_mode, ref: p.reference_no, notes: p.notes
-        });
-      }
-    });
-
-    return Object.values(ledgers).map(l => ({ ...l, balance: l.totalBilled - l.totalPaid })).sort((a, b) => b.balance - a.balance);
-  } catch (err) {
-    console.error('Error fetching vendor ledgers:', err);
-    return [];
-  }
-}
-
-export async function saveVendorPayment(payment) {
-  try {
-    const result = await sql`
-      INSERT INTO vendor_payments (vendor_name, date, amount, payment_mode, reference_no, notes)
-      VALUES (${payment.vendorName}, ${payment.date}, ${payment.amount}, ${payment.mode}, ${payment.referenceNo}, ${payment.notes})
-      RETURNING *;
-    `;
-    return result[0];
-  } catch (err) {
-    console.error('Error saving vendor payment:', err);
-    throw err;
-  }
-}
-
-// ==========================================
-// 16. SITE MANAGER (DPR & DOCUMENTS)
+// 19. SITE MANAGER (DPR & DOCUMENTS)
 // ==========================================
 export async function getSiteOperations(projectId) {
   try {
@@ -989,56 +1181,7 @@ export async function saveDocument(doc) {
 }
 
 // ==========================================
-// 17. PETTY CASH WALLET MODULE
-// ==========================================
-export async function getPettyCash() {
-  try {
-    const data = await sql`
-      SELECT pc.*, p.name as project_name 
-      FROM petty_cash pc
-      LEFT JOIN projects p ON pc.project_id = p.id
-      ORDER BY pc.date DESC, pc.id DESC
-    `;
-    return data.map(row => ({
-      id: row.id,
-      projectId: row.project_id,
-      projectName: row.project_name || 'Office / Unassigned',
-      date: row.date ? new Date(row.date).toISOString().split('T')[0] : '',
-      type: row.type,
-      amount: Number(row.amount || 0),
-      description: row.description,
-      loggedBy: row.logged_by
-    }));
-  } catch (err) {
-    console.error('Error fetching petty cash:', err);
-    return [];
-  }
-}
-
-export async function savePettyCash(txn) {
-  try {
-    const result = await sql`
-      INSERT INTO petty_cash (project_id, date, type, amount, description, logged_by)
-      VALUES (${txn.projectId || null}, ${txn.date}, ${txn.type}, ${txn.amount}, ${txn.description}, ${txn.loggedBy})
-      RETURNING *;
-    `;
-    return result[0];
-  } catch (err) {
-    console.error('Error saving petty cash:', err);
-    throw err;
-  }
-}
-
-export async function deletePettyCash(id) {
-  try {
-    await sql`DELETE FROM petty_cash WHERE id = ${id}`;
-  } catch (err) {
-    console.error('Error deleting petty cash:', err);
-  }
-}
-
-// ==========================================
-// 18. PROJECT PROFIT & LOSS (P&L) MODULE
+// 20. PROJECT P&L
 // ==========================================
 export async function getProjectPnL(projectId) {
   try {
@@ -1082,7 +1225,7 @@ export async function getProjectPnL(projectId) {
 }
 
 // ==========================================
-// 19. PROJECT TASK BOARD MODULE
+// 21. PROJECT TASK BOARD
 // ==========================================
 export async function getTasks() {
   try {
@@ -1140,7 +1283,7 @@ export async function deleteTask(id) {
 }
 
 // ==========================================
-// 20. DOCUMENT VAULT MODULE
+// 22. DOCUMENT VAULT
 // ==========================================
 export async function getVaultDocuments() {
   try {
@@ -1190,7 +1333,7 @@ export async function deleteVaultDocument(id) {
 }
 
 // ==========================================
-// 21. SITE SNAG & QUALITY PUNCH LIST MODULE
+// 23. SITE SNAGS
 // ==========================================
 export async function getSnags() {
   try {
@@ -1256,7 +1399,7 @@ export async function deleteSnag(id) {
 }
 
 // ==========================================
-// 22. SUBCONTRACTOR RA BILLS MODULE
+// 24. SUBCONTRACTOR RA BILLS
 // ==========================================
 export async function getRaBills(projectId) {
   try {
@@ -1312,7 +1455,7 @@ export async function saveRaBill(bill) {
 }
 
 // ==========================================
-// 23. CLIENT PAYMENT MILESTONES MODULE
+// 25. CLIENT MILESTONES & CHANGE ORDERS
 // ==========================================
 export async function getMilestones(projectId) {
   try {
@@ -1363,9 +1506,6 @@ export async function updateMilestoneStatus(id, newStatus) {
   }
 }
 
-// ==========================================
-// 24. PROJECT CHANGE ORDERS (VARIATIONS) MODULE
-// ==========================================
 export async function getChangeOrders(projectId) {
   try {
     const data = await sql`
@@ -1404,120 +1544,4 @@ export async function saveChangeOrder(co) {
     console.error('Error saving change order:', err);
     throw err;
   }
-}
-
-// --- VENDOR DIRECTORY HELPERS ---
-export async function getVendors() {
-  const saved = localStorage.getItem('jyanipur_vendors');
-  return saved ? JSON.parse(saved) : [];
-}
-
-export async function saveVendor(vendor) {
-  const vendors = await getVendors();
-  const index = vendors.findIndex(v => v.id === vendor.id);
-  if (index >= 0) {
-    vendors[index] = vendor;
-  } else {
-    vendors.push({ ...vendor, id: vendor.id || Date.now() });
-  }
-  localStorage.setItem('jyanipur_vendors', JSON.stringify(vendors));
-  return true;
-}
-
-export async function deleteVendor(id) {
-  const vendors = await getVendors();
-  const filtered = vendors.filter(v => v.id !== id);
-  localStorage.setItem('jyanipur_vendors', JSON.stringify(filtered));
-  return true;
-}
-// --- CENTRALIZED PURCHASES & SUPPLY CHAIN AUTO-SYNC ---
-
-export async function savePurchaseWithSync(record) {
-  // 1. Save Purchase Record
-  const purchases = await getPurchases();
-  const pIndex = purchases.findIndex(p => p.id === record.id);
-  if (pIndex >= 0) {
-    purchases[pIndex] = record;
-  } else {
-    purchases.unshift(record);
-  }
-  localStorage.setItem('jyanipur_purchases', JSON.stringify(purchases));
-
-  // 2. Auto-Sync Vendor Directory
-  if (record.vendorName) {
-    const vendors = JSON.parse(localStorage.getItem('jyanipur_vendors') || '[]');
-    const existingV = vendors.find(v => v.name.toLowerCase() === record.vendorName.toLowerCase());
-    if (!existingV) {
-      vendors.push({
-        id: Date.now(),
-        name: record.vendorName,
-        gstin: record.gstin || '',
-        state: record.taxMode === 'IGST' ? 'Out-of-State (IGST)' : 'In-State (CGST+SGST)',
-        tradeCategory: 'General Supplier'
-      });
-      localStorage.setItem('jyanipur_vendors', JSON.stringify(vendors));
-    }
-  }
-
-  // 3. Auto-Sync Vendor Ledger / Accounts Payable
-  if (record.vendorName && record.totalAmount) {
-    const ledger = JSON.parse(localStorage.getItem('jyanipur_vendor_ledger') || '[]');
-    const lIndex = ledger.findIndex(l => l.vendorName.toLowerCase() === record.vendorName.toLowerCase());
-    if (lIndex >= 0) {
-      ledger[lIndex].totalBilled = (ledger[lIndex].totalBilled || 0) + record.totalAmount;
-      ledger[lIndex].netPayable = (ledger[lIndex].totalBilled || 0) - (ledger[lIndex].totalPaid || 0);
-    } else {
-      ledger.push({
-        id: Date.now(),
-        vendorName: record.vendorName,
-        totalBilled: record.totalAmount,
-        totalPaid: 0,
-        netPayable: record.totalAmount
-      });
-    }
-    localStorage.setItem('jyanipur_vendor_ledger', JSON.stringify(ledger));
-  }
-
-  // 4. Auto-Sync Inventory & Rate Book Line Items
-  if (record.items && Array.isArray(record.items)) {
-    const inventory = JSON.parse(localStorage.getItem('jyanipur_inventory') || '[]');
-    const rates = JSON.parse(localStorage.getItem('jyanipur_material_rates') || '[]');
-
-    for (const item of record.items) {
-      if (!item.materialName) continue;
-
-      // Rate Book Entry
-      if (item.rate > 0) {
-        rates.unshift({
-          id: Date.now() + Math.random(),
-          materialName: item.materialName,
-          vendorName: record.vendorName,
-          rate: parseFloat(item.rate),
-          unit: item.unit || 'Pcs',
-          date: record.invoiceDate || new Date().toISOString().split('T')[0],
-          notes: `Auto-logged from Bill ${record.invoiceNo || 'N/A'}`
-        });
-      }
-
-      // Inventory Entry
-      const invIndex = inventory.findIndex(i => i.materialName.toLowerCase() === item.materialName.toLowerCase());
-      const addedQty = parseFloat(item.qty) || 0;
-      if (invIndex >= 0) {
-        inventory[invIndex].qty = (inventory[invIndex].qty || 0) + addedQty;
-      } else {
-        inventory.push({
-          id: Date.now() + Math.random(),
-          materialName: item.materialName,
-          category: 'General Material',
-          unit: item.unit || 'Pcs',
-          qty: addedQty
-        });
-      }
-    }
-
-    localStorage.setItem('jyanipur_material_rates', JSON.stringify(rates));
-    localStorage.setItem('jyanipur_inventory', JSON.stringify(inventory));
-  }
-
-  return true;
 }
