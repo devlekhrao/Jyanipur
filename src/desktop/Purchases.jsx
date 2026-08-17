@@ -312,13 +312,13 @@ export default function Purchases({ companySettings = {} }) {
             <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Taxable Value (2B)</span>
             <p className="text-2xl font-black text-zinc-900">₹ {totalTaxable.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
           </div>
-          <div className="bg-emerald-50 p-5 rounded-2xl border border-emerald-200/60 shadow-sm">
-            <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest block mb-1">Input Tax Credit (ITC)</span>
-            <p className="text-2xl font-black text-emerald-700">₹ {totalGst.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+          <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm">
+            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Input Tax Credit (ITC)</span>
+            <p className="text-2xl font-black text-emerald-600">₹ {totalGst.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
           </div>
-          <div className="bg-zinc-900 text-white p-5 rounded-2xl shadow-md border border-zinc-800">
+          <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm">
             <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Total Purchases</span>
-            <p className="text-2xl font-black">₹ {totalGross.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+            <p className="text-2xl font-black text-[#B45309]">₹ {totalGross.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
           </div>
         </div>
 
@@ -553,22 +553,22 @@ export default function Purchases({ companySettings = {} }) {
 
           {/* TOTALS SUMMARY DECK */}
           <div className="w-full lg:w-80 flex flex-col justify-between">
-            <div className="bg-zinc-900 p-6 rounded-2xl shadow-lg border border-zinc-800 text-white space-y-3">
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-200 text-zinc-800 space-y-3">
               <div className="flex justify-between text-xs">
-                <span className="text-zinc-400">Taxable Value:</span><span className="font-semibold">₹ {totals.subtotal.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
+                <span className="text-zinc-500">Taxable Value:</span><span className="font-semibold text-zinc-900">₹ {totals.subtotal.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
               </div>
               
               {taxMode === 'IGST' ? (
-                <div className="flex justify-between text-xs"><span className="text-zinc-400">IGST:</span><span className="font-semibold text-emerald-400">₹ {totals.totalGst.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span></div>
+                <div className="flex justify-between text-xs"><span className="text-zinc-500">IGST (ITC):</span><span className="font-semibold text-emerald-600">₹ {totals.totalGst.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span></div>
               ) : taxMode === 'CGST_SGST' ? (
                 <>
-                  <div className="flex justify-between text-xs"><span className="text-zinc-400">CGST:</span><span className="font-semibold text-emerald-400">₹ {(totals.totalGst / 2).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span></div>
-                  <div className="flex justify-between text-xs"><span className="text-zinc-400">SGST:</span><span className="font-semibold text-emerald-400">₹ {(totals.totalGst / 2).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span></div>
+                  <div className="flex justify-between text-xs"><span className="text-zinc-500">CGST (ITC):</span><span className="font-semibold text-emerald-600">₹ {(totals.totalGst / 2).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span></div>
+                  <div className="flex justify-between text-xs"><span className="text-zinc-500">SGST (ITC):</span><span className="font-semibold text-emerald-600">₹ {(totals.totalGst / 2).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span></div>
                 </>
               ) : null}
 
-              <div className="flex justify-between text-base font-black border-t border-zinc-700 pt-3">
-                <span>Total Bill Value:</span><span>₹ {totals.grandTotal.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
+              <div className="flex justify-between text-base font-black border-t border-zinc-200 pt-3">
+                <span>Total Bill Value:</span><span className="text-[#B45309]">₹ {totals.grandTotal.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
               </div>
             </div>
 
