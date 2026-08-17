@@ -54,6 +54,7 @@ export default function Estimation({ companySettings = {} }) {
       discount: 0,
       advanceReceived: 0,
       amount: '₹ 3,54,000.00',
+      status: 'Pending', // New Status Field
       isCancelled: false
     }
   ]);
@@ -115,7 +116,7 @@ export default function Estimation({ companySettings = {} }) {
           const effN = !isNaN(n) ? n : 1;
           updated.qty = parseFloat((effL * effB * effN).toFixed(2)).toString();
         } else {
-          updated.qty = ''; // Clear qty if L, B, and No are all empty
+          updated.qty = ''; 
         }
       }
 
@@ -169,6 +170,10 @@ export default function Estimation({ companySettings = {} }) {
     }
 
     setErrors({});
+    
+    // Find existing status if editing
+    const existingEst = estimationsList.find(e => e.id === editingId);
+
     const record = {
       id: editingId || Date.now(),
       date: estimateDetails.date,
@@ -188,6 +193,7 @@ export default function Estimation({ companySettings = {} }) {
       discount: estimateDetails.discount,
       advanceReceived: estimateDetails.advanceReceived,
       amount: '₹ ' + (netPayable > 0 ? netPayable : 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      status: existingEst ? existingEst.status : 'Pending', // Persist status
       isCancelled: false
     };
 
@@ -246,27 +252,28 @@ export default function Estimation({ companySettings = {} }) {
     setTimeout(() => window.print(), 150);
   };
 
-  // NEW: Duplicate an estimate instantly
+  // Duplicate an estimate instantly
   const handleDuplicate = (est) => {
     const newEst = { 
       ...est, 
       id: Date.now(), 
       estimateNo: `${est.estimateNo}-COPY`, 
       date: new Date().toISOString().split('T')[0],
+      status: 'Pending', // Reset status on copy
       isCancelled: false
     };
     setEstimationsList([newEst, ...estimationsList]);
     alert('Estimate successfully duplicated!');
   };
 
-  // NEW: Draft into Tax Invoice via localStorage
+  // Draft into Tax Invoice via localStorage
   const handleConvertToInvoice = (est) => {
     const invoiceDraft = {
       partyName: est.client || '',
       partyAddress: est.partyAddress || '',
       projectName: est.projectName || '',
       date: new Date().toISOString().split('T')[0],
-      poRef: est.estimateNo || '', // Link the estimate number
+      poRef: est.estimateNo || '', 
       description: est.description || '',
       bankName: est.bankName || '',
       accountName: est.accountName || '',
@@ -287,6 +294,16 @@ export default function Estimation({ companySettings = {} }) {
     setEstimationsList(estimationsList.map(est => {
       if (est.id === id) {
         return { ...est, isCancelled: !est.isCancelled };
+      }
+      return est;
+    }));
+  };
+
+  // Update Status directly from list view
+  const handleStatusChange = (id, newStatus) => {
+    setEstimationsList(estimationsList.map(est => {
+      if (est.id === id) {
+        return { ...est, status: newStatus };
       }
       return est;
     }));
@@ -322,7 +339,10 @@ export default function Estimation({ companySettings = {} }) {
             onClick={() => { handleClear(false); setCurrentView('form'); }}
             className="bg-[#B45309] hover:bg-[#92400E] text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm flex items-center gap-1.5"
           >
-            <span>+</span> New Estimate
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            New Estimate
           </button>
         </div>
 
@@ -334,6 +354,7 @@ export default function Estimation({ companySettings = {} }) {
                   <th className="py-3.5 px-6 font-semibold">Date</th>
                   <th className="py-3.5 px-6 font-semibold">Estimate No.</th>
                   <th className="py-3.5 px-6 font-semibold">Client / Party</th>
+                  <th className="py-3.5 px-6 font-semibold">Status</th>
                   <th className="py-3.5 px-6 font-semibold">Total Amount</th>
                   <th className="py-3.5 px-6 font-semibold text-right">Actions</th>
                 </tr>
@@ -341,7 +362,7 @@ export default function Estimation({ companySettings = {} }) {
               <tbody className="divide-y divide-zinc-100 text-sm">
                 {estimationsList.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="py-12 text-center text-zinc-400 font-medium text-xs">No estimations created yet. Click "+ New Estimate" above.</td>
+                    <td colSpan="6" className="py-12 text-center text-zinc-400 font-medium text-xs">No estimations created yet. Click "+ New Estimate" above.</td>
                   </tr>
                 ) : (
                   estimationsList.map((est) => (
@@ -363,43 +384,94 @@ export default function Estimation({ companySettings = {} }) {
                       <td className={`py-4 px-6 text-xs font-semibold ${est.isCancelled ? 'line-through text-zinc-400' : 'text-zinc-800'}`}>
                         {est.client}
                       </td>
+                      
+                      {/* STATUS DROPDOWN */}
+                      <td className="py-4 px-6">
+                        <select
+                          value={est.status || 'Pending'}
+                          onChange={(e) => handleStatusChange(est.id, e.target.value)}
+                          disabled={est.isCancelled}
+                          className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border outline-none cursor-pointer transition-all ${
+                            est.isCancelled ? 'bg-zinc-100 text-zinc-400 border-zinc-200 cursor-not-allowed' :
+                            est.status === 'Accepted' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 focus:ring-2 focus:ring-emerald-500/20' :
+                            est.status === 'Rejected' ? 'bg-red-50 text-red-700 border-red-200 focus:ring-2 focus:ring-red-500/20' :
+                            est.status === 'PO Received' ? 'bg-blue-50 text-blue-700 border-blue-200 focus:ring-2 focus:ring-blue-500/20' :
+                            'bg-amber-50 text-[#B45309] border-amber-200 focus:ring-2 focus:ring-[#B45309]/20'
+                          }`}
+                        >
+                          <option value="Pending">Pending</option>
+                          <option value="Accepted">Accepted</option>
+                          <option value="PO Received">PO Received</option>
+                          <option value="Rejected">Rejected</option>
+                        </select>
+                      </td>
+
                       <td className={`py-4 px-6 font-bold text-xs ${est.isCancelled ? 'line-through text-zinc-400' : 'text-zinc-900'}`}>
                         {est.amount}
                       </td>
                       
-                      {/* ACTION BUTTONS */}
+                      {/* ACTION BUTTONS (2D ICONS + FONT BLACK) */}
                       <td className="py-4 px-6 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
+                        <div className="flex items-center justify-end gap-2">
                           {!est.isCancelled ? (
                             <>
-                              <button onClick={() => handleEdit(est)} title="Edit Estimate" className="px-3 py-1.5 bg-amber-50 text-[#B45309] hover:bg-[#B45309] hover:text-white border border-amber-200/60 rounded-lg font-bold cursor-pointer text-[10px] uppercase tracking-wider transition-all">
+                              <button onClick={() => handleEdit(est)} title="Edit Estimate" className="px-3 py-1.5 bg-amber-50 text-[#B45309] hover:bg-[#B45309] hover:text-white border border-amber-200/60 rounded-lg font-black cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
+                                </svg>
                                 Edit
                               </button>
                               
-                              <button onClick={() => handleView(est)} title="View Detail" className="px-3 py-1.5 bg-zinc-50 text-zinc-600 hover:bg-zinc-200 border border-zinc-200 rounded-lg font-bold cursor-pointer text-[10px] uppercase tracking-wider transition-all">
+                              <button onClick={() => handleView(est)} title="View Detail" className="px-3 py-1.5 bg-zinc-50 text-zinc-600 hover:bg-zinc-200 border border-zinc-200 rounded-lg font-black cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
                                 View
                               </button>
                               
-                              <button onClick={() => handleDirectPrint(est)} title="Print or Save PDF" className="p-1.5 bg-zinc-50 text-zinc-600 hover:bg-zinc-200 border border-zinc-200 rounded-lg font-bold cursor-pointer text-sm transition-all flex items-center justify-center">
-                                🖨️
+                              <button onClick={() => handleDirectPrint(est)} title="Print or Save PDF" className="px-3 py-1.5 bg-zinc-50 text-zinc-600 hover:bg-zinc-200 border border-zinc-200 rounded-lg font-black cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0v-2.25a2.25 2.25 0 012.25-2.25h6a2.25 2.25 0 012.25 2.25v2.25z" />
+                                </svg>
+                                Print
                               </button>
                               
-                              <button onClick={() => handleDuplicate(est)} title="Duplicate/Clone Estimate" className="px-2.5 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white border border-blue-200 rounded-lg font-bold cursor-pointer text-[10px] uppercase tracking-wider transition-all flex items-center gap-1">
-                                📋 <span className="hidden xl:inline">Copy</span>
+                              <button onClick={() => handleDuplicate(est)} title="Duplicate Estimate" className="px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white border border-blue-200 rounded-lg font-black cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" />
+                                </svg>
+                                Copy
                               </button>
 
-                              <button onClick={() => handleConvertToInvoice(est)} title="Convert to Tax Invoice" className="px-2.5 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white border border-emerald-200 rounded-lg font-bold cursor-pointer text-[10px] uppercase tracking-wider transition-all flex items-center gap-1">
-                                🔄 <span className="hidden xl:inline">To Invoice</span>
+                              <button onClick={() => handleConvertToInvoice(est)} title="Convert to Tax Invoice" className="px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white border border-emerald-200 rounded-lg font-black cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                                </svg>
+                                To Invoice
                               </button>
                               
-                              <button onClick={() => handleToggleCancel(est.id)} title="Cancel/Reject Estimate" className="px-2 py-1.5 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white border border-red-200 rounded-lg font-bold cursor-pointer text-[10px] uppercase tracking-wider transition-all">
-                                ❌
+                              <button onClick={() => handleToggleCancel(est.id)} title="Cancel/Reject Estimate" className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white border border-red-200 rounded-lg font-black cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
                               </button>
                             </>
                           ) : (
                             <>
-                              <button onClick={() => handleView(est)} className="px-3 py-1.5 bg-zinc-50 text-zinc-600 hover:bg-zinc-200 border border-zinc-200 rounded-lg font-bold cursor-pointer text-[10px] uppercase tracking-wider transition-all">View</button>
-                              <button onClick={() => handleToggleCancel(est.id)} className="px-3 py-1.5 bg-amber-50 text-amber-700 hover:bg-amber-600 hover:text-white border border-amber-200 rounded-lg font-bold cursor-pointer text-[10px] uppercase tracking-wider transition-all">Restore</button>
+                              <button onClick={() => handleView(est)} className="px-3 py-1.5 bg-zinc-50 text-zinc-600 hover:bg-zinc-200 border border-zinc-200 rounded-lg font-black cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                View
+                              </button>
+                              <button onClick={() => handleToggleCancel(est.id)} className="px-3 py-1.5 bg-amber-50 text-[#B45309] hover:bg-[#B45309] hover:text-white border border-amber-200/60 rounded-lg font-black cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+                                </svg>
+                                Restore
+                              </button>
                             </>
                           )}
                         </div>
@@ -431,12 +503,18 @@ export default function Estimation({ companySettings = {} }) {
             {isReadOnly ? `Viewing Estimate ${estimateDetails.estimateNo}` : editingId ? `Edit Estimate ${estimateDetails.estimateNo}` : 'New Estimation'}
           </h2>
           <div className="flex gap-2">
-            <button onClick={() => { setCurrentView('list'); handleClear(false); }} className="text-zinc-600 hover:text-zinc-900 text-xs font-bold transition-colors cursor-pointer bg-white px-4 py-2 rounded-xl border border-zinc-200">
-              &larr; Back
+            <button onClick={() => { setCurrentView('list'); handleClear(false); }} className="text-zinc-600 hover:text-zinc-900 text-xs font-bold transition-colors cursor-pointer bg-white px-4 py-2 rounded-xl border border-zinc-200 flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Back
             </button>
             {isReadOnly && (
-              <button onClick={() => window.print()} className="bg-[#B45309] text-white px-5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer hover:bg-[#92400E]">
-                🖨️ Print / Save PDF
+              <button onClick={() => window.print()} className="bg-[#B45309] text-white px-5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer hover:bg-[#92400E] flex items-center gap-1.5">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0v-2.25a2.25 2.25 0 012.25-2.25h6a2.25 2.25 0 012.25 2.25v2.25z" />
+                </svg>
+                Print / Save PDF
               </button>
             )}
           </div>
@@ -546,7 +624,9 @@ export default function Estimation({ companySettings = {} }) {
                     <td className="py-2 px-2 text-right text-xs font-bold text-zinc-900">{rowCalc.totalAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
                     {!isReadOnly && (
                       <td className="py-2 pl-2 text-center">
-                        <button onClick={() => removeItem(item.id)} className="text-zinc-300 hover:text-red-500 font-bold opacity-0 group-hover:opacity-100 transition-all cursor-pointer text-base">&times;</button>
+                        <button onClick={() => removeItem(item.id)} className="text-zinc-300 hover:text-red-500 font-bold opacity-0 group-hover:opacity-100 transition-all cursor-pointer text-base flex items-center justify-center">
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
                       </td>
                     )}
                   </tr>
@@ -555,8 +635,9 @@ export default function Estimation({ companySettings = {} }) {
             </tbody>
           </table>
           {!isReadOnly && (
-            <button onClick={addItem} className="mt-4 text-[#B45309] hover:text-[#92400E] text-xs font-bold transition-all cursor-pointer flex items-center gap-1">
-              <span>+</span> Add BOQ Line Item
+            <button onClick={addItem} className="mt-4 text-[#B45309] hover:text-[#92400E] text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+              Add BOQ Line Item
             </button>
           )}
         </div>
