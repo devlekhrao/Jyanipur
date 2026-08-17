@@ -1430,3 +1430,94 @@ export async function deleteVendor(id) {
   localStorage.setItem('jyanipur_vendors', JSON.stringify(filtered));
   return true;
 }
+// --- CENTRALIZED PURCHASES & SUPPLY CHAIN AUTO-SYNC ---
+
+export async function savePurchaseWithSync(record) {
+  // 1. Save Purchase Record
+  const purchases = await getPurchases();
+  const pIndex = purchases.findIndex(p => p.id === record.id);
+  if (pIndex >= 0) {
+    purchases[pIndex] = record;
+  } else {
+    purchases.unshift(record);
+  }
+  localStorage.setItem('jyanipur_purchases', JSON.stringify(purchases));
+
+  // 2. Auto-Sync Vendor Directory
+  if (record.vendorName) {
+    const vendors = JSON.parse(localStorage.getItem('jyanipur_vendors') || '[]');
+    const existingV = vendors.find(v => v.name.toLowerCase() === record.vendorName.toLowerCase());
+    if (!existingV) {
+      vendors.push({
+        id: Date.now(),
+        name: record.vendorName,
+        gstin: record.gstin || '',
+        state: record.taxMode === 'IGST' ? 'Out-of-State (IGST)' : 'In-State (CGST+SGST)',
+        tradeCategory: 'General Supplier'
+      });
+      localStorage.setItem('jyanipur_vendors', JSON.stringify(vendors));
+    }
+  }
+
+  // 3. Auto-Sync Vendor Ledger / Accounts Payable
+  if (record.vendorName && record.totalAmount) {
+    const ledger = JSON.parse(localStorage.getItem('jyanipur_vendor_ledger') || '[]');
+    const lIndex = ledger.findIndex(l => l.vendorName.toLowerCase() === record.vendorName.toLowerCase());
+    if (lIndex >= 0) {
+      ledger[lIndex].totalBilled = (ledger[lIndex].totalBilled || 0) + record.totalAmount;
+      ledger[lIndex].netPayable = (ledger[lIndex].totalBilled || 0) - (ledger[lIndex].totalPaid || 0);
+    } else {
+      ledger.push({
+        id: Date.now(),
+        vendorName: record.vendorName,
+        totalBilled: record.totalAmount,
+        totalPaid: 0,
+        netPayable: record.totalAmount
+      });
+    }
+    localStorage.setItem('jyanipur_vendor_ledger', JSON.stringify(ledger));
+  }
+
+  // 4. Auto-Sync Inventory & Rate Book Line Items
+  if (record.items && Array.isArray(record.items)) {
+    const inventory = JSON.parse(localStorage.getItem('jyanipur_inventory') || '[]');
+    const rates = JSON.parse(localStorage.getItem('jyanipur_material_rates') || '[]');
+
+    for (const item of record.items) {
+      if (!item.materialName) continue;
+
+      // Rate Book Entry
+      if (item.rate > 0) {
+        rates.unshift({
+          id: Date.now() + Math.random(),
+          materialName: item.materialName,
+          vendorName: record.vendorName,
+          rate: parseFloat(item.rate),
+          unit: item.unit || 'Pcs',
+          date: record.invoiceDate || new Date().toISOString().split('T')[0],
+          notes: `Auto-logged from Bill ${record.invoiceNo || 'N/A'}`
+        });
+      }
+
+      // Inventory Entry
+      const invIndex = inventory.findIndex(i => i.materialName.toLowerCase() === item.materialName.toLowerCase());
+      const addedQty = parseFloat(item.qty) || 0;
+      if (invIndex >= 0) {
+        inventory[invIndex].qty = (inventory[invIndex].qty || 0) + addedQty;
+      } else {
+        inventory.push({
+          id: Date.now() + Math.random(),
+          materialName: item.materialName,
+          category: 'General Material',
+          unit: item.unit || 'Pcs',
+          qty: addedQty
+        });
+      }
+    }
+
+    localStorage.setItem('jyanipur_material_rates', JSON.stringify(rates));
+    localStorage.setItem('jyanipur_inventory', JSON.stringify(inventory));
+  }
+
+  return true;
+}
