@@ -1405,3 +1405,28 @@ export async function saveChangeOrder(co) {
     throw err;
   }
 }
+
+// --- VENDOR DIRECTORY HELPERS ---
+export async function getVendors() {
+  const saved = localStorage.getItem('jyanipur_vendors');
+  return saved ? JSON.parse(saved) : [];
+}
+
+export async function saveVendor(vendor) {
+  const vendors = await getVendors();
+  const index = vendors.findIndex(v => v.id === vendor.id);
+  if (index >= 0) {
+    vendors[index] = vendor;
+  } else {
+    vendors.push({ ...vendor, id: vendor.id || Date.now() });
+  }
+  localStorage.setItem('jyanipur_vendors', JSON.stringify(vendors));
+  return true;
+}
+
+export async function deleteVendor(id) {
+  const vendors = await getVendors();
+  const filtered = vendors.filter(v => v.id !== id);
+  localStorage.setItem('jyanipur_vendors', JSON.stringify(filtered));
+  return true;
+}
