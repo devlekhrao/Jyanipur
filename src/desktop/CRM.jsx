@@ -5,6 +5,7 @@ import { exportToCSV } from '../utils';
 export default function CRM() {
   const [loading, setLoading] = useState(true);
   const [leads, setLeads] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -12,20 +13,24 @@ export default function CRM() {
     clientName: '', 
     phone: '', 
     email: '',
-    occupation: '', // What work they do
-    address: '',    // Where they live
+    occupation: '', 
+    address: '',    
     projectType: 'Residential 3BHK', 
     estimatedValue: '', 
     source: 'Direct Inquiry',
     status: 'New Inquiry', 
-    notes: ''
+    notes: '',
+    followUpCount: 0,
+    dateAdded: new Date().toISOString().split('T')[0]
   });
 
   const loadData = async () => {
     setLoading(true);
     try {
       const data = await getLeads();
-      setLeads(data || []);
+      // Sort by newest first based on dateAdded or id
+      const sortedData = (data || []).sort((a, b) => (b.id || 0) - (a.id || 0));
+      setLeads(sortedData);
     } catch (e) {
       console.warn("Ensure getLeads is in db.js");
       setLeads([]);
@@ -38,23 +43,23 @@ export default function CRM() {
     const pending = JSON.parse(localStorage.getItem('jyanipur_crm_leads') || '[]');
     if (pending.length > 0) {
       for (let lead of pending) {
-        // Clean currency string to number
         const numericValue = typeof lead.value === 'string' ? parseFloat(lead.value.replace(/[^0-9.-]+/g, "")) : (lead.value || 0);
         
         await saveLead({
           clientName: lead.name,
           phone: lead.phone || '',
           email: lead.email || '',
-          occupation: lead.company || '', // Mapped from Estimation Project/Company
+          occupation: lead.company || '', 
           address: lead.address || '',
           projectType: 'Estimation Sync',
           estimatedValue: numericValue,
           source: lead.source || 'Estimation',
-          status: lead.status || 'Negotiation', // Put straight into negotiation
-          notes: 'Auto-imported from Estimation module.'
+          status: lead.status || 'Negotiation', 
+          notes: 'Auto-imported from Estimation module.',
+          followUpCount: 0,
+          dateAdded: new Date().toISOString().split('T')[0]
         });
       }
-      // Clear them so they don't import twice
       localStorage.removeItem('jyanipur_crm_leads');
       await loadData();
     }
@@ -66,7 +71,12 @@ export default function CRM() {
 
   const handleSave = async (e) => {
     e.preventDefault();
-    await saveLead({ ...formData, estimatedValue: parseFloat(formData.estimatedValue) || 0 });
+    await saveLead({ 
+      ...formData, 
+      estimatedValue: parseFloat(formData.estimatedValue) || 0,
+      followUpCount: formData.followUpCount || 0,
+      dateAdded: formData.dateAdded || new Date().toISOString().split('T')[0]
+    });
     setIsModalOpen(false);
     resetForm();
     await loadData();
@@ -84,18 +94,41 @@ export default function CRM() {
       estimatedValue: lead.estimatedValue || '',
       source: lead.source || 'Direct Inquiry',
       status: lead.status || 'New Inquiry',
-      notes: lead.notes || ''
+      notes: lead.notes || '',
+      followUpCount: lead.followUpCount || 0,
+      dateAdded: lead.dateAdded || new Date().toISOString().split('T')[0]
     });
     setIsModalOpen(true);
   };
 
   const resetForm = () => {
-    setFormData({ id: null, clientName: '', phone: '', email: '', occupation: '', address: '', projectType: 'Residential 3BHK', estimatedValue: '', source: 'Direct Inquiry', status: 'New Inquiry', notes: '' });
+    setFormData({ 
+      id: null, clientName: '', phone: '', email: '', occupation: '', address: '', 
+      projectType: 'Residential 3BHK', estimatedValue: '', source: 'Direct Inquiry', 
+      status: 'New Inquiry', notes: '', followUpCount: 0, dateAdded: new Date().toISOString().split('T')[0] 
+    });
   };
 
   const handleStatusMove = async (id, newStatus) => {
-    await updateLeadStatus(id, newStatus);
-    await loadData();
+    try {
+      const lead = leads.find(l => l.id === id);
+      if(lead) {
+        await saveLead({ ...lead, status: newStatus });
+        await loadData();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleAddFollowUp = async (lead) => {
+    try {
+      const newCount = (lead.followUpCount || 0) + 1;
+      await saveLead({ ...lead, followUpCount: newCount });
+      await loadData();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleDelete = async (id) => {
@@ -105,8 +138,21 @@ export default function CRM() {
     }
   };
 
+  const handleCreateEstimation = (lead) => {
+    // Save to local storage so the Estimation module can pick it up if you build an importer there
+    const draft = {
+      partyName: lead.clientName || '',
+      partyAddress: lead.address || '',
+      projectName: lead.occupation || lead.projectType || '',
+      description: lead.notes || ''
+    };
+    localStorage.setItem('crm_to_estimation', JSON.stringify(draft));
+    alert(`Details for ${lead.clientName} saved to clipboard memory! Navigate to "Estimation" and create a new estimate to use this data.`);
+  };
+
   const handleExport = () => {
     const exportData = leads.map(l => ({
+      'Date Added': l.dateAdded || '',
       'Client Name': l.clientName,
       'Phone': l.phone,
       'Email': l.email,
@@ -115,11 +161,26 @@ export default function CRM() {
       'Project Type': l.projectType,
       'Source': l.source,
       'Status': l.status,
+      'Follow-ups': l.followUpCount || 0,
       'Est. Value (INR)': l.estimatedValue,
       'Notes': l.notes
     }));
     exportToCSV('Jyanipur_CRM_Leads', exportData);
   };
+
+  const filteredLeads = leads.filter(l => {
+    if (searchQuery.trim() !== '') {
+      const q = searchQuery.toLowerCase();
+      return (
+        (l.clientName && l.clientName.toLowerCase().includes(q)) ||
+        (l.phone && l.phone.toLowerCase().includes(q)) ||
+        (l.email && l.email.toLowerCase().includes(q)) ||
+        (l.projectType && l.projectType.toLowerCase().includes(q)) ||
+        (l.status && l.status.toLowerCase().includes(q))
+      );
+    }
+    return true;
+  });
 
   const columns = ['New Inquiry', 'Site Visited', 'Negotiation', 'Won', 'Lost'];
 
@@ -128,20 +189,27 @@ export default function CRM() {
 
   return (
     <div className="w-full h-full font-['Poppins'] flex flex-col">
-      {/* HEADER */}
-      <div className="flex justify-between items-center pb-5 mb-6 border-b border-zinc-200 shrink-0">
+      {/* HEADER & FILTERS */}
+      <div className="flex flex-col 2xl:flex-row justify-between items-start 2xl:items-center pb-5 mb-6 border-b border-zinc-200 shrink-0 gap-4">
         <div>
           <h2 className="text-xl font-bold text-zinc-900 tracking-tight">CRM Pipeline</h2>
-          <p className="text-zinc-500 text-xs mt-0.5 font-medium">Track incoming inquiries, build client profiles, and close more deals.</p>
+          <p className="text-zinc-500 text-xs mt-0.5 font-medium">Manage leads, track contact attempts, and convert to estimates.</p>
         </div>
-        <div className="flex gap-3">
-          <button onClick={handleExport} className="bg-white border border-zinc-200 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer flex items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-3">
+          
+          <div className="flex items-center h-10 bg-white border border-zinc-200 rounded-xl px-3.5 shadow-sm w-full md:w-auto">
+            <span className="text-xs text-zinc-400">🔍</span>
+            <input type="text" placeholder="Search name, phone, status..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="bg-transparent border-none text-xs font-medium text-zinc-800 outline-none px-2 w-full md:w-56 placeholder:text-zinc-400" />
+          </div>
+
+          <button onClick={handleExport} className="h-10 bg-white border border-zinc-200 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 px-4 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer flex items-center gap-1.5">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
             </svg>
-            Export CSV
+            <span className="hidden sm:inline">Export</span>
           </button>
-          <button onClick={() => { resetForm(); setIsModalOpen(true); }} className="bg-[#B45309] hover:bg-[#92400E] text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer flex items-center gap-1.5">
+          
+          <button onClick={() => { resetForm(); setIsModalOpen(true); }} className="h-10 bg-[#B45309] hover:bg-[#92400E] text-white px-5 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer flex items-center gap-1.5">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
@@ -150,99 +218,124 @@ export default function CRM() {
         </div>
       </div>
 
-      {/* KANBAN BOARD */}
-      {loading ? (
-        <div className="py-20 text-center text-zinc-400 font-medium text-xs flex-1 flex flex-col items-center justify-center space-y-3">
-          <div className="w-10 h-10 border-4 border-zinc-200 border-t-[#B45309] rounded-full animate-spin"></div>
-          <p>Loading sales pipeline...</p>
-        </div>
-      ) : (
-        <div className="flex w-full gap-5 flex-1 min-h-0 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-          {columns.map(col => (
-            <div key={col} className="flex-1 min-w-[280px] flex flex-col bg-zinc-50/50 border border-zinc-200/80 rounded-2xl shadow-sm overflow-hidden">
-              
-              {/* Column Header */}
-              <div className="px-4 py-3.5 border-b border-zinc-200 bg-white flex justify-between items-center shrink-0">
-                <h3 className="text-[10px] font-black text-zinc-800 uppercase tracking-widest flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${
-                    col === 'Won' ? 'bg-emerald-500' : 
-                    col === 'Lost' ? 'bg-red-500' : 
-                    col === 'Negotiation' ? 'bg-amber-500' : 'bg-blue-500'
-                  }`}></span>
-                  {col}
-                </h3>
-                <span className="bg-zinc-100 text-zinc-500 text-[10px] font-black px-2 py-0.5 rounded-md">
-                  {leads.filter(l => l.status === col).length}
-                </span>
-              </div>
-              
-              {/* Column Body */}
-              <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                {leads.filter(l => l.status === col).map(lead => (
-                  <div key={lead.id} className="bg-white border border-zinc-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-[#B45309]/30 transition-all group relative cursor-pointer" onClick={() => handleEdit(lead)}>
-                    
-                    {/* Header: Name & Action */}
-                    <div className="flex justify-between items-start mb-1.5">
-                      <h4 className="font-bold text-zinc-900 text-sm truncate pr-6">{lead.clientName}</h4>
-                      <button onClick={(e) => { e.stopPropagation(); handleDelete(lead.id); }} className="absolute top-4 right-3 text-zinc-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                      </button>
-                    </div>
-
-                    {/* Metadata Sub-text */}
-                    {lead.occupation && (
-                      <p className="text-[10px] text-zinc-500 font-medium mb-1 truncate flex items-center gap-1.5">
-                        <svg className="w-3 h-3 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                        {lead.occupation}
-                      </p>
-                    )}
-                    {lead.address && (
-                      <p className="text-[10px] text-zinc-500 font-medium mb-3 truncate flex items-center gap-1.5">
-                        <svg className="w-3 h-3 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                        {lead.address}
-                      </p>
-                    )}
-
-                    {/* Tags & Value */}
-                    <div className="flex justify-between items-end mb-3">
-                      <div className="space-y-1">
-                        <span className="inline-block bg-zinc-100 text-zinc-600 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded mr-1.5">{lead.projectType}</span>
-                        {lead.source && <span className="inline-block border border-zinc-200 text-zinc-400 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded">{lead.source}</span>}
+      {/* TABLE VIEW */}
+      <div className="bg-white border border-zinc-200/80 rounded-2xl shadow-sm overflow-hidden flex-1 flex flex-col min-h-0">
+        <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <table className="w-full text-left border-collapse whitespace-nowrap">
+            <thead>
+              <tr className="bg-zinc-50/80 text-zinc-400 text-[10px] uppercase tracking-wider border-b border-zinc-100">
+                <th className="py-3.5 px-6 font-semibold">Date Added</th>
+                <th className="py-3.5 px-6 font-semibold">Client Profile</th>
+                <th className="py-3.5 px-6 font-semibold">Contact Details</th>
+                <th className="py-3.5 px-6 font-semibold">Project / Source</th>
+                <th className="py-3.5 px-6 font-semibold text-center">Follow-ups</th>
+                <th className="py-3.5 px-6 font-semibold text-center">Status</th>
+                <th className="py-3.5 px-6 font-semibold text-right">Est. Value</th>
+                <th className="py-3.5 px-6 font-semibold text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-100 text-sm">
+              {loading ? (
+                <tr><td colSpan="8" className="py-12 text-center text-zinc-400 font-medium text-xs">Loading leads...</td></tr>
+              ) : filteredLeads.length === 0 ? (
+                <tr>
+                  <td colSpan="8" className="py-16 text-center">
+                    <div className="flex flex-col items-center justify-center space-y-3">
+                      <div className="w-12 h-12 bg-amber-50 rounded-full flex items-center justify-center text-amber-500">
+                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                       </div>
-                      <p className="text-xs font-black text-[#B45309]">₹{(lead.estimatedValue || 0).toLocaleString('en-IN')}</p>
+                      <p className="text-zinc-500 font-medium text-xs">No leads found in pipeline.</p>
                     </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredLeads.map((lead) => (
+                  <tr key={lead.id} className="transition-all hover:bg-zinc-50/80 group">
+                    <td className="py-4 px-6 text-xs font-medium text-zinc-500">{lead.dateAdded || '-'}</td>
                     
-                    {/* Status Dropdown & Fast Actions */}
-                    <div className="flex justify-between items-center pt-3 border-t border-zinc-100 mt-2" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex gap-2">
-                        {lead.phone && (
-                          <a href={`tel:${lead.phone}`} title="Call Client" className="text-emerald-600 hover:bg-emerald-50 p-1.5 rounded-md transition-colors">
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
-                          </a>
-                        )}
+                    <td className="py-4 px-6">
+                      <p className="font-bold text-xs text-zinc-900">{lead.clientName}</p>
+                      {lead.occupation && <p className="text-[10px] text-zinc-500 mt-0.5 truncate max-w-[150px]">{lead.occupation}</p>}
+                    </td>
+                    
+                    <td className="py-4 px-6">
+                      <p className="text-xs font-medium text-zinc-700">{lead.phone || 'No Phone'}</p>
+                      {lead.email && <p className="text-[10px] text-zinc-500 mt-0.5">{lead.email}</p>}
+                    </td>
+                    
+                    <td className="py-4 px-6">
+                      <div className="flex flex-col gap-1 items-start">
+                        <span className="inline-block bg-zinc-100 text-zinc-600 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded">{lead.projectType}</span>
+                        {lead.source && <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider">{lead.source}</span>}
                       </div>
-                      
-                      <select 
-                        value={lead.status} 
+                    </td>
+
+                    <td className="py-4 px-6 text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="font-bold text-zinc-700 text-xs bg-white border border-zinc-200 w-6 h-6 flex items-center justify-center rounded-md shadow-sm">
+                          {lead.followUpCount || 0}
+                        </span>
+                        <button onClick={() => handleAddFollowUp(lead)} title="Add Attempt" className="text-emerald-600 hover:bg-emerald-50 border border-transparent hover:border-emerald-200 rounded p-1 transition-all cursor-pointer">
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                        </button>
+                      </div>
+                    </td>
+                    
+                    <td className="py-4 px-6 text-center">
+                      <select
+                        value={lead.status || 'New Inquiry'}
                         onChange={(e) => handleStatusMove(lead.id, e.target.value)}
-                        className={`appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23A1A1AA%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%223%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_0.4rem_center] bg-[length:0.6rem_0.6rem] pr-6 pl-2 py-1 rounded text-[9px] font-black uppercase tracking-wider border outline-none cursor-pointer transition-all ${
-                          lead.status === 'Won' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' :
-                          lead.status === 'Lost' ? 'bg-red-50 border-red-200 text-red-700' :
-                          lead.status === 'Negotiation' ? 'bg-amber-50 border-amber-200 text-amber-700' :
-                          'bg-zinc-50 border-zinc-200 text-zinc-700'
+                        className={`appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23A1A1AA%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%223%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_0.6rem_center] bg-[length:0.8rem_0.8rem] pr-7 pl-3 py-1.5 rounded-full border outline-none cursor-pointer transition-all text-[10px] font-black uppercase tracking-widest ${
+                          lead.status === 'Won' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 focus:ring-2 focus:ring-emerald-500/20' :
+                          lead.status === 'Lost' ? 'bg-red-50 text-red-700 border-red-200 focus:ring-2 focus:ring-red-500/20' :
+                          lead.status === 'Negotiation' ? 'bg-amber-50 text-amber-700 border-amber-200 focus:ring-2 focus:ring-amber-500/20' :
+                          lead.status === 'Site Visited' ? 'bg-blue-50 text-blue-700 border-blue-200 focus:ring-2 focus:ring-blue-500/20' :
+                          'bg-zinc-50 text-zinc-600 border-zinc-200 focus:ring-2 focus:ring-zinc-500/20'
                         }`}
                       >
                         {columns.map(c => <option key={c} value={c}>{c}</option>)}
                       </select>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                    </td>
 
-            </div>
-          ))}
+                    <td className="py-4 px-6 text-right font-black text-xs text-[#B45309]">
+                      ₹{(lead.estimatedValue || 0).toLocaleString('en-IN')}
+                    </td>
+                    
+                    <td className="py-4 px-6 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        
+                        {/* Direct Communication Buttons */}
+                        {lead.phone && (
+                          <a href={`tel:${lead.phone}`} title="Call Client" className="p-1.5 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white border border-blue-200 rounded-lg transition-all">
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                          </a>
+                        )}
+                        {lead.email && (
+                          <a href={`mailto:${lead.email}`} title="Email Client" className="p-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white border border-indigo-200 rounded-lg transition-all">
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" /></svg>
+                          </a>
+                        )}
+
+                        <button onClick={() => handleEdit(lead)} title="Edit Profile" className="px-2.5 py-1.5 bg-zinc-50 text-zinc-600 hover:bg-zinc-200 border border-zinc-200 rounded-lg font-black cursor-pointer text-[10px] uppercase tracking-widest transition-all">
+                          Edit
+                        </button>
+                        
+                        <button onClick={() => handleCreateEstimation(lead)} title="Create Estimation for Lead" className="px-2.5 py-1.5 bg-amber-50 text-[#B45309] hover:bg-[#B45309] hover:text-white border border-amber-200/60 rounded-lg font-black cursor-pointer text-[10px] uppercase tracking-widest transition-all">
+                          Est.
+                        </button>
+                        
+                        <button onClick={() => handleDelete(lead.id)} title="Delete Lead" className="p-1.5 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white border border-red-200 rounded-lg transition-all">
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
-      )}
+      </div>
 
       {/* ADD/EDIT LEAD MODAL */}
       {isModalOpen && (
