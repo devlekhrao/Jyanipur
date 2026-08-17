@@ -102,6 +102,7 @@ export default function Estimation({ companySettings = {} }) {
       if (item.id !== id) return item;
       const updated = { ...item, [field]: value };
 
+      // Auto-calculate QTY if dimensions are modified
       if (['sizeL', 'sizeB', 'no'].includes(field)) {
         const l = parseFloat(updated.sizeL);
         const b = parseFloat(updated.sizeB);
@@ -125,6 +126,8 @@ export default function Estimation({ companySettings = {} }) {
 
   const calculateRow = (item) => {
     let quantity = 0;
+    
+    // Priority: Explicit Qty > Calculated from L*B*No
     if (item.qty !== undefined && item.qty !== '') {
       quantity = parseFloat(item.qty) || 0;
     } else {
@@ -152,6 +155,7 @@ export default function Estimation({ companySettings = {} }) {
     return { subtotal: acc.subtotal + rowCalc.baseAmount, totalGst: acc.totalGst + rowCalc.gstAmount, grandTotal: acc.grandTotal + rowCalc.totalAmount };
   }, { subtotal: 0, totalGst: 0, grandTotal: 0 });
 
+  // Strictly Estimate Final Amount (No advances or balances)
   const finalAmount = totals.grandTotal - (parseFloat(estimateDetails.discount) || 0);
 
   const saveEstimationToState = () => {
@@ -165,6 +169,7 @@ export default function Estimation({ companySettings = {} }) {
     }
 
     setErrors({});
+    
     const existingEst = estimationsList.find(e => e.id === editingId);
 
     const record = {
@@ -274,7 +279,28 @@ export default function Estimation({ companySettings = {} }) {
     localStorage.setItem('draft_invoiceDetails', JSON.stringify(invoiceDraft));
     localStorage.setItem('draft_items', JSON.stringify(est.items || []));
     localStorage.setItem('draft_taxMode', est.taxMode || 'CGST_SGST');
+    
     alert('Estimate details copied! Navigate to the "Tax Invoice" module and click "+ New Invoice" to complete the conversion.');
+  };
+
+  // --- NEW: PUSH TO CRM ---
+  const handlePushToCRM = (est) => {
+    const existingLeads = JSON.parse(localStorage.getItem('jyanipur_crm_leads') || '[]');
+    const newLead = {
+      id: Date.now(),
+      dateAdded: new Date().toISOString().split('T')[0],
+      name: est.client,
+      company: est.projectName || 'Estimation Lead',
+      email: '',
+      phone: '',
+      address: est.partyAddress,
+      status: 'Negotiation', 
+      value: est.amount,
+      source: 'Estimation'
+    };
+    existingLeads.push(newLead);
+    localStorage.setItem('jyanipur_crm_leads', JSON.stringify(existingLeads));
+    alert(`${est.client} has been added to your CRM leads!`);
   };
 
   const handleToggleCancel = (id) => {
@@ -413,6 +439,13 @@ export default function Estimation({ companySettings = {} }) {
                                 </svg>
                                 View
                               </button>
+
+                              <button onClick={() => handlePushToCRM(est)} title="Send to CRM as Lead" className="px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white border border-indigo-200 rounded-lg font-black cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                                </svg>
+                                <span className="hidden xl:inline">To CRM</span>
+                              </button>
                               
                               <button onClick={() => handleDirectPrint(est)} title="Print or Save PDF" className="px-3 py-1.5 bg-zinc-50 text-zinc-600 hover:bg-zinc-200 border border-zinc-200 rounded-lg font-black cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
                                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -425,7 +458,7 @@ export default function Estimation({ companySettings = {} }) {
                                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" />
                                 </svg>
-                                Copy
+                                <span className="hidden xl:inline">Copy</span>
                               </button>
 
                               <button onClick={() => handleConvertToInvoice(est)} title="Convert to Tax Invoice" className="px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white border border-emerald-200 rounded-lg font-black cursor-pointer text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5">
@@ -583,6 +616,7 @@ export default function Estimation({ companySettings = {} }) {
                     <td className="py-2 px-2"><input disabled={isReadOnly} type="number" step="any" value={item.sizeB} onChange={(e) => updateItem(item.id, 'sizeB', e.target.value)} className={`${tInp} text-center`} /></td>
                     <td className="py-2 px-2"><input disabled={isReadOnly} type="number" step="any" value={item.no} onChange={(e) => updateItem(item.id, 'no', e.target.value)} className={`${tInp} text-center`} /></td>
                     
+                    {/* QTY FREE TEXT INPUT */}
                     <td className="py-2 px-2">
                       <input 
                         disabled={isReadOnly} 
@@ -706,185 +740,193 @@ export default function Estimation({ companySettings = {} }) {
       {/* ========================================== */}
       {/* PERFECT A4 PDF DOCUMENT ENGINE (CLEAN CORPORATE STYLE) */}
       {/* ========================================== */}
-      <div className="hidden print:block w-full bg-white text-black font-sans text-xs print:p-0 print:m-0">
+      <div className="hidden print:flex w-full bg-white text-black font-sans text-xs print:p-0 print:m-0 min-h-screen flex-col items-center">
         
         <style dangerouslySetInnerHTML={{__html: `
           @media print {
-            @page { margin: 15mm; size: A4 portrait; }
+            @page { margin: 10mm; size: A4 portrait; }
             body { padding: 0 !important; background: white !important; color: black !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             img { mix-blend-mode: multiply !important; }
           }
         `}} />
 
-        <div className="max-w-[210mm] mx-auto bg-white">
+        <div className="w-[210mm] min-h-[280mm] mx-auto bg-white flex flex-col relative">
           
-          {/* Header Branding */}
-          <div className="flex justify-between items-start border-b border-gray-300 pb-5 mb-6">
-            <div className="flex items-center gap-4">
-              {companySettings?.logoUrl && (
-                <img src={companySettings.logoUrl} className="h-14 w-auto object-contain shrink-0" alt="Logo" />
-              )}
+          {/* Main Document Content */}
+          <div className="flex-1">
+            {/* Header Branding */}
+            <div className="flex justify-between items-start border-b border-gray-300 pb-5 mb-6">
+              <div className="flex items-center gap-4">
+                {companySettings?.logoUrl && (
+                  <img src={companySettings.logoUrl} className="h-14 w-auto object-contain shrink-0" alt="Logo" />
+                )}
+                <div>
+                  <h1 className="text-lg font-bold text-black">{companySettings?.companyName || 'Company Name'}</h1>
+                  <p className="text-[10px] text-gray-600 whitespace-pre-wrap mt-0.5 max-w-xs">{companySettings?.companyAddress}</p>
+                  <p className="text-[10px] text-gray-800 mt-1">
+                    <span className="font-semibold">GSTIN:</span> {companySettings?.companyGst} <span className="mx-2">|</span> 
+                    <span className="font-semibold">Phone:</span> {companySettings?.companyPhone} <span className="mx-2">|</span> 
+                    <span className="font-semibold">Email:</span> {companySettings?.companyEmail || 'info@jyanipur.com'} <span className="mx-2">|</span> 
+                    <span className="font-semibold">Web:</span> jyanipur.com
+                  </p>
+                </div>
+              </div>
+              
+              <div className="text-right">
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1">Estimation / BOQ</span>
+                <h2 className="text-lg font-bold text-black">{estimateDetails.estimateNo || 'EST-000'}</h2>
+                <p className="text-[10px] text-gray-800 mt-1"><span className="font-semibold">Date:</span> {estimateDetails.date}</p>
+              </div>
+            </div>
+
+            {/* Client & Project Info */}
+            <div className="flex justify-between mb-8">
               <div>
-                <h1 className="text-lg font-bold text-black">{companySettings?.companyName || 'Company Name'}</h1>
-                <p className="text-[10px] text-gray-600 whitespace-pre-wrap mt-0.5 max-w-xs">{companySettings?.companyAddress}</p>
-                <p className="text-[10px] text-gray-800 mt-1">
-                  <span className="font-semibold">GSTIN:</span> {companySettings?.companyGst} <span className="mx-2">|</span> 
-                  <span className="font-semibold">Phone:</span> {companySettings?.companyPhone}
-                </p>
+                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">To</span>
+                <h3 className="text-sm font-bold text-black uppercase">{estimateDetails.partyName || 'Client Name'}</h3>
+                <p className="text-[10px] text-gray-700 whitespace-pre-wrap mt-1 leading-relaxed">{estimateDetails.partyAddress}</p>
+              </div>
+
+              <div className="text-right space-y-1 text-[10px]">
+                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Project Details</span>
+                <p className="text-gray-800"><span className="font-semibold">Project:</span> {estimateDetails.projectName || 'Interior Estimation'}</p>
+                {estimateDetails.validUntil && <p className="text-gray-800"><span className="font-semibold">Valid Until:</span> {estimateDetails.validUntil}</p>}
               </div>
             </div>
-            
-            <div className="text-right">
-              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1">Estimation / BOQ</span>
-              <h2 className="text-lg font-bold text-black">{estimateDetails.estimateNo || 'EST-000'}</h2>
-              <p className="text-[10px] text-gray-800 mt-1"><span className="font-semibold">Date:</span> {estimateDetails.date}</p>
-            </div>
-          </div>
 
-          {/* Client & Project Info */}
-          <div className="flex justify-between mb-8">
-            <div>
-              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">To</span>
-              <h3 className="text-sm font-bold text-black uppercase">{estimateDetails.partyName || 'Client Name'}</h3>
-              <p className="text-[10px] text-gray-700 whitespace-pre-wrap mt-1 leading-relaxed">{estimateDetails.partyAddress}</p>
-            </div>
+            {/* CLEAN ITEM TABLE */}
+            <table className="w-full text-left border-collapse border border-gray-300 mb-6">
+              <thead className="bg-gray-50 border-b border-gray-300">
+                <tr className="text-gray-700 text-[10px] uppercase font-semibold">
+                  <th className="py-2 px-2 text-center w-8 border-r border-gray-200">#</th>
+                  <th className="py-2 px-3 border-r border-gray-200">Scope of Work / Material Details</th>
+                  <th className="py-2 px-2 text-center w-12 border-r border-gray-200">Unit</th>
+                  <th className="py-2 px-2 text-center w-16 border-r border-gray-200">L x B</th>
+                  <th className="py-2 px-2 text-center w-10 border-r border-gray-200">No</th>
+                  <th className="py-2 px-2 text-center w-12 border-r border-gray-200">Qty</th>
+                  <th className="py-2 px-2 text-right w-20 border-r border-gray-200">Rate</th>
+                  {taxMode !== 'NONE' && <th className="py-2 px-2 text-center w-12 border-r border-gray-200">Tax</th>}
+                  <th className="py-2 px-3 text-right w-24">Amount</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 text-[10px] text-black">
+                {items.map((item, index) => {
+                  const row = calculateRow(item);
+                  if (!item.description) return null;
+                  const measurement = (item.sizeL || item.sizeB) ? `${item.sizeL || '-'} x ${item.sizeB || '-'}` : '-';
 
-            <div className="text-right space-y-1 text-[10px]">
-              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Project Details</span>
-              <p className="text-gray-800"><span className="font-semibold">Project:</span> {estimateDetails.projectName || 'Interior Estimation'}</p>
-              {estimateDetails.validUntil && <p className="text-gray-800"><span className="font-semibold">Valid Until:</span> {estimateDetails.validUntil}</p>}
-            </div>
-          </div>
+                  return (
+                    <tr key={item.id} className="break-inside-avoid">
+                      <td className="py-2 px-2 text-center text-gray-500 border-r border-gray-200">{index + 1}</td>
+                      <td className="py-2 px-3 border-r border-gray-200">{item.description}</td>
+                      <td className="py-2 px-2 text-center border-r border-gray-200">{item.unit}</td>
+                      <td className="py-2 px-2 text-center border-r border-gray-200">{measurement}</td>
+                      <td className="py-2 px-2 text-center border-r border-gray-200">{item.no || '-'}</td>
+                      <td className="py-2 px-2 text-center font-medium border-r border-gray-200">{row.quantity.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
+                      <td className="py-2 px-2 text-right border-r border-gray-200">₹{parseFloat(item.rate || 0).toLocaleString('en-IN')}</td>
+                      {taxMode !== 'NONE' && <td className="py-2 px-2 text-center border-r border-gray-200">{item.gst}%</td>}
+                      <td className="py-2 px-3 text-right font-medium">₹{row.totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
 
-          {/* CLEAN ITEM TABLE */}
-          <table className="w-full text-left border-collapse border border-gray-300 mb-6">
-            <thead className="bg-gray-50 border-b border-gray-300">
-              <tr className="text-gray-700 text-[10px] uppercase font-semibold">
-                <th className="py-2 px-2 text-center w-8 border-r border-gray-200">#</th>
-                <th className="py-2 px-3 border-r border-gray-200">Scope of Work / Material Details</th>
-                <th className="py-2 px-2 text-center w-12 border-r border-gray-200">Unit</th>
-                <th className="py-2 px-2 text-center w-16 border-r border-gray-200">L x B</th>
-                <th className="py-2 px-2 text-center w-10 border-r border-gray-200">No</th>
-                <th className="py-2 px-2 text-center w-12 border-r border-gray-200">Qty</th>
-                <th className="py-2 px-2 text-right w-20 border-r border-gray-200">Rate</th>
-                {taxMode !== 'NONE' && <th className="py-2 px-2 text-center w-12 border-r border-gray-200">Tax</th>}
-                <th className="py-2 px-3 text-right w-24">Amount</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 text-[10px] text-black">
-              {items.map((item, index) => {
-                const row = calculateRow(item);
-                if (!item.description) return null;
-                const measurement = (item.sizeL || item.sizeB) ? `${item.sizeL || '-'} x ${item.sizeB || '-'}` : '-';
-
-                return (
-                  <tr key={item.id} className="break-inside-avoid">
-                    <td className="py-2 px-2 text-center text-gray-500 border-r border-gray-200">{index + 1}</td>
-                    <td className="py-2 px-3 border-r border-gray-200">{item.description}</td>
-                    <td className="py-2 px-2 text-center border-r border-gray-200">{item.unit}</td>
-                    <td className="py-2 px-2 text-center border-r border-gray-200">{measurement}</td>
-                    <td className="py-2 px-2 text-center border-r border-gray-200">{item.no || '-'}</td>
-                    <td className="py-2 px-2 text-center font-medium border-r border-gray-200">{row.quantity.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
-                    <td className="py-2 px-2 text-right border-r border-gray-200">₹{parseFloat(item.rate || 0).toLocaleString('en-IN')}</td>
-                    {taxMode !== 'NONE' && <td className="py-2 px-2 text-center border-r border-gray-200">{item.gst}%</td>}
-                    <td className="py-2 px-3 text-right font-medium">₹{row.totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-
-          {/* Amount in Words & Totals Block */}
-          <div className="flex justify-between items-start break-inside-avoid mb-10">
-            <div className="w-1/2 pr-4 pt-2">
-              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Estimated Amount in Words</span>
-              <p className="text-[10px] font-medium text-black capitalize">{numberToWords(finalAmount > 0 ? finalAmount : totals.grandTotal)}</p>
-            </div>
-            
-            <div className="w-64 space-y-1.5 text-xs text-black">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Taxable BOQ Total:</span>
-                <span>₹{totals.subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+            {/* Amount in Words & Totals Block */}
+            <div className="flex justify-between items-start break-inside-avoid mb-10">
+              <div className="w-1/2 pr-4 pt-2">
+                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Estimated Amount in Words</span>
+                <p className="text-[10px] font-medium text-black capitalize">{numberToWords(finalAmount > 0 ? finalAmount : totals.grandTotal)}</p>
               </div>
               
-              {taxMode === 'IGST' ? (
+              <div className="w-64 space-y-1.5 text-xs text-black">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">IGST Total:</span>
-                  <span>₹{totals.totalGst.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                  <span className="text-gray-600">Taxable BOQ Total:</span>
+                  <span>₹{totals.subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
                 </div>
-              ) : taxMode === 'CGST_SGST' ? (
-                <>
+                
+                {taxMode === 'IGST' ? (
                   <div className="flex justify-between">
-                    <span className="text-gray-600">CGST:</span><span>₹{(totals.totalGst / 2).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                    <span className="text-gray-600">IGST Total:</span>
+                    <span>₹{totals.totalGst.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
                   </div>
-                  <div className="flex justify-between border-b border-gray-200 pb-1.5">
-                    <span className="text-gray-600">SGST:</span><span>₹{(totals.totalGst / 2).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                ) : taxMode === 'CGST_SGST' ? (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">CGST:</span><span>₹{(totals.totalGst / 2).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-gray-200 pb-1.5">
+                      <span className="text-gray-600">SGST:</span><span>₹{(totals.totalGst / 2).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                    </div>
+                  </>
+                ) : null}
+                
+                <div className="flex justify-between font-semibold pt-1">
+                  <span>Grand Total:</span><span>₹{totals.grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                </div>
+
+                {(estimateDetails.discount > 0) && (
+                  <div className="flex justify-between text-gray-500 text-[10px]">
+                    <span>Discount:</span><span>- ₹{parseFloat(estimateDetails.discount).toLocaleString('en-IN')}</span>
                   </div>
-                </>
-              ) : null}
-              
-              <div className="flex justify-between font-semibold pt-1">
-                <span>Grand Total:</span><span>₹{totals.grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                )}
+
+                <div className="flex justify-between font-bold text-base border-t-2 border-black pt-2 mt-2">
+                  <span>Final Estimate:</span><span>₹{finalAmount > 0 ? finalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2}) : 0}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Terms, Remarks, and Signatures */}
+            <div className="grid grid-cols-2 gap-8 text-[10px] break-inside-avoid">
+              <div className="space-y-5">
+                {companySettings?.showBankDetailsOnPdf !== false && (
+                  <div>
+                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Bank Details</span>
+                    <div className="grid grid-cols-[50px_1fr] gap-y-0.5 text-black">
+                      <span className="font-semibold">Bank:</span><span>{estimateDetails.bankName}</span>
+                      <span className="font-semibold">Name:</span><span>{estimateDetails.accountName}</span>
+                      <span className="font-semibold">A/C No:</span><span>{estimateDetails.accountNo}</span>
+                      <span className="font-semibold">IFSC:</span><span>{estimateDetails.ifscCode}</span>
+                    </div>
+                  </div>
+                )}
+                
+                {companySettings?.showTermsOnPdf !== false && (
+                  <div>
+                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Payment Terms & Schedule</span>
+                    <p className="whitespace-pre-wrap text-gray-600 leading-tight">{estimateDetails.terms}</p>
+                  </div>
+                )}
+
+                {companySettings?.showRemarksOnPdf !== false && estimateDetails.description && (
+                  <div>
+                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Scope Remarks</span>
+                    <p className="text-gray-800">{estimateDetails.description}</p>
+                  </div>
+                )}
               </div>
 
-              {(estimateDetails.discount > 0) && (
-                <div className="flex justify-between text-gray-500 text-[10px]">
-                  <span>Discount:</span><span>- ₹{parseFloat(estimateDetails.discount).toLocaleString('en-IN')}</span>
+              {companySettings?.showSignatoryOnPdf !== false && (
+                <div className="flex flex-col items-end justify-end text-right pt-6">
+                  {companySettings?.showSignatureImage && companySettings?.signatureUrl ? (
+                    <img src={companySettings.signatureUrl} alt="Signature" className="h-16 w-auto object-contain mb-2 mix-blend-multiply" />
+                  ) : <div className="h-16"></div>}
+                  <div className="border-t border-gray-400 pt-1 w-48">
+                    <p className="font-bold text-black">For {companySettings?.companyName}</p>
+                    <p className="text-[9px] text-gray-500 mt-0.5 uppercase tracking-wider">Authorized Signatory</p>
+                  </div>
                 </div>
               )}
-
-              <div className="flex justify-between font-bold text-base border-t-2 border-black pt-2 mt-2">
-                <span>Final Estimate:</span><span>₹{finalAmount > 0 ? finalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2}) : 0}</span>
-              </div>
             </div>
           </div>
 
-          {/* Footer Info */}
-          <div className="grid grid-cols-2 gap-8 text-[10px] break-inside-avoid">
-            <div className="space-y-5">
-              {companySettings?.showBankDetailsOnPdf !== false && (
-                <div>
-                  <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Bank Details</span>
-                  <div className="grid grid-cols-[50px_1fr] gap-y-0.5 text-black">
-                    <span className="font-semibold">Bank:</span><span>{estimateDetails.bankName}</span>
-                    <span className="font-semibold">Name:</span><span>{estimateDetails.accountName}</span>
-                    <span className="font-semibold">A/C No:</span><span>{estimateDetails.accountNo}</span>
-                    <span className="font-semibold">IFSC:</span><span>{estimateDetails.ifscCode}</span>
-                  </div>
-                </div>
-              )}
-              
-              {companySettings?.showTermsOnPdf !== false && (
-                <div>
-                  <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Payment Terms & Schedule</span>
-                  <p className="whitespace-pre-wrap text-gray-600 leading-tight">{estimateDetails.terms}</p>
-                </div>
-              )}
-
-              {companySettings?.showRemarksOnPdf !== false && estimateDetails.description && (
-                <div>
-                  <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Scope Remarks</span>
-                  <p className="text-gray-800">{estimateDetails.description}</p>
-                </div>
-              )}
-            </div>
-
-            {companySettings?.showSignatoryOnPdf !== false && (
-              <div className="flex flex-col items-end justify-end text-right pt-6">
-                {companySettings?.showSignatureImage && companySettings?.signatureUrl ? (
-                  <img src={companySettings.signatureUrl} alt="Signature" className="h-16 w-auto object-contain mb-2 mix-blend-multiply" />
-                ) : <div className="h-16"></div>}
-                <div className="border-t border-gray-400 pt-1 w-48">
-                  <p className="font-bold text-black">For {companySettings?.companyName}</p>
-                  <p className="text-[9px] text-gray-500 mt-0.5 uppercase tracking-wider">Authorized Signatory</p>
-                </div>
-              </div>
-            )}
-          </div>
-
+          {/* Persistent Anchored Footer */}
           {companySettings?.pdfFooterDisclaimer && (
-            <div className="mt-10 pt-4 border-t border-gray-200 text-center">
-              <p className="text-[8px] font-semibold text-gray-400 uppercase tracking-widest">{companySettings.pdfFooterDisclaimer}</p>
+            <div className="mt-auto pt-4 pb-2 border-t border-gray-200 text-center w-full">
+              <p className="text-[8px] font-semibold text-gray-400 uppercase tracking-widest">
+                {companySettings.pdfFooterDisclaimer} <span className="mx-2">|</span> WWW.JYANIPUR.COM
+              </p>
             </div>
           )}
 
