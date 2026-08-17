@@ -25,7 +25,7 @@ export default function Settings({ companySettings, setCompanySettings }) {
   const cardHeaderClass = "text-xs font-bold text-zinc-900 uppercase tracking-wider border-b border-zinc-100 pb-3 mb-2";
 
   return (
-    <div className="w-full h-full font-sans flex flex-col">
+    <div className="w-full h-full font-['Poppins'] flex flex-col">
       
       {/* Header */}
       <div className="flex justify-between items-end pb-4 border-b border-zinc-200 mb-6 shrink-0">

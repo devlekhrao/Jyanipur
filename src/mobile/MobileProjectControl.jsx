@@ -116,7 +116,7 @@ export default function MobileProjectControl() {
   const labelClass = "block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
 
   return (
-    <div className="w-full h-full flex flex-col font-sans">
+    <div className="w-full h-full flex flex-col font-['Poppins']">
       
       {/* HEADER SECTION */}
       <div className="mb-3 shrink-0">

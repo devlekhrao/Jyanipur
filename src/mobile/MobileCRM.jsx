@@ -71,7 +71,7 @@ export default function MobileCRM() {
   const activeLeads = leads.filter(l => l.status === activeStatusTab);
 
   return (
-    <div className="w-full h-full flex flex-col font-sans">
+    <div className="w-full h-full flex flex-col font-['Poppins']">
       
       {/* HEADER SECTION */}
       <div className="mb-4">

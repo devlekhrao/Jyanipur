@@ -55,7 +55,7 @@ export default function SiteManager() {
 
   if (!activeProject) {
     return (
-      <div className="w-full h-full font-sans flex flex-col items-center justify-center">
+      <div className="w-full h-full font-['Poppins'] flex flex-col items-center justify-center">
         <div className="bg-white p-10 rounded-[2.5rem] border border-zinc-200 shadow-xl max-w-md w-full text-center">
           <div className="text-4xl mb-4">🏗️</div>
           <h2 className="text-xl font-bold text-zinc-900 mb-2">Site Operations Center</h2>
@@ -70,7 +70,7 @@ export default function SiteManager() {
   }
 
   return (
-    <div className="w-full h-full font-sans flex flex-col">
+    <div className="w-full h-full font-['Poppins'] flex flex-col">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end pb-4 border-b border-zinc-200 mb-6 gap-4 shrink-0">
         <div>

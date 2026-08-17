@@ -240,7 +240,7 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
 
   if (currentView === 'list') {
     return (
-      <div className="w-full h-full font-sans flex flex-col print:hidden">
+      <div className="w-full h-full font-['Poppins'] flex flex-col print:hidden">
         <div className="flex justify-between items-end pb-4 border-b border-zinc-200 mb-6 shrink-0">
           <div>
             <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Purchase Orders</h2>
@@ -303,7 +303,7 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
   }
 
   return (
-    <div className="w-full h-full font-sans flex flex-col">
+    <div className="w-full h-full font-['Poppins'] flex flex-col">
       <div className="print:hidden flex-1 flex flex-col min-h-0 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <div className="flex items-center justify-between border-b border-zinc-200 pb-4 mb-6 shrink-0">
           <h2 className="text-xl font-bold text-zinc-900 tracking-tight">
@@ -448,7 +448,7 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
         </div>
       </div>
 
-      <div className="hidden print:block w-full bg-white text-zinc-900 font-sans text-[11px] leading-tight print:p-0 print:m-0">
+      <div className="hidden print:block w-full bg-white text-zinc-900 font-['Poppins'] text-[11px] leading-tight print:p-0 print:m-0">
         <style dangerouslySetInnerHTML={{__html: `
           @media print {
             @page { margin: 10mm; size: A4 portrait; }

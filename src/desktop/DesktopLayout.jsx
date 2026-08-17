@@ -173,7 +173,7 @@ export default function DesktopLayout() {
 
   if (isLoggedIn) {
     return (
-      <div className="flex w-screen h-screen overflow-hidden bg-zinc-50 font-sans text-zinc-900 selection:bg-amber-100">
+      <div className="flex w-screen h-screen overflow-hidden bg-zinc-50 font-['Poppins'] text-zinc-900 selection:bg-amber-100">
         
         {/* WARNING MODAL */}
         {showWarningModal && (
@@ -327,7 +327,7 @@ export default function DesktopLayout() {
   // LOGGED OUT: LOGIN SCREEN (Teak Theme + Stay Signed In)
   // ==========================================
   return (
-    <div className="fixed inset-0 w-screen h-[100dvh] flex items-center justify-center bg-[url('/background.png')] bg-cover bg-center bg-no-repeat px-4 font-sans overflow-hidden overscroll-none bg-zinc-900">
+    <div className="fixed inset-0 w-screen h-[100dvh] flex items-center justify-center bg-[url('/background.png')] bg-cover bg-center bg-no-repeat px-4 font-['Poppins'] overflow-hidden overscroll-none bg-zinc-900">
       
       {/* TEAK TINT OVERLAY INSTEAD OF BLUR */}
       <div className="absolute inset-0 bg-[#B45309]/30 mix-blend-multiply"></div>

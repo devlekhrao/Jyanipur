@@ -272,7 +272,7 @@ export default function MobileTaxInvoice({ companySettings = {}, updateDirtyStat
   // LIST VIEW
   if (currentView === 'list') {
     return (
-      <div className="w-full h-full flex flex-col font-sans">
+      <div className="w-full h-full flex flex-col font-['Poppins']">
         
         {/* HEADER SECTION */}
         <div className="mb-3 shrink-0">
@@ -347,7 +347,7 @@ export default function MobileTaxInvoice({ companySettings = {}, updateDirtyStat
 
   // CREATE / EDIT FORM VIEW
   return (
-    <div className="w-full h-full flex flex-col font-sans">
+    <div className="w-full h-full flex flex-col font-['Poppins']">
       
       {/* HEADER BAR */}
       <div className="mb-3 shrink-0 flex justify-between items-center border-b border-zinc-100 pb-2">

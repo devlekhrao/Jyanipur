@@ -34,7 +34,7 @@ export default function MobileProjectPnL() {
   // EMPTY SELECTION STATE
   if (!activeProject) {
     return (
-      <div className="w-full h-full flex flex-col font-sans items-center justify-center p-4">
+      <div className="w-full h-full flex flex-col font-['Poppins'] items-center justify-center p-4">
         <div className="bg-white p-6 rounded-[2rem] border border-zinc-200 shadow-lg w-full text-center space-y-4">
           <span className="text-4xl block">📈</span>
           <h2 className="text-xl font-bold text-zinc-900">Project P&L Reports</h2>
@@ -57,7 +57,7 @@ export default function MobileProjectPnL() {
   }
 
   return (
-    <div className="w-full h-full flex flex-col font-sans">
+    <div className="w-full h-full flex flex-col font-['Poppins']">
       
       {/* HEADER SECTION */}
       <div className="mb-3 shrink-0">

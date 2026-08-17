@@ -580,7 +580,7 @@ export default function Purchases({ companySettings = {} }) {
       {/* ========================================== */}
       {/* PERFECT A4 PRINT VIEW (INTERNAL PURCHASE VOUCHER) */}
       {/* ========================================== */}
-      <div className="hidden print:flex w-full bg-white text-black font-sans text-xs print:p-0 print:m-0 flex-col items-center justify-between" style={{ minHeight: '100vh' }}>
+      <div className="hidden print:flex w-full bg-white text-black font-['Poppins'] text-xs print:p-0 print:m-0 flex-col items-center justify-between" style={{ minHeight: '100vh' }}>
         
         <style dangerouslySetInnerHTML={{__html: `
           @media print {

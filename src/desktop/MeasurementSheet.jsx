@@ -116,7 +116,7 @@ export default function MeasurementSheet() {
     const cellClass = "w-full bg-transparent outline-none focus:bg-amber-50/50 px-2 py-2 text-xs text-zinc-800 font-medium transition-colors";
     
     return (
-      <div className="w-full h-full font-sans flex flex-col">
+      <div className="w-full h-full font-['Poppins'] flex flex-col">
         {/* Editor Toolbar */}
         <div className="bg-white border border-zinc-200 shadow-sm rounded-2xl p-4 mb-6 shrink-0 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
           <div className="flex-1 w-full flex flex-col md:flex-row gap-4 items-center">
@@ -206,7 +206,7 @@ export default function MeasurementSheet() {
 
   // --- MAIN DASHBOARD VIEW ---
   return (
-    <div className="w-full h-full font-sans flex flex-col">
+    <div className="w-full h-full font-['Poppins'] flex flex-col">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end pb-4 border-b border-zinc-200 mb-6 gap-4 shrink-0">
         <div>
           <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Joint Measurement Sheets</h2>

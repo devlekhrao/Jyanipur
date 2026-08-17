@@ -123,7 +123,7 @@ export default function MobileMeasurementSheet() {
   // VIEW 1: SPREADSHEET EDITOR
   if (isEditorOpen) {
     return (
-      <div className="w-full h-full flex flex-col font-sans">
+      <div className="w-full h-full flex flex-col font-['Poppins']">
         
         {/* HEADER BAR */}
         <div className="mb-3 shrink-0 flex justify-between items-center border-b border-zinc-100 pb-2">
@@ -333,7 +333,7 @@ export default function MobileMeasurementSheet() {
 
   // VIEW 2: SHEETS LIST DASHBOARD
   return (
-    <div className="w-full h-full flex flex-col font-sans">
+    <div className="w-full h-full flex flex-col font-['Poppins']">
       
       {/* HEADER SECTION */}
       <div className="mb-3 shrink-0">

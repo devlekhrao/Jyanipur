@@ -356,7 +356,7 @@ export default function Estimation({ companySettings = {} }) {
   // ==========================================
   if (currentView === 'list') {
     return (
-      <div className="w-full h-full font-sans flex flex-col print:hidden">
+      <div className="w-full h-full font-['Poppins'] flex flex-col print:hidden">
         <div className="flex justify-between items-center pb-5 mb-6 border-b border-zinc-200 shrink-0">
           <div>
             <h2 className="text-xl font-bold text-zinc-900 tracking-tight">Estimations & BOQs</h2>
@@ -534,7 +534,7 @@ export default function Estimation({ companySettings = {} }) {
   // RENDER 2: CREATE / EDIT / VIEW FORM VIEW
   // ==========================================
   return (
-    <div className="w-full h-full font-sans flex flex-col">
+    <div className="w-full h-full font-['Poppins'] flex flex-col">
       
       {/* SCREEN FORM VIEW (HIDDEN ON PRINT) */}
       <div className="print:hidden flex-1 flex flex-col min-h-0 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
@@ -767,7 +767,7 @@ export default function Estimation({ companySettings = {} }) {
       {/* ========================================== */}
       {/* PERFECT A4 PDF DOCUMENT ENGINE (CLEAN CORPORATE STYLE) */}
       {/* ========================================== */}
-      <div className="hidden print:flex w-full bg-white text-black font-sans text-xs print:p-0 print:m-0 flex-col items-center justify-between" style={{ minHeight: '100vh' }}>
+      <div className="hidden print:flex w-full bg-white text-black font-['Poppins'] text-xs print:p-0 print:m-0 flex-col items-center justify-between" style={{ minHeight: '100vh' }}>
         
         {/* THIS CSS BLOCK DISABLES BROWSER HEADERS AND FOOTERS ENTIRELY */}
         <style dangerouslySetInnerHTML={{__html: `

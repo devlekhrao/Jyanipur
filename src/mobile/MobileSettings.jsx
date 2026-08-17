@@ -25,7 +25,7 @@ export default function MobileSettings({ companySettings = {}, setCompanySetting
   const tabs = ['Profile', 'Bank', 'Prefixes & Tax', 'Labor & HR', 'Templates', 'PDF Print'];
 
   return (
-    <div className="w-full h-full flex flex-col font-sans">
+    <div className="w-full h-full flex flex-col font-['Poppins']">
       
       {/* HEADER SECTION */}
       <div className="mb-3 shrink-0">

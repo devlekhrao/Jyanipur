@@ -102,7 +102,7 @@ export default function MobileInventory() {
   const outOfStockCount = items.filter(i => i.totalStock === 0).length;
 
   return (
-    <div className="w-full h-full flex flex-col font-sans">
+    <div className="w-full h-full flex flex-col font-['Poppins']">
       
       {/* HEADER SECTION */}
       <div className="mb-3 shrink-0">

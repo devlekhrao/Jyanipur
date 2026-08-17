@@ -106,7 +106,7 @@ export default function ProjectControl() {
   const labelClass = "block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
 
   return (
-    <div className="w-full font-sans pb-12 relative h-full flex flex-col">
+    <div className="w-full font-['Poppins'] pb-12 relative h-full flex flex-col">
       
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end pb-4 border-b border-zinc-300/50 mb-6 gap-4 shrink-0">

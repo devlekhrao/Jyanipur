@@ -50,7 +50,7 @@ export default function VendorLedger() {
   const labelClass = "block text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-1";
 
   return (
-    <div className="w-full h-full font-sans flex flex-col">
+    <div className="w-full h-full font-['Poppins'] flex flex-col">
       
       {/* Header */}
       <div className="flex justify-between items-end pb-4 border-b border-zinc-200 mb-6 shrink-0">

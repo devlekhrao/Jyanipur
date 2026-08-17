@@ -155,7 +155,7 @@ export default function MobileSalaries() {
   const isAllSelected = allSelectableCount > 0 && selectedEmps.size === allSelectableCount;
 
   return (
-    <div className="w-full h-full flex flex-col font-sans">
+    <div className="w-full h-full flex flex-col font-['Poppins']">
       
       {/* HEADER SECTION */}
       <div className="mb-3 shrink-0">

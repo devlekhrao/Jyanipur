@@ -116,7 +116,7 @@ export default function Dashboard({ setActivePage }) {
   const cardClass = "bg-white border border-zinc-200 p-6 rounded-[2rem] shadow-sm";
 
   return (
-    <div className="w-full font-sans flex flex-col">
+    <div className="w-full font-['Poppins'] flex flex-col">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Graphical Command Center</h2>
         <p className="text-zinc-500 text-xs mt-1 font-medium">Real-time charts and job costing visualizations.</p>

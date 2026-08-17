@@ -121,7 +121,7 @@ export default function MobileLayout({
   };
 
   return (
-    <div className="w-full h-[100dvh] flex flex-col bg-zinc-100 font-sans overflow-hidden">
+    <div className="w-full h-[100dvh] flex flex-col bg-zinc-100 font-['Poppins'] overflow-hidden">
       
       {/* FLUID SAFE AREA HEADER */}
       <header className="px-4 pt-[calc(env(safe-area-inset-top,0px)+12px)] pb-3 bg-white border-b border-zinc-200 flex justify-between items-center shrink-0 z-30 shadow-sm">

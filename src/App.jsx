@@ -150,7 +150,7 @@ export default function App() {
   // LOGGED OUT: LOGIN SCREEN (Teak Theme + Checkbox)
   // ==========================================
   return (
-    <div className="fixed inset-0 w-screen h-[100dvh] flex items-center justify-center bg-[url('/background.png')] bg-cover bg-center bg-no-repeat px-4 font-sans overflow-hidden overscroll-none bg-zinc-900">
+    <div className="fixed inset-0 w-screen h-[100dvh] flex items-center justify-center bg-[url('/background.png')] bg-cover bg-center bg-no-repeat px-4 font-['Poppins'] overflow-hidden overscroll-none bg-zinc-900">
       
       {/* TEAK TINT OVERLAY INSTEAD OF BLUR */}
       <div className="absolute inset-0 bg-[#B45309]/30 mix-blend-multiply"></div>
