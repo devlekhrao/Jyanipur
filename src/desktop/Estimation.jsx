@@ -121,6 +121,7 @@ export default function Estimation({ companySettings = {} }) {
       if (item.id !== id) return item;
       const updated = { ...item, [field]: value };
 
+      // Auto-calculate QTY if dimensions are modified
       if (['sizeL', 'sizeB', 'no'].includes(field)) {
         const l = parseFloat(updated.sizeL);
         const b = parseFloat(updated.sizeB);
@@ -144,6 +145,8 @@ export default function Estimation({ companySettings = {} }) {
 
   const calculateRow = (item) => {
     let quantity = 0;
+    
+    // Priority: Explicit Qty > Calculated from L*B*No
     if (item.qty !== undefined && item.qty !== '') {
       quantity = parseFloat(item.qty) || 0;
     } else {
@@ -171,6 +174,7 @@ export default function Estimation({ companySettings = {} }) {
     return { subtotal: acc.subtotal + rowCalc.baseAmount, totalGst: acc.totalGst + rowCalc.gstAmount, grandTotal: acc.grandTotal + rowCalc.totalAmount };
   }, { subtotal: 0, totalGst: 0, grandTotal: 0 });
 
+  // Strictly Estimate Final Amount (No advances or balances)
   const finalAmount = totals.grandTotal - (parseFloat(estimateDetails.discount) || 0);
 
   const saveEstimationToState = () => {
@@ -184,6 +188,7 @@ export default function Estimation({ companySettings = {} }) {
     }
 
     setErrors({});
+    
     const existingEst = estimationsList.find(e => e.id === editingId);
 
     const record = {
@@ -293,9 +298,11 @@ export default function Estimation({ companySettings = {} }) {
     localStorage.setItem('draft_invoiceDetails', JSON.stringify(invoiceDraft));
     localStorage.setItem('draft_items', JSON.stringify(est.items || []));
     localStorage.setItem('draft_taxMode', est.taxMode || 'CGST_SGST');
+    
     alert('Estimate details copied! Navigate to the "Tax Invoice" module and click "+ New Invoice" to complete the conversion.');
   };
 
+  // --- NEW: PUSH TO CRM ---
   const handlePushToCRM = (est) => {
     const existingLeads = JSON.parse(localStorage.getItem('jyanipur_crm_leads') || '[]');
     const newLead = {
@@ -754,17 +761,17 @@ export default function Estimation({ companySettings = {} }) {
       {/* ========================================== */}
       {/* PERFECT A4 PDF DOCUMENT ENGINE (CLEAN CORPORATE STYLE) */}
       {/* ========================================== */}
-      <div className="hidden print:flex w-full bg-white text-black font-sans text-xs print:p-0 print:m-0 flex-col items-center justify-between" style={{ minHeight: 'calc(100vh - 20mm)' }}>
+      <div className="hidden print:flex w-full bg-white text-black font-sans text-xs print:p-0 print:m-0 flex-col items-center justify-between" style={{ minHeight: '100vh' }}>
         
         <style dangerouslySetInnerHTML={{__html: `
           @media print {
-            @page { margin: 10mm; size: A4 portrait; }
+            @page { margin: 0; size: A4 portrait; }
             body { padding: 0 !important; background: white !important; color: black !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             img { mix-blend-mode: multiply !important; }
           }
         `}} />
 
-        <div className="w-full bg-white flex flex-col relative flex-1">
+        <div className="w-full bg-white flex flex-col relative flex-1 print:p-[15mm]">
           
           {/* Header Branding */}
           <div className="flex justify-between items-start border-b border-gray-300 pb-5 mb-6">
@@ -777,8 +784,7 @@ export default function Estimation({ companySettings = {} }) {
                 <p className="text-[10px] text-gray-600 whitespace-pre-wrap mt-0.5 max-w-xs">{companySettings?.companyAddress}</p>
                 <p className="text-[10px] text-gray-800 mt-1">
                   <span className="font-semibold">GSTIN:</span> {companySettings?.companyGst} <span className="mx-2">|</span> 
-                  <span className="font-semibold">Phone:</span> {companySettings?.companyPhone} <span className="mx-2">|</span> 
-                  <span className="font-semibold">Email:</span> {companySettings?.companyEmail || 'accounts@jyanipur.in'}
+                  <span className="font-semibold">Phone:</span> {companySettings?.companyPhone}
                 </p>
               </div>
             </div>
@@ -931,17 +937,16 @@ export default function Estimation({ companySettings = {} }) {
             )}
           </div>
 
+          {/* Persistent Anchored Footer */}
+          {companySettings?.pdfFooterDisclaimer && (
+            <div className="mt-auto pt-4 pb-2 border-t border-gray-200 text-center w-full">
+              <p className="text-[10px] text-gray-500">
+                {companySettings.pdfFooterDisclaimer}
+              </p>
+            </div>
+          )}
+
         </div>
-
-        {/* Persistent Anchored Footer */}
-        {companySettings?.pdfFooterDisclaimer && (
-          <div className="mt-8 pt-4 pb-2 border-t border-gray-200 text-center w-full">
-            <p className="text-[10px] text-gray-500">
-              {companySettings.pdfFooterDisclaimer}
-            </p>
-          </div>
-        )}
-
       </div>
     </div>
   );
