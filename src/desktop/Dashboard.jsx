@@ -79,14 +79,13 @@ export default function Dashboard({ setActivePage }) {
     loadDashboardData();
   }, []);
 
-  // Safe number parser
   const parseAmt = (val) => Number(val?.toString().replace(/[^0-9.-]+/g, "")) || 0;
 
   // --- Financial Computations ---
   const totalPortfolioBudget = projects.reduce((sum, p) => sum + parseAmt(p.budget), 0);
 
   const thisMonthIncome = income.filter(i => {
-    if (!i.date) return true; // Include all entries if no strict month filter is required
+    if (!i.date) return true;
     const d = new Date(i.date);
     return d.getMonth() + 1 === currentMonth && d.getFullYear() === currentYear;
   }).reduce((sum, i) => sum + parseAmt(i.amount), 0);
@@ -384,11 +383,11 @@ export default function Dashboard({ setActivePage }) {
       {/* QUICK DPR MODAL */}
       {quickModal === 'dpr' && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col">
+          <div className="bg-white w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden flex flex-col">
             <div className="px-6 py-5 border-b border-zinc-200 flex justify-between items-center bg-zinc-50">
               <h2 className="text-xl font-semibold text-zinc-900">Quick Daily Report (DPR)</h2>
               <button onClick={() => setQuickModal(null)} className="text-zinc-400 hover:text-zinc-700 cursor-pointer">
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                ✕
               </button>
             </div>
             <form onSubmit={handleQuickDpr} className="p-6 space-y-4">
@@ -418,11 +417,11 @@ export default function Dashboard({ setActivePage }) {
       {/* QUICK INCOME MODAL */}
       {quickModal === 'income' && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col">
+          <div className="bg-white w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden flex flex-col">
             <div className="px-6 py-5 border-b border-zinc-200 flex justify-between items-center bg-zinc-50">
               <h2 className="text-xl font-semibold text-zinc-900">Log Client Payment</h2>
               <button onClick={() => setQuickModal(null)} className="text-zinc-400 hover:text-zinc-700 cursor-pointer">
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                ✕
               </button>
             </div>
             <form onSubmit={handleQuickIncome} className="p-6 space-y-4">
@@ -464,11 +463,11 @@ export default function Dashboard({ setActivePage }) {
       {/* QUICK SNAG MODAL */}
       {quickModal === 'snag' && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col">
+          <div className="bg-white w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden flex flex-col">
             <div className="px-6 py-5 border-b border-zinc-200 flex justify-between items-center bg-zinc-50">
               <h2 className="text-xl font-semibold text-zinc-900">Add Quality Snag</h2>
               <button onClick={() => setQuickModal(null)} className="text-zinc-400 hover:text-zinc-700 cursor-pointer">
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                ✕
               </button>
             </div>
             <form onSubmit={handleQuickSnag} className="p-6 space-y-4">
