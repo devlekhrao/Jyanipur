@@ -26,19 +26,24 @@ import SiteManager from './SiteManager';
 import PettyCash from './PettyCash';
 import Settings from './Settings';
 
-export default function App() {
+export default function DesktopLayout() {
+  // --- AUTHENTICATION STATE ---
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   
+  // Check local storage on initial load to keep user signed in
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return localStorage.getItem('jyanipur_auth') === 'true';
+  });
+  
+  // --- NAVIGATION STATE ---
   const [activePage, setActivePage] = useState('Dashboard');
   const [visitedPages, setVisitedPages] = useState(new Set(['Dashboard']));
-
   const [dirtyStates, setDirtyStates] = useState({});
   const [pendingPage, setPendingPage] = useState(null);
   const [showWarningModal, setShowWarningModal] = useState(false);
-
   const [expandedGroups, setExpandedGroups] = useState({
     "Workspace": true,
     "Site Execution": false,
@@ -123,37 +128,7 @@ export default function App() {
     companyGst: '36OEYPS9800J1Z9',
     companyEmail: 'accounts@jyanipur.in',
     companyPhone: '+91 9246546742',
-    bankName: 'ICICI BANK',
-    accountName: 'Jyanipur Interiors',
-    accountNo: '437405000324',
-    ifscCode: 'ICIC0004374',
     logoUrl: '/jyanipur.png',
-    signatureUrl: '',
-    showSignatureImage: true,
-    showBankDetailsOnPdf: true,
-    showTermsOnPdf: true,
-    showRemarksOnPdf: true,
-    showSignatoryOnPdf: true,
-    showGstBreakdownOnPdf: true,
-    pdfFooterDisclaimer: 'Thank you for choosing Jyanipur Interiors. For any query, contact accounts@jyanipur.in',
-    invoicePrefix: 'JIC/FY26-27/',
-    poPrefix: 'PO/',
-    woPrefix: 'WO/',
-    defaultGstRate: '18',
-    defaultTdsRate: '2',
-    defaultHsnSac: '9954',
-    defaultInvoiceTerms: '1. Payment due within 15 days of invoice date.\n2. Goods/Services once rendered cannot be returned.',
-    defaultEstimateTerms: '1. Validity of this estimate is 30 days.\n2. 50% advance required to commence work.',
-    defaultPOTerms: '1. Material must match approved specifications.\n2. Delivery delayed beyond 7 days will attract a 5% penalty.',
-    waInvoiceTemplate: 'Hello! Attached is your latest invoice from Jyanipur Interiors. Please let us know if you have any questions.',
-    waPoTemplate: 'Hello, please find our official Purchase Order attached. Kindly confirm receipt and delivery schedule.',
-    defaultWorkStartTime: '09:30',
-    defaultWorkEndTime: '18:30',
-    overtimeMultiplier: '1.5',
-    skilledLaborRate: '1200',
-    unskilledLaborRate: '800',
-    crmStages: 'New Inquiry, Site Visit, Design Proposed, Negotiation, Contract Signed, Closed Won, Closed Lost',
-    projectStatuses: 'Planning, Civil Work, False Ceiling, Flooring, Painting, Carpentry, Handover'
   };
 
   const [companySettings, setCompanySettings] = useState(() => {
@@ -164,11 +139,22 @@ export default function App() {
     return defaultSettings;
   });
 
+  // --- REVISED LOGIN HANDLER (Fixes Double Login) ---
   const handleLogin = (e) => {
     e.preventDefault();
-    if (email === 'accounts@jyanipur.in' && password === '@llIneedis1.978') {
+    
+    // Read directly from the HTML form elements to bypass the React Autofill glitch
+    const enteredEmail = e.target.email.value;
+    const enteredPassword = e.target.password.value;
+
+    if (enteredEmail === 'accounts@jyanipur.in' && enteredPassword === '@llIneedis1.978') {
       setError('');
       setIsLoggedIn(true);
+      
+      // Save session if "Keep me signed in" is checked
+      if (rememberMe) {
+        localStorage.setItem('jyanipur_auth', 'true');
+      }
     } else {
       setError('Invalid credentials. Please try again.');
     }
@@ -178,6 +164,8 @@ export default function App() {
     setIsLoggedIn(false);
     setEmail('');
     setPassword('');
+    // Clear the saved session
+    localStorage.removeItem('jyanipur_auth');
     setActivePage('Dashboard');
     setVisitedPages(new Set(['Dashboard']));
     setDirtyStates({});
@@ -285,7 +273,7 @@ export default function App() {
   }
 
   // ==========================================
-  // LOGGED OUT: LOGIN SCREEN (Teak Theme & No Auto-Suggest)
+  // LOGGED OUT: LOGIN SCREEN (Teak Theme + Stay Signed In)
   // ==========================================
   return (
     <div className="fixed inset-0 w-screen h-[100dvh] flex items-center justify-center bg-[url('/background.png')] bg-cover bg-center bg-no-repeat px-4 font-['Poppins'] overflow-hidden overscroll-none bg-zinc-900">
@@ -314,14 +302,14 @@ export default function App() {
           </div>
         )}
 
-        {/* FORMS WITH AUTOCOMPLETE TURNED OFF */}
-        <form onSubmit={handleLogin} className="space-y-5" autoComplete="off">
+        {/* FORMS WITH STANDARD AUTOCOMPLETE */}
+        <form onSubmit={handleLogin} className="space-y-4">
           <div>
             <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2 ml-1">Work Email</label>
             <input 
-              type="text" 
-              name="email_hidden"
-              autoComplete="off"
+              type="email" 
+              name="email"
+              autoComplete="email"
               placeholder="Enter your registered email"
               value={email} 
               onChange={(e) => setEmail(e.target.value)} 
@@ -333,8 +321,8 @@ export default function App() {
             <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2 ml-1">Passkey</label>
             <input 
               type="password" 
-              name="password_hidden"
-              autoComplete="new-password"
+              name="password"
+              autoComplete="current-password"
               placeholder="Enter your secure passkey"
               value={password} 
               onChange={(e) => setPassword(e.target.value)} 
@@ -342,6 +330,21 @@ export default function App() {
               required 
             />
           </div>
+
+          {/* KEEP ME SIGNED IN CHECKBOX */}
+          <div className="flex items-center pt-2 pb-2 ml-1">
+            <input 
+              type="checkbox" 
+              id="rememberMe" 
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="w-4 h-4 text-[#B45309] bg-zinc-100 border-zinc-300 rounded focus:ring-[#B45309] cursor-pointer"
+            />
+            <label htmlFor="rememberMe" className="ml-3 text-xs font-bold text-zinc-500 cursor-pointer select-none">
+              Keep me signed in
+            </label>
+          </div>
+
           <button type="submit" className="w-full py-4 bg-[#B45309] hover:bg-[#92400E] text-white font-bold rounded-2xl transition-all mt-6 cursor-pointer text-sm shadow-[0_10px_20px_rgba(180,83,9,0.2)] hover:shadow-[0_15px_25px_rgba(180,83,9,0.3)] hover:-translate-y-1 tracking-wide">
             Enter Portal
           </button>
