@@ -34,29 +34,23 @@ export default function Estimation({ companySettings = {} }) {
   const [currentView, setCurrentView] = useState('list');
   const [editingId, setEditingId] = useState(null);
 
-  const [estimationsList, setEstimationsList] = useState([
-    {
-      id: 1,
-      date: '2026-08-10',
-      estimateNo: 'EST-001',
-      client: 'Reliance Retail',
-      projectName: 'Flagship Store Interior',
-      partyAddress: '123 Commercial Street, Mumbai',
-      validUntil: '2026-09-10',
-      taxMode: 'CGST_SGST',
-      items: [{ id: 1, description: 'Custom Wooden Counter Work', unit: 'Sq.Ft.', sizeL: '10', sizeB: '12', no: '1', qty: '120', rate: '2500', gst: 18 }],
-      bankName: companySettings.bankName || 'ICICI BANK',
-      accountName: companySettings.accountName || 'Jyanipur Interiors',
-      accountNo: companySettings.accountNo || '437405000324',
-      ifscCode: companySettings.ifscCode || 'ICIC0004374',
-      terms: companySettings.defaultEstimateTerms || '1. 50% Mobilization advance upon booking.\n2. 40% against material delivery at site.\n3. 10% upon final hand-over.',
-      description: 'Tentative BOQ estimation based on conceptual drawings.',
-      discount: 0,
-      amount: '₹ 3,54,000.00',
-      status: 'Pending',
-      isCancelled: false
+  // Initialize from LocalStorage to ensure data persists across sessions
+  const [estimationsList, setEstimationsList] = useState(() => {
+    const saved = localStorage.getItem('jyanipur_estimations');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error("Error parsing estimations", e);
+      }
     }
-  ]);
+    return []; // Start completely blank, NO DUMMY DATA
+  });
+
+  // Save to LocalStorage automatically whenever estimationsList changes
+  useEffect(() => {
+    localStorage.setItem('jyanipur_estimations', JSON.stringify(estimationsList));
+  }, [estimationsList]);
 
   const [taxMode, setTaxMode] = useState('CGST_SGST');
 
@@ -225,7 +219,7 @@ export default function Estimation({ companySettings = {} }) {
     if (saveEstimationToState()) {
       alert(`Estimation ${estimateDetails.estimateNo} saved!`);
       setCurrentView('list');
-      handleClear(false);
+      setEditingId(null); // Clear editing mode
     }
   };
 
@@ -302,7 +296,7 @@ export default function Estimation({ companySettings = {} }) {
     alert('Estimate details copied! Navigate to the "Tax Invoice" module and click "+ New Invoice" to complete the conversion.');
   };
 
-  // --- NEW: PUSH TO CRM ---
+  // --- PUSH TO CRM ---
   const handlePushToCRM = (est) => {
     const existingLeads = JSON.parse(localStorage.getItem('jyanipur_crm_leads') || '[]');
     const newLead = {
@@ -395,7 +389,14 @@ export default function Estimation({ companySettings = {} }) {
               <tbody className="divide-y divide-zinc-100 text-sm">
                 {estimationsList.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="py-12 text-center text-zinc-400 font-medium text-xs">No estimations created yet. Click "+ New Estimate" above.</td>
+                    <td colSpan="6" className="py-16 text-center">
+                      <div className="flex flex-col items-center justify-center space-y-3">
+                        <div className="w-12 h-12 bg-amber-50 rounded-full flex items-center justify-center text-amber-500">
+                          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        </div>
+                        <p className="text-zinc-500 font-medium text-xs">No estimations created yet.</p>
+                      </div>
+                    </td>
                   </tr>
                 ) : (
                   estimationsList.map((est) => (
@@ -418,12 +419,13 @@ export default function Estimation({ companySettings = {} }) {
                         {est.client}
                       </td>
                       
+                      {/* FIXED DROPDOWN ALIGNMENT */}
                       <td className="py-4 px-6">
                         <select
                           value={est.status || 'Pending'}
                           onChange={(e) => handleStatusChange(est.id, e.target.value)}
                           disabled={est.isCancelled}
-                          className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border outline-none cursor-pointer transition-all ${
+                          className={`appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23A1A1AA%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%223%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_0.6rem_center] bg-[length:0.8rem_0.8rem] pr-7 pl-3 py-1.5 rounded-full border outline-none cursor-pointer transition-all text-[10px] font-black uppercase tracking-widest ${
                             est.isCancelled ? 'bg-zinc-100 text-zinc-400 border-zinc-200 cursor-not-allowed' :
                             est.status === 'Accepted' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 focus:ring-2 focus:ring-emerald-500/20' :
                             est.status === 'Rejected' ? 'bg-red-50 text-red-700 border-red-200 focus:ring-2 focus:ring-red-500/20' :
@@ -587,13 +589,15 @@ export default function Estimation({ companySettings = {} }) {
             <label className={labelClass}>Valid Until</label>
             <input disabled={isReadOnly} type="date" value={estimateDetails.validUntil} onChange={(e) => setEstimateDetails({...estimateDetails, validUntil: e.target.value})} className={inputClass} />
           </div>
+          
+          {/* FIXED SELECT ALIGNMENT */}
           <div>
             <label className={labelClass}>Tax Type</label>
             <select 
               disabled={isReadOnly}
               value={taxMode} 
               onChange={(e) => setTaxMode(e.target.value)}
-              className={`${inputClass} cursor-pointer font-bold text-[#B45309]`}
+              className={`${inputClass} cursor-pointer font-bold text-[#B45309] appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23B45309%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.25rem_1.25rem] pr-10`}
             >
               <option value="CGST_SGST">CGST + SGST (In State)</option>
               <option value="IGST">IGST (Out of State)</option>
@@ -628,16 +632,18 @@ export default function Estimation({ companySettings = {} }) {
                 return (
                   <tr key={item.id} className="group hover:bg-zinc-50/50 transition-colors">
                     <td className="py-2 pr-4"><input disabled={isReadOnly} type="text" placeholder="BOQ Description" value={item.description} onChange={(e) => updateItem(item.id, 'description', e.target.value)} className={tInp} /></td>
+                    
+                    {/* FIXED TABLE SELECT ALIGNMENT */}
                     <td className="py-2 px-2">
-                      <select disabled={isReadOnly} value={item.unit} onChange={(e) => updateItem(item.id, 'unit', e.target.value)} className={`${tInp} text-center appearance-none cursor-pointer`}>
+                      <select disabled={isReadOnly} value={item.unit} onChange={(e) => updateItem(item.id, 'unit', e.target.value)} className={`${tInp} text-center appearance-none cursor-pointer bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%2371717A%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_0.25rem_center] bg-[length:0.75rem_0.75rem] pr-4`}>
                         <option value="Sq.Ft.">Sq.Ft.</option><option value="Rft.">Rft.</option><option value="Nos">Nos</option><option value="L.S.">L.S.</option>
                       </select>
                     </td>
+
                     <td className="py-2 px-2"><input disabled={isReadOnly} type="number" step="any" value={item.sizeL} onChange={(e) => updateItem(item.id, 'sizeL', e.target.value)} className={`${tInp} text-center`} /></td>
                     <td className="py-2 px-2"><input disabled={isReadOnly} type="number" step="any" value={item.sizeB} onChange={(e) => updateItem(item.id, 'sizeB', e.target.value)} className={`${tInp} text-center`} /></td>
                     <td className="py-2 px-2"><input disabled={isReadOnly} type="number" step="any" value={item.no} onChange={(e) => updateItem(item.id, 'no', e.target.value)} className={`${tInp} text-center`} /></td>
                     
-                    {/* QTY FREE TEXT INPUT */}
                     <td className="py-2 px-2">
                       <input 
                         disabled={isReadOnly} 
@@ -654,7 +660,7 @@ export default function Estimation({ companySettings = {} }) {
                     <td className="py-2 px-2 text-right text-xs font-semibold text-zinc-800">{rowCalc.baseAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
                     {taxMode !== 'NONE' && (
                       <td className="py-2 px-2">
-                        <select disabled={isReadOnly} value={item.gst} onChange={(e) => updateItem(item.id, 'gst', e.target.value)} className={`${tInp} text-center appearance-none cursor-pointer`}>
+                        <select disabled={isReadOnly} value={item.gst} onChange={(e) => updateItem(item.id, 'gst', e.target.value)} className={`${tInp} text-center appearance-none cursor-pointer bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%2371717A%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_0.25rem_center] bg-[length:0.75rem_0.75rem] pr-4`}>
                           <option value="0">0%</option><option value="5">5%</option><option value="12">12%</option><option value="18">18%</option><option value="28">28%</option>
                         </select>
                       </td>
@@ -763,6 +769,7 @@ export default function Estimation({ companySettings = {} }) {
       {/* ========================================== */}
       <div className="hidden print:flex w-full bg-white text-black font-sans text-xs print:p-0 print:m-0 flex-col items-center justify-between" style={{ minHeight: '100vh' }}>
         
+        {/* THIS CSS BLOCK DISABLES BROWSER HEADERS AND FOOTERS ENTIRELY */}
         <style dangerouslySetInnerHTML={{__html: `
           @media print {
             @page { margin: 0; size: A4 portrait; }
@@ -937,16 +944,17 @@ export default function Estimation({ companySettings = {} }) {
             )}
           </div>
 
-          {/* Persistent Anchored Footer */}
-          {companySettings?.pdfFooterDisclaimer && (
-            <div className="mt-auto pt-4 pb-2 border-t border-gray-200 text-center w-full">
-              <p className="text-[10px] text-gray-500">
-                {companySettings.pdfFooterDisclaimer}
-              </p>
-            </div>
-          )}
-
         </div>
+
+        {/* Persistent Anchored Footer */}
+        {companySettings?.pdfFooterDisclaimer && (
+          <div className="mt-auto pt-4 pb-2 border-t border-gray-200 text-center w-full">
+            <p className="text-[10px] text-gray-500">
+              {companySettings.pdfFooterDisclaimer}
+            </p>
+          </div>
+        )}
+
       </div>
     </div>
   );
