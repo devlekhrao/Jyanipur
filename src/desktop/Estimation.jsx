@@ -44,7 +44,7 @@ export default function Estimation({ companySettings = {} }) {
       partyAddress: '123 Commercial Street, Mumbai',
       validUntil: '2026-09-10',
       taxMode: 'CGST_SGST',
-      items: [{ id: 1, description: 'Custom Wooden Counter Work', unit: 'Sq.Ft.', sizeL: '10', sizeB: '12', no: '1', rate: '2500', gst: 18 }],
+      items: [{ id: 1, description: 'Custom Wooden Counter Work', unit: 'Sq.Ft.', sizeL: '10', sizeB: '12', no: '1', qty: '120', rate: '2500', gst: 18 }],
       bankName: companySettings.bankName || 'ICICI BANK',
       accountName: companySettings.accountName || 'Jyanipur Interiors',
       accountNo: companySettings.accountNo || '437405000324',
@@ -78,7 +78,7 @@ export default function Estimation({ companySettings = {} }) {
   });
 
   const [items, setItems] = useState([
-    { id: 1, description: '', unit: 'Sq.Ft.', sizeL: '', sizeB: '', no: '', rate: '', gst: 18 },
+    { id: 1, description: '', unit: 'Sq.Ft.', sizeL: '', sizeB: '', no: '', qty: '', rate: '', gst: 18 },
   ]);
 
   const [errors, setErrors] = useState({});
@@ -96,13 +96,56 @@ export default function Estimation({ companySettings = {} }) {
     }
   }, [companySettings, editingId]);
 
-  const addItem = () => setItems([...items, { id: Date.now(), description: '', unit: 'Sq.Ft.', sizeL: '', sizeB: '', no: '', rate: '', gst: 18 }]);
-  const updateItem = (id, field, value) => setItems(items.map(item => item.id === id ? { ...item, [field]: value } : item));
+  const addItem = () => setItems([...items, { id: Date.now(), description: '', unit: 'Sq.Ft.', sizeL: '', sizeB: '', no: '', qty: '', rate: '', gst: 18 }]);
+  
+  const updateItem = (id, field, value) => {
+    setItems(items.map(item => {
+      if (item.id !== id) return item;
+      const updated = { ...item, [field]: value };
+
+      // Auto-calculate QTY if dimensions are modified
+      if (['sizeL', 'sizeB', 'no'].includes(field)) {
+        const l = parseFloat(updated.sizeL);
+        const b = parseFloat(updated.sizeB);
+        const n = parseFloat(updated.no);
+
+        if (!isNaN(l) || !isNaN(b) || !isNaN(n)) {
+          const effL = !isNaN(l) ? l : 1;
+          const effB = !isNaN(b) ? b : 1;
+          const effN = !isNaN(n) ? n : 1;
+          updated.qty = parseFloat((effL * effB * effN).toFixed(2)).toString();
+        } else {
+          updated.qty = ''; // Clear qty if L, B, and No are all empty
+        }
+      }
+
+      return updated;
+    }));
+  };
+
   const removeItem = (id) => setItems(items.filter(item => item.id !== id));
 
   const calculateRow = (item) => {
-    const l = parseFloat(item.sizeL) || 1, b = parseFloat(item.sizeB) || 1, no = parseFloat(item.no) || 0, rate = parseFloat(item.rate) || 0, gstRate = taxMode === 'NONE' ? 0 : (parseFloat(item.gst) || 0);
-    const quantity = (item.sizeL !== '' || item.sizeB !== '') ? (l * b * no) : no;
+    let quantity = 0;
+    
+    // Priority: Explicit Qty > Calculated from L*B*No
+    if (item.qty !== undefined && item.qty !== '') {
+      quantity = parseFloat(item.qty) || 0;
+    } else {
+      const l = parseFloat(item.sizeL);
+      const b = parseFloat(item.sizeB);
+      const n = parseFloat(item.no);
+      if (!isNaN(l) || !isNaN(b) || !isNaN(n)) {
+        const effL = !isNaN(l) ? l : 1;
+        const effB = !isNaN(b) ? b : 1;
+        const effN = !isNaN(n) ? n : 1;
+        quantity = effL * effB * effN;
+      }
+    }
+
+    const rate = parseFloat(item.rate) || 0;
+    const gstRate = taxMode === 'NONE' ? 0 : (parseFloat(item.gst) || 0);
+
     const baseAmount = quantity * rate;
     const gstAmount = (baseAmount * gstRate) / 100;
     return { quantity, baseAmount, gstAmount, totalAmount: baseAmount + gstAmount };
@@ -189,7 +232,7 @@ export default function Estimation({ companySettings = {} }) {
       advanceReceived: est.advanceReceived || '',
       discount: est.discount || ''
     });
-    setItems(est.items && est.items.length > 0 ? est.items : [{ id: 1, description: '', unit: 'Sq.Ft.', sizeL: '', sizeB: '', no: '', rate: '', gst: 18 }]);
+    setItems(est.items && est.items.length > 0 ? est.items : [{ id: 1, description: '', unit: 'Sq.Ft.', sizeL: '', sizeB: '', no: '', qty: '', rate: '', gst: 18 }]);
     setCurrentView('form');
   };
 
@@ -219,7 +262,7 @@ export default function Estimation({ companySettings = {} }) {
         partyName: '', partyAddress: '', projectName: '', date: new Date().toISOString().split('T')[0], estimateNo: '', validUntil: '', description: '', terms: companySettings.defaultEstimateTerms || '1. 50% Mobilization advance upon booking.\n2. 40% against material delivery at site.\n3. 10% upon final hand-over.', 
         bankName: companySettings.bankName || '', accountName: companySettings.accountName || '', accountNo: companySettings.accountNo || '', ifscCode: companySettings.ifscCode || '', advanceReceived: '', discount: '' 
       });
-      setItems([{ id: 1, description: '', unit: 'Sq.Ft.', sizeL: '', sizeB: '', no: '', rate: '', gst: 18 }]);
+      setItems([{ id: 1, description: '', unit: 'Sq.Ft.', sizeL: '', sizeB: '', no: '', qty: '', rate: '', gst: 18 }]);
       setErrors({});
     }
   };
@@ -392,7 +435,7 @@ export default function Estimation({ companySettings = {} }) {
                 <th className="py-2.5 px-2 font-bold w-16 text-center">L</th>
                 <th className="py-2.5 px-2 font-bold w-16 text-center">B</th>
                 <th className="py-2.5 px-2 font-bold w-16 text-center">NO</th>
-                <th className="py-2.5 px-2 font-bold w-20 text-center">Qty</th>
+                <th className="py-2.5 px-2 font-bold w-24 text-center">Qty</th>
                 <th className="py-2.5 px-2 font-bold w-24 text-right">Rate</th>
                 <th className="py-2.5 px-2 font-bold w-28 text-right">Amount</th>
                 {taxMode !== 'NONE' && <th className="py-2.5 px-2 font-bold w-20 text-center">GST %</th>}
@@ -416,7 +459,20 @@ export default function Estimation({ companySettings = {} }) {
                     <td className="py-2 px-2"><input disabled={isReadOnly} type="number" step="any" value={item.sizeL} onChange={(e) => updateItem(item.id, 'sizeL', e.target.value)} className={`${tInp} text-center`} /></td>
                     <td className="py-2 px-2"><input disabled={isReadOnly} type="number" step="any" value={item.sizeB} onChange={(e) => updateItem(item.id, 'sizeB', e.target.value)} className={`${tInp} text-center`} /></td>
                     <td className="py-2 px-2"><input disabled={isReadOnly} type="number" step="any" value={item.no} onChange={(e) => updateItem(item.id, 'no', e.target.value)} className={`${tInp} text-center`} /></td>
-                    <td className="py-2 px-2 text-center text-xs font-semibold text-zinc-500">{rowCalc.quantity.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
+                    
+                    {/* QTY FREE TEXT INPUT */}
+                    <td className="py-2 px-2">
+                      <input 
+                        disabled={isReadOnly} 
+                        type="number" 
+                        step="any" 
+                        value={item.qty !== undefined ? item.qty : rowCalc.quantity} 
+                        onChange={(e) => updateItem(item.id, 'qty', e.target.value)} 
+                        className={`${tInp} text-center font-bold text-[#B45309]`} 
+                        placeholder="0"
+                      />
+                    </td>
+                    
                     <td className="py-2 px-2"><input disabled={isReadOnly} type="number" step="any" value={item.rate} onChange={(e) => updateItem(item.id, 'rate', e.target.value)} className={`${tInp} text-right`} /></td>
                     <td className="py-2 px-2 text-right text-xs font-semibold text-zinc-800">{rowCalc.baseAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
                     {taxMode !== 'NONE' && (
@@ -605,7 +661,10 @@ export default function Estimation({ companySettings = {} }) {
                     <td className="py-3 px-2 text-center text-zinc-600">{item.unit}</td>
                     <td className="py-3 px-2 text-center text-zinc-600">{measurement}</td>
                     <td className="py-3 px-2 text-center text-zinc-600">{item.no || '-'}</td>
-                    <td className="py-3 px-2 text-center font-bold text-zinc-800">{row.quantity}</td>
+                    
+                    {/* QTY PRINT DISPLAY */}
+                    <td className="py-3 px-2 text-center font-bold text-zinc-800">{row.quantity.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
+                    
                     <td className="py-3 px-2 text-right text-zinc-800">₹{parseFloat(item.rate || 0).toLocaleString('en-IN')}</td>
                     {taxMode !== 'NONE' && <td className="py-3 px-2 text-center text-zinc-500">{item.gst}%</td>}
                     <td className="py-3 px-3 text-right font-black text-zinc-900">₹{row.totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
