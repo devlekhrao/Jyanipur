@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+# Backend Secrets
+jyanipur-backend/.env
+jyanipur-backend/keys/
+*.pem
