@@ -327,8 +327,8 @@ export default function DesktopLayout() {
           <div className="print:p-0 print:overflow-visible flex-1 overflow-y-auto p-6 lg:p-8 custom-scrollbar">
             <div className="w-full h-full">
               {visitedPages.has('Dashboard') && <div className={activePage === 'Dashboard' ? 'block' : 'hidden'}><Dashboard setActivePage={handlePageSwitch} /></div>}
-              {visitedPages.has('CRM') && <div className={activePage === 'CRM' ? 'block' : 'hidden'}><CRM /></div>}
-              {visitedPages.has('Projects') && <div className={activePage === 'Projects' ? 'block' : 'hidden'}><Projects /></div>}
+              {visitedPages.has('CRM') && <div className={activePage === 'CRM' ? 'block' : 'hidden'}><CRM setActivePage={handlePageSwitch} /></div>}
+                            {visitedPages.has('Projects') && <div className={activePage === 'Projects' ? 'block' : 'hidden'}><Projects /></div>}
               {visitedPages.has('Task Board') && <div className={activePage === 'Task Board' ? 'block' : 'hidden'}><TaskBoard /></div>}
               {visitedPages.has('Document Vault') && <div className={activePage === 'Document Vault' ? 'block' : 'hidden'}><DocumentVault /></div>}
               {visitedPages.has('CAD Studio') && <div className={activePage === 'CAD Studio' ? 'block w-full h-full' : 'hidden'}><CADViewer /></div>}

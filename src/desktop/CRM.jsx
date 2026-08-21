@@ -2,18 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { getLeads, saveLead, deleteLead } from '../db';
 import { exportToCSV } from '../utils';
 
-export default function CRM() {
+// Added setActivePage prop to handle auto-navigation
+export default function CRM({ setActivePage }) {
   const [loading, setLoading] = useState(true);
   const [leads, setLeads] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // Added 'gst' to the default state
   const [formData, setFormData] = useState({
     id: null, 
     clientName: '', 
     phone: '', 
     email: '',
     occupation: '', 
+    gst: '', // NEW GST FIELD
     address: '',    
     projectType: 'Residential 3BHK', 
     estimatedValue: '', 
@@ -37,7 +41,6 @@ export default function CRM() {
     setLoading(false);
   };
 
-  // Intercept leads pushed from the Estimation module
   const checkPendingEstimationLeads = async () => {
     const pending = JSON.parse(localStorage.getItem('jyanipur_crm_leads') || '[]');
     if (pending.length > 0) {
@@ -49,6 +52,7 @@ export default function CRM() {
           phone: lead.phone || '',
           email: lead.email || '',
           occupation: lead.company || '', 
+          gst: lead.gst || '',
           address: lead.address || '',
           projectType: 'Estimation Sync',
           estimatedValue: numericValue,
@@ -89,6 +93,7 @@ export default function CRM() {
       phone: lead.phone || '',
       email: lead.email || '',
       occupation: lead.occupation || '',
+      gst: lead.gst || '', // Populate GST
       address: lead.address || '',
       projectType: lead.projectType || 'Residential 3BHK',
       estimatedValue: lead.estimatedValue || '',
@@ -103,7 +108,7 @@ export default function CRM() {
 
   const resetForm = () => {
     setFormData({ 
-      id: null, clientName: '', phone: '', email: '', occupation: '', address: '', 
+      id: null, clientName: '', phone: '', email: '', occupation: '', gst: '', address: '', 
       projectType: 'Residential 3BHK', estimatedValue: '', source: 'Direct Inquiry', 
       status: 'New Inquiry', notes: '', followUpCount: 0, dateAdded: new Date().toISOString().split('T')[0] 
     });
@@ -140,14 +145,24 @@ export default function CRM() {
   };
 
   const handleCreateEstimation = (lead) => {
+    // 1. Pack the client's data into a draft for the Estimation module
     const draft = {
       partyName: lead.clientName || '',
       partyAddress: lead.address || '',
-      projectName: lead.occupation || lead.projectType || '',
+      partyGst: lead.gst || '', // Pass GST to Estimation
+      projectName: lead.projectType || '',
       description: lead.notes || ''
     };
+    
+    // 2. Save it to session storage where Estimation.jsx will pick it up
     sessionStorage.setItem('crm_to_estimation', JSON.stringify(draft));
-    alert(`Details for ${lead.clientName} pre-filled! Navigate to "Estimation" and click "+ New Estimate" to continue.`);
+    
+    // 3. Auto-navigate to the Estimation Page!
+    if (setActivePage) {
+      setActivePage('Estimation');
+    } else {
+      alert(`Details for ${lead.clientName} pre-filled! Navigate to "Estimation" manually.`);
+    }
   };
 
   const handleExport = () => {
@@ -157,6 +172,7 @@ export default function CRM() {
       'Phone': l.phone,
       'Email': l.email,
       'Occupation / Company': l.occupation,
+      'GSTIN': l.gst,
       'Address': l.address,
       'Project Type': l.projectType,
       'Source': l.source,
@@ -230,7 +246,7 @@ export default function CRM() {
                 <th className="py-4 px-6 font-semibold">Project / Source</th>
                 <th className="py-4 px-6 font-semibold text-center">Follow-ups</th>
                 <th className="py-4 px-6 font-semibold text-center">Status</th>
-                <th className="py-4 px-6 font-semibold text-right">Est. Value</th>
+                <th className="py-4 px-6 font-semibold text-right">Est. Budget</th>
                 <th className="py-4 px-6 font-semibold text-right">Actions</th>
               </tr>
             </thead>
@@ -318,7 +334,7 @@ export default function CRM() {
                           Edit
                         </button>
                         
-                        <button onClick={() => handleCreateEstimation(lead)} title="Create Estimation for Lead" className="px-3 py-1.5 bg-amber-50 text-[#B45309] hover:bg-[#B45309] hover:text-white border border-amber-200/60 rounded-lg font-semibold cursor-pointer text-[11px] uppercase tracking-wider transition-all">
+                        <button onClick={() => handleCreateEstimation(lead)} title="Create Estimation for Lead" className="px-3 py-1.5 bg-amber-50 text-[#B45309] hover:bg-[#B45309] hover:text-white border border-amber-200/60 rounded-lg font-semibold cursor-pointer text-[11px] uppercase tracking-wider transition-all shadow-sm">
                           Est.
                         </button>
                         
@@ -343,7 +359,7 @@ export default function CRM() {
             {/* Modal Header */}
             <div className="px-6 py-5 border-b border-zinc-200 flex justify-between items-center bg-zinc-50 shrink-0">
               <div>
-                <h2 className="text-xl font-semibold text-zinc-900">{formData.id ? 'Edit Client Profile' : 'New Client Inquiry'}</h2>
+                <h2 className="text-xl font-semibold text-zinc-900">{formData.id ? 'Edit Client Profile' : 'New Client Onboarding'}</h2>
                 <p className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider mt-0.5">Comprehensive CRM Lead Details</p>
               </div>
               <button onClick={() => setIsModalOpen(false)} className="text-zinc-400 hover:text-zinc-700 cursor-pointer">
@@ -357,7 +373,7 @@ export default function CRM() {
                 
                 {/* Section 1: Contact Details */}
                 <div>
-                  <h3 className="text-[11px] font-semibold text-[#B45309] uppercase tracking-wider mb-3 border-b border-zinc-100 pb-2">1. Primary Contact</h3>
+                  <h3 className="text-[11px] font-semibold text-[#B45309] uppercase tracking-wider mb-3 border-b border-zinc-100 pb-2">1. Client Billing & Contact Info</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className={labelClass}>Client Full Name <span className="text-red-500">*</span></label>
@@ -375,7 +391,13 @@ export default function CRM() {
                       <label className={labelClass}>Email Address</label>
                       <input type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className={inputClass} placeholder="client@example.com" />
                     </div>
-                    <div className="md:col-span-2">
+                    
+                    <div className="md:col-span-1">
+                      <label className={labelClass}>GST Number (Optional)</label>
+                      <input type="text" value={formData.gst} onChange={e => setFormData({...formData, gst: e.target.value.toUpperCase()})} className={`${inputClass} font-mono`} placeholder="29ABCDE1234F1Z5" maxLength={15} />
+                    </div>
+
+                    <div className="md:col-span-1">
                       <label className={labelClass}>Location / Address</label>
                       <input type="text" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} className={inputClass} placeholder="Where do they live?" />
                     </div>
@@ -384,22 +406,21 @@ export default function CRM() {
 
                 {/* Section 2: Project Details */}
                 <div>
-                  <h3 className="text-[11px] font-semibold text-[#B45309] uppercase tracking-wider mb-3 border-b border-zinc-100 pb-2">2. Requirement Details</h3>
+                  <h3 className="text-[11px] font-semibold text-[#B45309] uppercase tracking-wider mb-3 border-b border-zinc-100 pb-2">2. Requirement Details & Scope</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <label className={labelClass}>Project Type</label>
-                      <select value={formData.projectType} onChange={e => setFormData({...formData, projectType: e.target.value})} className={`${inputClass} appearance-none cursor-pointer bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23B45309%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.25rem_1.25rem] pr-10`}>
-                        <option value="Residential 2BHK">Residential 2BHK</option>
-                        <option value="Residential 3BHK">Residential 3BHK</option>
-                        <option value="Villa">Villa</option>
-                        <option value="Commercial Office">Commercial Office</option>
-                        <option value="Retail Store">Retail Store</option>
-                        <option value="Estimation Sync">Estimation Sync</option>
-                        <option value="Other">Other</option>
-                      </select>
+                      <label className={labelClass}>Project Type / Scope of Work</label>
+                      <input type="text" value={formData.projectType} onChange={e => setFormData({...formData, projectType: e.target.value})} className={inputClass} placeholder="e.g. Residential 3BHK" list="projectTypes" />
+                      <datalist id="projectTypes">
+                        <option value="Residential 2BHK" />
+                        <option value="Residential 3BHK" />
+                        <option value="Villa" />
+                        <option value="Commercial Office" />
+                        <option value="Retail Store" />
+                      </datalist>
                     </div>
                     <div>
-                      <label className={labelClass}>Estimated Value (₹)</label>
+                      <label className={labelClass}>Estimated Budget (₹)</label>
                       <input type="number" step="any" value={formData.estimatedValue} onChange={e => setFormData({...formData, estimatedValue: e.target.value})} className={inputClass} placeholder="0.00" />
                     </div>
                     <div>
