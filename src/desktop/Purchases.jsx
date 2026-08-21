@@ -222,6 +222,9 @@ export default function Purchases({ companySettings = {} }) {
   }, { subtotal: 0, totalGst: 0, grandTotal: 0 });
 
   const savePurchaseToState = async () => {
+    // FIX: Prevent double-click duplicates
+    if (submitting) return false;
+
     const newErrors = {};
     if (!purchaseDetails.vendorName) newErrors.vendorName = true;
     if (!purchaseDetails.invoiceNo) newErrors.invoiceNo = true;
@@ -232,10 +235,14 @@ export default function Purchases({ companySettings = {} }) {
     }
 
     setErrors({});
-    const existingPur = purchases.find(e => String(e.id) === String(editingId));
+    const existingPur = purchases.find(e => String(e.id) === String(editingId) || String(e._id) === String(editingId));
+
+    // FIX: Safely assign ID to prevent duplicate creations
+    const recordId = editingId || undefined;
 
     const record = {
-      id: editingId || undefined,
+      id: recordId,
+      _id: recordId, // Fallback safety for backend databases
       vendorName: purchaseDetails.vendorName,
       gstin: purchaseDetails.gstin,
       projectName: purchaseDetails.projectName,
@@ -289,7 +296,9 @@ export default function Purchases({ companySettings = {} }) {
   };
 
   const handleEdit = (pur) => {
-    setEditingId(pur.id);
+    // FIX: Capture robust ID
+    const targetId = pur.id || pur._id;
+    setEditingId(targetId);
     setTaxMode(pur.taxMode || 'CGST_SGST');
     setPurchaseDetails({
       vendorName: pur.vendorName || '',
@@ -313,17 +322,28 @@ export default function Purchases({ companySettings = {} }) {
     setTimeout(() => window.print(), 150);
   };
 
+  // FIX: Added robust Try/Catch so the X button stops hanging
   const handleDelete = async (id) => {
+    if (!id) {
+      alert("Error: Cannot identify this record ID.");
+      return;
+    }
     if (window.confirm("Permanently delete this purchase record?")) {
       setLoading(true);
-      await deletePurchase(id);
-      await loadData();
+      try {
+        await deletePurchase(id);
+      } catch (err) {
+        console.error("Deletion failed:", err);
+        alert("Failed to delete the record. Please try again.");
+      } finally {
+        await loadData();
+      }
     }
   };
 
   const handleStatusChange = async (pur, newStatus) => {
     try {
-      await updatePurchaseStatus(pur.id, newStatus);
+      await updatePurchaseStatus(pur.id || pur._id, newStatus);
       await loadData();
     } catch (e) {
       console.error("Failed to update status", e);
@@ -428,8 +448,9 @@ export default function Purchases({ companySettings = {} }) {
                     </td>
                   </tr>
                 ) : (
-                  filteredPurchases.map((pur) => (
-                    <tr key={pur.id} className="transition-all hover:bg-zinc-50/80">
+                  filteredPurchases.map((pur, idx) => (
+                    // FIX: Safer Key ID mapping
+                    <tr key={pur.id || pur._id || idx} className="transition-all hover:bg-zinc-50/80">
                       <td className="py-4 px-6 text-xs font-medium text-zinc-600">{pur.invoiceDate}</td>
                       <td className="py-4 px-6 font-bold text-xs text-[#B45309]">{pur.invoiceNo}</td>
                       <td className="py-4 px-6 text-xs font-semibold text-zinc-800">{pur.vendorName}</td>
@@ -468,7 +489,8 @@ export default function Purchases({ companySettings = {} }) {
                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0v-2.25a2.25 2.25 0 012.25-2.25h6a2.25 2.25 0 012.25 2.25v2.25z" /></svg>
                             Print
                           </button>
-                          <button onClick={() => handleDelete(pur.id)} title="Delete Purchase" className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white border border-red-200 rounded-lg font-semibold text-[10px] cursor-pointer uppercase tracking-widest transition-all flex items-center gap-1.5">
+                          {/* FIX: Safer X button implementation */}
+                          <button onClick={() => handleDelete(pur.id || pur._id)} title="Delete Purchase" className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white border border-red-200 rounded-lg font-semibold text-[10px] cursor-pointer uppercase tracking-widest transition-all flex items-center gap-1.5">
                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                           </button>
                         </div>

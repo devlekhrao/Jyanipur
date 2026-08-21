@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { sendWhatsAppMessage } from '../WhatsAppHelper';
-import { getPurchaseOrders, savePurchaseOrder, toggleCancelPurchaseOrder, getVendors } from '../db';
+// Added getMaterialRates to import
+import { getPurchaseOrders, savePurchaseOrder, toggleCancelPurchaseOrder, getVendors, getMaterialRates } from '../db';
 
 // Helper function to convert number to Words
 function numberToWords(num) {
@@ -42,6 +43,10 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
   const [vendorSuggestions, setVendorSuggestions] = useState([]);
   const [showVendorDropdown, setShowVendorDropdown] = useState(false);
   const vendorDropdownRef = useRef(null);
+
+  // Material Rate Book State (For Line Items Sync)
+  const [materialRates, setMaterialRates] = useState([]);
+  const [focusedRowId, setFocusedRowId] = useState(null);
 
   const [poDetails, setPoDetails] = useState(() => {
     const saved = sessionStorage.getItem('draft_poDetails');
@@ -92,23 +97,26 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
   const loadPOsFromDb = async () => {
     setLoading(true);
     try {
-      const [poData, vData] = await Promise.all([
+      const [poData, vData, mData] = await Promise.all([
         getPurchaseOrders(),
-        getVendors ? getVendors() : Promise.resolve([])
+        getVendors ? getVendors() : Promise.resolve([]),
+        getMaterialRates ? getMaterialRates() : Promise.resolve([])
       ]);
       setPoList(poData || []);
       setVendorsList(vData || []);
+      setMaterialRates(mData || []);
     } catch (e) {
-      console.error("Error loading Purchase Orders from cloud DB:", e);
+      console.error("Error loading POs from cloud DB:", e);
       setPoList([]);
       setVendorsList([]);
+      setMaterialRates([]);
     }
     setLoading(false);
   };
 
   useEffect(() => { loadPOsFromDb(); }, [currentView]);
 
-  // Click outside to close vendor dropdown
+  // Click outside to close dropdowns
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (vendorDropdownRef.current && !vendorDropdownRef.current.contains(event.target)) {
@@ -162,8 +170,23 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
   };
 
   const addItem = () => setItems([...items, { id: Date.now(), description: '', uom: 'Nos', qty: '', rate: '', tax: companySettings.defaultGstRate || 18 }]);
-  const updateItem = (id, field, value) => setItems(items.map(item => item.id === id ? { ...item, [field]: value } : item));
+  
+  const updateItem = (id, field, value) => {
+    setItems(items.map(item => item.id === id ? { ...item, [field]: value } : item));
+  };
+
   const removeItem = (id) => setItems(items.filter(item => item.id !== id));
+
+  // Auto-fill material details from the Rate Book suggestions
+  const handleSelectMaterial = (rowId, material) => {
+    setItems(items.map(item => item.id === rowId ? {
+      ...item,
+      description: material.materialName,
+      uom: material.unit || 'Nos',
+      rate: material.rate || ''
+    } : item));
+    setFocusedRowId(null);
+  };
 
   const calculateRow = (item) => {
     const qty = parseFloat(item.qty) || 0;
@@ -492,10 +515,10 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
           </div>
         </div>
 
-        {/* Item Rows Table */}
+        {/* Item Rows Table with Rate Book Suggestion Overlay */}
         <div className="mb-6 bg-white border border-zinc-200 rounded-2xl p-5 shadow-sm shrink-0">
           <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-3 border-b border-zinc-100 pb-2">Procurement Items & Quantities</p>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-visible">
             <table className="w-full text-left border-collapse whitespace-nowrap min-w-[800px]">
               <thead>
                 <tr className="text-zinc-400 text-[10px] uppercase tracking-wider border-b border-zinc-100 pb-3">
@@ -514,14 +537,69 @@ export default function PurchaseOrders({ companySettings = {}, updateDirtyState 
                   const rowCalc = calculateRow(item);
                   const tInp = "w-full border-b border-transparent hover:border-zinc-300 focus:border-[#B45309] bg-transparent focus:outline-none py-2 px-1 text-xs transition-all font-medium text-zinc-900 placeholder-zinc-300 disabled:opacity-75";
                   
+                  // Sort suggestions: Highlight current vendor's rate at top
+                  const itemSuggestions = materialRates.filter(m => item.description && m.materialName && m.materialName.toLowerCase().includes(item.description.toLowerCase()));
+                  itemSuggestions.sort((a, b) => {
+                    const aIsVendor = a.vendorName === poDetails.vendorName;
+                    const bIsVendor = b.vendorName === poDetails.vendorName;
+                    if (aIsVendor && !bIsVendor) return -1;
+                    if (!aIsVendor && bIsVendor) return 1;
+                    return 0;
+                  });
+
                   return (
                     <tr key={item.id} className="group hover:bg-zinc-50/50 transition-colors">
-                      <td className="py-2 pr-4">
-                        <input disabled={isReadOnly} type="text" placeholder="e.g. 18mm Century Plywood" value={item.description} onChange={(e) => updateItem(item.id, 'description', e.target.value)} className={tInp} />
+                      <td className="py-2 pr-4 relative">
+                        <input 
+                          disabled={isReadOnly} 
+                          type="text" 
+                          placeholder="e.g. 18mm Century Plywood" 
+                          value={item.description} 
+                          onChange={(e) => {
+                            updateItem(item.id, 'description', e.target.value);
+                            setFocusedRowId(item.id);
+                          }}
+                          onFocus={() => setFocusedRowId(item.id)}
+                          onBlur={() => setTimeout(() => setFocusedRowId(null), 200)}
+                          className={tInp} 
+                          autoComplete="off"
+                        />
+
+                        {/* Rate Book Sync Overlay */}
+                        {focusedRowId === item.id && itemSuggestions.length > 0 && !isReadOnly && (
+                          <div className="absolute left-0 top-full mt-1 w-96 bg-white border border-zinc-200 rounded-xl shadow-2xl z-[150] max-h-60 overflow-y-auto">
+                            <div className="p-2 border-b border-zinc-100 text-[10px] font-bold text-zinc-400 uppercase tracking-widest bg-zinc-50 sticky top-0">
+                              Historical Rates (Rate Book)
+                            </div>
+                            {itemSuggestions.map((m, idx) => {
+                              const isCurrentVendor = m.vendorName === poDetails.vendorName;
+                              return (
+                                <div
+                                  key={idx}
+                                  onMouseDown={(e) => {
+                                    e.preventDefault();
+                                    handleSelectMaterial(item.id, m);
+                                  }}
+                                  className={`px-4 py-2.5 cursor-pointer flex flex-col transition-colors border-b border-zinc-100 last:border-none ${isCurrentVendor ? 'bg-amber-50/60 hover:bg-amber-100' : 'hover:bg-zinc-50'}`}
+                                >
+                                  <div className="flex justify-between items-center">
+                                    <span className="font-semibold text-xs text-zinc-900">{m.materialName}</span>
+                                    <span className="font-bold text-[#B45309] text-xs">₹{m.rate} <span className="text-[9px] text-zinc-500 font-normal">/{m.unit}</span></span>
+                                  </div>
+                                  <div className="flex justify-between items-center mt-1">
+                                    <span className={`text-[9px] uppercase tracking-wider font-bold ${isCurrentVendor ? 'text-[#B45309]' : 'text-zinc-500'}`}>
+                                      {m.vendorName || 'Unknown Vendor'} {isCurrentVendor && '(Current Supplier)'}
+                                    </span>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
                       </td>
                       <td className="py-2 px-2">
                         <select disabled={isReadOnly} value={item.uom} onChange={(e) => updateItem(item.id, 'uom', e.target.value)} className={`${tInp} text-center appearance-none cursor-pointer bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%2371717A%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_0.25rem_center] bg-[length:0.75rem_0.75rem] pr-4`}>
-                          <option value="Nos">Nos</option><option value="Bags">Bags</option><option value="SqFt">SqFt</option><option value="Rft">Rft</option><option value="Cum">Cum</option><option value="Kgs">Kgs</option><option value="Ltrs">Ltrs</option><option value="Box">Box</option><option value="Roll">Roll</option><option value="LumpSum">LumpSum</option>
+                          <option value="Nos">Nos</option><option value="Bags">Bags</option><option value="SqFt">SqFt</option><option value="Rft">Rft</option><option value="Cum">Cum</option><option value="Kgs">Kgs</option><option value="Ltrs">Ltrs</option><option value="Box">Box</option><option value="Roll">Roll</option><option value="LumpSum">LumpSum</option><option value="Pcs">Pcs</option>
                         </select>
                       </td>
                       <td className="py-2 px-2">

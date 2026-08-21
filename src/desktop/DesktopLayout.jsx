@@ -27,6 +27,8 @@ import MeasurementSheet from './MeasurementSheet';
 import SiteManager from './SiteManager'; 
 import PettyCash from './PettyCash';
 import Settings from './Settings';
+// IMPORT THE NEW BANKING MODULE
+import BankStatement from './BankStatement';
 
 const APP_VERSION = "1.0.0"; // Local Desktop App Build Version
 
@@ -145,10 +147,11 @@ export default function DesktopLayout() {
     commitPageSwitch(pendingPage);
   };
 
+  // ADDED 'Bank Statement' to Finance & Sales
   const navigationGroups = [
     { title: "Workspace", pages: ['Dashboard', 'CRM', 'Projects', 'Task Board', 'Document Vault', 'CAD Studio'] },
     { title: "Site Execution", pages: ['Project Control', 'Daily Report', 'Site Snags', 'Measurement Sheet'] },
-    { title: "Finance & Sales", pages: ['Estimation', 'Tax Invoice', 'Project P&L', 'Income', 'Petty Cash', 'GST Filing'] },
+    { title: "Finance & Sales", pages: ['Estimation', 'Tax Invoice', 'Project P&L', 'Income', 'Bank Statement', 'Petty Cash', 'GST Filing'] },
     { title: "Supply Chain", pages: ['Purchase Orders', 'Purchases', 'Vendors', 'Vendor Ledger', 'Inventory', 'Rate Book', 'Tools & Assets', 'Subcontractors'] },
     { title: "Team & HR", pages: ['Employee Attendance', 'Staff Expenses', 'Salaries'] }
   ];
@@ -350,6 +353,8 @@ export default function DesktopLayout() {
               {visitedPages.has('Salaries') && <div className={activePage === 'Salaries' ? 'block' : 'hidden'}><Salaries /></div>}
               {visitedPages.has('Income') && <div className={activePage === 'Income' ? 'block' : 'hidden'}><Income /></div>}
               {visitedPages.has('GST Filing') && <div className={activePage === 'GST Filing' ? 'block' : 'hidden'}><GST /></div>}
+              {/* RENDER THE BANKING MODULE */}
+              {visitedPages.has('Bank Statement') && <div className={activePage === 'Bank Statement' ? 'block' : 'hidden'}><BankStatement /></div>}
               {visitedPages.has('Settings') && (
                 <div className={activePage === 'Settings' ? 'block' : 'hidden'}>
                   <Settings companySettings={companySettings} setCompanySettings={setCompanySettings} />

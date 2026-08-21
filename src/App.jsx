@@ -1,19 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { Capacitor } from '@capacitor/core';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Import Layout Shells
 import DesktopLayout from './desktop/DesktopLayout';
 import MobileLayout from './mobile/MobileLayout';
 
+// Import Separate Admin Console
+import AdminConsole from './AdminConsole';
+
 export default function App() {
+  // Main Auth State
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false); // Added Checkbox State
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [isMobile, setIsMobile] = useState(false);
+  
+  // Admin Console & Protection State
+  const [isAdminConsoleOpen, setIsAdminConsoleOpen] = useState(false);
+  const [showAdminPrompt, setShowAdminPrompt] = useState(false);
+  const [adminPasskey, setAdminPasskey] = useState('');
+  const [adminError, setAdminError] = useState('');
+
   const teakTintFilter = 'brightness(0) saturate(100%) invert(36%) sepia(61%) saturate(2251%) hue-rotate(5deg) brightness(95%) contrast(92%)';
 
-  // Check local storage on initial load to keep user signed in
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     return localStorage.getItem('jyanipur_auth') === 'true';
   });
@@ -69,27 +80,20 @@ export default function App() {
     return defaultSettings;
   });
 
-  // Persist Company Settings when updated
   useEffect(() => {
     localStorage.setItem('jyanipur_companySettings', JSON.stringify(companySettings));
   }, [companySettings]);
 
-  // Detect Platform (Native Mobile App vs Desktop Web)
   useEffect(() => {
     const checkPlatform = () => {
-      // 1. Safe Capacitor check (prevents silent crashes)
       let isNative = false;
       try {
         isNative = Capacitor?.isNativePlatform?.() || false;
       } catch (e) {}
 
-      // 2. Strict User Agent Check (Forces mobile layout for "Add to Home Screen" devices on iOS/Android)
       const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      
-      // 3. Standard screen width fallback
       const isSmallScreen = window.innerWidth < 850;
 
-      // If ANY of these are true, trigger the MobileLayout
       setIsMobile(isNative || isMobileUA || isSmallScreen);
     };
 
@@ -98,18 +102,12 @@ export default function App() {
     return () => window.removeEventListener('resize', checkPlatform);
   }, []);
 
+  // --- Main Employee Login ---
   const handleLogin = (e) => {
     e.preventDefault();
-    
-    // Read directly from HTML form to bypass React's autofill glitch
-    const enteredEmail = e.target.email.value;
-    const enteredPassword = e.target.password.value;
-
-    if (enteredEmail.trim() === 'accounts@jyanipur.in' && enteredPassword === '@llIneedis1.978') {
+    if (email.trim() === 'accounts@jyanipur.in' && password === '@llIneedis1.978') {
       setError('');
       setIsLoggedIn(true);
-      
-      // Save session if "Keep me signed in" is checked
       if (rememberMe) {
         localStorage.setItem('jyanipur_auth', 'true');
       }
@@ -123,13 +121,24 @@ export default function App() {
     setEmail('');
     setPassword('');
     setError('');
-    // Clear the saved session so they stay logged out
     localStorage.removeItem('jyanipur_auth');
   };
 
-  // ==========================================
+  // --- Admin Console Protection ---
+  const handleAdminAccess = (e) => {
+    e.preventDefault();
+    // Updated to the exact requested passkey
+    if (adminPasskey === '@llIneedis1.978') {
+      setAdminError('');
+      setAdminPasskey('');
+      setShowAdminPrompt(false);
+      setIsAdminConsoleOpen(true);
+    } else {
+      setAdminError('Unauthorized. Invalid master passkey.');
+    }
+  };
+
   // LOGGED IN: ROUTE TO DESKTOP / MOBILE LAYOUT
-  // ==========================================
   if (isLoggedIn) {
     return isMobile ? (
       <MobileLayout 
@@ -146,28 +155,94 @@ export default function App() {
     );
   }
 
-  // ==========================================
-  // LOGGED OUT: LOGIN SCREEN (Teak Theme + Checkbox)
-  // ==========================================
+  // LOGGED OUT: LOGIN SCREEN
   return (
     <div className="fixed inset-0 w-screen h-[100dvh] flex items-center justify-center bg-[url('/background.png')] bg-cover bg-center bg-no-repeat px-4 font-['Poppins'] overflow-hidden overscroll-none bg-zinc-900">
       
-      {/* TEAK TINT OVERLAY INSTEAD OF BLUR */}
       <div className="absolute inset-0 bg-[#B45309]/30 mix-blend-multiply"></div>
       <div className="absolute inset-0 bg-black/40"></div>
 
+      {/* TOP RIGHT ADMIN BUTTON (STEALTH MODE - BIG LOGO ONLY) */}
+      <button 
+        onClick={() => setShowAdminPrompt(true)}
+        className="absolute top-6 right-6 lg:top-8 lg:right-8 z-20 hover:scale-110 transition-transform cursor-pointer drop-shadow-md opacity-90 hover:opacity-100"
+      >
+        <img 
+          src="/jyanipur.png" 
+          alt="Jyanipur" 
+          className="h-10 lg:h-12 w-auto object-contain" 
+          style={{ filter: teakTintFilter }} 
+        />
+      </button>
+
+      {/* ADMIN PASSWORD PROMPT MODAL */}
+      <AnimatePresence>
+        {showAdminPrompt && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md px-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="max-w-sm w-full bg-white/95 backdrop-blur-3xl rounded-[2rem] p-8 shadow-2xl border border-white/40 relative"
+            >
+              <button 
+                onClick={() => { setShowAdminPrompt(false); setAdminError(''); setAdminPasskey(''); }}
+                className="absolute top-5 right-5 text-zinc-400 hover:text-zinc-800 text-xs font-bold p-2"
+              >
+                ✕
+              </button>
+              
+              <div className="flex flex-col items-center text-center mb-6">
+                <div className="w-12 h-12 rounded-full bg-[#B45309]/10 flex items-center justify-center mb-4">
+                  <img src="/jyanipur.png" alt="Lock" className="h-5 w-auto" style={{ filter: teakTintFilter }} />
+                </div>
+                <h3 className="text-lg font-bold text-zinc-800">Admin Authorization</h3>
+                <p className="text-[10px] text-zinc-500 uppercase tracking-widest mt-1 font-bold">Restricted Access Zone</p>
+              </div>
+
+              {adminError && (
+                <div className="mb-4 p-3 bg-red-50 text-red-600 text-[11px] rounded-xl border border-red-200 text-center font-bold tracking-wide">
+                  {adminError}
+                </div>
+              )}
+
+              <form onSubmit={handleAdminAccess}>
+                <div className="mb-6">
+                  <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2 ml-1">Master Passkey</label>
+                  <input 
+                    type="password" 
+                    value={adminPasskey} 
+                    onChange={(e) => setAdminPasskey(e.target.value)} 
+                    placeholder="Enter admin passkey"
+                    className="w-full px-5 py-3.5 rounded-2xl border border-zinc-200 bg-zinc-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#B45309] text-zinc-900 text-sm font-medium transition-all shadow-inner" 
+                    autoFocus
+                    required 
+                  />
+                </div>
+                <button type="submit" className="w-full py-3.5 bg-[#B45309] hover:bg-[#92400E] text-white font-bold rounded-2xl transition-all cursor-pointer text-sm shadow-[0_10px_20px_rgba(180,83,9,0.2)]">
+                  Verify & Open Console
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* SEPARATE FULL-SCREEN ADMIN CONSOLE COMPONENT */}
+      <AdminConsole isOpen={isAdminConsoleOpen} onClose={() => setIsAdminConsoleOpen(false)} />
+
+      {/* MAIN EMPLOYEE LOGIN CARD */}
       <div className="max-w-md w-full bg-white/95 backdrop-blur-3xl rounded-[2.5rem] shadow-[0_40px_80px_rgba(0,0,0,0.5)] border border-white/40 p-10 relative z-10">
         
-        {/* ENLARGED TEAK LOGO (NAME REMOVED) */}
-        <div className="mb-12 flex flex-col items-center text-center">
+        <div className="mb-10 flex flex-col items-center text-center">
           <img 
             src="/jyanipur.png" 
             alt="Jyanipur Symbol" 
-            className="h-28 w-auto object-contain drop-shadow-sm" 
+            className="h-24 w-auto object-contain drop-shadow-sm" 
             style={{ filter: teakTintFilter }} 
             onError={(e) => { e.target.style.display='none'; }} 
           />
-          <p className="text-zinc-500 text-xs uppercase tracking-widest mt-6 font-bold">Portal Access</p>
+          <p className="text-zinc-500 text-xs uppercase tracking-widest mt-4 font-bold">Portal Access</p>
         </div>
 
         {error && (
@@ -176,7 +251,6 @@ export default function App() {
           </div>
         )}
 
-        {/* FORMS WITH STANDARD AUTOCOMPLETE */}
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
             <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2 ml-1">Work Email</label>
@@ -205,7 +279,6 @@ export default function App() {
             />
           </div>
 
-          {/* KEEP ME SIGNED IN CHECKBOX */}
           <div className="flex items-center pt-2 pb-2 ml-1">
             <input 
               type="checkbox" 
@@ -219,10 +292,11 @@ export default function App() {
             </label>
           </div>
 
-          <button type="submit" className="w-full py-4 bg-[#B45309] hover:bg-[#92400E] text-white font-bold rounded-2xl transition-all mt-6 cursor-pointer text-sm shadow-[0_10px_20px_rgba(180,83,9,0.2)] hover:shadow-[0_15px_25px_rgba(180,83,9,0.3)] hover:-translate-y-1 tracking-wide">
+          <button type="submit" className="w-full py-4 bg-[#B45309] hover:bg-[#92400E] text-white font-bold rounded-2xl transition-all cursor-pointer text-sm shadow-[0_10px_20px_rgba(180,83,9,0.2)] hover:shadow-[0_15px_25px_rgba(180,83,9,0.3)] hover:-translate-y-1 tracking-wide">
             Enter Portal
           </button>
         </form>
+
       </div>
     </div>
   );
