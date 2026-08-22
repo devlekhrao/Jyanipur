@@ -4,6 +4,7 @@ import CRM from './CRM';
 import TaxInvoice from './TaxInvoice';
 import Estimation from './Estimation';
 import EmployeeAttendance from './EmployeeAttendance';
+import WorkOrders from './WorkOrders';
 import PurchaseOrders from './PurchaseOrders';
 import Purchases from './Purchases';
 import Vendors from './Vendors';
@@ -147,11 +148,11 @@ export default function DesktopLayout() {
     commitPageSwitch(pendingPage);
   };
 
-  // ADDED 'Bank Statement' to Finance & Sales
+  // ADDED 'Work Orders' to Finance & Sales
   const navigationGroups = [
     { title: "Workspace", pages: ['Dashboard', 'CRM', 'Projects', 'Task Board', 'Document Vault', 'CAD Studio'] },
     { title: "Site Execution", pages: ['Project Control', 'Daily Report', 'Site Snags', 'Measurement Sheet'] },
-    { title: "Finance & Sales", pages: ['Estimation', 'Tax Invoice', 'Project P&L', 'Income', 'Bank Statement', 'Petty Cash', 'GST Filing'] },
+    { title: "Finance & Sales", pages: ['Estimation', 'Work Orders', 'Tax Invoice', 'Project P&L', 'Income', 'Bank Statement', 'Petty Cash', 'GST Filing'] },
     { title: "Supply Chain", pages: ['Purchase Orders', 'Purchases', 'Vendors', 'Vendor Ledger', 'Inventory', 'Rate Book', 'Tools & Assets', 'Subcontractors'] },
     { title: "Team & HR", pages: ['Employee Attendance', 'Staff Expenses', 'Salaries'] }
   ];
@@ -328,7 +329,7 @@ export default function DesktopLayout() {
             <div className="w-full h-full">
               {visitedPages.has('Dashboard') && <div className={activePage === 'Dashboard' ? 'block' : 'hidden'}><Dashboard setActivePage={handlePageSwitch} /></div>}
               {visitedPages.has('CRM') && <div className={activePage === 'CRM' ? 'block' : 'hidden'}><CRM setActivePage={handlePageSwitch} /></div>}
-                            {visitedPages.has('Projects') && <div className={activePage === 'Projects' ? 'block' : 'hidden'}><Projects /></div>}
+              {visitedPages.has('Projects') && <div className={activePage === 'Projects' ? 'block' : 'hidden'}><Projects /></div>}
               {visitedPages.has('Task Board') && <div className={activePage === 'Task Board' ? 'block' : 'hidden'}><TaskBoard /></div>}
               {visitedPages.has('Document Vault') && <div className={activePage === 'Document Vault' ? 'block' : 'hidden'}><DocumentVault /></div>}
               {visitedPages.has('CAD Studio') && <div className={activePage === 'CAD Studio' ? 'block w-full h-full' : 'hidden'}><CADViewer /></div>}
@@ -339,6 +340,8 @@ export default function DesktopLayout() {
               {visitedPages.has('Petty Cash') && <div className={activePage === 'Petty Cash' ? 'block' : 'hidden'}><PettyCash /></div>}
               {visitedPages.has('Measurement Sheet') && <div className={activePage === 'Measurement Sheet' ? 'block' : 'hidden'}><MeasurementSheet /></div>}
               {visitedPages.has('Purchase Orders') && <div className={activePage === 'Purchase Orders' ? 'block' : 'hidden'}><PurchaseOrders companySettings={companySettings} updateDirtyState={updateDirtyState} /></div>}
+              {/* ADDED WORK ORDERS RENDER BLOCK HERE */}
+              {visitedPages.has('Work Orders') && <div className={activePage === 'Work Orders' ? 'block' : 'hidden'}><WorkOrders companySettings={companySettings} updateDirtyState={updateDirtyState} /></div>}
               {visitedPages.has('Tax Invoice') && <div className={activePage === 'Tax Invoice' ? 'block' : 'hidden'}><TaxInvoice companySettings={companySettings} updateDirtyState={updateDirtyState} /></div>}
               {visitedPages.has('Estimation') && <div className={activePage === 'Estimation' ? 'block' : 'hidden'}><Estimation companySettings={companySettings} /></div>}
               {visitedPages.has('Purchases') && <div className={activePage === 'Purchases' ? 'block' : 'hidden'}><Purchases /></div>}
@@ -353,7 +356,6 @@ export default function DesktopLayout() {
               {visitedPages.has('Salaries') && <div className={activePage === 'Salaries' ? 'block' : 'hidden'}><Salaries /></div>}
               {visitedPages.has('Income') && <div className={activePage === 'Income' ? 'block' : 'hidden'}><Income /></div>}
               {visitedPages.has('GST Filing') && <div className={activePage === 'GST Filing' ? 'block' : 'hidden'}><GST /></div>}
-              {/* RENDER THE BANKING MODULE */}
               {visitedPages.has('Bank Statement') && <div className={activePage === 'Bank Statement' ? 'block' : 'hidden'}><BankStatement /></div>}
               {visitedPages.has('Settings') && (
                 <div className={activePage === 'Settings' ? 'block' : 'hidden'}>

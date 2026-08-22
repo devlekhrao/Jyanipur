@@ -1550,3 +1550,33 @@ export async function saveChangeOrder(co) {
     throw err;
   }
 }
+// ==========================================
+// WORK ORDERS
+// ==========================================
+export async function getWorkOrders() {
+  const db = await initDB();
+  return db.getAll('workOrders');
+}
+
+export async function saveWorkOrder(wo) {
+  const db = await initDB();
+  if (wo.id) {
+    return db.put('workOrders', wo);
+  } else {
+    return db.add('workOrders', wo);
+  }
+}
+
+export async function deleteWorkOrder(id) {
+  const db = await initDB();
+  return db.delete('workOrders', id);
+}
+
+export async function toggleCancelWorkOrder(id, currentStatus) {
+  const db = await initDB();
+  const wo = await db.get('workOrders', id);
+  if (wo) {
+    wo.isCancelled = !currentStatus;
+    return db.put('workOrders', wo);
+  }
+}
