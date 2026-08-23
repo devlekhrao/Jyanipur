@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getWorkOrders, saveWorkOrder, toggleCancelWorkOrder, getLeads } from '../db';
+import { getClientWorkOrders as getWorkOrders, saveClientWorkOrder as saveWorkOrder, toggleCancelClientWorkOrder as toggleCancelWorkOrder, getLeads } from '../db';
 
 // Helper function to convert number to Words
 function numberToWords(num) {

@@ -856,7 +856,7 @@ export async function deletePettyCash(id) {
 }
 
 // ==========================================
-// 15. SUBCONTRACTORS & WORK ORDERS MODULE
+// 15. SUBCONTRACTORS MODULE
 // ==========================================
 export async function getSubcontractors() {
   try {
@@ -887,7 +887,7 @@ export async function saveSubcontractor(sub) {
   }
 }
 
-export async function getWorkOrders() {
+export async function getSubcontractorWorkOrders() {
   try {
     const data = await sql`
       SELECT 
@@ -918,12 +918,12 @@ export async function getWorkOrders() {
       payments: wo.payments ? wo.payments.sort((a, b) => new Date(b.date) - new Date(a.date)) : []
     }));
   } catch (err) {
-    console.error('Error fetching work orders:', err);
+    console.error('Error fetching subcontractor work orders:', err);
     return [];
   }
 }
 
-export async function saveWorkOrder(wo) {
+export async function saveSubcontractorWorkOrder(wo) {
   try {
     const result = await sql`
       INSERT INTO work_orders (subcontractor_id, project_id, scope_of_work, contract_value, status)
@@ -932,21 +932,21 @@ export async function saveWorkOrder(wo) {
     `;
     return result[0];
   } catch (err) {
-    console.error('Error saving work order:', err);
+    console.error('Error saving subcontractor work order:', err);
     throw err;
   }
 }
 
-export async function updateWorkOrderStatus(id, newStatus) {
+export async function updateSubcontractorWorkOrderStatus(id, newStatus) {
   try {
     await sql`UPDATE work_orders SET status = ${newStatus} WHERE id = ${id}`;
   } catch (err) {
-    console.error('Error updating work order status:', err);
+    console.error('Error updating subcontractor work order status:', err);
     throw err;
   }
 }
 
-export async function saveWoPayment(payment) {
+export async function saveSubWoPayment(payment) {
   try {
     const result = await sql`
       INSERT INTO wo_payments (work_order_id, date, amount, payment_mode, reference_no, notes)
@@ -1550,33 +1550,79 @@ export async function saveChangeOrder(co) {
     throw err;
   }
 }
-// ==========================================
-// WORK ORDERS
-// ==========================================
-export async function getWorkOrders() {
-  const db = await initDB();
-  return db.getAll('workOrders');
-}
 
-export async function saveWorkOrder(wo) {
-  const db = await initDB();
-  if (wo.id) {
-    return db.put('workOrders', wo);
-  } else {
-    return db.add('workOrders', wo);
+// ==========================================
+// 26. CLIENT WORK ORDERS MODULE (From CRM/Estimations)
+// ==========================================
+export async function getClientWorkOrders() {
+  try {
+    const data = await sql`SELECT * FROM client_work_orders ORDER BY id DESC`;
+    return data.map(wo => ({
+      id: wo.id,
+      woNo: wo.wo_no,
+      clientName: wo.client_name,
+      clientAddress: wo.client_address,
+      clientPhone: wo.client_phone,
+      date: wo.date ? new Date(wo.date).toISOString().split('T')[0] : '',
+      targetCompletion: wo.target_completion ? new Date(wo.target_completion).toISOString().split('T')[0] : '',
+      projectName: wo.project_name,
+      terms: wo.terms,
+      scopeOfWork: wo.scope_of_work,
+      items: typeof wo.items === 'string' ? JSON.parse(wo.items) : (wo.items || []),
+      totalAmount: Number(wo.total_amount || 0),
+      isCancelled: wo.is_cancelled
+    }));
+  } catch (err) {
+    console.error('Error fetching client work orders:', err);
+    return [];
   }
 }
 
-export async function deleteWorkOrder(id) {
-  const db = await initDB();
-  return db.delete('workOrders', id);
+export async function saveClientWorkOrder(wo) {
+  try {
+    if (wo.id) {
+      const result = await sql`
+        UPDATE client_work_orders SET
+          wo_no = ${wo.woNo}, client_name = ${wo.clientName}, client_address = ${wo.clientAddress},
+          client_phone = ${wo.clientPhone}, date = ${wo.date}, target_completion = ${wo.targetCompletion || null},
+          project_name = ${wo.projectName}, terms = ${wo.terms}, scope_of_work = ${wo.scopeOfWork},
+          items = ${JSON.stringify(wo.items)}, total_amount = ${wo.totalAmount}
+        WHERE id = ${wo.id}
+        RETURNING *;
+      `;
+      return result[0];
+    } else {
+      const result = await sql`
+        INSERT INTO client_work_orders (
+          wo_no, client_name, client_address, client_phone, date, target_completion,
+          project_name, terms, scope_of_work, items, total_amount, is_cancelled
+        ) VALUES (
+          ${wo.woNo}, ${wo.clientName}, ${wo.clientAddress}, ${wo.clientPhone}, ${wo.date}, ${wo.targetCompletion || null},
+          ${wo.projectName}, ${wo.terms}, ${wo.scopeOfWork}, ${JSON.stringify(wo.items)}, ${wo.totalAmount}, false
+        )
+        RETURNING *;
+      `;
+      return result[0];
+    }
+  } catch (err) {
+    console.error('Error saving client work order:', err);
+    throw err;
+  }
 }
 
-export async function toggleCancelWorkOrder(id, currentStatus) {
-  const db = await initDB();
-  const wo = await db.get('workOrders', id);
-  if (wo) {
-    wo.isCancelled = !currentStatus;
-    return db.put('workOrders', wo);
+export async function deleteClientWorkOrder(id) {
+  try {
+    await sql`DELETE FROM client_work_orders WHERE id = ${id}`;
+  } catch (err) {
+    console.error('Error deleting client work order:', err);
+  }
+}
+
+export async function toggleCancelClientWorkOrder(id, currentStatus) {
+  try {
+    await sql`UPDATE client_work_orders SET is_cancelled = ${!currentStatus} WHERE id = ${id}`;
+  } catch (err) {
+    console.error('Error toggling client work order status:', err);
+    throw err;
   }
 }

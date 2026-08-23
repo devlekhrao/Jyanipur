@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  getProjects, getSubcontractors, saveSubcontractor, 
-  getWorkOrders, saveWorkOrder, saveWoPayment, updateWorkOrderStatus 
+  getSubcontractors, 
+  saveSubcontractor, 
+  getSubcontractorWorkOrders as getWorkOrders, 
+  saveSubcontractorWorkOrder as saveWorkOrder, 
+  updateSubcontractorWorkOrderStatus as updateWorkOrderStatus, 
+  saveSubWoPayment as saveWoPayment, 
+  getProjects 
 } from '../db';
-
 export default function MobileSubcontractors() {
   const [loading, setLoading] = useState(true);
   const [projects, setProjects] = useState([]);
