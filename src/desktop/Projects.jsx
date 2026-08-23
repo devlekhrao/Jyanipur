@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { getProjects, saveProject, deleteProject } from '../db';
+import { 
+  getProjects, saveProject, deleteProject,
+  getProjectPnL, getTasks, getInventoryMovements, 
+  getIncomeRecords, getSiteOperations, getSubcontractorWorkOrders, getPettyCash
+} from '../db';
 
 export default function Projects() {
   const [loading, setLoading] = useState(true);
@@ -9,7 +13,7 @@ export default function Projects() {
   const [searchQuery, setSearchQuery] = useState('');
 
   // View State
-  const [currentView, setCurrentView] = useState('list');
+  const [currentView, setCurrentView] = useState('list'); // 'list', 'form', 'report'
   const [isNewClient, setIsNewClient] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -21,6 +25,12 @@ export default function Projects() {
     poDate: new Date().toISOString().split('T')[0],
     budget: '',
     status: 'Planning'
+  });
+
+  // Master Report State
+  const [activeProject, setActiveProject] = useState(null);
+  const [reportData, setReportData] = useState({
+    pnl: null, tasks: [], inventory: [], income: [], dprs: [], subWOs: [], pettyCash: [], transactions: []
   });
 
   const loadData = async () => {
@@ -145,22 +155,78 @@ export default function Projects() {
     }
   };
 
-  const handleView = (projName) => {
-    alert(`Detailed view for ${projName} is coming soon!`);
+  // ============================================================================
+  // MASTER PROJECT REPORT GENERATOR
+  // ============================================================================
+  const handleView = async (project) => {
+    setLoading(true);
+    setActiveProject(project);
+    
+    try {
+      const pId = project.id;
+      const [pnl, allTasks, allInv, allInc, ops, allSubWOs, allPetty] = await Promise.all([
+        getProjectPnL(pId),
+        getTasks ? getTasks() : Promise.resolve([]),
+        getInventoryMovements ? getInventoryMovements() : Promise.resolve([]),
+        getIncomeRecords ? getIncomeRecords() : Promise.resolve([]),
+        getSiteOperations ? getSiteOperations(pId) : Promise.resolve({dprs:[], docs:[]}),
+        getSubcontractorWorkOrders ? getSubcontractorWorkOrders() : Promise.resolve([]),
+        getPettyCash ? getPettyCash() : Promise.resolve([])
+      ]);
+
+      const projTasks = allTasks.filter(t => String(t.projectId) === String(pId));
+      const projInv = allInv.filter(i => String(i.projectId) === String(pId));
+      const projInc = allInc.filter(i => String(i.projectId) === String(pId));
+      const projSubWOs = allSubWOs.filter(w => String(w.projectName) === String(project.name));
+      const projPetty = allPetty.filter(p => String(p.projectId) === String(pId));
+
+      // Build unified transaction ledger
+      const txns = [
+        ...projInc.map(i => ({ id: `inc_${i.id}`, date: i.date, type: 'Income', amount: i.amount, desc: i.notes || i.paymentMode })),
+        ...projPetty.map(p => ({ id: `exp_${p.id}`, date: p.date, type: 'Expense', amount: p.amount, desc: p.description }))
+      ];
+      projSubWOs.forEach(wo => {
+        (wo.payments || []).forEach(pay => {
+          txns.push({ id: `sub_${pay.id}`, date: pay.date, type: 'Sub Payment', amount: pay.amount, desc: `Paid to ${wo.subName}` });
+        });
+      });
+      txns.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+      setReportData({
+        pnl: pnl || { incomeReceived: 0, totalCost: 0, netProfit: 0, profitMargin: 0, budget: project.budget },
+        tasks: projTasks,
+        inventory: projInv,
+        income: projInc,
+        dprs: ops.dprs || [],
+        subWOs: projSubWOs,
+        pettyCash: projPetty,
+        transactions: txns
+      });
+      
+      setCurrentView('report');
+    } catch (err) {
+      console.error("Error generating report:", err);
+      alert("Failed to load comprehensive project report.");
+    }
+    setLoading(false);
   };
 
+  const calculateDaysActive = (poDate) => {
+    if (!poDate) return 0;
+    const start = new Date(poDate);
+    const today = new Date();
+    const diffTime = Math.abs(today - start);
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
+
+  // Grouping for the List View
   const clients = {};
   projects.forEach(p => {
     const cName = p.clientName || 'General Client';
     if (!clients[cName]) {
       clients[cName] = {
-        name: cName,
-        gstin: p.clientGstin,
-        phone: p.clientPhone,
-        totalBudget: 0,
-        totalBilled: 0,
-        totalCost: 0,
-        projects: []
+        name: cName, gstin: p.clientGstin, phone: p.clientPhone,
+        totalBudget: 0, totalBilled: 0, totalCost: 0, projects: []
       };
     }
     const b = Number(p.budget) || 0;
@@ -249,7 +315,7 @@ export default function Projects() {
         </div>
 
         {/* Client & Project Hierarchy */}
-        <div className="flex-1 overflow-y-auto space-y-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <div className="flex-1 overflow-y-auto space-y-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pb-10">
           {loading ? (
             <div className="py-20 text-center text-zinc-400 font-medium text-sm flex flex-col items-center justify-center space-y-3">
               <div className="w-10 h-10 border-4 border-zinc-200 border-t-[#B45309] rounded-full animate-spin"></div>
@@ -352,8 +418,8 @@ export default function Projects() {
                                 <button onClick={() => handleEditProject(proj)} title="Edit Project" className="px-2.5 py-1.5 bg-amber-50 text-[#B45309] hover:bg-[#B45309] hover:text-white border border-amber-200/60 rounded-lg font-semibold cursor-pointer text-[11px] uppercase tracking-wider transition-all">
                                   Edit
                                 </button>
-                                <button onClick={() => handleView(proj.name || proj.projectName)} title="View Project" className="px-2.5 py-1.5 bg-zinc-50 text-zinc-600 hover:bg-zinc-200 border border-zinc-200 rounded-lg font-semibold cursor-pointer text-[11px] uppercase tracking-wider transition-all">
-                                  View
+                                <button onClick={() => handleView(proj)} title="View Master Report" className="px-3 py-1.5 bg-[#B45309] text-white hover:bg-[#92400E] shadow-sm rounded-lg font-bold cursor-pointer text-[11px] uppercase tracking-wider transition-all">
+                                  Report
                                 </button>
                               </div>
                             </td>
@@ -372,7 +438,216 @@ export default function Projects() {
   }
 
   // ==========================================
-  // RENDER 2: FORM VIEW (CREATE / EDIT)
+  // RENDER 2: MASTER PROJECT REPORT VIEW
+  // ==========================================
+  if (currentView === 'report' && activeProject) {
+    const latestDPR = reportData.dprs.length > 0 ? reportData.dprs[0] : null;
+    const completedTasks = reportData.tasks.filter(t => t.status === 'Completed').length;
+    const totalTasks = reportData.tasks.length;
+    
+    return (
+      <div className="w-full h-full flex flex-col bg-zinc-50 print:bg-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
+        
+        {/* Report Header */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center pb-5 border-b border-zinc-200 mb-6 shrink-0 gap-4">
+          <div>
+            <div className="flex items-center gap-3 mb-1">
+              <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border ${
+                activeProject.status === 'Ongoing' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                activeProject.status === 'Completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                'bg-amber-50 text-amber-700 border-amber-200'
+              }`}>
+                {activeProject.status || 'Planning'}
+              </span>
+              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{activeProject.clientName}</span>
+            </div>
+            <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">{activeProject.name || activeProject.projectName}</h2>
+          </div>
+          <div className="flex gap-2 print:hidden">
+            <button onClick={() => setCurrentView('list')} className="text-zinc-600 hover:text-zinc-900 text-xs font-bold transition-colors cursor-pointer bg-white px-4 py-2 rounded-xl border border-zinc-200 shadow-sm flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+              Back to Projects
+            </button>
+            <button onClick={() => window.print()} className="bg-[#B45309] text-white px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer hover:bg-[#92400E] shadow-sm flex items-center gap-1.5">
+              🖨️ Print Report
+            </button>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pb-10 space-y-6">
+          
+          {/* Quick Stats Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm flex flex-col justify-center">
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Days Active</span>
+              <p className="text-2xl font-black text-zinc-900">{calculateDaysActive(activeProject.poDate)} <span className="text-sm font-semibold text-zinc-400">Days</span></p>
+            </div>
+            <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm flex flex-col justify-center">
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Task Progress</span>
+              <p className="text-2xl font-black text-blue-600">{completedTasks} <span className="text-sm font-semibold text-zinc-400">/ {totalTasks}</span></p>
+            </div>
+            <div className="bg-emerald-50 p-5 rounded-2xl border border-emerald-100 shadow-sm flex flex-col justify-center">
+              <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1">Income Received</span>
+              <p className="text-xl font-black text-emerald-700">₹ {(reportData.pnl?.incomeReceived || 0).toLocaleString('en-IN')}</p>
+            </div>
+            <div className="bg-red-50 p-5 rounded-2xl border border-red-100 shadow-sm flex flex-col justify-center">
+              <span className="text-[10px] font-bold text-red-600 uppercase tracking-widest mb-1">Total Costs Incurred</span>
+              <p className="text-xl font-black text-red-600">₹ {(reportData.pnl?.totalCost || 0).toLocaleString('en-IN')}</p>
+            </div>
+          </div>
+
+          {/* Two Column Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            {/* LEFT COLUMN: Operations & Status */}
+            <div className="space-y-6">
+              
+              {/* Where we stand (Latest DPR) */}
+              <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden p-6">
+                <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <span>📍</span> Current Standing (Latest Daily Report)
+                </h3>
+                {latestDPR ? (
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-[10px] font-bold text-[#B45309] bg-amber-50 px-2 py-0.5 rounded border border-amber-200">Date: {latestDPR.date}</span>
+                      <span className="text-[10px] font-medium text-zinc-500">By: {latestDPR.loggedBy}</span>
+                    </div>
+                    <p className="text-sm text-zinc-800 font-medium leading-relaxed bg-zinc-50 p-3 rounded-xl border border-zinc-100">{latestDPR.summary}</p>
+                    
+                    {latestDPR.materials_needed && (
+                      <div className="mt-4">
+                        <span className="text-[10px] font-bold text-red-500 uppercase tracking-widest block mb-1">Upcoming Material Purchase List</span>
+                        <p className="text-sm text-zinc-700 bg-red-50/50 p-3 rounded-xl border border-red-100">{latestDPR.materials_needed}</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-xs text-zinc-500 italic">No daily reports logged yet for this site.</p>
+                )}
+              </div>
+
+              {/* Tasks / Work Status */}
+              <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden p-6">
+                <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <span>✅</span> Work Schedule & Tasks
+                </h3>
+                {reportData.tasks.length === 0 ? (
+                  <p className="text-xs text-zinc-500 italic">No tasks assigned to this project.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {reportData.tasks.slice(0, 5).map(task => (
+                      <div key={task.id} className="flex justify-between items-center p-3 bg-zinc-50 rounded-xl border border-zinc-100">
+                        <div>
+                          <p className={`text-sm font-semibold ${task.status === 'Completed' ? 'text-zinc-400 line-through' : 'text-zinc-800'}`}>{task.title}</p>
+                          <p className="text-[10px] text-zinc-500 mt-0.5">Assigned to: {task.assignedTo || 'Unassigned'}</p>
+                        </div>
+                        <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                          task.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' :
+                          task.status === 'In Progress' ? 'bg-amber-100 text-[#B45309]' : 'bg-zinc-200 text-zinc-600'
+                        }`}>
+                          {task.status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+            </div>
+
+            {/* RIGHT COLUMN: Resources & Finances */}
+            <div className="space-y-6">
+
+              {/* Subcontractors Deployed */}
+              <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden p-6">
+                <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <span>👷</span> Subcontractors Deployed
+                </h3>
+                {reportData.subWOs.length === 0 ? (
+                  <p className="text-xs text-zinc-500 italic">No subcontractors allocated.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {reportData.subWOs.map(wo => (
+                      <div key={wo.id} className="flex justify-between items-center p-3 bg-zinc-50 rounded-xl border border-zinc-100">
+                        <div>
+                          <p className="text-sm font-bold text-zinc-800">{wo.subName}</p>
+                          <p className="text-[10px] font-semibold text-[#B45309] uppercase tracking-wider mt-0.5">{wo.trade}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[10px] text-zinc-500 font-medium">Contract Value</p>
+                          <p className="text-sm font-bold text-zinc-900">₹ {(wo.contractValue || 0).toLocaleString('en-IN')}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Materials on Project (Inventory) */}
+              <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden p-6">
+                <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <span>🧱</span> Materials Logged to Site
+                </h3>
+                {reportData.inventory.length === 0 ? (
+                  <p className="text-xs text-zinc-500 italic">No materials requested or dispatched to site.</p>
+                ) : (
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                    {reportData.inventory.map(inv => (
+                      <div key={inv.id} className="flex justify-between items-center border-b border-zinc-100 pb-2 mb-2 last:border-0 last:pb-0 last:mb-0">
+                        <div>
+                          <p className="text-xs font-semibold text-zinc-800">{inv.itemName}</p>
+                          <p className="text-[9px] text-zinc-400">{inv.date}</p>
+                        </div>
+                        <span className={`text-[11px] font-bold ${inv.type === 'IN' ? 'text-emerald-600' : 'text-red-500'}`}>
+                          {inv.type === 'IN' ? '+' : '-'}{inv.quantity} {inv.unit}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Financial Ledger (Transactions) */}
+              <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden p-6">
+                <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <span>💸</span> Project Ledger (Receipts & Payments)
+                </h3>
+                {reportData.transactions.length === 0 ? (
+                  <p className="text-xs text-zinc-500 italic">No financial transactions recorded.</p>
+                ) : (
+                  <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                    {reportData.transactions.map(txn => (
+                      <div key={txn.id} className="flex justify-between items-center p-3 bg-zinc-50 rounded-xl border border-zinc-100">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                              txn.type === 'Income' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                            }`}>
+                              {txn.type}
+                            </span>
+                            <span className="text-[10px] text-zinc-400 font-medium">{txn.date}</span>
+                          </div>
+                          <p className="text-xs font-semibold text-zinc-700 mt-1 truncate max-w-[200px]">{txn.desc}</p>
+                        </div>
+                        <p className={`text-sm font-bold ${txn.type === 'Income' ? 'text-emerald-600' : 'text-zinc-900'}`}>
+                          {txn.type === 'Income' ? '+' : '-'}₹{(txn.amount || 0).toLocaleString('en-IN')}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ==========================================
+  // RENDER 3: FORM VIEW (CREATE / EDIT)
   // ==========================================
   return (
     <div className="w-full h-full flex flex-col" style={{ fontFamily: 'Poppins, sans-serif' }}>
