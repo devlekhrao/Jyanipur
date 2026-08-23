@@ -79,7 +79,7 @@ const INITIAL_EMAILS = [
 export default function PortalEmail({ companySettings }) {
   // Navigation & Filtering States
   const [selectedAccount, setSelectedAccount] = useState('accounts@jyanipur.in');
-  const [selectedFolder, setSelectedFolder] = useState('inbox'); // inbox, starred, sent, drafts, trash
+  const [selectedFolder, setSelectedFolder] = useState('inbox');
   const [emails, setEmails] = useState(INITIAL_EMAILS);
   const [selectedEmail, setSelectedEmail] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -97,12 +97,10 @@ export default function PortalEmail({ companySettings }) {
   });
   const [sending, setSending] = useState(false);
 
-  // Sync compose 'from' address when active account changes
   useEffect(() => {
     setComposeForm(prev => ({ ...prev, from: selectedAccount }));
   }, [selectedAccount]);
 
-  // Filter Emails matching Account, Folder & Search Query
   const filteredEmails = emails.filter(m => {
     if (m.account !== selectedAccount) return false;
     if (selectedFolder === 'starred') return m.starred;
@@ -120,10 +118,8 @@ export default function PortalEmail({ companySettings }) {
     return true;
   });
 
-  // Automatically select the first email when folder/account changes
   useEffect(() => {
     if (filteredEmails.length > 0 && !selectedEmail) {
-      // Don't auto-select if we already have one open, unless it's no longer in this list
       const stillExists = filteredEmails.find(m => m.id === selectedEmail?.id);
       if (!stillExists) setSelectedEmail(filteredEmails[0]);
     } else if (filteredEmails.length === 0) {
@@ -131,10 +127,8 @@ export default function PortalEmail({ companySettings }) {
     }
   }, [selectedAccount, selectedFolder, filteredEmails, selectedEmail]);
 
-  // Actions
   const handleSelectEmail = (mail) => {
     setSelectedEmail(mail);
-    // Mark as read
     setEmails(prev => prev.map(m => m.id === mail.id ? { ...m, unread: false } : m));
   };
 
@@ -212,34 +206,31 @@ export default function PortalEmail({ companySettings }) {
     setIsComposeOpen(true);
   };
 
-  const inputClass = "w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-white focus:outline-none focus:border-[#B45309] focus:ring-1 focus:ring-inset focus:ring-[#B45309] text-zinc-900 text-sm font-medium transition-all shadow-sm";
-  const labelClass = "block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1 ml-0.5";
+  const inputClass = "w-full px-4 py-2 border-b border-zinc-200 bg-transparent focus:outline-none focus:border-[#B45309] text-zinc-900 text-sm transition-colors";
 
   return (
-    // Outer cohesive application shell
-    <div className="w-full h-full bg-white rounded-3xl border border-zinc-200 shadow-sm overflow-hidden flex flex-col font-['Poppins'] text-zinc-900 relative">
+    // ABSOLUTE INSET-0: Bypasses DesktopLayout padding to create a true full-page app
+    <div className="absolute inset-0 bg-white flex flex-col font-['Poppins'] text-zinc-900 z-20">
       
-      {/* 1. TOP HEADER (GMAIL STYLE) */}
-      <div className="h-16 flex items-center justify-between px-4 lg:px-6 border-b border-zinc-200 shrink-0 bg-white z-10 gap-6">
+      {/* 1. TOP HEADER (SEAMLESS) */}
+      <div className="h-14 flex items-center justify-between px-4 border-b border-zinc-200 shrink-0 bg-white gap-6">
         
-        {/* Logo/Brand Area */}
-        <div className="flex items-center gap-3 min-w-[220px]">
-          <div className="w-8 h-8 rounded-xl bg-amber-50 text-[#B45309] flex items-center justify-center font-black text-sm shadow-sm border border-amber-100">
-            ✉️
-          </div>
-          <span className="text-lg font-bold tracking-tight text-zinc-800">Mailbox</span>
+        {/* Brand Area */}
+        <div className="flex items-center gap-3 w-48 shrink-0">
+          <span className="text-xl">✉️</span>
+          <span className="text-sm font-semibold text-zinc-800">Mailbox</span>
         </div>
 
         {/* Global Search Bar */}
-        <div className="flex-1 max-w-2xl hidden md:flex">
-          <div className="w-full flex items-center bg-zinc-100/80 hover:bg-zinc-100 border border-transparent hover:border-zinc-200 rounded-full px-4 py-2.5 transition-all">
-            <svg className="w-4 h-4 text-zinc-500 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+        <div className="flex-1 max-w-3xl">
+          <div className="w-full flex items-center bg-zinc-100 border border-transparent focus-within:border-zinc-300 focus-within:bg-white rounded-lg px-4 py-2 transition-all">
+            <svg className="w-4 h-4 text-zinc-500 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
             <input 
               type="text" 
-              placeholder="Search all conversations..."
+              placeholder={`Search in ${selectedFolder}...`}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="bg-transparent text-sm font-medium outline-none w-full text-zinc-800 placeholder:text-zinc-500"
+              className="bg-transparent text-sm outline-none w-full text-zinc-800 placeholder:text-zinc-500"
             />
           </div>
         </div>
@@ -249,93 +240,67 @@ export default function PortalEmail({ companySettings }) {
           <select 
             value={selectedAccount} 
             onChange={(e) => { setSelectedAccount(e.target.value); setSelectedFolder('inbox'); }}
-            className="appearance-none bg-white text-zinc-700 font-semibold text-sm border border-zinc-200 px-4 py-2 pr-8 rounded-full outline-none cursor-pointer hover:bg-zinc-50 transition-colors bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%2371717A%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_0.75rem_center] bg-[length:1rem_1rem]"
+            className="appearance-none bg-transparent text-zinc-700 font-medium text-sm border border-zinc-200 px-3 py-1.5 pr-8 rounded-lg outline-none cursor-pointer hover:bg-zinc-50 transition-colors bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%2371717A%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_0.5rem_center] bg-[length:1rem_1rem]"
           >
             {DOMAIN_ACCOUNTS.map(acc => (
-              <option key={acc.email} value={acc.email}>
-                {acc.email}
-              </option>
+              <option key={acc.email} value={acc.email}>{acc.email}</option>
             ))}
           </select>
         </div>
       </div>
 
       {/* 2. THREE-PANE WORKSPACE */}
-      <div className="flex-1 flex overflow-hidden bg-white">
+      <div className="flex-1 flex overflow-hidden">
         
         {/* PANE 1: GMAIL-STYLE SIDEBAR */}
-        <div className="w-64 flex flex-col justify-between shrink-0 py-4 border-r border-zinc-200/60">
-          <div>
-            <div className="px-4 mb-6">
-              <button 
-                onClick={() => setIsComposeOpen(true)}
-                className="w-full bg-[#B45309] hover:bg-[#92400E] text-white px-5 py-3.5 rounded-2xl text-sm font-bold shadow-md shadow-[#B45309]/20 transition-all flex items-center gap-3 cursor-pointer"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                Compose
-              </button>
-            </div>
-
-            <div className="pr-4 space-y-0.5">
-              {[
-                { id: 'inbox', label: 'Inbox', icon: '📥', count: emails.filter(m => m.account === selectedAccount && m.folder === 'inbox' && m.unread).length },
-                { id: 'starred', label: 'Starred', icon: '⭐', count: emails.filter(m => m.account === selectedAccount && m.starred).length },
-                { id: 'sent', label: 'Sent', icon: '📤', count: 0 },
-                { id: 'drafts', label: 'Drafts', icon: '📝', count: 0 },
-                { id: 'trash', label: 'Trash', icon: '🗑️', count: 0 }
-              ].map(f => {
-                const isActive = selectedFolder === f.id;
-                return (
-                  <button
-                    key={f.id}
-                    onClick={() => setSelectedFolder(f.id)}
-                    className={`w-full flex items-center justify-between px-6 py-2.5 rounded-r-full text-sm font-medium transition-all cursor-pointer ${
-                      isActive ? 'bg-amber-100/60 text-[#B45309] font-bold' : 'text-zinc-600 hover:bg-zinc-100'
-                    }`}
-                  >
-                    <span className="flex items-center gap-4">
-                      <span className={`text-base ${isActive ? 'opacity-100' : 'opacity-70'}`}>{f.icon}</span>
-                      {f.label}
-                    </span>
-                    {f.count > 0 && (
-                      <span className={`text-[11px] font-bold ${isActive ? 'text-[#B45309]' : 'text-zinc-500'}`}>
-                        {f.count}
-                      </span>
-                    )}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* User Status / Storage Footer */}
-          <div className="px-6">
-            <div className="p-4 bg-zinc-50 rounded-2xl border border-zinc-100 text-[10px] text-zinc-500 font-medium">
-              <div className="flex justify-between mb-1.5">
-                <span>Storage (Jyanipur)</span>
-                <strong className="text-zinc-700">1.2 GB</strong>
-              </div>
-              <div className="w-full h-1.5 bg-zinc-200 rounded-full overflow-hidden">
-                <div className="w-[12%] h-full bg-zinc-400"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* PANE 2: EMAIL THREAD LIST */}
-        <div className="w-[360px] border-r border-zinc-200/60 flex flex-col shrink-0 bg-white">
-          <div className="p-3 px-4 border-b border-zinc-200/60 flex justify-between items-center bg-white shrink-0 h-[52px]">
-            <span className="text-sm font-bold text-zinc-800 capitalize">{selectedFolder}</span>
-            <button className="text-zinc-400 hover:text-zinc-600 cursor-pointer">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16m-7 6h7" /></svg>
+        <div className="w-56 flex flex-col py-4 border-r border-zinc-200 shrink-0">
+          <div className="px-3 mb-4">
+            <button 
+              onClick={() => setIsComposeOpen(true)}
+              className="w-full bg-white hover:bg-zinc-50 border border-zinc-200 text-zinc-800 px-4 py-2.5 rounded-xl text-sm font-medium shadow-sm transition-all flex items-center gap-3 cursor-pointer"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+              Compose
             </button>
           </div>
 
+          <div className="pr-3 space-y-0.5">
+            {[
+              { id: 'inbox', label: 'Inbox', icon: '📥', count: emails.filter(m => m.account === selectedAccount && m.folder === 'inbox' && m.unread).length },
+              { id: 'starred', label: 'Starred', icon: '⭐', count: emails.filter(m => m.account === selectedAccount && m.starred).length },
+              { id: 'sent', label: 'Sent', icon: '📤', count: 0 },
+              { id: 'drafts', label: 'Drafts', icon: '📝', count: 0 },
+              { id: 'trash', label: 'Trash', icon: '🗑️', count: 0 }
+            ].map(f => {
+              const isActive = selectedFolder === f.id;
+              return (
+                <button
+                  key={f.id}
+                  onClick={() => setSelectedFolder(f.id)}
+                  className={`w-full flex items-center justify-between px-5 py-2 rounded-r-full text-sm transition-all cursor-pointer ${
+                    isActive ? 'bg-zinc-100 text-zinc-900 font-semibold' : 'text-zinc-600 hover:bg-zinc-50 font-normal'
+                  }`}
+                >
+                  <span className="flex items-center gap-3">
+                    <span className="text-base">{f.icon}</span>
+                    {f.label}
+                  </span>
+                  {f.count > 0 && (
+                    <span className="text-xs font-bold text-zinc-600">
+                      {f.count}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* PANE 2: EMAIL LIST */}
+        <div className="w-[350px] border-r border-zinc-200 flex flex-col shrink-0 bg-white">
           <div className="flex-1 overflow-y-auto divide-y divide-zinc-100 custom-scrollbar">
             {filteredEmails.length === 0 ? (
-              <div className="p-12 text-center text-zinc-400 text-sm font-medium">
-                Nothing to see here.
-              </div>
+              <div className="p-8 text-center text-zinc-400 text-sm">Empty folder.</div>
             ) : (
               filteredEmails.map(mail => {
                 const isActive = selectedEmail?.id === mail.id;
@@ -343,34 +308,32 @@ export default function PortalEmail({ companySettings }) {
                   <div
                     key={mail.id}
                     onClick={() => handleSelectEmail(mail)}
-                    className={`p-4 cursor-pointer transition-all relative flex flex-col gap-1 border-l-4 ${
-                      isActive ? 'bg-amber-50/40 border-l-[#B45309]' :
-                      mail.unread ? 'bg-white border-l-transparent' : 'bg-zinc-50/40 border-l-transparent opacity-80'
+                    className={`p-3.5 cursor-pointer transition-all border-l-4 ${
+                      isActive ? 'bg-[#B45309]/5 border-l-[#B45309]' :
+                      mail.unread ? 'bg-white border-l-transparent' : 'bg-zinc-50/50 border-l-transparent'
                     }`}
                   >
-                    <div className="flex items-center justify-between">
-                      <span className={`text-sm truncate pr-2 ${mail.unread ? 'font-bold text-zinc-900' : 'font-semibold text-zinc-700'}`}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className={`text-sm truncate pr-2 ${mail.unread ? 'font-semibold text-zinc-900' : 'text-zinc-700'}`}>
                         {selectedFolder === 'sent' ? `To: ${mail.to}` : mail.fromName}
                       </span>
-                      <span className={`text-[10px] shrink-0 ${mail.unread ? 'font-bold text-zinc-900' : 'font-semibold text-zinc-400'}`}>
+                      <span className={`text-xs shrink-0 ${mail.unread ? 'font-semibold text-[#B45309]' : 'text-zinc-500'}`}>
                         {mail.date}
                       </span>
                     </div>
-
                     <div className="flex items-center gap-2">
-                      <h4 className={`text-xs truncate flex-1 ${mail.unread ? 'font-bold text-zinc-800' : 'font-medium text-zinc-600'}`}>
+                      <h4 className={`text-xs truncate flex-1 ${mail.unread ? 'font-semibold text-zinc-800' : 'text-zinc-600'}`}>
                         {mail.subject}
                       </h4>
                       {mail.attachments?.length > 0 && (
-                        <svg className="w-3 h-3 text-zinc-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
+                        <svg className="w-3 h-3 text-zinc-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
                       )}
                     </div>
-
-                    <div className="flex items-start gap-2 mt-0.5">
-                      <p className="text-xs text-zinc-500 font-medium line-clamp-2 leading-relaxed flex-1">
+                    <div className="flex items-start gap-2 mt-1">
+                      <p className="text-xs text-zinc-500 truncate flex-1">
                         {mail.snippet}
                       </p>
-                      <button onClick={(e) => toggleStar(e, mail.id)} className={`text-base leading-none shrink-0 ${mail.starred ? 'text-amber-400' : 'text-zinc-300 hover:text-zinc-400'}`}>
+                      <button onClick={(e) => toggleStar(e, mail.id)} className={`text-sm leading-none shrink-0 ${mail.starred ? 'text-amber-400' : 'text-zinc-300 hover:text-zinc-400'}`}>
                         {mail.starred ? '★' : '☆'}
                       </button>
                     </div>
@@ -381,85 +344,65 @@ export default function PortalEmail({ companySettings }) {
           </div>
         </div>
 
-        {/* PANE 3: FULL EMAIL READER VIEW */}
-        <div className="flex-1 bg-white flex flex-col overflow-hidden relative">
+        {/* PANE 3: READER VIEW */}
+        <div className="flex-1 bg-white flex flex-col overflow-hidden">
           {!selectedEmail ? (
-            <div className="h-full flex flex-col items-center justify-center p-12 text-center bg-zinc-50/30">
-              <div className="w-20 h-20 rounded-full bg-zinc-100 text-zinc-300 flex items-center justify-center text-4xl mb-6 shadow-inner">
-                ✉️
-              </div>
-              <h3 className="text-lg font-bold text-zinc-800">Select an item to read</h3>
-              <p className="text-sm text-zinc-500 font-medium mt-1">Nothing is selected</p>
+            <div className="h-full flex items-center justify-center text-zinc-400 text-sm">
+              Select an item to read
             </div>
           ) : (
             <div className="h-full flex flex-col overflow-hidden">
               
-              {/* Reader Action Header */}
-              <div className="px-6 py-3 border-b border-zinc-200/60 bg-white flex items-center justify-between shrink-0 h-[52px]">
-                <div className="flex items-center gap-1">
-                  <button onClick={handleQuickReply} className="p-2 text-zinc-500 hover:bg-zinc-100 rounded-lg transition-colors cursor-pointer" title="Reply">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg>
-                  </button>
-                  <button className="p-2 text-zinc-500 hover:bg-zinc-100 rounded-lg transition-colors cursor-pointer" title="Forward">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" /></svg>
-                  </button>
-                  <div className="w-px h-4 bg-zinc-200 mx-2"></div>
-                  <button onClick={() => deleteEmail(selectedEmail.id)} className="p-2 text-zinc-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer" title="Delete">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                  </button>
-                </div>
+              {/* Toolbar */}
+              <div className="px-4 py-2 border-b border-zinc-200 flex items-center gap-1 shrink-0">
+                <button onClick={handleQuickReply} className="p-1.5 text-zinc-600 hover:bg-zinc-100 rounded transition-colors cursor-pointer" title="Reply">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg>
+                </button>
+                <button className="p-1.5 text-zinc-600 hover:bg-zinc-100 rounded transition-colors cursor-pointer" title="Forward">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" /></svg>
+                </button>
+                <div className="w-px h-4 bg-zinc-200 mx-2"></div>
+                <button onClick={() => deleteEmail(selectedEmail.id)} className="p-1.5 text-zinc-600 hover:text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer" title="Delete">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                </button>
               </div>
 
               {/* Reader Body */}
-              <div className="flex-1 overflow-y-auto px-8 py-8 custom-scrollbar">
-                
-                {/* Subject Header */}
-                <div className="mb-8">
-                  <h1 className="text-[22px] font-medium text-zinc-900 leading-snug">{selectedEmail.subject}</h1>
-                </div>
+              <div className="flex-1 overflow-y-auto px-8 py-6 custom-scrollbar">
+                <h1 className="text-xl font-medium text-zinc-900 mb-6">{selectedEmail.subject}</h1>
 
                 <div className="flex items-start justify-between mb-8">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-amber-600 text-white font-bold text-lg flex items-center justify-center uppercase shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-zinc-200 text-zinc-600 font-semibold text-sm flex items-center justify-center uppercase">
                       {selectedEmail.fromName[0]}
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-zinc-900">
+                      <p className="text-sm font-semibold text-zinc-900">
                         {selectedEmail.fromName} <span className="text-xs text-zinc-500 font-normal">&lt;{selectedEmail.fromEmail}&gt;</span>
                       </p>
-                      <p className="text-[11px] text-zinc-500 mt-0.5">To: {selectedEmail.to}</p>
+                      <p className="text-xs text-zinc-500">To: {selectedEmail.to}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs text-zinc-500 font-medium">{new Date(selectedEmail.timestamp).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</span>
-                  </div>
+                  <span className="text-xs text-zinc-500">{new Date(selectedEmail.timestamp).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</span>
                 </div>
 
-                {/* Email HTML Body Render */}
+                {/* HTML Body */}
                 <div 
                   className="text-sm text-zinc-800 leading-relaxed font-normal whitespace-pre-wrap max-w-4xl"
                   dangerouslySetInnerHTML={{ __html: selectedEmail.body }}
                 />
 
-                {/* Attachments Section */}
+                {/* Attachments */}
                 {selectedEmail.attachments?.length > 0 && (
-                  <div className="mt-12 pt-6 border-t border-zinc-100">
-                    <h4 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest mb-4">{selectedEmail.attachments.length} Attachments</h4>
-                    <div className="flex flex-wrap gap-4">
+                  <div className="mt-10 pt-6 border-t border-zinc-100">
+                    <p className="text-xs font-semibold text-zinc-500 mb-3">{selectedEmail.attachments.length} Attachments</p>
+                    <div className="flex flex-wrap gap-3">
                       {selectedEmail.attachments.map((att, idx) => (
-                        <div key={idx} className="group relative w-48 border border-zinc-200 rounded-2xl overflow-hidden hover:border-[#B45309] transition-colors cursor-pointer bg-zinc-50 shadow-sm">
-                          <div className="h-24 bg-zinc-100 flex items-center justify-center border-b border-zinc-200 text-3xl">
-                            {att.name.endsWith('.pdf') ? '📄' : '🖼️'}
-                          </div>
-                          <div className="p-3 bg-white">
-                            <p className="text-xs font-bold text-zinc-900 truncate" title={att.name}>{att.name}</p>
-                            <p className="text-[10px] text-zinc-500 font-medium mt-0.5">{att.size}</p>
-                          </div>
-                          {/* Hover Download Overlay */}
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                            <div className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center shadow-md">
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                            </div>
+                        <div key={idx} className="flex items-center gap-3 w-64 border border-zinc-200 rounded-lg p-3 hover:bg-zinc-50 cursor-pointer">
+                          <span className="text-2xl">{att.name.endsWith('.pdf') ? '📄' : '🖼️'}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-zinc-900 truncate">{att.name}</p>
+                            <p className="text-xs text-zinc-500">{att.size}</p>
                           </div>
                         </div>
                       ))}
@@ -467,78 +410,64 @@ export default function PortalEmail({ companySettings }) {
                   </div>
                 )}
               </div>
-
             </div>
           )}
         </div>
 
       </div>
 
-      {/* 3. COMPOSE EMAIL MODAL */}
+      {/* 3. COMPOSE DRAWER */}
       {isComposeOpen && (
-        <div className="absolute bottom-0 right-16 w-full max-w-xl bg-white rounded-t-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.15)] border border-zinc-200 flex flex-col z-50 animate-in slide-in-from-bottom-8 duration-200">
+        <div className="absolute bottom-0 right-16 w-full max-w-lg bg-white rounded-t-lg shadow-[0_-5px_25px_rgba(0,0,0,0.15)] border border-zinc-200 flex flex-col z-50">
           
-          {/* Modal Header */}
-          <div className="px-5 py-3 bg-zinc-900 text-white rounded-t-2xl flex justify-between items-center cursor-pointer" onClick={() => setIsComposeOpen(false)}>
-            <h3 className="text-sm font-bold tracking-wide">New Message</h3>
-            <div className="flex items-center gap-2">
-              <button className="text-zinc-400 hover:text-white p-1">─</button>
-              <button className="text-zinc-400 hover:text-white p-1">✕</button>
-            </div>
+          {/* Header */}
+          <div className="px-4 py-2 bg-zinc-800 text-white rounded-t-lg flex justify-between items-center cursor-pointer" onClick={() => setIsComposeOpen(false)}>
+            <h3 className="text-sm font-medium">New Message</h3>
+            <button className="text-zinc-400 hover:text-white">✕</button>
           </div>
 
-          <form onSubmit={handleSendEmail} className="flex flex-col flex-1 max-h-[600px]">
-            <div className="overflow-y-auto px-6 py-2 custom-scrollbar">
+          <form onSubmit={handleSendEmail} className="flex flex-col flex-1 h-[450px]">
+            <div className="overflow-y-auto px-4 py-2 custom-scrollbar">
               
-              <div className="flex items-center border-b border-zinc-100 py-2">
-                <span className="text-xs text-zinc-500 w-16">From</span>
+              <div className="flex items-center border-b border-zinc-100">
                 <select 
                   value={composeData.from} 
                   onChange={e => setComposeForm({ ...composeData, from: e.target.value })}
-                  className="flex-1 bg-transparent text-sm font-bold text-zinc-800 outline-none cursor-pointer"
+                  className="w-full bg-transparent text-xs font-medium text-zinc-600 outline-none cursor-pointer py-2"
                 >
-                  {DOMAIN_ACCOUNTS.map(acc => <option key={acc.email} value={acc.email}>{acc.email}</option>)}
+                  {DOMAIN_ACCOUNTS.map(acc => <option key={acc.email} value={acc.email}>From: {acc.email}</option>)}
                 </select>
               </div>
 
-              <div className="flex items-center border-b border-zinc-100 py-2 relative group">
-                <span className="text-xs text-zinc-500 w-16">To</span>
-                <input type="email" required value={composeData.to} onChange={e => setComposeForm({ ...composeData, to: e.target.value })} className="flex-1 bg-transparent text-sm font-medium outline-none" />
-                <span className="text-[10px] text-zinc-400 font-bold uppercase cursor-pointer hover:text-zinc-600 absolute right-0">Cc Bcc</span>
+              <div className="flex items-center border-b border-zinc-100 py-2">
+                <span className="text-sm text-zinc-500 w-10">To</span>
+                <input type="email" required value={composeData.to} onChange={e => setComposeForm({ ...composeData, to: e.target.value })} className="flex-1 bg-transparent text-sm outline-none" />
               </div>
 
               <div className="flex items-center border-b border-zinc-100 py-2">
-                <input type="text" placeholder="Subject" required value={composeData.subject} onChange={e => setComposeForm({ ...composeData, subject: e.target.value })} className="flex-1 bg-transparent text-sm font-bold text-zinc-900 outline-none placeholder:font-medium placeholder:text-zinc-400" />
+                <input type="text" placeholder="Subject" required value={composeData.subject} onChange={e => setComposeForm({ ...composeData, subject: e.target.value })} className="flex-1 bg-transparent text-sm font-semibold outline-none" />
               </div>
 
-              <div className="py-4">
+              <div className="py-2">
                 <textarea required rows="10" value={composeData.body} onChange={e => setComposeForm({ ...composeData, body: e.target.value })} className="w-full bg-transparent text-sm text-zinc-800 outline-none resize-none" />
               </div>
             </div>
 
-            {/* Footer Actions */}
-            <div className="p-4 bg-zinc-50 border-t border-zinc-200 flex items-center justify-between shrink-0">
+            {/* Footer */}
+            <div className="p-3 bg-white border-t border-zinc-200 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3">
-                <button type="submit" disabled={sending} className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full text-sm font-bold shadow-sm transition-all disabled:opacity-50">
+                <button type="submit" disabled={sending} className="px-5 py-1.5 bg-[#B45309] hover:bg-[#92400E] text-white rounded text-sm font-medium transition-colors disabled:opacity-50">
                   {sending ? 'Sending...' : 'Send'}
                 </button>
-                <div className="relative group cursor-pointer p-2 rounded-full hover:bg-zinc-200 transition-colors">
-                  <svg className="w-5 h-5 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
+                <div className="relative cursor-pointer hover:bg-zinc-100 p-1.5 rounded">
+                  <svg className="w-4 h-4 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
                   <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" />
                 </div>
-                <div className="relative group cursor-pointer">
-                  <select value={composeData.template} onChange={handleTemplateSelect} className="appearance-none bg-transparent text-xs font-bold text-zinc-500 hover:text-zinc-800 outline-none cursor-pointer">
-                    <option value="Blank">Templates</option>
-                    <option value="Invoice">Tax Invoice</option>
-                    <option value="PO">Purchase Order</option>
-                  </select>
-                </div>
               </div>
-              <button type="button" onClick={() => setIsComposeOpen(false)} className="p-2 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors cursor-pointer">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+              <button type="button" onClick={() => setIsComposeOpen(false)} className="p-1.5 text-zinc-400 hover:text-red-600 rounded transition-colors">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
               </button>
             </div>
-
           </form>
         </div>
       )}
