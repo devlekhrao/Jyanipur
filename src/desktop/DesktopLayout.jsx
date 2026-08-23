@@ -28,8 +28,10 @@ import MeasurementSheet from './MeasurementSheet';
 import SiteManager from './SiteManager'; 
 import PettyCash from './PettyCash';
 import Settings from './Settings';
-// IMPORT THE NEW BANKING MODULE
 import BankStatement from './BankStatement';
+
+// IMPORT THE NEW CLIENT PORTAL
+import ClientPortal from './ClientPortal';
 
 const APP_VERSION = "1.0.0"; // Local Desktop App Build Version
 
@@ -91,6 +93,7 @@ export default function DesktopLayout() {
   const [showWarningModal, setShowWarningModal] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState({
     "Workspace": true,
+    "Client Experience": true, // Expanded by default
     "Site Execution": false,
     "Finance & Sales": false,
     "Supply Chain": false,
@@ -148,9 +151,10 @@ export default function DesktopLayout() {
     commitPageSwitch(pendingPage);
   };
 
-  // ADDED 'Work Orders' to Finance & Sales
+  // ADDED 'Client Experience' to navigation groups
   const navigationGroups = [
     { title: "Workspace", pages: ['Dashboard', 'CRM', 'Projects', 'Task Board', 'Document Vault', 'CAD Studio'] },
+    { title: "Client Experience", pages: ['Client Portal'] },
     { title: "Site Execution", pages: ['Project Control', 'Daily Report', 'Site Snags', 'Measurement Sheet'] },
     { title: "Finance & Sales", pages: ['Estimation', 'Work Orders', 'Tax Invoice', 'Project P&L', 'Income', 'Bank Statement', 'Petty Cash', 'GST Filing'] },
     { title: "Supply Chain", pages: ['Purchase Orders', 'Purchases', 'Vendors', 'Vendor Ledger', 'Inventory', 'Rate Book', 'Tools & Assets', 'Subcontractors'] },
@@ -333,6 +337,10 @@ export default function DesktopLayout() {
               {visitedPages.has('Task Board') && <div className={activePage === 'Task Board' ? 'block' : 'hidden'}><TaskBoard /></div>}
               {visitedPages.has('Document Vault') && <div className={activePage === 'Document Vault' ? 'block' : 'hidden'}><DocumentVault /></div>}
               {visitedPages.has('CAD Studio') && <div className={activePage === 'CAD Studio' ? 'block w-full h-full' : 'hidden'}><CADViewer /></div>}
+              
+              {/* NEW CLIENT PORTAL BLOCK */}
+              {visitedPages.has('Client Portal') && <div className={activePage === 'Client Portal' ? 'block' : 'hidden'}><ClientPortal /></div>}
+              
               {visitedPages.has('Project Control') && <div className={activePage === 'Project Control' ? 'block' : 'hidden'}><ProjectControl /></div>}
               {visitedPages.has('Site Snags') && <div className={activePage === 'Site Snags' ? 'block' : 'hidden'}><SiteSnag companySettings={companySettings} /></div>}
               {visitedPages.has('Project P&L') && <div className={activePage === 'Project P&L' ? 'block' : 'hidden'}><ProjectPnL /></div>}
@@ -340,7 +348,6 @@ export default function DesktopLayout() {
               {visitedPages.has('Petty Cash') && <div className={activePage === 'Petty Cash' ? 'block' : 'hidden'}><PettyCash /></div>}
               {visitedPages.has('Measurement Sheet') && <div className={activePage === 'Measurement Sheet' ? 'block' : 'hidden'}><MeasurementSheet /></div>}
               {visitedPages.has('Purchase Orders') && <div className={activePage === 'Purchase Orders' ? 'block' : 'hidden'}><PurchaseOrders companySettings={companySettings} updateDirtyState={updateDirtyState} /></div>}
-              {/* ADDED WORK ORDERS RENDER BLOCK HERE */}
               {visitedPages.has('Work Orders') && <div className={activePage === 'Work Orders' ? 'block' : 'hidden'}><WorkOrders companySettings={companySettings} updateDirtyState={updateDirtyState} /></div>}
               {visitedPages.has('Tax Invoice') && <div className={activePage === 'Tax Invoice' ? 'block' : 'hidden'}><TaxInvoice companySettings={companySettings} updateDirtyState={updateDirtyState} /></div>}
               {visitedPages.has('Estimation') && <div className={activePage === 'Estimation' ? 'block' : 'hidden'}><Estimation companySettings={companySettings} /></div>}
