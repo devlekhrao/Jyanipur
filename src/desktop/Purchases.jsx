@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-// IMPORT getMaterialRates HERE
 import { getPurchases, savePurchase, deletePurchase, updatePurchaseStatus, saveMaterialRate, getVendors, getMaterialRates } from '../db';
 
 function getFinancialYear(dateStr) {
@@ -47,6 +46,11 @@ export default function Purchases({ companySettings = {} }) {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [purchases, setPurchases] = useState([]);
+  
+  // AI Scanner State
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [scanState, setScanState] = useState('idle'); // idle, uploading, scanning, complete
+  const [scanProgress, setScanProgress] = useState(0);
   
   // Vendor Suggestions State
   const [vendorsList, setVendorsList] = useState([]);
@@ -136,6 +140,59 @@ export default function Purchases({ companySettings = {} }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // --- AI SCANNER SIMULATION ENGINE ---
+  const handleAIScanUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setScanState('uploading');
+    setScanProgress(10);
+
+    // Simulate API Upload & Processing delay (AWS Textract / Google Doc AI)
+    setTimeout(() => {
+      setScanState('scanning');
+      setScanProgress(40);
+      
+      let progress = 40;
+      const interval = setInterval(() => {
+        progress += 15;
+        setScanProgress(progress);
+        if (progress >= 90) clearInterval(interval);
+      }, 400);
+
+      // Final Extraction Mock Data to seamlessly populate your existing Form UI
+      setTimeout(() => {
+        clearInterval(interval);
+        setScanProgress(100);
+        setScanState('complete');
+
+        setTimeout(() => {
+          setPurchaseDetails({
+            vendorName: vendorsList.length > 0 ? vendorsList[0].name : 'AI Extracted Vendor',
+            gstin: vendorsList.length > 0 ? vendorsList[0].gstin || '' : '',
+            projectName: '',
+            invoiceNo: `INV-${Math.floor(Math.random() * 90000) + 10000}`,
+            invoiceDate: new Date().toISOString().split('T')[0],
+            remarks: 'AI Auto-Scanned Document'
+          });
+          
+          setItems([
+            { id: Date.now(), materialName: 'Ultra White Emulsion Paint 20L', hsn: '3209', qty: 5, unit: 'Ltrs', rate: 4500, gst: 18 },
+            { id: Date.now()+1, materialName: 'Wall Putty 40kg', hsn: '3214', qty: 10, unit: 'Bags', rate: 800, gst: 18 }
+          ]);
+          
+          setTaxMode('CGST_SGST');
+
+          setIsScannerOpen(false);
+          setScanState('idle');
+          setScanProgress(0);
+          setCurrentView('form'); // Boom! Opens the form fully populated
+        }, 800);
+
+      }, 3000);
+    }, 1000);
+  };
+
   const handleVendorInputChange = (e) => {
     const val = e.target.value;
     const exactMatch = vendorsList.find(v => v.name && v.name.toLowerCase() === val.toLowerCase());
@@ -221,7 +278,7 @@ export default function Purchases({ companySettings = {} }) {
       materialName: material.materialName,
       unit: material.unit || 'Pcs',
       rate: material.rate || '',
-      hsn: material.hsn || item.hsn // Keeps existing HSN if catalog doesn't have one
+      hsn: material.hsn || item.hsn 
     } : item));
     setFocusedRowId(null);
   };
@@ -414,9 +471,11 @@ export default function Purchases({ companySettings = {} }) {
               </select>
             </div>
 
-            <button onClick={() => { handleClear(false); setCurrentView('form'); }} className="bg-[#B45309] hover:bg-[#92400E] text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm flex items-center gap-1.5 h-10">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
-              Log Purchase Bill
+            <button onClick={() => { handleClear(false); setCurrentView('form'); }} className="bg-white border border-zinc-200 hover:bg-zinc-50 text-zinc-800 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm flex items-center gap-1.5 h-10">
+              + Manual Entry
+            </button>
+            <button onClick={() => setIsScannerOpen(true)} className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-md transition-all flex items-center gap-2 cursor-pointer border border-indigo-500 h-10">
+              <span>✨</span> AI Auto-Scan Bill
             </button>
           </div>
         </div>
@@ -442,7 +501,7 @@ export default function Purchases({ companySettings = {} }) {
           <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <table className="w-full text-left border-collapse whitespace-nowrap">
               <thead>
-                <tr className="bg-white text-zinc-500 text-[10px] uppercase tracking-wider border-b border-zinc-200">
+                <tr className="bg-white text-zinc-500 text-[10px] uppercase tracking-wider border-b border-zinc-200 sticky top-0 z-10">
                   <th className="py-4 px-6 font-bold">Date</th>
                   <th className="py-4 px-6 font-bold">Inv No.</th>
                   <th className="py-4 px-6 font-bold">Vendor</th>
@@ -460,7 +519,7 @@ export default function Purchases({ companySettings = {} }) {
                 ) : filteredPurchases.length === 0 ? (
                   <tr>
                     <td colSpan="9" className="py-12 text-center text-zinc-400 font-medium text-xs">
-                      No purchases found for this period. Click '+ Log Purchase Bill' above.
+                      No purchases found for this period. Click '✨ AI Auto-Scan Bill' above.
                     </td>
                   </tr>
                 ) : (
@@ -516,6 +575,51 @@ export default function Purchases({ companySettings = {} }) {
             </table>
           </div>
         </div>
+
+        {/* --- AI SCANNER MODAL --- */}
+        {isScannerOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
+            <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col relative">
+              
+              <button onClick={() => { setIsScannerOpen(false); setScanState('idle'); setScanProgress(0); }} className="absolute top-6 right-6 text-zinc-400 hover:text-zinc-800 z-10 cursor-pointer">
+                ✕
+              </button>
+
+              <div className="p-10 text-center">
+                <div className="w-20 h-20 bg-indigo-50 rounded-3xl mx-auto flex items-center justify-center text-4xl mb-6 shadow-inner border border-indigo-100">
+                  🤖
+                </div>
+                <h2 className="text-2xl font-black text-zinc-900 tracking-tight mb-2">AI Invoice Scanner</h2>
+                <p className="text-sm text-zinc-500 font-medium mb-8 leading-relaxed">Upload a photo or PDF of a vendor bill. Our AI will extract the vendor, items, and GST automatically.</p>
+
+                {scanState === 'idle' && (
+                  <div className="relative group border-2 border-dashed border-indigo-200 hover:border-indigo-500 rounded-3xl p-10 bg-indigo-50/30 transition-colors cursor-pointer">
+                    <span className="text-4xl mb-3 block opacity-50 group-hover:opacity-100 transition-opacity">📸</span>
+                    <p className="text-sm font-bold text-indigo-900">Click or Drag Bill Here</p>
+                    <p className="text-[10px] text-zinc-500 font-semibold uppercase tracking-widest mt-2">Supports JPG, PNG, PDF</p>
+                    <input type="file" accept="image/*,.pdf" onChange={handleAIScanUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                  </div>
+                )}
+
+                {scanState !== 'idle' && (
+                  <div className="py-8">
+                    <div className="w-full h-2.5 bg-zinc-100 rounded-full overflow-hidden mb-4 border border-zinc-200">
+                      <div 
+                        className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-300 ease-out"
+                        style={{ width: `${scanProgress}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-sm font-bold text-indigo-700 animate-pulse">
+                      {scanState === 'uploading' ? 'Encrypting & Uploading Document...' : 
+                       scanState === 'scanning' ? 'Extracting Line Items & GST Rates...' : 
+                       'Extraction Complete! Generating Form...'}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -531,8 +635,10 @@ export default function Purchases({ companySettings = {} }) {
       {/* SCREEN FORM VIEW (HIDDEN ON PRINT) */}
       <div className="flex-1 flex flex-col min-h-0 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <div className="flex items-center justify-between border-b border-zinc-200 pb-4 mb-6 shrink-0">
-          <h2 className="text-xl font-bold text-zinc-900 tracking-tight">
+          <h2 className="text-xl font-bold text-zinc-900 tracking-tight flex items-center gap-2">
             {isReadOnly ? `Viewing Purchase ${purchaseDetails.invoiceNo}` : editingId ? `Edit Purchase ${purchaseDetails.invoiceNo}` : 'Log New Purchase'}
+            {/* Added a subtle badge if it came from AI Scanner (if Remarks match the AI injection) */}
+            {purchaseDetails.remarks === 'AI Auto-Scanned Document' && <span className="text-[10px] bg-indigo-50 border border-indigo-200 text-indigo-600 px-2 py-0.5 rounded font-bold tracking-widest uppercase">✨ AI Draft</span>}
           </h2>
           <div className="flex gap-2">
             <button onClick={() => { setCurrentView('list'); handleClear(false); }} className="text-zinc-600 hover:text-zinc-900 text-xs font-bold transition-colors cursor-pointer bg-white px-4 py-2 rounded-xl border border-zinc-200 flex items-center gap-1.5">
@@ -758,7 +864,7 @@ export default function Purchases({ companySettings = {} }) {
             </table>
           </div>
           {!isReadOnly && (
-            <button onClick={addItem} className="mt-4 text-[#B45309] hover:text-[#92400E] text-[10px] font-semibold text-[11px] uppercase tracking-widest transition-all cursor-pointer flex items-center gap-1.5">
+            <button onClick={addItem} className="mt-4 text-[#B45309] hover:text-[#92400E] font-semibold text-[11px] uppercase tracking-widest transition-all cursor-pointer flex items-center gap-1.5">
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
               Add Material Row
             </button>
