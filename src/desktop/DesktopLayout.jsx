@@ -30,8 +30,11 @@ import PettyCash from './PettyCash';
 import Settings from './Settings';
 import BankStatement from './BankStatement';
 
-// IMPORT THE NEW CLIENT PORTAL
+// NEWLY ADDED MODULES
 import ClientPortal from './ClientPortal';
+import PortalEmail from './PortalEmail';
+import SiteSafety from './SiteSafety';
+import WarrantyDLP from './WarrantyDLP';
 
 const APP_VERSION = "1.0.0"; // Local Desktop App Build Version
 
@@ -93,7 +96,7 @@ export default function DesktopLayout() {
   const [showWarningModal, setShowWarningModal] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState({
     "Workspace": true,
-    "Client Experience": true, // Expanded by default
+    "Client Experience": true,
     "Site Execution": false,
     "Finance & Sales": false,
     "Supply Chain": false,
@@ -151,11 +154,11 @@ export default function DesktopLayout() {
     commitPageSwitch(pendingPage);
   };
 
-  // ADDED 'Client Experience' to navigation groups
+  // UPDATED NAVIGATION GROUPS TO INCLUDE NEW MODULES
   const navigationGroups = [
     { title: "Workspace", pages: ['Dashboard', 'CRM', 'Projects', 'Task Board', 'Document Vault', 'CAD Studio'] },
-    { title: "Client Experience", pages: ['Client Portal'] },
-    { title: "Site Execution", pages: ['Project Control', 'Daily Report', 'Site Snags', 'Measurement Sheet'] },
+    { title: "Client Experience", pages: ['Client Portal', 'Portal Email'] },
+    { title: "Site Execution", pages: ['Project Control', 'Daily Report', 'Site Snags', 'Measurement Sheet', 'HSE Safety Tracker', 'Warranty & DLP'] },
     { title: "Finance & Sales", pages: ['Estimation', 'Work Orders', 'Tax Invoice', 'Project P&L', 'Income', 'Bank Statement', 'Petty Cash', 'GST Filing'] },
     { title: "Supply Chain", pages: ['Purchase Orders', 'Purchases', 'Vendors', 'Vendor Ledger', 'Inventory', 'Rate Book', 'Tools & Assets', 'Subcontractors'] },
     { title: "Team & HR", pages: ['Employee Attendance', 'Staff Expenses', 'Salaries'] }
@@ -338,8 +341,11 @@ export default function DesktopLayout() {
               {visitedPages.has('Document Vault') && <div className={activePage === 'Document Vault' ? 'block' : 'hidden'}><DocumentVault /></div>}
               {visitedPages.has('CAD Studio') && <div className={activePage === 'CAD Studio' ? 'block w-full h-full' : 'hidden'}><CADViewer /></div>}
               
-              {/* NEW CLIENT PORTAL BLOCK */}
+              {/* BRAND NEW MODULES RENDER BLOCKS */}
               {visitedPages.has('Client Portal') && <div className={activePage === 'Client Portal' ? 'block' : 'hidden'}><ClientPortal /></div>}
+              {visitedPages.has('Portal Email') && <div className={activePage === 'Portal Email' ? 'block' : 'hidden'}><PortalEmail companySettings={companySettings} /></div>}
+              {visitedPages.has('HSE Safety Tracker') && <div className={activePage === 'HSE Safety Tracker' ? 'block' : 'hidden'}><SiteSafety /></div>}
+              {visitedPages.has('Warranty & DLP') && <div className={activePage === 'Warranty & DLP' ? 'block' : 'hidden'}><WarrantyDLP /></div>}
               
               {visitedPages.has('Project Control') && <div className={activePage === 'Project Control' ? 'block' : 'hidden'}><ProjectControl /></div>}
               {visitedPages.has('Site Snags') && <div className={activePage === 'Site Snags' ? 'block' : 'hidden'}><SiteSnag companySettings={companySettings} /></div>}
