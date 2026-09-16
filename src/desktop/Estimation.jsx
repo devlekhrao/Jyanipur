@@ -4,7 +4,7 @@ import { getEstimations, saveEstimation, deleteEstimation } from '../db';
 // Helper function to convert number to Indian Currency Words
 function numberToWords(num) {
   if (!num || isNaN(num)) return 'Zero Rupees Only';
-  
+
   const a = ['', 'One ', 'Two ', 'Three ', 'Four ', 'Five ', 'Six ', 'Seven ', 'Eight ', 'Nine ', 'Ten ', 'Eleven ', 'Twelve ', 'Thirteen ', 'Fourteen ', 'Fifteen ', 'Sixteen ', 'Seventeen ', 'Eighteen ', 'Nineteen '];
   const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
 
@@ -548,6 +548,13 @@ export default function Estimation({ companySettings = {} }) {
 
   const isReadOnly = currentView === 'view';
 
+  // --- PRINT PAGINATION LOGIC ---
+  const ITEMS_PER_PAGE = 27;
+  const paginatedItems = [];
+  for (let i = 0; i < items.length; i += ITEMS_PER_PAGE) {
+    paginatedItems.push(items.slice(i, i + ITEMS_PER_PAGE));
+  }
+
   // ==========================================
   // RENDER 2: CREATE / EDIT / VIEW FORM VIEW
   // ==========================================
@@ -572,408 +579,468 @@ export default function Estimation({ companySettings = {} }) {
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0v-2.25a2.25 2.25 0 012.25-2.25h6a2.25 2.25 0 012.25 2.25v2.25z" />
                 </svg>
-                Print / Save PDF
+                Print / PDF
+              </button>
+            )}
+            {!isReadOnly && (
+              <>
+                <button onClick={() => handleClear(true)} className="text-zinc-600 hover:text-zinc-900 text-xs font-bold transition-colors cursor-pointer bg-white px-4 py-2 rounded-xl border border-zinc-200">
+                  Clear
+                </button>
+                <button onClick={handleSaveOnly} className="bg-zinc-900 hover:bg-black text-white px-5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer">
+                  Save
+                </button>
+                <button onClick={handleSaveAndPrint} className="bg-[#B45309] hover:bg-[#92400E] text-white px-5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm">
+                  Save & Print
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* DETAILS SECTION */}
+        <div className="bg-white p-6 rounded-2xl border border-zinc-200/80 shadow-sm mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className={labelClass}>Client Name *</label>
+              <input 
+                disabled={isReadOnly}
+                className={`${inputClass} ${errors.partyName ? 'border-red-500 bg-red-50/50' : ''}`}
+                value={estimateDetails.partyName} 
+                onChange={(e) => setEstimateDetails({ ...estimateDetails, partyName: e.target.value })} 
+                placeholder="Client / Company Name"
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Estimate No *</label>
+              <input 
+                disabled={isReadOnly}
+                className={`${inputClass} ${errors.estimateNo ? 'border-red-500 bg-red-50/50' : ''}`}
+                value={estimateDetails.estimateNo || generateNextEstimateNo()} 
+                onChange={(e) => setEstimateDetails({ ...estimateDetails, estimateNo: e.target.value })} 
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Date</label>
+              <input 
+                disabled={isReadOnly}
+                type="date" 
+                className={inputClass}
+                value={estimateDetails.date} 
+                onChange={(e) => setEstimateDetails({ ...estimateDetails, date: e.target.value })} 
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Project Name</label>
+              <input 
+                disabled={isReadOnly}
+                className={inputClass}
+                value={estimateDetails.projectName} 
+                onChange={(e) => setEstimateDetails({ ...estimateDetails, projectName: e.target.value })} 
+                placeholder="e.g. Villa Renovation"
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Valid Until</label>
+              <input 
+                disabled={isReadOnly}
+                type="date" 
+                className={inputClass}
+                value={estimateDetails.validUntil} 
+                onChange={(e) => setEstimateDetails({ ...estimateDetails, validUntil: e.target.value })} 
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Tax Mode</label>
+              <select 
+                disabled={isReadOnly}
+                className={inputClass}
+                value={taxMode}
+                onChange={(e) => setTaxMode(e.target.value)}
+              >
+                <option value="CGST_SGST">CGST + SGST (In-State)</option>
+                <option value="IGST">IGST (Inter-State)</option>
+                <option value="NONE">None / Exempted</option>
+              </select>
+            </div>
+            <div className="md:col-span-2">
+              <label className={labelClass}>Client Address</label>
+              <input 
+                disabled={isReadOnly}
+                className={inputClass}
+                value={estimateDetails.partyAddress} 
+                onChange={(e) => setEstimateDetails({ ...estimateDetails, partyAddress: e.target.value })} 
+                placeholder="Full Billing Address"
+              />
+            </div>
+            <div className="md:col-span-1">
+              <label className={labelClass}>Description / Notes</label>
+              <input 
+                disabled={isReadOnly}
+                className={inputClass}
+                value={estimateDetails.description} 
+                onChange={(e) => setEstimateDetails({ ...estimateDetails, description: e.target.value })} 
+                placeholder="Brief summary or scope"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* ITEMS SECTION */}
+        <div className="bg-white border border-zinc-200/80 rounded-2xl shadow-sm overflow-hidden mb-6">
+          <div className="p-4 bg-zinc-50/80 border-b border-zinc-200/80 flex justify-between items-center">
+            <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">Item Details & Measurements</h3>
+            {!isReadOnly && (
+              <button 
+                onClick={addItem}
+                className="text-xs font-bold text-[#B45309] hover:text-[#92400E] flex items-center gap-1 cursor-pointer"
+              >
+                + Add Line Item
               </button>
             )}
           </div>
-        </div>
-
-        {/* TOP METADATA INPUTS */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 shrink-0">
-          <div>
-            <label className={labelClass}>Client Name <span className="text-red-500">*</span></label>
-            <input disabled={isReadOnly} type="text" value={estimateDetails.partyName} onChange={(e) => { setEstimateDetails({...estimateDetails, partyName: e.target.value}); if(errors.partyName) setErrors({...errors, partyName: false}); }} className={`${inputClass} ${errors.partyName ? 'border-red-400 focus:border-red-500 focus:ring-red-500 bg-red-50/20' : ''}`} placeholder="e.g. Reliance Retail" />
-          </div>
-          <div>
-            <label className={labelClass}>Project / Site Name</label>
-            <input disabled={isReadOnly} type="text" value={estimateDetails.projectName} onChange={(e) => setEstimateDetails({...estimateDetails, projectName: e.target.value})} className={inputClass} placeholder="e.g. Flagship Store Interior" />
-          </div>
-          <div>
-            <label className={labelClass}>Site Address</label>
-            <input disabled={isReadOnly} type="text" value={estimateDetails.partyAddress} onChange={(e) => setEstimateDetails({...estimateDetails, partyAddress: e.target.value})} className={inputClass} placeholder="e.g. Commercial St, Mumbai" />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 shrink-0">
-          <div>
-            <label className={labelClass}>Estimate No. <span className="text-red-500">*</span></label>
-            <input disabled={isReadOnly} type="text" value={estimateDetails.estimateNo} onChange={(e) => { setEstimateDetails({...estimateDetails, estimateNo: e.target.value}); if(errors.estimateNo) setErrors({...errors, estimateNo: false}); }} className={`${inputClass} ${errors.estimateNo ? 'border-red-400 focus:border-red-500 focus:ring-red-500 bg-red-50/20' : ''}`} placeholder="e.g. EST-001" />
-          </div>
-          <div>
-            <label className={labelClass}>Estimate Date</label>
-            <input disabled={isReadOnly} type="date" value={estimateDetails.date} onChange={(e) => setEstimateDetails({...estimateDetails, date: e.target.value})} className={inputClass} />
-          </div>
-          <div>
-            <label className={labelClass}>Valid Until</label>
-            <input disabled={isReadOnly} type="date" value={estimateDetails.validUntil} onChange={(e) => setEstimateDetails({...estimateDetails, validUntil: e.target.value})} className={inputClass} />
-          </div>
-          
-          <div>
-            <label className={labelClass}>Tax Type</label>
-            <select 
-              disabled={isReadOnly}
-              value={taxMode} 
-              onChange={(e) => setTaxMode(e.target.value)}
-              className={`${inputClass} cursor-pointer font-bold text-[#B45309] appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23B45309%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.25rem_1.25rem] pr-10`}
-            >
-              <option value="CGST_SGST">CGST + SGST (In State)</option>
-              <option value="IGST">IGST (Out of State)</option>
-              <option value="NONE">No Tax (Quotation Only)</option>
-            </select>
-          </div>
-        </div>
-
-        {/* BOQ ITEMS TABLE */}
-        <div className="mb-6 bg-white border border-zinc-200 rounded-2xl p-5 shadow-sm shrink-0">
-          <table className="w-full text-left border-collapse whitespace-nowrap">
-            <thead>
-              <tr className="text-zinc-400 text-[10px] uppercase tracking-wider border-b border-zinc-100 pb-3">
-                <th className="py-2.5 pr-4 font-bold">Scope of Work / Material Description</th>
-                <th className="py-2.5 px-2 font-bold w-20 text-center">Unit</th>
-                <th className="py-2.5 px-2 font-bold w-16 text-center">L</th>
-                <th className="py-2.5 px-2 font-bold w-16 text-center">B</th>
-                <th className="py-2.5 px-2 font-bold w-16 text-center">NO</th>
-                <th className="py-2.5 px-2 font-bold w-24 text-center">Qty</th>
-                <th className="py-2.5 px-2 font-bold w-24 text-right">Rate</th>
-                <th className="py-2.5 px-2 font-bold w-28 text-right">Amount</th>
-                {taxMode !== 'NONE' && <th className="py-2.5 px-2 font-bold w-20 text-center">GST %</th>}
-                <th className="py-2.5 px-2 font-bold w-28 text-right">Total</th>
-                {!isReadOnly && <th className="py-2.5 pl-2 w-6"></th>}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-100">
-              {items.map((item) => {
-                const rowCalc = calculateRow(item);
-                const tInp = "w-full border-b border-transparent hover:border-zinc-300 focus:border-[#B45309] bg-transparent focus:outline-none py-2 px-1 text-xs transition-all font-medium text-zinc-900 placeholder-zinc-300 disabled:opacity-75";
-                
-                return (
-                  <tr key={item.id} className="group hover:bg-zinc-50/50 transition-colors">
-                    <td className="py-2 pr-4"><input disabled={isReadOnly} type="text" placeholder="BOQ Description" value={item.description} onChange={(e) => updateItem(item.id, 'description', e.target.value)} className={tInp} /></td>
-                    
-                    <td className="py-2 px-2">
-                      <select disabled={isReadOnly} value={item.unit} onChange={(e) => updateItem(item.id, 'unit', e.target.value)} className={`${tInp} text-center appearance-none cursor-pointer bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%2371717A%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_0.25rem_center] bg-[length:0.75rem_0.75rem] pr-4`}>
-                        <option value="Sq.Ft.">Sq.Ft.</option><option value="Rft.">Rft.</option><option value="Nos">Nos</option><option value="L.S.">L.S.</option>
-                      </select>
-                    </td>
-
-                    <td className="py-2 px-2"><input disabled={isReadOnly} type="number" step="any" value={item.sizeL} onChange={(e) => updateItem(item.id, 'sizeL', e.target.value)} className={`${tInp} text-center`} /></td>
-                    <td className="py-2 px-2"><input disabled={isReadOnly} type="number" step="any" value={item.sizeB} onChange={(e) => updateItem(item.id, 'sizeB', e.target.value)} className={`${tInp} text-center`} /></td>
-                    <td className="py-2 px-2"><input disabled={isReadOnly} type="number" step="any" value={item.no} onChange={(e) => updateItem(item.id, 'no', e.target.value)} className={`${tInp} text-center`} /></td>
-                    
-                    <td className="py-2 px-2">
-                      <input 
-                        disabled={isReadOnly} 
-                        type="number" 
-                        step="any" 
-                        value={item.qty !== undefined ? item.qty : rowCalc.quantity} 
-                        onChange={(e) => updateItem(item.id, 'qty', e.target.value)} 
-                        className={`${tInp} text-center font-bold text-[#B45309]`} 
-                        placeholder="0"
-                      />
-                    </td>
-                    
-                    <td className="py-2 px-2"><input disabled={isReadOnly} type="number" step="any" value={item.rate} onChange={(e) => updateItem(item.id, 'rate', e.target.value)} className={`${tInp} text-right`} /></td>
-                    <td className="py-2 px-2 text-right text-xs font-semibold text-zinc-800">{rowCalc.baseAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
-                    {taxMode !== 'NONE' && (
-                      <td className="py-2 px-2">
-                        <select disabled={isReadOnly} value={item.gst} onChange={(e) => updateItem(item.id, 'gst', e.target.value)} className={`${tInp} text-center appearance-none cursor-pointer bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%2371717A%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_0.25rem_center] bg-[length:0.75rem_0.75rem] pr-4`}>
-                          <option value="0">0%</option><option value="5">5%</option><option value="12">12%</option><option value="18">18%</option><option value="28">28%</option>
-                        </select>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="bg-zinc-50/50 text-zinc-400 text-[10px] uppercase tracking-wider border-b border-zinc-100">
+                  <th className="p-3 w-8">#</th>
+                  <th className="p-3 min-w-[200px]">Description</th>
+                  <th className="p-3 w-24">Unit</th>
+                  <th className="p-3 w-20">L</th>
+                  <th className="p-3 w-20">B</th>
+                  <th className="p-3 w-20">Nos</th>
+                  <th className="p-3 w-24">Qty</th>
+                  <th className="p-3 w-28">Rate (₹)</th>
+                  {taxMode !== 'NONE' && <th className="p-3 w-20">GST %</th>}
+                  <th className="p-3 w-32 text-right">Amount (₹)</th>
+                  {!isReadOnly && <th className="p-3 w-12 text-center"></th>}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100 font-medium">
+                {items.map((item, idx) => {
+                  const calc = calculateRow(item);
+                  return (
+                    <tr key={item.id || idx}>
+                      <td className="p-3 text-zinc-400 font-bold">{idx + 1}</td>
+                      <td className="p-3">
+                        <input 
+                          disabled={isReadOnly}
+                          className="w-full px-2 py-1 border border-zinc-200 rounded-lg focus:outline-none focus:border-[#B45309]"
+                          value={item.description} 
+                          onChange={(e) => updateItem(item.id, 'description', e.target.value)}
+                          placeholder="Item or Service Name"
+                        />
                       </td>
-                    )}
-                    <td className="py-2 px-2 text-right text-xs font-bold text-zinc-900">{rowCalc.totalAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
-                    {!isReadOnly && (
-                      <td className="py-2 pl-2 text-center">
-                        <button onClick={() => removeItem(item.id)} className="text-zinc-300 hover:text-red-500 font-bold opacity-0 group-hover:opacity-100 transition-all cursor-pointer text-base flex items-center justify-center">
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                        </button>
+                      <td className="p-3">
+                        <input 
+                          disabled={isReadOnly}
+                          className="w-full px-2 py-1 border border-zinc-200 rounded-lg focus:outline-none focus:border-[#B45309]"
+                          value={item.unit} 
+                          onChange={(e) => updateItem(item.id, 'unit', e.target.value)}
+                          placeholder="Sq.Ft."
+                        />
                       </td>
-                    )}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          {!isReadOnly && (
-            <button onClick={addItem} className="mt-4 text-[#B45309] hover:text-[#92400E] text-[10px] font-semibold text-[11px] uppercase tracking-widest transition-all cursor-pointer flex items-center gap-1.5">
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
-              Add BOQ Line Item
-            </button>
-          )}
+                      <td className="p-3">
+                        <input 
+                          disabled={isReadOnly}
+                          type="number" 
+                          className="w-full px-2 py-1 border border-zinc-200 rounded-lg focus:outline-none focus:border-[#B45309]"
+                          value={item.sizeL} 
+                          onChange={(e) => updateItem(item.id, 'sizeL', e.target.value)}
+                        />
+                      </td>
+                      <td className="p-3">
+                        <input 
+                          disabled={isReadOnly}
+                          type="number" 
+                          className="w-full px-2 py-1 border border-zinc-200 rounded-lg focus:outline-none focus:border-[#B45309]"
+                          value={item.sizeB} 
+                          onChange={(e) => updateItem(item.id, 'sizeB', e.target.value)}
+                        />
+                      </td>
+                      <td className="p-3">
+                        <input 
+                          disabled={isReadOnly}
+                          type="number" 
+                          className="w-full px-2 py-1 border border-zinc-200 rounded-lg focus:outline-none focus:border-[#B45309]"
+                          value={item.no} 
+                          onChange={(e) => updateItem(item.id, 'no', e.target.value)}
+                        />
+                      </td>
+                      <td className="p-3">
+                        <input 
+                          disabled={isReadOnly}
+                          type="number" 
+                          className="w-full px-2 py-1 border border-zinc-200 rounded-lg focus:outline-none focus:border-[#B45309] font-bold"
+                          value={item.qty} 
+                          onChange={(e) => updateItem(item.id, 'qty', e.target.value)}
+                        />
+                      </td>
+                      <td className="p-3">
+                        <input 
+                          disabled={isReadOnly}
+                          type="number" 
+                          className="w-full px-2 py-1 border border-zinc-200 rounded-lg focus:outline-none focus:border-[#B45309]"
+                          value={item.rate} 
+                          onChange={(e) => updateItem(item.id, 'rate', e.target.value)}
+                        />
+                      </td>
+                      {taxMode !== 'NONE' && (
+                        <td className="p-3">
+                          <input 
+                            disabled={isReadOnly}
+                            type="number" 
+                            className="w-full px-2 py-1 border border-zinc-200 rounded-lg focus:outline-none focus:border-[#B45309]"
+                            value={item.gst} 
+                            onChange={(e) => updateItem(item.id, 'gst', e.target.value)}
+                          />
+                        </td>
+                      )}
+                      <td className="p-3 text-right font-bold text-zinc-900">
+                        {calc.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </td>
+                      {!isReadOnly && (
+                        <td className="p-3 text-center">
+                          {items.length > 1 && (
+                            <button 
+                              onClick={() => removeItem(item.id)}
+                              className="text-zinc-400 hover:text-red-600 transition-colors cursor-pointer"
+                            >
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          )}
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        {/* BOTTOM SECTION */}
-        <div className="flex flex-col lg:flex-row justify-between gap-6 pb-8 shrink-0">
-          <div className="flex-1 space-y-5">
-            <div>
-              <label className={labelClass}>Scope Remarks / Notes</label>
-              <textarea disabled={isReadOnly} value={estimateDetails.description} onChange={(e) => setEstimateDetails({...estimateDetails, description: e.target.value})} className={`${inputClass} resize-y min-h-[40px] py-2`} rows="1"></textarea>
+        {/* BOTTOM TOTALS & BANK DETAILS */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className="space-y-4">
+            <div className="bg-white p-5 rounded-2xl border border-zinc-200/80 shadow-sm">
+              <h4 className={labelClass}>Payment Terms & Notes</h4>
+              <textarea 
+                disabled={isReadOnly}
+                rows={4}
+                className={`${inputClass} resize-none`}
+                value={estimateDetails.terms} 
+                onChange={(e) => setEstimateDetails({ ...estimateDetails, terms: e.target.value })}
+              />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-white rounded-2xl p-4 border border-zinc-200 shadow-sm">
-                <h3 className="text-[10px] font-bold text-[#B45309] uppercase tracking-wider mb-3">Bank Details</h3>
-                <div className="space-y-2 text-xs">
-                  <div className="flex items-center border-b border-zinc-100 pb-1">
-                    <span className="text-[10px] font-bold text-zinc-400 w-16 uppercase shrink-0">Bank:</span>
-                    <input disabled={isReadOnly} type="text" placeholder="Bank Name" value={estimateDetails.bankName} onChange={(e) => setEstimateDetails({...estimateDetails, bankName: e.target.value})} className="w-full bg-transparent focus:outline-none font-medium text-zinc-900" />
-                  </div>
-                  <div className="flex items-center border-b border-zinc-100 pb-1">
-                    <span className="text-[10px] font-bold text-zinc-400 w-16 uppercase shrink-0">Name:</span>
-                    <input disabled={isReadOnly} type="text" placeholder="Account Holder" value={estimateDetails.accountName} onChange={(e) => setEstimateDetails({...estimateDetails, accountName: e.target.value})} className="w-full bg-transparent focus:outline-none font-medium text-zinc-900" />
-                  </div>
-                  <div className="flex items-center border-b border-zinc-100 pb-1">
-                    <span className="text-[10px] font-bold text-zinc-400 w-16 uppercase shrink-0">A/C No:</span>
-                    <input disabled={isReadOnly} type="text" placeholder="Account Number" value={estimateDetails.accountNo} onChange={(e) => setEstimateDetails({...estimateDetails, accountNo: e.target.value})} className="w-full bg-transparent focus:outline-none font-medium text-zinc-900" />
-                  </div>
-                  <div className="flex items-center border-b border-zinc-100 pb-1">
-                    <span className="text-[10px] font-bold text-zinc-400 w-16 uppercase shrink-0">IFSC:</span>
-                    <input disabled={isReadOnly} type="text" placeholder="IFSC Code" value={estimateDetails.ifscCode} onChange={(e) => setEstimateDetails({...estimateDetails, ifscCode: e.target.value})} className="w-full bg-transparent focus:outline-none font-medium text-zinc-900" />
-                  </div>
-                </div>
+            <div className="bg-white p-5 rounded-2xl border border-zinc-200/80 shadow-sm grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelClass}>Bank Name</label>
+                <input disabled={isReadOnly} className={inputClass} value={estimateDetails.bankName} onChange={(e) => setEstimateDetails({ ...estimateDetails, bankName: e.target.value })} />
               </div>
               <div>
-                <label className={labelClass}>Payment Terms & Schedule</label>
-                <textarea disabled={isReadOnly} value={estimateDetails.terms} onChange={(e) => setEstimateDetails({...estimateDetails, terms: e.target.value})} className={`${inputClass} resize-none h-[140px] text-[11px] leading-relaxed`}></textarea>
+                <label className={labelClass}>Account Name</label>
+                <input disabled={isReadOnly} className={inputClass} value={estimateDetails.accountName} onChange={(e) => setEstimateDetails({ ...estimateDetails, accountName: e.target.value })} />
+              </div>
+              <div>
+                <label className={labelClass}>Account No.</label>
+                <input disabled={isReadOnly} className={inputClass} value={estimateDetails.accountNo} onChange={(e) => setEstimateDetails({ ...estimateDetails, accountNo: e.target.value })} />
+              </div>
+              <div>
+                <label className={labelClass}>IFSC Code</label>
+                <input disabled={isReadOnly} className={inputClass} value={estimateDetails.ifscCode} onChange={(e) => setEstimateDetails({ ...estimateDetails, ifscCode: e.target.value })} />
               </div>
             </div>
           </div>
 
-          {/* TOTALS SUMMARY DECK */}
-          <div className="w-full lg:w-80 flex flex-col justify-between">
-            <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm text-zinc-700 space-y-3">
-              <div className="flex justify-between text-xs">
-                <span className="text-zinc-500">Basic BOQ Total:</span><span className="text-zinc-900 font-semibold">₹ {totals.subtotal.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
+          <div className="bg-white p-6 rounded-2xl border border-zinc-200/80 shadow-sm flex flex-col justify-between">
+            <div className="space-y-3 text-xs font-semibold text-zinc-600">
+              <div className="flex justify-between pb-2 border-b border-zinc-100">
+                <span>Sub Total:</span>
+                <span className="text-zinc-900">₹ {totals.subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               </div>
-              
-              {taxMode === 'IGST' ? (
-                <div className="flex justify-between text-xs"><span>IGST:</span><span className="text-zinc-900 font-semibold">₹ {totals.totalGst.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span></div>
-              ) : taxMode === 'CGST_SGST' ? (
+              {taxMode === 'CGST_SGST' && (
                 <>
-                  <div className="flex justify-between text-xs"><span className="text-zinc-500">CGST:</span><span className="text-zinc-900 font-semibold">₹ {(totals.totalGst / 2).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span></div>
-                  <div className="flex justify-between text-xs"><span className="text-zinc-500">SGST:</span><span className="text-zinc-900 font-semibold">₹ {(totals.totalGst / 2).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span></div>
+                  <div className="flex justify-between">
+                    <span>CGST:</span>
+                    <span className="text-zinc-900">₹ {(totals.totalGst / 2).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  </div>
+                  <div className="flex justify-between pb-2 border-b border-zinc-100">
+                    <span>SGST:</span>
+                    <span className="text-zinc-900">₹ {(totals.totalGst / 2).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  </div>
                 </>
-              ) : null}
-
-              <div className="flex justify-between text-sm font-bold text-zinc-900 border-t border-zinc-100 pt-3">
-                <span>Grand Total:</span><span>₹ {totals.grandTotal.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
-              </div>
-
-              <div className="border-t border-zinc-100 pt-3 space-y-2">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-zinc-500">Discount:</span>
-                  <input disabled={isReadOnly} type="number" value={estimateDetails.discount} onChange={(e) => setEstimateDetails({...estimateDetails, discount: e.target.value})} placeholder="0" className="w-24 bg-zinc-50 text-zinc-900 rounded-lg px-2.5 py-1 text-right outline-none border border-zinc-200 focus:border-[#B45309] focus:ring-1 focus:ring-inset focus:ring-[#B45309]" />
+              )}
+              {taxMode === 'IGST' && (
+                <div className="flex justify-between pb-2 border-b border-zinc-100">
+                  <span>IGST:</span>
+                  <span className="text-zinc-900">₹ {totals.totalGst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
+              )}
+              <div className="flex justify-between items-center py-1">
+                <span>Discount (₹):</span>
+                <input 
+                  disabled={isReadOnly}
+                  type="number" 
+                  className="w-28 px-2 py-1 text-right border border-zinc-200 rounded-lg focus:outline-none focus:border-[#B45309]"
+                  value={estimateDetails.discount} 
+                  onChange={(e) => setEstimateDetails({ ...estimateDetails, discount: e.target.value })}
+                  placeholder="0.00"
+                />
               </div>
-
-              <div className="flex justify-between text-base font-bold text-[#B45309] border-t border-zinc-200 pt-3">
-                <span>Final Estimate:</span><span>₹ {finalAmount > 0 ? finalAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 }) : 0}</span>
+              <div className="flex justify-between pt-3 border-t border-zinc-200 text-sm font-bold text-zinc-900">
+                <span>Grand Total:</span>
+                <span className="text-[#B45309] text-base">₹ {(finalAmount > 0 ? finalAmount : 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               </div>
             </div>
-
-            {!isReadOnly && (
-              <div className="flex gap-2 mt-4">
-                <button onClick={handleSaveOnly} disabled={loading} className="flex-1 py-3 bg-zinc-900 hover:bg-black text-white rounded-xl font-bold text-xs transition-all shadow-sm cursor-pointer disabled:opacity-50">
-                  {loading ? 'Saving...' : 'Save'}
-                </button>
-                <button onClick={handleSaveAndPrint} disabled={loading} className="flex-[1.5] py-3 bg-[#B45309] hover:bg-[#92400E] text-white rounded-xl font-bold text-xs transition-all shadow-sm cursor-pointer disabled:opacity-50">
-                  {loading ? 'Saving...' : 'Save & Print PDF'}
-                </button>
-              </div>
-            )}
+            
+            <div className="mt-4 pt-4 border-t border-zinc-100 bg-amber-50/50 p-3 rounded-xl border border-amber-100">
+              <span className="text-[10px] uppercase tracking-wider text-amber-700 font-bold block mb-0.5">Amount in Words</span>
+              <p className="text-xs font-bold text-amber-900">{numberToWords(finalAmount > 0 ? finalAmount : 0)}</p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* ========================================== */}
-      {/* PERFECT A4 PDF DOCUMENT ENGINE */}
-      {/* ========================================== */}
-      <div className="hidden print:flex w-full bg-white text-black font-['Poppins'] text-xs print:p-0 print:m-0 flex-col items-center justify-between" style={{ minHeight: '100vh' }}>
-        
-        <style dangerouslySetInnerHTML={{__html: `
-          @media print {
-            @page { margin: 0; size: A4 portrait; }
-            body { padding: 0 !important; background: white !important; color: black !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            img { mix-blend-mode: multiply !important; }
-          }
-        `}} />
+      {/* PRINT TEMPLATE (PRINT ONLY) */}
+      <div className="hidden print:block font-['Poppins'] text-zinc-900 p-8">
+        <div className="border-b border-zinc-300 pb-4 mb-6 flex justify-between items-start">
+          <div>
+            <h1 className="text-2xl font-bold text-zinc-900">{companySettings.companyName || 'YOUR COMPANY NAME'}</h1>
+            <p className="text-xs text-zinc-600 max-w-sm whitespace-pre-line mt-1">{companySettings.companyAddress || 'Company Address Line 1\nCity, State - PIN'}</p>
+            <p className="text-xs text-zinc-600 mt-1">GSTIN: {companySettings.gstin || 'N/A'} | Phone: {companySettings.phone || 'N/A'}</p>
+          </div>
+          <div className="text-right">
+            <span className="inline-block px-3 py-1 bg-amber-100 text-[#B45309] font-bold text-xs uppercase tracking-widest rounded mb-2">Estimate / BOQ</span>
+            <p className="text-sm font-bold text-zinc-900">Ref: {estimateDetails.estimateNo}</p>
+            <p className="text-xs text-zinc-600">Date: {estimateDetails.date}</p>
+            {estimateDetails.validUntil && <p className="text-xs text-zinc-600">Valid Until: {estimateDetails.validUntil}</p>}
+          </div>
+        </div>
 
-        <div className="w-full bg-white flex flex-col relative flex-1 print:p-[15mm]">
-          
-          {/* Header Branding */}
-          <div className="flex justify-between items-start border-b border-gray-300 pb-5 mb-6">
-            <div className="flex items-center gap-4">
-              {companySettings?.logoUrl && (
-                <img src={companySettings.logoUrl} className="h-14 w-auto object-contain shrink-0" alt="Logo" />
-              )}
+        <div className="grid grid-cols-2 gap-6 mb-6 p-4 bg-zinc-50 border border-zinc-200 rounded-lg text-xs">
+          <div>
+            <span className="font-bold text-zinc-400 uppercase tracking-wider block mb-1">To / Client</span>
+            <p className="font-bold text-zinc-900 text-sm">{estimateDetails.partyName}</p>
+            <p className="text-zinc-600 whitespace-pre-line">{estimateDetails.partyAddress}</p>
+          </div>
+          <div>
+            {estimateDetails.projectName && (
+              <div className="mb-2">
+                <span className="font-bold text-zinc-400 uppercase tracking-wider block mb-0.5">Project</span>
+                <p className="font-bold text-zinc-900">{estimateDetails.projectName}</p>
+              </div>
+            )}
+            {estimateDetails.description && (
               <div>
-                <h1 className="text-lg font-bold text-black">{companySettings?.companyName || 'Company Name'}</h1>
-                <p className="text-[10px] text-gray-600 whitespace-pre-wrap mt-0.5 max-w-xs">{companySettings?.companyAddress}</p>
-                <p className="text-[10px] text-gray-800 mt-1">
-                  <span className="font-semibold">GSTIN:</span> {companySettings?.companyGst} <span className="mx-2">|</span> 
-                  <span className="font-semibold">Phone:</span> {companySettings?.companyPhone}
-                </p>
+                <span className="font-bold text-zinc-400 uppercase tracking-wider block mb-0.5">Notes</span>
+                <p className="text-zinc-600">{estimateDetails.description}</p>
               </div>
-            </div>
-            
-            <div className="text-right">
-              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1">Estimation / BOQ</span>
-              <h2 className="text-lg font-bold text-black">{estimateDetails.estimateNo || 'EST-000'}</h2>
-              <p className="text-[10px] text-gray-800 mt-1"><span className="font-semibold">Date:</span> {estimateDetails.date}</p>
-            </div>
+            )}
           </div>
+        </div>
 
-          {/* Client & Project Info */}
-          <div className="flex justify-between mb-8">
-            <div>
-              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">To</span>
-              <h3 className="text-sm font-bold text-black uppercase">{estimateDetails.partyName || 'Client Name'}</h3>
-              <p className="text-[10px] text-gray-700 whitespace-pre-wrap mt-1 leading-relaxed">{estimateDetails.partyAddress}</p>
-            </div>
-
-            <div className="text-right space-y-1 text-[10px]">
-              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Project Details</span>
-              <p className="text-gray-800"><span className="font-semibold">Project:</span> {estimateDetails.projectName || 'Interior Estimation'}</p>
-              {estimateDetails.validUntil && <p className="text-gray-800"><span className="font-semibold">Valid Until:</span> {estimateDetails.validUntil}</p>}
-            </div>
+        {paginatedItems.map((pageGroup, pIdx) => (
+          <div key={pIdx} className="mb-6">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-zinc-100 border-y border-zinc-300 font-bold uppercase tracking-wider text-[10px] text-zinc-700">
+                  <th className="py-2 px-2 border-r border-zinc-200 w-8">#</th>
+                  <th className="py-2 px-3 border-r border-zinc-200">Description</th>
+                  <th className="py-2 px-2 border-r border-zinc-200 w-12 text-center">Unit</th>
+                  <th className="py-2 px-2 border-r border-zinc-200 w-10 text-center">L</th>
+                  <th className="py-2 px-2 border-r border-zinc-200 w-10 text-center">B</th>
+                  <th className="py-2 px-2 border-r border-zinc-200 w-10 text-center">No</th>
+                  <th className="py-2 px-2 border-r border-zinc-200 w-14 text-center">Qty</th>
+                  <th className="py-2 px-2 border-r border-zinc-200 w-20 text-right">Rate</th>
+                  <th className="py-2 px-3 text-right w-24">Amount</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-200 border-b border-zinc-300 text-xs">
+                {pageGroup.map((item, idx) => {
+                  const rowCalc = calculateRow(item);
+                  return (
+                    <tr key={item.id || idx}>
+                      <td className="py-2 px-2 border-r border-zinc-200 text-center font-semibold text-zinc-500">{pIdx * ITEMS_PER_PAGE + idx + 1}</td>
+                      <td className="py-2 px-3 border-r border-zinc-200 font-medium">{item.description}</td>
+                      <td className="py-2 px-2 border-r border-zinc-200 text-center">{item.unit}</td>
+                      <td className="py-2 px-2 border-r border-zinc-200 text-center">{item.sizeL}</td>
+                      <td className="py-2 px-2 border-r border-zinc-200 text-center">{item.sizeB}</td>
+                      <td className="py-2 px-2 border-r border-zinc-200 text-center">{item.no}</td>
+                      <td className="py-2 px-2 border-r border-zinc-200 text-center font-bold">{item.qty}</td>
+                      <td className="py-2 px-2 border-r border-zinc-200 text-right">{item.rate ? `₹${parseFloat(item.rate).toFixed(2)}` : ''}</td>
+                      <td className="py-2 px-3 text-right font-bold">₹{rowCalc.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
+        ))}
 
-          {/* ITEM TABLE */}
-          <table className="w-full text-left border-collapse border border-gray-300 mb-6">
-            <thead className="bg-gray-50 border-b border-gray-300">
-              <tr className="text-gray-700 text-[10px] uppercase font-semibold">
-                <th className="py-2 px-2 text-center w-8 border-r border-gray-200">#</th>
-                <th className="py-2 px-3 border-r border-gray-200">Scope of Work / Material Details</th>
-                <th className="py-2 px-2 text-center w-12 border-r border-gray-200">Unit</th>
-                <th className="py-2 px-2 text-center w-16 border-r border-gray-200">L x B</th>
-                <th className="py-2 px-2 text-center w-10 border-r border-gray-200">No</th>
-                <th className="py-2 px-2 text-center w-12 border-r border-gray-200">Qty</th>
-                <th className="py-2 px-2 text-right w-20 border-r border-gray-200">Rate</th>
-                {taxMode !== 'NONE' && <th className="py-2 px-2 text-center w-12 border-r border-gray-200">Tax</th>}
-                <th className="py-2 px-3 text-right w-24">Amount</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 text-[10px] text-black">
-              {items.map((item, index) => {
-                const row = calculateRow(item);
-                if (!item.description) return null;
-                const measurement = (item.sizeL || item.sizeB) ? `${item.sizeL || '-'} x ${item.sizeB || '-'}` : '-';
-
-                return (
-                  <tr key={item.id} className="break-inside-avoid">
-                    <td className="py-2 px-2 text-center text-gray-500 border-r border-gray-200">{index + 1}</td>
-                    <td className="py-2 px-3 border-r border-gray-200">{item.description}</td>
-                    <td className="py-2 px-2 text-center border-r border-gray-200">{item.unit}</td>
-                    <td className="py-2 px-2 text-center border-r border-gray-200">{measurement}</td>
-                    <td className="py-2 px-2 text-center border-r border-gray-200">{item.no || '-'}</td>
-                    <td className="py-2 px-2 text-center font-medium border-r border-gray-200">{row.quantity.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
-                    <td className="py-2 px-2 text-right border-r border-gray-200">₹{parseFloat(item.rate || 0).toLocaleString('en-IN')}</td>
-                    {taxMode !== 'NONE' && <td className="py-2 px-2 text-center border-r border-gray-200">{item.gst}%</td>}
-                    <td className="py-2 px-3 text-right font-medium">₹{row.totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-
-          {/* Amount in Words & Totals Block */}
-          <div className="flex justify-between items-start break-inside-avoid mb-10">
-            <div className="w-1/2 pr-4 pt-2">
-              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Estimated Amount in Words</span>
-              <p className="text-[10px] font-medium text-black capitalize">{numberToWords(finalAmount > 0 ? finalAmount : totals.grandTotal)}</p>
-            </div>
-            
-            <div className="w-64 space-y-1.5 text-xs text-black">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Taxable BOQ Total:</span>
-                <span>₹{totals.subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+        <div className="grid grid-cols-2 gap-6 mt-6 pt-4 border-t border-zinc-300">
+          <div className="space-y-4 text-xs">
+            {estimateDetails.terms && (
+              <div>
+                <span className="font-bold text-zinc-700 uppercase tracking-wider block mb-1">Terms & Conditions</span>
+                <p className="whitespace-pre-line text-zinc-600 leading-relaxed text-[11px]">{estimateDetails.terms}</p>
               </div>
-              
-              {taxMode === 'IGST' ? (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">IGST Total:</span>
-                  <span>₹{totals.totalGst.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-                </div>
-              ) : taxMode === 'CGST_SGST' ? (
-                <>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">CGST:</span><span>₹{(totals.totalGst / 2).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-                  </div>
-                  <div className="flex justify-between border-b border-gray-200 pb-1.5">
-                    <span className="text-gray-600">SGST:</span><span>₹{(totals.totalGst / 2).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-                  </div>
-                </>
-              ) : null}
-              
-              <div className="flex justify-between font-semibold pt-1">
-                <span>Grand Total:</span><span>₹{totals.grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-              </div>
-
-              {(estimateDetails.discount > 0) && (
-                <div className="flex justify-between text-gray-500 text-[10px]">
-                  <span>Discount:</span><span>- ₹{parseFloat(estimateDetails.discount).toLocaleString('en-IN')}</span>
-                </div>
-              )}
-
-              <div className="flex justify-between font-bold text-base border-t-2 border-black pt-2 mt-2">
-                <span>Final Estimate:</span><span>₹{finalAmount > 0 ? finalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2}) : 0}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Terms, Remarks, and Signatures */}
-          <div className="grid grid-cols-2 gap-8 text-[10px] break-inside-avoid">
-            <div className="space-y-5">
-              {companySettings?.showBankDetailsOnPdf !== false && (
-                <div>
-                  <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Bank Details</span>
-                  <div className="grid grid-cols-[50px_1fr] gap-y-0.5 text-black">
-                    <span className="font-semibold">Bank:</span><span>{estimateDetails.bankName}</span>
-                    <span className="font-semibold">Name:</span><span>{estimateDetails.accountName}</span>
-                    <span className="font-semibold">A/C No:</span><span>{estimateDetails.accountNo}</span>
-                    <span className="font-semibold">IFSC:</span><span>{estimateDetails.ifscCode}</span>
-                  </div>
-                </div>
-              )}
-              
-              {companySettings?.showTermsOnPdf !== false && (
-                <div>
-                  <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Payment Terms & Schedule</span>
-                  <p className="whitespace-pre-wrap text-gray-600 leading-tight">{estimateDetails.terms}</p>
-                </div>
-              )}
-
-              {companySettings?.showRemarksOnPdf !== false && estimateDetails.description && (
-                <div>
-                  <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Scope Remarks</span>
-                  <p className="text-gray-800">{estimateDetails.description}</p>
-                </div>
-              )}
-            </div>
-
-            {companySettings?.showSignatoryOnPdf !== false && (
-              <div className="flex flex-col items-end justify-end text-right pt-6">
-                {companySettings?.showSignatureImage && companySettings?.signatureUrl ? (
-                  <img src={companySettings.signatureUrl} alt="Signature" className="h-16 w-auto object-contain mb-2 mix-blend-multiply" />
-                ) : <div className="h-16"></div>}
-                <div className="border-t border-gray-400 pt-1 w-48">
-                  <p className="font-bold text-black">For {companySettings?.companyName}</p>
-                  <p className="text-[9px] text-gray-500 mt-0.5 uppercase tracking-wider">Authorized Signatory</p>
-                </div>
+            )}
+            {estimateDetails.bankName && (
+              <div className="p-3 bg-zinc-50 border border-zinc-200 rounded">
+                <span className="font-bold text-zinc-700 uppercase tracking-wider block mb-1">Bank Details</span>
+                <p className="text-zinc-600 text-[11px]">Bank: <span className="font-semibold text-zinc-900">{estimateDetails.bankName}</span> | Acc: <span className="font-semibold text-zinc-900">{estimateDetails.accountNo}</span></p>
+                <p className="text-zinc-600 text-[11px]">IFSC: <span className="font-semibold text-zinc-900">{estimateDetails.ifscCode}</span> | Name: <span className="font-semibold text-zinc-900">{estimateDetails.accountName}</span></p>
               </div>
             )}
           </div>
 
-        </div>
-
-        {/* Persistent Anchored Footer */}
-        {companySettings?.pdfFooterDisclaimer && (
-          <div className="mt-auto pt-4 pb-2 border-t border-gray-200 text-center w-full">
-            <p className="text-[10px] text-gray-500">
-              {companySettings.pdfFooterDisclaimer}
+          <div className="space-y-2 text-xs">
+            <div className="flex justify-between py-1 border-b border-zinc-200 font-semibold text-zinc-600">
+              <span>Subtotal:</span>
+              <span className="text-zinc-900">₹ {totals.subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            </div>
+            {taxMode === 'CGST_SGST' && (
+              <>
+                <div className="flex justify-between text-zinc-600">
+                  <span>CGST:</span>
+                  <span>₹ {(totals.totalGst / 2).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+                <div className="flex justify-between text-zinc-600 border-b border-zinc-200 pb-1">
+                  <span>SGST:</span>
+                  <span>₹ {(totals.totalGst / 2).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+              </>
+            )}
+            {taxMode === 'IGST' && (
+              <div className="flex justify-between text-zinc-600 border-b border-zinc-200 pb-1">
+                <span>IGST:</span>
+                <span>₹ {totals.totalGst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              </div>
+            )}
+            {parseFloat(estimateDetails.discount) > 0 && (
+              <div className="flex justify-between text-zinc-600 border-b border-zinc-200 pb-1">
+                <span>Discount:</span>
+                <span>- ₹ {parseFloat(estimateDetails.discount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              </div>
+            )}
+            <div className="flex justify-between py-2 font-bold text-sm text-zinc-900 border-b-2 border-zinc-900">
+              <span>Grand Total:</span>
+              <span>₹ {(finalAmount > 0 ? finalAmount : 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            </div>
+            
+            <p className="text-[11px] font-bold text-zinc-800 pt-2">
+              Amount in words: <span className="font-normal italic">{numberToWords(finalAmount > 0 ? finalAmount : 0)}</span>
             </p>
-          </div>
-        )}
 
+            <div className="pt-12 text-right">
+              <p className="text-xs font-bold text-zinc-900">For {companySettings.companyName || 'Authorized Signatory'}</p>
+              <div className="h-10"></div>
+              <p className="text-[10px] text-zinc-400 uppercase tracking-wider">Authorized Signatory</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
