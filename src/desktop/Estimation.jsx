@@ -554,32 +554,89 @@ export default function Estimation({ companySettings = {} }) {
   return (
     <div className="w-full font-['Poppins'] flex flex-col print:h-auto print:overflow-visible">
       
-      {/* SCREEN FORM VIEW (HIDDEN ON PRINT) */}
-      <div className="print:hidden flex-1 flex flex-col min-h-0 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-        <div className="flex items-center justify-between border-b border-zinc-200 pb-4 mb-6 shrink-0">
-          <h2 className="text-xl font-bold text-zinc-900 tracking-tight">
-            {isReadOnly ? `Viewing Estimate ${estimateDetails.estimateNo}` : editingId ? `Edit Estimate ${estimateDetails.estimateNo}` : 'New Estimation'}
-          </h2>
-          <div className="flex gap-2">
-            <button onClick={() => { setCurrentView('list'); handleClear(false); }} className="text-zinc-600 hover:text-zinc-900 text-xs font-bold transition-colors cursor-pointer bg-white px-4 py-2 rounded-xl border border-zinc-200 flex items-center gap-1.5">
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-              Back
-            </button>
-            {isReadOnly && (
-              <button onClick={() => window.print()} className="bg-[#B45309] text-white px-5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer hover:bg-[#92400E] flex items-center gap-1.5">
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0v-2.25a2.25 2.25 0 012.25-2.25h6a2.25 2.25 0 012.25 2.25v2.25z" />
-                </svg>
-                Print / PDF
-              </button>
+      {/* GLOBAL CSS PRINT STYLES TO INJECT PAGINATION RULES DIRECTLY INTO YOUR DESIGN */}
+      <style>{`
+        @media print {
+          body, html {
+            height: auto !important;
+            overflow: visible !important;
+            background: white !important;
+          }
+          .print\\:hidden {
+            display: none !important;
+          }
+          table {
+            page-break-inside: auto;
+          }
+          tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+          }
+          thead {
+            display: table-header-group;
+          }
+          tfoot {
+            display: table-footer-group;
+          }
+        }
+      `}</style>
+
+      {/* TOP HEADER CONTROLS (HIDDEN ON PRINT) */}
+      <div className="print:hidden flex items-center justify-between border-b border-zinc-200 pb-4 mb-6 shrink-0">
+        <h2 className="text-xl font-bold text-zinc-900 tracking-tight">
+          {isReadOnly ? `Viewing Estimate ${estimateDetails.estimateNo}` : editingId ? `Edit Estimate ${estimateDetails.estimateNo}` : 'New Estimation'}
+        </h2>
+        <div className="flex gap-2">
+          <button onClick={() => { setCurrentView('list'); handleClear(false); }} className="text-zinc-600 hover:text-zinc-900 text-xs font-bold transition-colors cursor-pointer bg-white px-4 py-2 rounded-xl border border-zinc-200 flex items-center gap-1.5">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back
+          </button>
+          <button onClick={() => window.print()} className="bg-[#B45309] text-white px-5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer hover:bg-[#92400E] flex items-center gap-1.5">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0v-2.25a2.25 2.25 0 012.25-2.25h6a2.25 2.25 0 012.25 2.25v2.25z" />
+            </svg>
+            Print / PDF
+          </button>
+        </div>
+      </div>
+
+      {/* PRINTABLE CONTAINER WRAPPING YOUR EXACT ORIGINAL LAYOUT */}
+      <div className="bg-white border border-zinc-200/80 rounded-2xl p-8 shadow-sm mb-6 print:border-none print:shadow-none print:p-0">
+        
+        {/* Company & Estimate Header */}
+        <div className="flex justify-between items-start border-b border-zinc-200 pb-6 mb-6">
+          <div>
+            <h1 className="text-2xl font-extrabold text-[#B45309] tracking-tight">ESTIMATION / BOQ</h1>
+            <p className="text-xs text-zinc-500 font-medium mt-1">Estimate No: <strong className="text-zinc-800">{estimateDetails.estimateNo}</strong></p>
+            <p className="text-xs text-zinc-500 font-medium">Date: <strong className="text-zinc-800">{estimateDetails.date}</strong></p>
+            {estimateDetails.validUntil && (
+              <p className="text-xs text-zinc-500 font-medium">Valid Until: <strong className="text-zinc-800">{estimateDetails.validUntil}</strong></p>
             )}
+          </div>
+          <div className="text-right">
+            <h2 className="text-base font-bold text-zinc-900">{companySettings.companyName || 'Jyanipur Interiors'}</h2>
+            <p className="text-xs text-zinc-500 whitespace-pre-line mt-0.5">{companySettings.address || ''}</p>
+            <p className="text-xs text-zinc-500 mt-0.5">{companySettings.email || ''} {companySettings.phone ? `| ${companySettings.phone}` : ''}</p>
           </div>
         </div>
 
-        {/* INPUT FIELDS SECTION (Hidden during print or kept simple) */}
-        <div className="bg-white border border-zinc-200/80 rounded-2xl p-6 shadow-sm mb-6 space-y-6">
+        {/* Client & Project Details */}
+        <div className="grid grid-cols-2 gap-6 bg-zinc-50 p-4 rounded-xl border border-zinc-100 mb-6">
+          <div>
+            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Billed To:</p>
+            <p className="text-sm font-bold text-zinc-900">{estimateDetails.partyName || '[Client Name]'}</p>
+            {estimateDetails.partyAddress && <p className="text-xs text-zinc-600 mt-0.5">{estimateDetails.partyAddress}</p>}
+          </div>
+          <div className="text-right">
+            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Project Details:</p>
+            <p className="text-sm font-bold text-zinc-900">{estimateDetails.projectName || '[Project Name]'}</p>
+          </div>
+        </div>
+
+        {/* INPUT FIELDS SECTION (Hidden during print view or rendered clean) */}
+        <div className="print:hidden space-y-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             <div>
               <label className={labelClass}>Client Name *</label>
@@ -663,9 +720,9 @@ export default function Estimation({ companySettings = {} }) {
           </div>
         </div>
 
-        {/* LINE ITEMS EDITOR TABLE */}
-        <div className="bg-white border border-zinc-200/80 rounded-2xl p-6 shadow-sm mb-6">
-          <div className="flex justify-between items-center mb-4">
+        {/* LINE ITEMS TABLE (With Multi-Page Header Repeat and Row Break Prevention) */}
+        <div className="mb-6">
+          <div className="print:hidden flex justify-between items-center mb-3">
             <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-wider">Line Items / BOQ</h3>
             {!isReadOnly && (
               <button onClick={addItem} className="bg-amber-50 text-[#B45309] hover:bg-[#B45309] hover:text-white border border-amber-200 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer">
@@ -677,24 +734,25 @@ export default function Estimation({ companySettings = {} }) {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-zinc-200 text-[10px] text-zinc-400 uppercase">
+                <tr className="border-b border-zinc-200 text-[10px] text-zinc-400 uppercase bg-zinc-50/50 print:bg-zinc-100">
                   <th className="py-2.5 px-2">Description</th>
-                  <th className="py-2.5 px-2 w-24">Unit</th>
-                  <th className="py-2.5 px-2 w-16">L</th>
-                  <th className="py-2.5 px-2 w-16">B</th>
-                  <th className="py-2.5 px-2 w-16">No</th>
-                  <th className="py-2.5 px-2 w-20">Qty</th>
-                  <th className="py-2.5 px-2 w-24">Rate (₹)</th>
+                  <th className="py-2.5 px-2 w-20 text-center">Unit</th>
+                  <th className="py-2.5 px-2 w-14 text-center print:hidden">L</th>
+                  <th className="py-2.5 px-2 w-14 text-center print:hidden">B</th>
+                  <th className="py-2.5 px-2 w-14 text-center print:hidden">No</th>
+                  <th className="py-2.5 px-2 w-16 text-center">Qty</th>
+                  <th className="py-2.5 px-2 w-24 text-right">Rate (₹)</th>
                   <th className="py-2.5 px-2 w-28 text-right">Amount (₹)</th>
-                  {!isReadOnly && <th className="py-2.5 px-2 w-10"></th>}
+                  {!isReadOnly && <th className="py-2.5 px-2 w-10 print:hidden"></th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
-                {items.map((item) => {
+                {items.map((item, index) => {
                   const rCalc = calculateRow(item);
                   return (
-                    <tr key={item.id} className="text-xs">
-                      <td className="py-2 px-2">
+                    <tr key={item.id || index} className="text-xs">
+                      {/* Screen mode row input */}
+                      <td className="py-2 px-2 print:hidden">
                         <input 
                           type="text" 
                           value={item.description} 
@@ -704,7 +762,7 @@ export default function Estimation({ companySettings = {} }) {
                           className={inputClass} 
                         />
                       </td>
-                      <td className="py-2 px-2">
+                      <td className="py-2 px-2 print:hidden">
                         <select 
                           value={item.unit} 
                           onChange={e => updateItem(item.id, 'unit', e.target.value)} 
@@ -720,16 +778,22 @@ export default function Estimation({ companySettings = {} }) {
                           <option value="Kg">Kg</option>
                         </select>
                       </td>
-                      <td className="py-2 px-2"><input type="number" value={item.sizeL} onChange={e => updateItem(item.id, 'sizeL', e.target.value)} disabled={isReadOnly} className={inputClass} /></td>
-                      <td className="py-2 px-2"><input type="number" value={item.sizeB} onChange={e => updateItem(item.id, 'sizeB', e.target.value)} disabled={isReadOnly} className={inputClass} /></td>
-                      <td className="py-2 px-2"><input type="number" value={item.no} onChange={e => updateItem(item.id, 'no', e.target.value)} disabled={isReadOnly} className={inputClass} /></td>
-                      <td className="py-2 px-2"><input type="number" value={item.qty} onChange={e => updateItem(item.id, 'qty', e.target.value)} disabled={isReadOnly} className={inputClass} /></td>
-                      <td className="py-2 px-2"><input type="number" value={item.rate} onChange={e => updateItem(item.id, 'rate', e.target.value)} disabled={isReadOnly} className={inputClass} /></td>
-                      <td className="py-2 px-2 text-right font-bold text-zinc-800">
+                      <td className="py-2 px-2 print:hidden"><input type="number" value={item.sizeL} onChange={e => updateItem(item.id, 'sizeL', e.target.value)} disabled={isReadOnly} className={inputClass} /></td>
+                      <td className="py-2 px-2 print:hidden"><input type="number" value={item.sizeB} onChange={e => updateItem(item.id, 'sizeB', e.target.value)} disabled={isReadOnly} className={inputClass} /></td>
+                      <td className="py-2 px-2 print:hidden"><input type="number" value={item.no} onChange={e => updateItem(item.id, 'no', e.target.value)} disabled={isReadOnly} className={inputClass} /></td>
+                      <td className="py-2 px-2 print:hidden"><input type="number" value={item.qty} onChange={e => updateItem(item.id, 'qty', e.target.value)} disabled={isReadOnly} className={inputClass} /></td>
+                      <td className="py-2 px-2 print:hidden"><input type="number" value={item.rate} onChange={e => updateItem(item.id, 'rate', e.target.value)} disabled={isReadOnly} className={inputClass} /></td>
+                      
+                      {/* Print mode static view cells for exact original design fidelity */}
+                      <td className="hidden print:table-cell py-3 px-2 text-zinc-900 font-medium">{item.description}</td>
+                      <td className="hidden print:table-cell py-3 px-2 text-center text-zinc-600">{item.unit}</td>
+                      <td className="py-2 px-2 text-center text-zinc-700 font-medium">{item.qty || 1}</td>
+                      <td className="py-2 px-2 text-right text-zinc-600">{Number(item.rate || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                      <td className="py-2 px-2 text-right font-bold text-zinc-900">
                         ₹ {rCalc.baseAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                       </td>
                       {!isReadOnly && (
-                        <td className="py-2 px-2 text-center">
+                        <td className="py-2 px-2 text-center print:hidden">
                           {items.length > 1 && (
                             <button onClick={() => removeItem(item.id)} className="text-red-500 hover:text-red-700 font-bold p-1">✕</button>
                           )}
@@ -743,136 +807,75 @@ export default function Estimation({ companySettings = {} }) {
           </div>
         </div>
 
-        {/* FOOTER TOTALS & BUTTONS */}
-        <div className="bg-white border border-zinc-200/80 rounded-2xl p-6 shadow-sm mb-12 flex justify-between items-center">
-          <div>
-            <label className={labelClass}>Discount Amount (₹)</label>
-            <input 
-              type="number" 
-              value={estimateDetails.discount} 
-              onChange={e => setEstimateDetails({...estimateDetails, discount: e.target.value})} 
-              disabled={isReadOnly}
-              className={inputClass} 
-              placeholder="0.00"
-            />
-          </div>
-          <div className="text-right space-y-1">
-            <p className="text-xs text-zinc-500 font-medium">Grand Total: ₹ {totals.grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
-            <p className="text-lg font-bold text-[#B45309]">Final Estimate: ₹ {finalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
-          </div>
-          {!isReadOnly && (
-            <div className="flex gap-3">
-              <button onClick={handleSaveOnly} className="bg-zinc-100 hover:bg-zinc-200 text-zinc-800 px-5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer">
-                Save Draft
-              </button>
-              <button onClick={handleSaveAndPrint} className="bg-[#B45309] hover:bg-[#92400E] text-white px-6 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer shadow-sm">
-                Save & Print PDF
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ========================================================
-          DEDICATED PRINT / PDF VIEW (VISIBLE ONLY WHEN PRINTING)
-          Configured with proper page-break rules & header repeat
-      ======================================================== */}
-      <div className="hidden print:block w-full font-['Poppins'] bg-white text-zinc-900 text-xs">
-        
-        {/* Print Header */}
-        <div className="flex justify-between items-start border-b border-zinc-300 pb-4 mb-6">
-          <div>
-            <h1 className="text-xl font-bold text-[#B45309]">ESTIMATION / BOQ</h1>
-            <p className="text-zinc-600 mt-1">Estimate No: <strong className="text-zinc-900">{estimateDetails.estimateNo}</strong></p>
-            <p className="text-zinc-600">Date: {estimateDetails.date}</p>
-          </div>
-          <div className="text-right">
-            <h2 className="font-bold text-sm text-zinc-900">{companySettings.companyName || 'Jyanipur Interiors'}</h2>
-            <p className="text-zinc-500 text-[11px]">{companySettings.address || ''}</p>
-            <p className="text-zinc-500 text-[11px]">{companySettings.email || ''} | {companySettings.phone || ''}</p>
-          </div>
-        </div>
-
-        {/* Client Metadata block */}
-        <div className="mb-6 p-3 bg-zinc-50 rounded-lg border border-zinc-200">
-          <p className="text-[10px] uppercase font-bold text-zinc-400">Billed To:</p>
-          <p className="font-bold text-sm text-zinc-900 mt-0.5">{estimateDetails.partyName}</p>
-          {estimateDetails.projectName && <p className="text-zinc-600">Project: {estimateDetails.projectName}</p>}
-          {estimateDetails.partyAddress && <p className="text-zinc-500 text-[11px]">{estimateDetails.partyAddress}</p>}
-        </div>
-
-        {/* Multi-page Printable Line Items Table */}
-        <table className="w-full border-collapse mb-6">
-          <thead style={{ display: 'table-header-group' }}>
-            <tr className="bg-zinc-100 text-[10px] uppercase text-zinc-600 border-b border-zinc-300">
-              <th className="py-2 px-2 text-left">Scope of Work / Description</th>
-              <th className="py-2 px-2 text-center w-16">Unit</th>
-              <th className="py-2 px-2 text-center w-16">Qty</th>
-              <th className="py-2 px-2 text-right w-20">Rate</th>
-              <th className="py-2 px-2 text-right w-24">Amount</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-zinc-200">
-            {items.map((item, index) => {
-              const rCalc = calculateRow(item);
-              return (
-                <tr key={index} style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}>
-                  <td className="py-2.5 px-2 text-zinc-800">{item.description}</td>
-                  <td className="py-2.5 px-2 text-center text-zinc-600">{item.unit}</td>
-                  <td className="py-2.5 px-2 text-center text-zinc-800 font-medium">{item.qty || 1}</td>
-                  <td className="py-2.5 px-2 text-right text-zinc-600">{Number(item.rate || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-                  <td className="py-2.5 px-2 text-right font-bold text-zinc-900">
-                    ₹ {rCalc.baseAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-
-        {/* Totals & Bank Details container kept safe from split */}
-        <div style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }} className="space-y-4 pt-4 border-t border-zinc-300">
+        {/* FOOTER TOTALS & BANK DETAILS */}
+        <div className="pt-6 border-t border-zinc-200 grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           
-          <div className="flex justify-end">
-            <div className="w-64 space-y-1.5 text-right">
-              <div className="flex justify-between text-zinc-600">
+          <div className="space-y-4">
+            {!isReadOnly ? (
+              <div className="print:hidden">
+                <label className={labelClass}>Discount Amount (₹)</label>
+                <input 
+                  type="number" 
+                  value={estimateDetails.discount} 
+                  onChange={e => setEstimateDetails({...estimateDetails, discount: e.target.value})} 
+                  className={inputClass} 
+                  placeholder="0.00"
+                />
+              </div>
+            ) : null}
+
+            <div className="text-[11px] text-zinc-600 space-y-1">
+              <p className="font-bold uppercase text-[10px] text-zinc-700">Amount in Words:</p>
+              <p className="font-medium">{numberToWords(finalAmount)}</p>
+            </div>
+
+            <div className="text-[11px] text-zinc-600 space-y-1 pt-2">
+              <p className="font-bold uppercase text-[10px] text-zinc-700">Terms & Conditions:</p>
+              <p className="whitespace-pre-line leading-relaxed">{estimateDetails.terms}</p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="bg-zinc-50 p-4 rounded-xl border border-zinc-100 space-y-2 text-right">
+              <div className="flex justify-between text-xs text-zinc-600">
                 <span>Subtotal:</span>
                 <span>₹ {totals.subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
               </div>
               {parseFloat(estimateDetails.discount) > 0 && (
-                <div className="flex justify-between text-zinc-600">
+                <div className="flex justify-between text-xs text-zinc-600">
                   <span>Discount:</span>
                   <span>- ₹ {parseFloat(estimateDetails.discount).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
                 </div>
               )}
-              <div className="flex justify-between text-sm font-bold text-zinc-900 border-t border-zinc-200 pt-1.5">
+              <div className="flex justify-between text-sm font-bold text-zinc-900 border-t border-zinc-200 pt-2">
                 <span>Grand Total:</span>
-                <span>₹ {finalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                <span className="text-[#B45309]">₹ {finalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
               </div>
             </div>
-          </div>
 
-          <div className="p-3 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] text-zinc-700">
-            <p className="font-bold uppercase text-[10px] text-zinc-500 mb-1">Amount in Words:</p>
-            <p className="font-semibold">{numberToWords(finalAmount)}</p>
-          </div>
-
-          {/* Terms & Bank details */}
-          <div className="grid grid-cols-2 gap-4 text-[10px] text-zinc-600 pt-2">
-            <div>
-              <p className="font-bold uppercase text-zinc-700 mb-1">Terms & Conditions:</p>
-              <p className="whitespace-pre-line">{estimateDetails.terms}</p>
-            </div>
-            <div>
-              <p className="font-bold uppercase text-zinc-700 mb-1">Bank Details:</p>
-              <p>Bank: {estimateDetails.bankName}</p>
-              <p>Account Name: {estimateDetails.accountName}</p>
-              <p>A/c No: {estimateDetails.accountNo}</p>
-              <p>IFSC: {estimateDetails.ifscCode}</p>
+            <div className="text-[11px] text-zinc-600 space-y-0.5 border border-zinc-100 p-3 rounded-xl bg-zinc-50/50">
+              <p className="font-bold uppercase text-[10px] text-zinc-700 mb-1">Bank Details:</p>
+              <p><strong>Bank:</strong> {estimateDetails.bankName}</p>
+              <p><strong>A/c Name:</strong> {estimateDetails.accountName}</p>
+              <p><strong>A/c No:</strong> {estimateDetails.accountNo}</p>
+              <p><strong>IFSC Code:</strong> {estimateDetails.ifscCode}</p>
             </div>
           </div>
 
         </div>
+
+        {/* SCREEN ACTION BUTTONS (Hidden on print) */}
+        {!isReadOnly && (
+          <div className="print:hidden mt-8 pt-6 border-t border-zinc-200 flex justify-end gap-3">
+            <button onClick={handleSaveOnly} className="bg-zinc-100 hover:bg-zinc-200 text-zinc-800 px-5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer">
+              Save Draft
+            </button>
+            <button onClick={handleSaveAndPrint} className="bg-[#B45309] hover:bg-[#92400E] text-white px-6 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer shadow-sm">
+              Save & Print PDF
+            </button>
+          </div>
+        )}
+
       </div>
 
     </div>
