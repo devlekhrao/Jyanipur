@@ -36,9 +36,8 @@ export default function Estimation({ companySettings = {} }) {
   const [editingId, setEditingId] = useState(null);
   const [estimationsList, setEstimationsList] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [saveStatus, setSaveStatus] = useState('idle'); // Added for Auto-Save Status
+  const [saveStatus, setSaveStatus] = useState('idle');
 
-  // Load Estimations directly from Neon DB via db.js
   const loadEstimationsFromCloud = async () => {
     setLoading(true);
     try {
@@ -91,32 +90,22 @@ export default function Estimation({ companySettings = {} }) {
     }
   }, [companySettings, editingId]);
 
-  // ==========================================
-  // DEBOUNCED AUTO-SAVE HOOK LOGIC
-  // ==========================================
   useEffect(() => {
-    // Only auto-save if we are currently editing a form and not just viewing
     if (currentView === 'form' && !editingId) {
       setSaveStatus('saving');
-      
       const timer = setTimeout(() => {
         const draftData = { estimateDetails, items, taxMode };
         localStorage.setItem('jyanipur_desktop_estimate_draft', JSON.stringify(draftData));
         setSaveStatus('saved');
-        
         setTimeout(() => setSaveStatus('idle'), 2000);
       }, 1000);
-
       return () => clearTimeout(timer);
     }
   }, [estimateDetails, items, taxMode, currentView, editingId]);
-  // ==========================================
 
-  // --- AUTO INCREMENT ESTIMATE NO ---
   const generateNextEstimateNo = () => {
     const prefix = companySettings.estimatePrefix || 'EST/FY26-27/';
     let maxNum = 0;
-    
     estimationsList.forEach(est => {
       if (est.estimateNo && est.estimateNo.startsWith(prefix)) {
         const numStr = est.estimateNo.replace(prefix, '');
@@ -126,7 +115,6 @@ export default function Estimation({ companySettings = {} }) {
         }
       }
     });
-    
     const nextNum = maxNum + 1;
     return `${prefix}${nextNum.toString().padStart(3, '0')}`;
   };
@@ -137,12 +125,10 @@ export default function Estimation({ companySettings = {} }) {
     setItems(items.map(item => {
       if (item.id !== id) return item;
       const updated = { ...item, [field]: value };
-
       if (['sizeL', 'sizeB', 'no'].includes(field)) {
         const l = parseFloat(updated.sizeL);
         const b = parseFloat(updated.sizeB);
         const n = parseFloat(updated.no);
-
         if (!isNaN(l) || !isNaN(b) || !isNaN(n)) {
           const effL = !isNaN(l) ? l : 1;
           const effB = !isNaN(b) ? b : 1;
@@ -152,7 +138,6 @@ export default function Estimation({ companySettings = {} }) {
           updated.qty = ''; 
         }
       }
-
       return updated;
     }));
   };
@@ -161,7 +146,6 @@ export default function Estimation({ companySettings = {} }) {
 
   const calculateRow = (item) => {
     let quantity = 0;
-    
     if (item.qty !== undefined && item.qty !== '') {
       quantity = parseFloat(item.qty) || 0;
     } else {
@@ -175,10 +159,8 @@ export default function Estimation({ companySettings = {} }) {
         quantity = effL * effB * effN;
       }
     }
-
     const rate = parseFloat(item.rate) || 0;
     const gstRate = taxMode === 'NONE' ? 0 : (parseFloat(item.gst) || 0);
-
     const baseAmount = quantity * rate;
     const gstAmount = (baseAmount * gstRate) / 100;
     return { quantity, baseAmount, gstAmount, totalAmount: baseAmount + gstAmount };
@@ -200,11 +182,8 @@ export default function Estimation({ companySettings = {} }) {
       alert('Fill required fields: Client Name & Estimate No.');
       return false;
     }
-
     setErrors({});
-    
     const existingEst = estimationsList.find(e => e.id === editingId);
-
     const record = {
       id: editingId || undefined,
       date: estimateDetails.date,
@@ -233,10 +212,7 @@ export default function Estimation({ companySettings = {} }) {
     try {
       await saveEstimation(record);
       await loadEstimationsFromCloud();
-      
-      // Clear the draft after successful save
       localStorage.removeItem('jyanipur_desktop_estimate_draft');
-      
       return true;
     } catch (err) {
       console.error("Error saving estimation to cloud:", err);
@@ -301,7 +277,6 @@ export default function Estimation({ companySettings = {} }) {
       status: 'Pending', 
       isCancelled: false
     };
-    
     setLoading(true);
     try {
       await saveEstimation(newEst);
@@ -331,7 +306,6 @@ export default function Estimation({ companySettings = {} }) {
     localStorage.setItem('draft_invoiceDetails', JSON.stringify(invoiceDraft));
     localStorage.setItem('draft_items', JSON.stringify(est.items || []));
     localStorage.setItem('draft_taxMode', est.taxMode || 'CGST_SGST');
-    
     alert('Estimate details copied! Navigate to the "Tax Invoice" module and click "+ New Invoice" to complete the conversion.');
   };
 
@@ -357,7 +331,6 @@ export default function Estimation({ companySettings = {} }) {
   const handleToggleCancel = async (id) => {
     const est = estimationsList.find(e => e.id === id);
     if (!est) return;
-    
     const updated = { ...est, isCancelled: !est.isCancelled };
     setLoading(true);
     await saveEstimation(updated);
@@ -367,7 +340,6 @@ export default function Estimation({ companySettings = {} }) {
   const handleStatusChange = async (id, newStatus) => {
     const est = estimationsList.find(e => e.id === id);
     if (!est) return;
-
     const updated = { ...est, status: newStatus };
     await saveEstimation(updated);
     await loadEstimationsFromCloud();
@@ -375,8 +347,6 @@ export default function Estimation({ companySettings = {} }) {
 
   const handleClear = (askConfirm = true) => {
     if (!askConfirm || window.confirm('Clear the entire estimation?')) {
-      
-      // CHECK FOR EXISTING DRAFT BEFORE CLEARING
       if (!askConfirm) {
         const savedDraft = localStorage.getItem('jyanipur_desktop_estimate_draft');
         if (savedDraft) {
@@ -388,18 +358,15 @@ export default function Estimation({ companySettings = {} }) {
               setTaxMode(parsed.taxMode || 'CGST_SGST');
               setEditingId(null);
               setErrors({});
-              return; // Stop execution to keep the restored draft
+              return;
             } catch (e) {
               console.error("Failed to restore draft:", e);
             }
           } else {
-            // User rejected restoring, destroy the draft
             localStorage.removeItem('jyanipur_desktop_estimate_draft');
           }
         }
       }
-
-      // Standard Reset
       setEditingId(null);
       setEstimateDetails({ 
         partyName: '', partyAddress: '', projectName: '', date: new Date().toISOString().split('T')[0], 
@@ -415,9 +382,6 @@ export default function Estimation({ companySettings = {} }) {
   const inputClass = "w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-white focus:outline-none focus:border-[#B45309] focus:ring-1 focus:ring-inset focus:ring-[#B45309] text-zinc-900 text-xs font-medium transition-all disabled:opacity-75 disabled:cursor-not-allowed";
   const labelClass = "block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1.5 ml-0.5";
 
-  // ==========================================
-  // RENDER 1: ESTIMATION BOARD LIST VIEW
-  // ==========================================
   if (currentView === 'list') {
     return (
       <div className="w-full h-full font-['Poppins'] flex flex-col print:hidden">
@@ -599,11 +563,9 @@ export default function Estimation({ companySettings = {} }) {
 
   const isReadOnly = currentView === 'view';
 
-  // ==========================================
-  // RENDER 2: CREATE / EDIT / VIEW FORM VIEW
-  // ==========================================
   return (
-    <div className="w-full h-full font-['Poppins'] flex flex-col">
+    // FIX 1: Break out of height constraints by adding print:block print:h-auto print:overflow-visible
+    <div className="w-full h-full font-['Poppins'] flex flex-col print:block print:h-auto print:overflow-visible">
       
       {/* SCREEN FORM VIEW (HIDDEN ON PRINT) */}
       <div className="print:hidden flex-1 flex flex-col min-h-0 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
@@ -856,6 +818,15 @@ export default function Estimation({ companySettings = {} }) {
         <style dangerouslySetInnerHTML={{__html: `
           @media print {
             @page { margin: 15mm; size: A4 portrait; }
+            
+            /* FIX 2: Force ALL parent wrappers to expand fully to unlock multi-page printing */
+            html, body, #root, #__next, .app-container { 
+              height: auto !important; 
+              min-height: auto !important;
+              overflow: visible !important; 
+              position: static !important;
+            }
+            
             body { 
               padding: 0 !important; 
               background: white !important; 
@@ -865,22 +836,16 @@ export default function Estimation({ companySettings = {} }) {
             }
             img { mix-blend-mode: multiply !important; }
             
-            /* Magic CSS to repeat headers and prevent row breaks */
             table { page-break-inside: auto; width: 100%; border-collapse: collapse; }
             tr { page-break-inside: avoid; page-break-after: auto; }
             thead { display: table-header-group; }
             tfoot { display: table-footer-group; }
             
-            /* Prevent orphans */
             .totals-section { page-break-inside: avoid; }
             .signatures-section { page-break-inside: avoid; }
           }
         `}} />
 
-        {/* 
-          Instead of Flexbox, we use a single native <table> as the master wrapper.
-          This forces the browser print engine to correctly calculate page breaks.
-        */}
         <table className="w-full">
           
           {/* HEADER: Prints ONCE at the top of Page 1 */}
