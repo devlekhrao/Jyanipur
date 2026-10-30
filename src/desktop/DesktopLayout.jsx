@@ -222,11 +222,12 @@ export default function DesktopLayout() {
 
   if (isLoggedIn) {
     return (
-      <div className="flex w-screen h-screen overflow-hidden bg-zinc-50 font-['Poppins'] text-zinc-900 selection:bg-amber-100">
+      // FIX 1: Allow layout to break out of screen height for multi-page printing
+      <div className="flex w-screen h-screen overflow-hidden bg-zinc-50 font-['Poppins'] text-zinc-900 selection:bg-amber-100 print:block print:h-auto print:overflow-visible">
         
         {/* WARNING MODAL */}
         {showWarningModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 backdrop-blur-sm px-4">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 backdrop-blur-sm px-4 print:hidden">
             <div className="bg-slate-900 border border-white/10 p-8 rounded-2xl shadow-2xl max-w-sm w-full">
               <div className="w-12 h-12 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center mb-5 border border-amber-500/30">
                 <span className="text-xl">⚠️</span>
@@ -288,7 +289,8 @@ export default function DesktopLayout() {
         </aside>
 
         {/* MAIN CONTENT AREA */}
-        <main className="print:w-full print:ml-0 print:block flex-1 h-full overflow-hidden flex flex-col relative bg-zinc-50">
+        {/* FIX 2: Allow content area to break out of screen height for multi-page printing */}
+        <main className="print:w-full print:ml-0 print:block flex-1 h-full overflow-hidden flex flex-col relative bg-zinc-50 print:h-auto print:overflow-visible">
           
           {/* TOP BAR */}
           <header className="print:hidden w-full h-16 bg-white border-b border-zinc-200/80 px-8 flex items-center justify-between z-10 flex-shrink-0 shadow-sm">
@@ -332,7 +334,8 @@ export default function DesktopLayout() {
           </header>
 
           {/* PAGE CONTENT */}
-          <div className="print:p-0 print:overflow-visible flex-1 overflow-y-auto p-6 lg:p-8 custom-scrollbar">
+          {/* FIX 3: Allow scroll view to expand natively when printing */}
+          <div className="print:p-0 print:overflow-visible flex-1 overflow-y-auto p-6 lg:p-8 custom-scrollbar print:h-auto">
             <div className="w-full h-full">
               {visitedPages.has('Dashboard') && <div className={activePage === 'Dashboard' ? 'block' : 'hidden'}><Dashboard setActivePage={handlePageSwitch} /></div>}
               {visitedPages.has('CRM') && <div className={activePage === 'CRM' ? 'block' : 'hidden'}><CRM setActivePage={handlePageSwitch} /></div>}
