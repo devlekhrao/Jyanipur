@@ -49,8 +49,8 @@ const gstStateCodes = {
 };
 
 export default function TaxInvoice({ companySettings = {}, updateDirtyState }) {
+  // Keep view states in session storage so they reset when the tab is fully closed
   const [currentView, setCurrentView] = useState(() => sessionStorage.getItem('draft_invoiceView') || 'list');
-  
   const [editingId, setEditingId] = useState(() => {
     const saved = sessionStorage.getItem('draft_editingId');
     return saved && saved !== 'undefined' ? JSON.parse(saved) : null;
@@ -59,11 +59,13 @@ export default function TaxInvoice({ companySettings = {}, updateDirtyState }) {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [invoiceList, setInvoiceList] = useState([]);
+  const [saveStatus, setSaveStatus] = useState('idle');
   
-  const [taxMode, setTaxMode] = useState(() => sessionStorage.getItem('draft_taxMode') || 'CGST_SGST');
+  // Migrate core form data to LocalStorage to survive tab closures & support offline drafts
+  const [taxMode, setTaxMode] = useState(() => localStorage.getItem('draft_taxMode') || 'CGST_SGST');
 
   const [invoiceDetails, setInvoiceDetails] = useState(() => {
-    const saved = sessionStorage.getItem('draft_invoiceDetails');
+    const saved = localStorage.getItem('draft_invoiceDetails');
     if (saved && saved !== 'undefined') {
       try { return JSON.parse(saved); } catch (e) {}
     }
@@ -79,7 +81,7 @@ export default function TaxInvoice({ companySettings = {}, updateDirtyState }) {
   });
 
   const [items, setItems] = useState(() => {
-    const saved = sessionStorage.getItem('draft_items');
+    const saved = localStorage.getItem('draft_items');
     if (saved && saved !== 'undefined') {
       try { return JSON.parse(saved); } catch (e) {}
     }
@@ -88,13 +90,29 @@ export default function TaxInvoice({ companySettings = {}, updateDirtyState }) {
 
   const [errors, setErrors] = useState({});
 
+  // 1. Session Storage Effect for UI state
   useEffect(() => {
     sessionStorage.setItem('draft_invoiceView', currentView);
     sessionStorage.setItem('draft_editingId', JSON.stringify(editingId));
-    sessionStorage.setItem('draft_taxMode', taxMode);
-    sessionStorage.setItem('draft_invoiceDetails', JSON.stringify(invoiceDetails));
-    sessionStorage.setItem('draft_items', JSON.stringify(items));
-  }, [currentView, editingId, taxMode, invoiceDetails, items]);
+  }, [currentView, editingId]);
+
+  // 2. Local Storage Debounced Auto-Save for Form Data
+  useEffect(() => {
+    if (currentView === 'form' && !editingId) {
+      setSaveStatus('saving');
+      
+      const timer = setTimeout(() => {
+        localStorage.setItem('draft_taxMode', taxMode);
+        localStorage.setItem('draft_invoiceDetails', JSON.stringify(invoiceDetails));
+        localStorage.setItem('draft_items', JSON.stringify(items));
+        setSaveStatus('saved');
+        
+        setTimeout(() => setSaveStatus('idle'), 2000);
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [invoiceDetails, items, taxMode, currentView, editingId]);
 
   useEffect(() => {
     if (updateDirtyState) {
@@ -285,6 +303,12 @@ export default function TaxInvoice({ companySettings = {}, updateDirtyState }) {
     try {
       await saveInvoice(record);
       await loadInvoicesFromDb();
+      
+      // Clear offline drafts upon successful sync
+      localStorage.removeItem('draft_invoiceDetails');
+      localStorage.removeItem('draft_items');
+      localStorage.removeItem('draft_taxMode');
+      
       setSubmitting(false);
       return true;
     } catch (err) {
@@ -399,6 +423,33 @@ export default function TaxInvoice({ companySettings = {}, updateDirtyState }) {
 
   const handleClear = (askConfirm = true) => {
     if (!askConfirm || window.confirm('Clear the entire invoice?')) {
+      
+      // CHECK FOR EXISTING DRAFT FIRST
+      if (!askConfirm) {
+        const savedDraft = localStorage.getItem('draft_invoiceDetails');
+        if (savedDraft) {
+          if (window.confirm('You have an unsaved draft or transferred estimate. Do you want to load it?')) {
+            try {
+              setInvoiceDetails(JSON.parse(savedDraft));
+              const savedItems = localStorage.getItem('draft_items');
+              if (savedItems) setItems(JSON.parse(savedItems));
+              setTaxMode(localStorage.getItem('draft_taxMode') || 'CGST_SGST');
+              
+              setEditingId(null);
+              setErrors({});
+              return; // Stop execution to keep the restored draft
+            } catch (e) {
+              console.error("Failed to restore draft:", e);
+            }
+          } else {
+            // User rejected restoring, destroy the draft
+            localStorage.removeItem('draft_invoiceDetails');
+            localStorage.removeItem('draft_items');
+            localStorage.removeItem('draft_taxMode');
+          }
+        }
+      }
+
       setEditingId(null);
       setInvoiceDetails({ 
         partyName: '', partyAddress: '', gstNo: '', placeOfSupply: 'Telangana (36)', date: new Date().toISOString().split('T')[0], 
@@ -410,9 +461,6 @@ export default function TaxInvoice({ companySettings = {}, updateDirtyState }) {
       setItems([{ id: 1, description: '', hsn: companySettings.defaultHsnSac || '', sizeL: '', sizeB: '', no: '', qty: '', rate: '', gst: companySettings.defaultGstRate || 18 }]);
       setErrors({});
       
-      sessionStorage.removeItem('draft_invoiceDetails');
-      sessionStorage.removeItem('draft_items');
-      sessionStorage.removeItem('draft_taxMode');
       sessionStorage.removeItem('draft_editingId');
       if (updateDirtyState) updateDirtyState('TaxInvoice', false);
     }
@@ -561,9 +609,21 @@ export default function TaxInvoice({ companySettings = {}, updateDirtyState }) {
       {/* SCREEN FORM VIEW (HIDDEN ON PRINT) */}
       <div className="print:hidden flex-1 flex flex-col min-h-0 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <div className="flex items-center justify-between border-b border-zinc-200 pb-4 mb-6 shrink-0">
-          <h2 className="text-xl font-bold text-zinc-900 tracking-tight">
-            {isReadOnly ? `Viewing Invoice ${invoiceDetails.invoiceNo}` : editingId ? `Edit Invoice ${invoiceDetails.invoiceNo}` : 'New Tax Invoice'}
-          </h2>
+          
+          <div className="flex items-center gap-4">
+            <h2 className="text-xl font-bold text-zinc-900 tracking-tight">
+              {isReadOnly ? `Viewing Invoice ${invoiceDetails.invoiceNo}` : editingId ? `Edit Invoice ${invoiceDetails.invoiceNo}` : 'New Tax Invoice'}
+            </h2>
+            
+            {/* AUTO SAVE INDICATOR */}
+            {!isReadOnly && currentView === 'form' && !editingId && (
+              <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest ml-4">
+                {saveStatus === 'saving' && <span className="text-amber-500 flex items-center gap-1"><svg className="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg> Saving Draft...</span>}
+                {saveStatus === 'saved' && <span className="text-emerald-500 flex items-center gap-1"><svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg> Draft Saved Locally</span>}
+              </div>
+            )}
+          </div>
+
           <div className="flex gap-2">
             <button onClick={() => { setCurrentView('list'); handleClear(false); }} className="text-zinc-600 hover:text-zinc-900 text-xs font-bold transition-colors cursor-pointer bg-white px-4 py-2 rounded-xl border border-zinc-200 flex items-center gap-1.5">
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>

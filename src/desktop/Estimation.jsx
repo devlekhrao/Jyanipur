@@ -36,6 +36,7 @@ export default function Estimation({ companySettings = {} }) {
   const [editingId, setEditingId] = useState(null);
   const [estimationsList, setEstimationsList] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [saveStatus, setSaveStatus] = useState('idle'); // Added for Auto-Save Status
 
   // Load Estimations directly from Neon DB via db.js
   const loadEstimationsFromCloud = async () => {
@@ -89,6 +90,27 @@ export default function Estimation({ companySettings = {} }) {
       }));
     }
   }, [companySettings, editingId]);
+
+  // ==========================================
+  // DEBOUNCED AUTO-SAVE HOOK LOGIC
+  // ==========================================
+  useEffect(() => {
+    // Only auto-save if we are currently editing a form and not just viewing
+    if (currentView === 'form' && !editingId) {
+      setSaveStatus('saving');
+      
+      const timer = setTimeout(() => {
+        const draftData = { estimateDetails, items, taxMode };
+        localStorage.setItem('jyanipur_desktop_estimate_draft', JSON.stringify(draftData));
+        setSaveStatus('saved');
+        
+        setTimeout(() => setSaveStatus('idle'), 2000);
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [estimateDetails, items, taxMode, currentView, editingId]);
+  // ==========================================
 
   // --- AUTO INCREMENT ESTIMATE NO ---
   const generateNextEstimateNo = () => {
@@ -211,6 +233,10 @@ export default function Estimation({ companySettings = {} }) {
     try {
       await saveEstimation(record);
       await loadEstimationsFromCloud();
+      
+      // Clear the draft after successful save
+      localStorage.removeItem('jyanipur_desktop_estimate_draft');
+      
       return true;
     } catch (err) {
       console.error("Error saving estimation to cloud:", err);
@@ -349,6 +375,31 @@ export default function Estimation({ companySettings = {} }) {
 
   const handleClear = (askConfirm = true) => {
     if (!askConfirm || window.confirm('Clear the entire estimation?')) {
+      
+      // CHECK FOR EXISTING DRAFT BEFORE CLEARING
+      if (!askConfirm) {
+        const savedDraft = localStorage.getItem('jyanipur_desktop_estimate_draft');
+        if (savedDraft) {
+          if (window.confirm('You have an unsaved draft estimate. Do you want to restore it?')) {
+            try {
+              const parsed = JSON.parse(savedDraft);
+              setEstimateDetails(parsed.estimateDetails);
+              setItems(parsed.items);
+              setTaxMode(parsed.taxMode || 'CGST_SGST');
+              setEditingId(null);
+              setErrors({});
+              return; // Stop execution to keep the restored draft
+            } catch (e) {
+              console.error("Failed to restore draft:", e);
+            }
+          } else {
+            // User rejected restoring, destroy the draft
+            localStorage.removeItem('jyanipur_desktop_estimate_draft');
+          }
+        }
+      }
+
+      // Standard Reset
       setEditingId(null);
       setEstimateDetails({ 
         partyName: '', partyAddress: '', projectName: '', date: new Date().toISOString().split('T')[0], 
@@ -557,9 +608,21 @@ export default function Estimation({ companySettings = {} }) {
       {/* SCREEN FORM VIEW (HIDDEN ON PRINT) */}
       <div className="print:hidden flex-1 flex flex-col min-h-0 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <div className="flex items-center justify-between border-b border-zinc-200 pb-4 mb-6 shrink-0">
-          <h2 className="text-xl font-bold text-zinc-900 tracking-tight">
-            {isReadOnly ? `Viewing Estimate ${estimateDetails.estimateNo}` : editingId ? `Edit Estimate ${estimateDetails.estimateNo}` : 'New Estimation'}
-          </h2>
+          
+          <div className="flex items-center gap-4">
+            <h2 className="text-xl font-bold text-zinc-900 tracking-tight">
+              {isReadOnly ? `Viewing Estimate ${estimateDetails.estimateNo}` : editingId ? `Edit Estimate ${estimateDetails.estimateNo}` : 'New Estimation'}
+            </h2>
+            
+            {/* AUTO SAVE INDICATOR */}
+            {!isReadOnly && currentView === 'form' && !editingId && (
+              <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest ml-4">
+                {saveStatus === 'saving' && <span className="text-amber-500 flex items-center gap-1"><svg className="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg> Saving Draft...</span>}
+                {saveStatus === 'saved' && <span className="text-emerald-500 flex items-center gap-1"><svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg> Draft Saved Locally</span>}
+              </div>
+            )}
+          </div>
+
           <div className="flex gap-2">
             <button onClick={() => { setCurrentView('list'); handleClear(false); }} className="text-zinc-600 hover:text-zinc-900 text-xs font-bold transition-colors cursor-pointer bg-white px-4 py-2 rounded-xl border border-zinc-200 flex items-center gap-1.5">
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -785,195 +848,232 @@ export default function Estimation({ companySettings = {} }) {
       </div>
 
       {/* ========================================== */}
-      {/* PERFECT A4 PDF DOCUMENT ENGINE */}
+      {/* PERFECT A4 MULTI-PAGE PDF ENGINE           */}
       {/* ========================================== */}
-      <div className="hidden print:flex w-full bg-white text-black font-['Poppins'] text-xs print:p-0 print:m-0 flex-col items-center justify-between" style={{ minHeight: '100vh' }}>
+      <div className="hidden print:block w-full bg-white text-black font-['Poppins'] text-xs">
         
+        {/* Print Styles for Multi-Page Tables */}
         <style dangerouslySetInnerHTML={{__html: `
           @media print {
-            @page { margin: 0; size: A4 portrait; }
-            body { padding: 0 !important; background: white !important; color: black !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            @page { margin: 15mm; size: A4 portrait; }
+            body { 
+              padding: 0 !important; 
+              background: white !important; 
+              color: black !important; 
+              -webkit-print-color-adjust: exact; 
+              print-color-adjust: exact; 
+            }
             img { mix-blend-mode: multiply !important; }
+            
+            /* Magic CSS to repeat headers and prevent row breaks */
+            table { page-break-inside: auto; width: 100%; border-collapse: collapse; }
+            tr { page-break-inside: avoid; page-break-after: auto; }
+            thead { display: table-header-group; }
+            tfoot { display: table-footer-group; }
+            
+            /* Prevent orphans */
+            .totals-section { page-break-inside: avoid; }
+            .signatures-section { page-break-inside: avoid; }
           }
         `}} />
 
-        <div className="w-full bg-white flex flex-col relative flex-1 print:p-[15mm]">
+        {/* 
+          Instead of Flexbox, we use a single native <table> as the master wrapper.
+          This forces the browser print engine to correctly calculate page breaks.
+        */}
+        <table className="w-full">
           
-          {/* Header Branding */}
-          <div className="flex justify-between items-start border-b border-gray-300 pb-5 mb-6">
-            <div className="flex items-center gap-4">
-              {companySettings?.logoUrl && (
-                <img src={companySettings.logoUrl} className="h-14 w-auto object-contain shrink-0" alt="Logo" />
-              )}
-              <div>
-                <h1 className="text-lg font-bold text-black">{companySettings?.companyName || 'Company Name'}</h1>
-                <p className="text-[10px] text-gray-600 whitespace-pre-wrap mt-0.5 max-w-xs">{companySettings?.companyAddress}</p>
-                <p className="text-[10px] text-gray-800 mt-1">
-                  <span className="font-semibold">GSTIN:</span> {companySettings?.companyGst} <span className="mx-2">|</span> 
-                  <span className="font-semibold">Phone:</span> {companySettings?.companyPhone}
-                </p>
-              </div>
-            </div>
-            
-            <div className="text-right">
-              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1">Estimation / BOQ</span>
-              <h2 className="text-lg font-bold text-black">{estimateDetails.estimateNo || 'EST-000'}</h2>
-              <p className="text-[10px] text-gray-800 mt-1"><span className="font-semibold">Date:</span> {estimateDetails.date}</p>
-            </div>
-          </div>
+          {/* HEADER: Prints ONCE at the top of Page 1 */}
+          <thead>
+            <tr>
+              <td>
+                <div className="flex justify-between items-start border-b border-gray-300 pb-4 mb-4">
+                  <div className="flex items-center gap-4">
+                    {companySettings?.logoUrl && (
+                      <img src={companySettings.logoUrl} className="h-14 w-auto object-contain shrink-0" alt="Logo" />
+                    )}
+                    <div>
+                      <h1 className="text-lg font-bold text-black">{companySettings?.companyName || 'Company Name'}</h1>
+                      <p className="text-[10px] text-gray-600 whitespace-pre-wrap mt-0.5 max-w-xs">{companySettings?.companyAddress}</p>
+                      <p className="text-[10px] text-gray-800 mt-1">
+                        <span className="font-semibold">GSTIN:</span> {companySettings?.companyGst} <span className="mx-2">|</span> 
+                        <span className="font-semibold">Phone:</span> {companySettings?.companyPhone}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="text-right">
+                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1">Estimation / BOQ</span>
+                    <h2 className="text-lg font-bold text-black">{estimateDetails.estimateNo || 'EST-000'}</h2>
+                    <p className="text-[10px] text-gray-800 mt-1"><span className="font-semibold">Date:</span> {estimateDetails.date}</p>
+                  </div>
+                </div>
 
-          {/* Client & Project Info */}
-          <div className="flex justify-between mb-8">
-            <div>
-              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">To</span>
-              <h3 className="text-sm font-bold text-black uppercase">{estimateDetails.partyName || 'Client Name'}</h3>
-              <p className="text-[10px] text-gray-700 whitespace-pre-wrap mt-1 leading-relaxed">{estimateDetails.partyAddress}</p>
-            </div>
+                <div className="flex justify-between mb-6">
+                  <div>
+                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">To</span>
+                    <h3 className="text-sm font-bold text-black uppercase">{estimateDetails.partyName || 'Client Name'}</h3>
+                    <p className="text-[10px] text-gray-700 whitespace-pre-wrap mt-1 leading-relaxed">{estimateDetails.partyAddress}</p>
+                  </div>
+                  <div className="text-right space-y-1 text-[10px]">
+                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Project Details</span>
+                    <p className="text-gray-800"><span className="font-semibold">Project:</span> {estimateDetails.projectName || 'Interior Estimation'}</p>
+                    {estimateDetails.validUntil && <p className="text-gray-800"><span className="font-semibold">Valid Until:</span> {estimateDetails.validUntil}</p>}
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </thead>
 
-            <div className="text-right space-y-1 text-[10px]">
-              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Project Details</span>
-              <p className="text-gray-800"><span className="font-semibold">Project:</span> {estimateDetails.projectName || 'Interior Estimation'}</p>
-              {estimateDetails.validUntil && <p className="text-gray-800"><span className="font-semibold">Valid Until:</span> {estimateDetails.validUntil}</p>}
-            </div>
-          </div>
+          {/* BODY: Contains the actual Line Items */}
+          <tbody>
+            <tr>
+              <td>
+                <table className="w-full text-left border-collapse border border-gray-300 mb-6">
+                  {/* Nested THEAD repeats on every new page! */}
+                  <thead className="bg-gray-50 border-b border-gray-300">
+                    <tr className="text-gray-700 text-[10px] uppercase font-semibold">
+                      <th className="py-2 px-2 text-center w-8 border-r border-gray-200">#</th>
+                      <th className="py-2 px-3 border-r border-gray-200">Scope of Work / Material Details</th>
+                      <th className="py-2 px-2 text-center w-12 border-r border-gray-200">Unit</th>
+                      <th className="py-2 px-2 text-center w-16 border-r border-gray-200">L x B</th>
+                      <th className="py-2 px-2 text-center w-10 border-r border-gray-200">No</th>
+                      <th className="py-2 px-2 text-center w-12 border-r border-gray-200">Qty</th>
+                      <th className="py-2 px-2 text-right w-20 border-r border-gray-200">Rate</th>
+                      {taxMode !== 'NONE' && <th className="py-2 px-2 text-center w-12 border-r border-gray-200">Tax</th>}
+                      <th className="py-2 px-3 text-right w-24">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 text-[10px] text-black">
+                    {items.map((item, index) => {
+                      const row = calculateRow(item);
+                      if (!item.description) return null;
+                      const measurement = (item.sizeL || item.sizeB) ? `${item.sizeL || '-'} x ${item.sizeB || '-'}` : '-';
 
-          {/* ITEM TABLE */}
-          <table className="w-full text-left border-collapse border border-gray-300 mb-6">
-            <thead className="bg-gray-50 border-b border-gray-300">
-              <tr className="text-gray-700 text-[10px] uppercase font-semibold">
-                <th className="py-2 px-2 text-center w-8 border-r border-gray-200">#</th>
-                <th className="py-2 px-3 border-r border-gray-200">Scope of Work / Material Details</th>
-                <th className="py-2 px-2 text-center w-12 border-r border-gray-200">Unit</th>
-                <th className="py-2 px-2 text-center w-16 border-r border-gray-200">L x B</th>
-                <th className="py-2 px-2 text-center w-10 border-r border-gray-200">No</th>
-                <th className="py-2 px-2 text-center w-12 border-r border-gray-200">Qty</th>
-                <th className="py-2 px-2 text-right w-20 border-r border-gray-200">Rate</th>
-                {taxMode !== 'NONE' && <th className="py-2 px-2 text-center w-12 border-r border-gray-200">Tax</th>}
-                <th className="py-2 px-3 text-right w-24">Amount</th>
+                      return (
+                        <tr key={item.id}>
+                          <td className="py-2 px-2 text-center text-gray-500 border-r border-gray-200">{index + 1}</td>
+                          <td className="py-2 px-3 border-r border-gray-200">{item.description}</td>
+                          <td className="py-2 px-2 text-center border-r border-gray-200">{item.unit}</td>
+                          <td className="py-2 px-2 text-center border-r border-gray-200">{measurement}</td>
+                          <td className="py-2 px-2 text-center border-r border-gray-200">{item.no || '-'}</td>
+                          <td className="py-2 px-2 text-center font-medium border-r border-gray-200">{row.quantity.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
+                          <td className="py-2 px-2 text-right border-r border-gray-200">₹{parseFloat(item.rate || 0).toLocaleString('en-IN')}</td>
+                          {taxMode !== 'NONE' && <td className="py-2 px-2 text-center border-r border-gray-200">{item.gst}%</td>}
+                          <td className="py-2 px-3 text-right font-medium">₹{row.totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+
+                {/* Amount in Words & Totals Block (Avoids breaking across pages) */}
+                <div className="totals-section flex justify-between items-start mb-8">
+                  <div className="w-1/2 pr-4 pt-2">
+                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Estimated Amount in Words</span>
+                    <p className="text-[10px] font-medium text-black capitalize">{numberToWords(finalAmount > 0 ? finalAmount : totals.grandTotal)}</p>
+                  </div>
+                  
+                  <div className="w-64 space-y-1.5 text-xs text-black">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Taxable BOQ Total:</span>
+                      <span>₹{totals.subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                    </div>
+                    
+                    {taxMode === 'IGST' ? (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">IGST Total:</span>
+                        <span>₹{totals.totalGst.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                      </div>
+                    ) : taxMode === 'CGST_SGST' ? (
+                      <>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">CGST:</span><span>₹{(totals.totalGst / 2).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                        </div>
+                        <div className="flex justify-between border-b border-gray-200 pb-1.5">
+                          <span className="text-gray-600">SGST:</span><span>₹{(totals.totalGst / 2).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                        </div>
+                      </>
+                    ) : null}
+                    
+                    <div className="flex justify-between font-semibold pt-1">
+                      <span>Grand Total:</span><span>₹{totals.grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                    </div>
+
+                    {(estimateDetails.discount > 0) && (
+                      <div className="flex justify-between text-gray-500 text-[10px]">
+                        <span>Discount:</span><span>- ₹{parseFloat(estimateDetails.discount).toLocaleString('en-IN')}</span>
+                      </div>
+                    )}
+
+                    <div className="flex justify-between font-bold text-base border-t-2 border-black pt-2 mt-2">
+                      <span>Final Estimate:</span><span>₹{finalAmount > 0 ? finalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2}) : 0}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Terms, Remarks, and Signatures (Avoids breaking across pages) */}
+                <div className="signatures-section grid grid-cols-2 gap-8 text-[10px]">
+                  <div className="space-y-4">
+                    {companySettings?.showBankDetailsOnPdf !== false && (
+                      <div>
+                        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Bank Details</span>
+                        <div className="grid grid-cols-[50px_1fr] gap-y-0.5 text-black">
+                          <span className="font-semibold">Bank:</span><span>{estimateDetails.bankName}</span>
+                          <span className="font-semibold">Name:</span><span>{estimateDetails.accountName}</span>
+                          <span className="font-semibold">A/C No:</span><span>{estimateDetails.accountNo}</span>
+                          <span className="font-semibold">IFSC:</span><span>{estimateDetails.ifscCode}</span>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {companySettings?.showTermsOnPdf !== false && (
+                      <div>
+                        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Payment Terms & Schedule</span>
+                        <p className="whitespace-pre-wrap text-gray-600 leading-tight">{estimateDetails.terms}</p>
+                      </div>
+                    )}
+
+                    {companySettings?.showRemarksOnPdf !== false && estimateDetails.description && (
+                      <div>
+                        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Scope Remarks</span>
+                        <p className="text-gray-800">{estimateDetails.description}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {companySettings?.showSignatoryOnPdf !== false && (
+                    <div className="flex flex-col items-end justify-end text-right pt-4">
+                      {companySettings?.showSignatureImage && companySettings?.signatureUrl ? (
+                        <img src={companySettings.signatureUrl} alt="Signature" className="h-16 w-auto object-contain mb-2 mix-blend-multiply" />
+                      ) : <div className="h-16"></div>}
+                      <div className="border-t border-gray-400 pt-1 w-48">
+                        <p className="font-bold text-black">For {companySettings?.companyName}</p>
+                        <p className="text-[9px] text-gray-500 mt-0.5 uppercase tracking-wider">Authorized Signatory</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+              </td>
+            </tr>
+          </tbody>
+
+          {/* FOOTER: Prints at the bottom of every page automatically */}
+          {companySettings?.pdfFooterDisclaimer && (
+            <tfoot>
+              <tr>
+                <td>
+                  <div className="mt-4 pt-2 border-t border-gray-200 text-center w-full">
+                    <p className="text-[10px] text-gray-500">
+                      {companySettings.pdfFooterDisclaimer}
+                    </p>
+                  </div>
+                </td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 text-[10px] text-black">
-              {items.map((item, index) => {
-                const row = calculateRow(item);
-                if (!item.description) return null;
-                const measurement = (item.sizeL || item.sizeB) ? `${item.sizeL || '-'} x ${item.sizeB || '-'}` : '-';
-
-                return (
-                  <tr key={item.id} className="break-inside-avoid">
-                    <td className="py-2 px-2 text-center text-gray-500 border-r border-gray-200">{index + 1}</td>
-                    <td className="py-2 px-3 border-r border-gray-200">{item.description}</td>
-                    <td className="py-2 px-2 text-center border-r border-gray-200">{item.unit}</td>
-                    <td className="py-2 px-2 text-center border-r border-gray-200">{measurement}</td>
-                    <td className="py-2 px-2 text-center border-r border-gray-200">{item.no || '-'}</td>
-                    <td className="py-2 px-2 text-center font-medium border-r border-gray-200">{row.quantity.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
-                    <td className="py-2 px-2 text-right border-r border-gray-200">₹{parseFloat(item.rate || 0).toLocaleString('en-IN')}</td>
-                    {taxMode !== 'NONE' && <td className="py-2 px-2 text-center border-r border-gray-200">{item.gst}%</td>}
-                    <td className="py-2 px-3 text-right font-medium">₹{row.totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-
-          {/* Amount in Words & Totals Block */}
-          <div className="flex justify-between items-start break-inside-avoid mb-10">
-            <div className="w-1/2 pr-4 pt-2">
-              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Estimated Amount in Words</span>
-              <p className="text-[10px] font-medium text-black capitalize">{numberToWords(finalAmount > 0 ? finalAmount : totals.grandTotal)}</p>
-            </div>
-            
-            <div className="w-64 space-y-1.5 text-xs text-black">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Taxable BOQ Total:</span>
-                <span>₹{totals.subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-              </div>
-              
-              {taxMode === 'IGST' ? (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">IGST Total:</span>
-                  <span>₹{totals.totalGst.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-                </div>
-              ) : taxMode === 'CGST_SGST' ? (
-                <>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">CGST:</span><span>₹{(totals.totalGst / 2).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-                  </div>
-                  <div className="flex justify-between border-b border-gray-200 pb-1.5">
-                    <span className="text-gray-600">SGST:</span><span>₹{(totals.totalGst / 2).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-                  </div>
-                </>
-              ) : null}
-              
-              <div className="flex justify-between font-semibold pt-1">
-                <span>Grand Total:</span><span>₹{totals.grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-              </div>
-
-              {(estimateDetails.discount > 0) && (
-                <div className="flex justify-between text-gray-500 text-[10px]">
-                  <span>Discount:</span><span>- ₹{parseFloat(estimateDetails.discount).toLocaleString('en-IN')}</span>
-                </div>
-              )}
-
-              <div className="flex justify-between font-bold text-base border-t-2 border-black pt-2 mt-2">
-                <span>Final Estimate:</span><span>₹{finalAmount > 0 ? finalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2}) : 0}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Terms, Remarks, and Signatures */}
-          <div className="grid grid-cols-2 gap-8 text-[10px] break-inside-avoid">
-            <div className="space-y-5">
-              {companySettings?.showBankDetailsOnPdf !== false && (
-                <div>
-                  <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Bank Details</span>
-                  <div className="grid grid-cols-[50px_1fr] gap-y-0.5 text-black">
-                    <span className="font-semibold">Bank:</span><span>{estimateDetails.bankName}</span>
-                    <span className="font-semibold">Name:</span><span>{estimateDetails.accountName}</span>
-                    <span className="font-semibold">A/C No:</span><span>{estimateDetails.accountNo}</span>
-                    <span className="font-semibold">IFSC:</span><span>{estimateDetails.ifscCode}</span>
-                  </div>
-                </div>
-              )}
-              
-              {companySettings?.showTermsOnPdf !== false && (
-                <div>
-                  <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Payment Terms & Schedule</span>
-                  <p className="whitespace-pre-wrap text-gray-600 leading-tight">{estimateDetails.terms}</p>
-                </div>
-              )}
-
-              {companySettings?.showRemarksOnPdf !== false && estimateDetails.description && (
-                <div>
-                  <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Scope Remarks</span>
-                  <p className="text-gray-800">{estimateDetails.description}</p>
-                </div>
-              )}
-            </div>
-
-            {companySettings?.showSignatoryOnPdf !== false && (
-              <div className="flex flex-col items-end justify-end text-right pt-6">
-                {companySettings?.showSignatureImage && companySettings?.signatureUrl ? (
-                  <img src={companySettings.signatureUrl} alt="Signature" className="h-16 w-auto object-contain mb-2 mix-blend-multiply" />
-                ) : <div className="h-16"></div>}
-                <div className="border-t border-gray-400 pt-1 w-48">
-                  <p className="font-bold text-black">For {companySettings?.companyName}</p>
-                  <p className="text-[9px] text-gray-500 mt-0.5 uppercase tracking-wider">Authorized Signatory</p>
-                </div>
-              </div>
-            )}
-          </div>
-
-        </div>
-
-        {/* Persistent Anchored Footer */}
-        {companySettings?.pdfFooterDisclaimer && (
-          <div className="mt-auto pt-4 pb-2 border-t border-gray-200 text-center w-full">
-            <p className="text-[10px] text-gray-500">
-              {companySettings.pdfFooterDisclaimer}
-            </p>
-          </div>
-        )}
-
+            </tfoot>
+          )}
+        </table>
       </div>
     </div>
   );
