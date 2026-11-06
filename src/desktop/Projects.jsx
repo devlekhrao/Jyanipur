@@ -254,26 +254,26 @@ export default function Projects() {
   const globalBilled = projects.reduce((sum, p) => sum + (Number(p.totalBilled) || 0), 0);
   const globalCost = projects.reduce((sum, p) => sum + (Number(p.materialCost) || 0) + (Number(p.laborCost) || 0), 0);
 
-  const inputClass = "w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-white focus:outline-none focus:border-[#B45309] focus:ring-1 focus:ring-inset focus:ring-[#B45309] text-zinc-900 text-sm font-medium transition-all disabled:opacity-75 disabled:cursor-not-allowed";
-  const labelClass = "block text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5 ml-0.5";
+  const inputClass = "w-full px-4 py-3 rounded-lg border border-zinc-200 bg-zinc-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-zinc-900 text-zinc-900 text-sm font-medium transition-all disabled:opacity-75 disabled:cursor-not-allowed";
+  const labelClass = "block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-0.5";
 
   // ==========================================
   // RENDER 1: LIST VIEW
   // ==========================================
   if (currentView === 'list') {
     return (
-      <div className="w-full h-full flex flex-col" style={{ fontFamily: 'Poppins, sans-serif' }}>
+      <div className="w-full h-full flex flex-col font-['Inter',sans-serif]">
         
         {/* Header & Controls */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center pb-5 border-b border-zinc-200 mb-6 gap-4 shrink-0">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center pb-6 border-b border-zinc-200 mb-6 gap-4 shrink-0">
           <div>
-            <h2 className="text-xl font-bold text-zinc-900 tracking-tight">Project Board & Job Costing</h2>
-            <p className="text-zinc-500 text-sm mt-0.5 font-medium">Onboard clients and sequence multiple projects by PO Date.</p>
+            <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Project Board & Job Costing</h2>
+            <p className="text-zinc-500 text-sm mt-1 font-medium">Onboard clients and sequence multiple projects by PO Date.</p>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex items-center h-10 bg-white border border-zinc-200 rounded-xl px-3.5 shadow-sm">
-              <span className="text-sm text-zinc-400">🔍</span>
+            <div className="flex items-center h-10 bg-white border border-zinc-200 rounded-lg px-3.5 shadow-sm focus-within:ring-2 focus-within:ring-zinc-900 transition-all">
+              <svg className="w-4 h-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
               <input 
                 type="text" 
                 placeholder="Search client or project..." 
@@ -284,9 +284,9 @@ export default function Projects() {
             </div>
             <button 
               onClick={handleNewProject} 
-              className="h-10 bg-[#B45309] hover:bg-[#92400E] text-white px-5 rounded-xl text-sm font-semibold transition-all shadow-sm cursor-pointer flex items-center gap-1.5"
+              className="bg-zinc-900 hover:bg-black text-white px-5 py-2.5 rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer flex items-center gap-2 h-10 uppercase tracking-widest border border-black"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
               </svg>
               New Project
@@ -296,21 +296,22 @@ export default function Projects() {
 
         {/* Global Financial Overview */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6 shrink-0">
-          <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm flex flex-col justify-center">
-            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Total Active PO Budgets</span>
-            <p className="text-xl font-bold text-zinc-900">₹ {globalBudget.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+          <div className="bg-white p-6 rounded-xl border border-zinc-200 shadow-sm flex flex-col justify-center">
+            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-2">Total Active PO Budgets</span>
+            <p className="text-2xl font-black text-zinc-900 tracking-tight">₹ {globalBudget.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
           </div>
-          <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm flex flex-col justify-center">
-            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Total Billed (Invoices)</span>
-            <p className="text-xl font-bold text-zinc-800">₹ {globalBilled.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+          <div className="bg-white p-6 rounded-xl border border-zinc-200 shadow-sm flex flex-col justify-center">
+            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-2">Total Billed (Invoices)</span>
+            <p className="text-2xl font-black text-zinc-900 tracking-tight">₹ {globalBilled.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
           </div>
-          <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm flex flex-col justify-center">
-            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Total Cost (Mat + Labor)</span>
-            <p className="text-xl font-bold text-red-500">₹ {globalCost.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+          <div className="bg-red-50 p-6 rounded-xl border border-red-200 shadow-sm flex flex-col justify-center">
+            <span className="text-[10px] font-bold text-red-700 uppercase tracking-widest block mb-2">Total Cost (Mat + Labor)</span>
+            <p className="text-2xl font-black text-red-600 tracking-tight">₹ {globalCost.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
           </div>
-          <div className="bg-emerald-50 p-5 rounded-2xl border border-emerald-100 shadow-sm flex flex-col justify-center">
-            <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest block mb-1">Estimated Net Margin</span>
-            <p className="text-xl font-bold text-emerald-700">₹ {(globalBilled - globalCost).toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+          <div className="bg-zinc-900 p-6 rounded-xl border border-black shadow-sm flex flex-col justify-center relative overflow-hidden">
+            <svg className="absolute -right-4 -bottom-6 w-32 h-32 opacity-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}><path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-2 relative z-10">Estimated Net Margin</span>
+            <p className="text-2xl font-black text-white tracking-tight relative z-10">₹ {(globalBilled - globalCost).toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
           </div>
         </div>
 
@@ -318,54 +319,55 @@ export default function Projects() {
         <div className="flex-1 overflow-y-auto space-y-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pb-10">
           {loading ? (
             <div className="py-20 text-center text-zinc-400 font-medium text-sm flex flex-col items-center justify-center space-y-3">
-              <div className="w-10 h-10 border-4 border-zinc-200 border-t-[#B45309] rounded-full animate-spin"></div>
+              <div className="w-10 h-10 border-4 border-zinc-200 border-t-zinc-900 rounded-full animate-spin"></div>
               <p>Syncing projects from cloud database...</p>
             </div>
           ) : filteredClients.length === 0 ? (
-            <div className="py-20 text-center text-zinc-400 font-medium text-sm bg-white border border-dashed border-zinc-200 rounded-2xl">No clients or projects found.</div>
+            <div className="py-20 text-center text-zinc-400 font-bold text-xs uppercase tracking-widest bg-white border border-dashed border-zinc-300 rounded-xl">No clients or projects found.</div>
           ) : (
             filteredClients.map(client => (
-              <div key={client.name} className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden">
+              <div key={client.name} className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
                 
                 {/* Client Header */}
-                <div className="bg-zinc-50 px-6 py-4 border-b border-zinc-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div className="bg-white px-6 py-5 border-b border-zinc-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                   <div>
-                    <h3 className="text-base font-bold text-zinc-900 flex items-center gap-2">
-                      <span className="w-7 h-7 rounded-full bg-[#B45309] text-white flex items-center justify-center text-xs font-semibold">
+                    <h3 className="text-lg font-bold text-zinc-900 flex items-center gap-3 tracking-tight">
+                      <span className="w-8 h-8 rounded-lg bg-zinc-900 text-white flex items-center justify-center text-sm font-bold shadow-sm">
                         {client.name.charAt(0)}
                       </span>
                       {client.name}
                     </h3>
-                    <div className="flex gap-4 mt-2 ml-9">
-                      {client.gstin && <p className="text-[10px] font-mono font-semibold text-zinc-500 bg-white px-2 py-0.5 rounded border border-zinc-200 shadow-sm">GST: {client.gstin}</p>}
-                      {client.phone && <p className="text-[10px] font-mono font-semibold text-zinc-500 bg-white px-2 py-0.5 rounded border border-zinc-200 shadow-sm">Ph: {client.phone}</p>}
-                      <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest py-0.5">
+                    <div className="flex gap-4 mt-2 ml-11">
+                      {client.gstin && <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 bg-zinc-50 px-2 py-1 rounded-md border border-zinc-200 shadow-sm">GST: <span className="text-zinc-900">{client.gstin}</span></p>}
+                      {client.phone && <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 bg-zinc-50 px-2 py-1 rounded-md border border-zinc-200 shadow-sm">Ph: <span className="text-zinc-900">{client.phone}</span></p>}
+                      <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest py-1 px-1">
                         {client.projects.length} Project{client.projects.length > 1 ? 's' : ''}
                       </p>
                     </div>
                   </div>
                   <div className="text-right hidden sm:block">
-                    <p className="text-sm font-semibold text-zinc-900">Client Budget: ₹{client.totalBudget.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
-                    <p className="text-[11px] font-semibold text-emerald-600 mt-1">Est. Margin: ₹{(client.totalBilled - client.totalCost).toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+                    <p className="text-sm font-bold text-zinc-500 uppercase tracking-widest">Client Budget</p>
+                    <p className="text-xl font-black text-zinc-900">₹{client.totalBudget.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+                    <p className="text-[10px] font-bold text-emerald-700 mt-1 uppercase tracking-widest bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-block">Margin: ₹{(client.totalBilled - client.totalCost).toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
                   </div>
                 </div>
 
                 {/* Projects Table */}
-                <div className="overflow-x-auto w-full">
+                <div className="overflow-x-auto w-full bg-zinc-50/50">
                   <table className="w-full text-left border-collapse whitespace-nowrap min-w-[1000px]">
                     <thead>
-                      <tr className="text-zinc-500 text-[11px] uppercase tracking-wider border-b border-zinc-100 bg-white">
-                        <th className="py-3.5 px-6 font-semibold w-64">Project / Site Name</th>
-                        <th className="py-3.5 px-4 font-semibold w-28">PO Date</th>
-                        <th className="py-3.5 px-4 font-semibold text-center w-24">Status</th>
-                        <th className="py-3.5 px-4 font-semibold text-right w-32">PO Budget</th>
-                        <th className="py-3.5 px-4 font-semibold text-right w-32">Billed (Sales)</th>
-                        <th className="py-3.5 px-4 font-semibold text-right w-32">Costs (Mat+Lab)</th>
-                        <th className="py-3.5 px-4 font-semibold text-right w-32">Site Margin</th>
-                        <th className="py-3.5 px-6 font-semibold text-right w-24">Action</th>
+                      <tr className="text-zinc-500 text-[10px] uppercase tracking-widest border-b border-zinc-200 bg-zinc-50 font-bold">
+                        <th className="py-4 px-6 w-64">Project / Site Name</th>
+                        <th className="py-4 px-4 w-28">PO Date</th>
+                        <th className="py-4 px-4 text-center w-24">Status</th>
+                        <th className="py-4 px-4 text-right w-32">PO Budget</th>
+                        <th className="py-4 px-4 text-right w-32">Billed (Sales)</th>
+                        <th className="py-4 px-4 text-right w-32">Costs (Mat+Lab)</th>
+                        <th className="py-4 px-4 text-right w-32">Site Margin</th>
+                        <th className="py-4 px-6 text-right w-24">Action</th>
                       </tr>
                     </thead>
-                    <tbody className="text-sm text-zinc-800 divide-y divide-zinc-50">
+                    <tbody className="text-sm text-zinc-800 divide-y divide-zinc-100">
                       {client.projects.map((proj, index) => {
                         const matCost = Number(proj.materialCost) || 0;
                         const labCost = Number(proj.laborCost) || 0;
@@ -373,52 +375,52 @@ export default function Projects() {
                         const margin = (Number(proj.totalBilled) || 0) - totalCost;
                         
                         return (
-                          <tr key={proj.id} className="hover:bg-zinc-50 transition-colors">
+                          <tr key={proj.id} className="hover:bg-white transition-colors">
                             <td className="py-4 px-6">
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs font-semibold text-zinc-400 w-4">#{index + 1}</span>
+                              <div className="flex items-center gap-3">
+                                <span className="text-[10px] font-bold text-zinc-400 w-4">#{index + 1}</span>
                                 <div>
-                                  <p className="font-semibold text-zinc-900">{proj.name || proj.projectName}</p>
-                                  <p className="text-[11px] text-zinc-400 font-medium mt-0.5">
-                                    {proj.invoicesCount || 0} Invoices Linked
+                                  <p className="font-bold text-zinc-900 tracking-tight">{proj.name || proj.projectName}</p>
+                                  <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-1">
+                                    {proj.invoicesCount || 0} Invoices
                                   </p>
                                 </div>
                               </div>
                             </td>
-                            <td className="py-4 px-4 text-zinc-500 font-medium text-sm">
+                            <td className="py-4 px-4 text-zinc-500 font-bold text-xs uppercase tracking-widest">
                               {proj.poDate || '-'}
                             </td>
                             <td className="py-4 px-4 text-center">
-                              <span className={`inline-block px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
-                                proj.status === 'Ongoing' ? 'bg-blue-50 text-blue-700 border border-blue-100' :
-                                proj.status === 'Completed' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
-                                'bg-amber-50 text-amber-700 border border-amber-100'
+                              <span className={`inline-block px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-widest border ${
+                                proj.status === 'Ongoing' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                proj.status === 'Completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                'bg-zinc-100 text-zinc-700 border-zinc-300'
                               }`}>
                                 {proj.status || 'Planning'}
                               </span>
                             </td>
-                            <td className="py-4 px-4 text-right font-medium text-sm text-zinc-900">
+                            <td className="py-4 px-4 text-right font-bold text-sm text-zinc-900">
                               ₹{(Number(proj.budget) || 0).toLocaleString('en-IN', {maximumFractionDigits: 0})}
                             </td>
                             <td className="py-4 px-4 text-right">
-                              <p className="font-medium text-sm text-zinc-800">₹{(Number(proj.totalBilled) || 0).toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
-                              <p className="text-[10px] text-zinc-400 font-medium mt-0.5">₹{(Number(proj.totalReceived) || 0).toLocaleString('en-IN', {maximumFractionDigits: 0})} Recv</p>
+                              <p className="font-bold text-sm text-zinc-900">₹{(Number(proj.totalBilled) || 0).toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+                              <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest mt-1">₹{(Number(proj.totalReceived) || 0).toLocaleString('en-IN', {maximumFractionDigits: 0})} Recv</p>
+                            </td>
+                            <td className="py-4 px-4 text-right bg-red-50/30">
+                              <p className="font-bold text-sm text-red-600">₹{totalCost.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
+                              <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-1">Mat: ₹{matCost.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
                             </td>
                             <td className="py-4 px-4 text-right">
-                              <p className="font-medium text-sm text-red-500">₹{totalCost.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
-                              <p className="text-[10px] text-zinc-400 font-medium mt-0.5">Mat: ₹{matCost.toLocaleString('en-IN', {maximumFractionDigits: 0})}</p>
-                            </td>
-                            <td className="py-4 px-4 text-right">
-                              <span className={`font-semibold text-sm ${margin >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                                ₹{margin.toLocaleString('en-IN', {maximumFractionDigits: 0})}
+                              <span className={`font-black text-sm ${margin >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>
+                                {margin >= 0 ? '+' : ''}₹{margin.toLocaleString('en-IN', {maximumFractionDigits: 0})}
                               </span>
                             </td>
                             <td className="py-4 px-6 text-right space-x-2">
                               <div className="flex items-center justify-end gap-1.5">
-                                <button onClick={() => handleEditProject(proj)} title="Edit Project" className="px-2.5 py-1.5 bg-amber-50 text-[#B45309] hover:bg-[#B45309] hover:text-white border border-amber-200/60 rounded-lg font-semibold cursor-pointer text-[11px] uppercase tracking-wider transition-all">
+                                <button onClick={() => handleEditProject(proj)} title="Edit Project" className="px-3 py-1.5 bg-zinc-100 text-zinc-600 hover:bg-zinc-900 hover:text-white border border-zinc-200 rounded-lg font-bold cursor-pointer text-[10px] uppercase tracking-widest transition-all shadow-sm">
                                   Edit
                                 </button>
-                                <button onClick={() => handleView(proj)} title="View Master Report" className="px-3 py-1.5 bg-[#B45309] text-white hover:bg-[#92400E] shadow-sm rounded-lg font-bold cursor-pointer text-[11px] uppercase tracking-wider transition-all">
+                                <button onClick={() => handleView(proj)} title="View Master Report" className="px-4 py-1.5 bg-zinc-900 text-white hover:bg-black shadow-sm rounded-lg font-bold cursor-pointer text-[10px] uppercase tracking-widest transition-all border border-black">
                                   Report
                                 </button>
                               </div>
@@ -446,16 +448,16 @@ export default function Projects() {
     const totalTasks = reportData.tasks.length;
     
     return (
-      <div className="w-full h-full flex flex-col bg-zinc-50 print:bg-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
+      <div className="w-full h-full flex flex-col font-['Inter',sans-serif] print:bg-white">
         
         {/* Report Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center pb-5 border-b border-zinc-200 mb-6 shrink-0 gap-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center pb-6 border-b border-zinc-200 mb-6 shrink-0 gap-4">
           <div>
-            <div className="flex items-center gap-3 mb-1">
-              <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border ${
+            <div className="flex items-center gap-3 mb-2">
+              <span className={`px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-widest border ${
                 activeProject.status === 'Ongoing' ? 'bg-blue-50 text-blue-700 border-blue-200' :
                 activeProject.status === 'Completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                'bg-amber-50 text-amber-700 border-amber-200'
+                'bg-zinc-100 text-zinc-700 border-zinc-300'
               }`}>
                 {activeProject.status || 'Planning'}
               </span>
@@ -464,12 +466,15 @@ export default function Projects() {
             <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">{activeProject.name || activeProject.projectName}</h2>
           </div>
           <div className="flex gap-2 print:hidden">
-            <button onClick={() => setCurrentView('list')} className="text-zinc-600 hover:text-zinc-900 text-xs font-bold transition-colors cursor-pointer bg-white px-4 py-2 rounded-xl border border-zinc-200 shadow-sm flex items-center gap-1.5">
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+            <button onClick={() => setCurrentView('list')} className="text-zinc-700 hover:text-zinc-900 text-[10px] font-bold uppercase tracking-widest transition-colors cursor-pointer bg-white px-5 py-2.5 rounded-lg border border-zinc-200 shadow-sm flex items-center gap-2">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
               Back to Projects
             </button>
-            <button onClick={() => window.print()} className="bg-[#B45309] text-white px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer hover:bg-[#92400E] shadow-sm flex items-center gap-1.5">
-              🖨️ Print Report
+            <button onClick={() => window.print()} className="bg-zinc-900 text-white px-5 py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all cursor-pointer hover:bg-black shadow-sm flex items-center gap-2 border border-black">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+              </svg>
+              Print Report
             </button>
           </div>
         </div>
@@ -478,21 +483,21 @@ export default function Projects() {
           
           {/* Quick Stats Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm flex flex-col justify-center">
-              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Days Active</span>
-              <p className="text-2xl font-black text-zinc-900">{calculateDaysActive(activeProject.poDate)} <span className="text-sm font-semibold text-zinc-400">Days</span></p>
+            <div className="bg-white p-6 rounded-xl border border-zinc-200 shadow-sm flex flex-col justify-center">
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">Days Active</span>
+              <p className="text-2xl font-black text-zinc-900 tracking-tight">{calculateDaysActive(activeProject.poDate)} <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Days</span></p>
             </div>
-            <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm flex flex-col justify-center">
-              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Task Progress</span>
-              <p className="text-2xl font-black text-blue-600">{completedTasks} <span className="text-sm font-semibold text-zinc-400">/ {totalTasks}</span></p>
+            <div className="bg-white p-6 rounded-xl border border-zinc-200 shadow-sm flex flex-col justify-center">
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">Task Progress</span>
+              <p className="text-2xl font-black text-blue-600 tracking-tight">{completedTasks} <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">/ {totalTasks}</span></p>
             </div>
-            <div className="bg-emerald-50 p-5 rounded-2xl border border-emerald-100 shadow-sm flex flex-col justify-center">
-              <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1">Income Received</span>
-              <p className="text-xl font-black text-emerald-700">₹ {(reportData.pnl?.incomeReceived || 0).toLocaleString('en-IN')}</p>
+            <div className="bg-emerald-50 p-6 rounded-xl border border-emerald-200 shadow-sm flex flex-col justify-center">
+              <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest mb-2">Income Received</span>
+              <p className="text-2xl font-black text-emerald-800 tracking-tight">₹ {(reportData.pnl?.incomeReceived || 0).toLocaleString('en-IN')}</p>
             </div>
-            <div className="bg-red-50 p-5 rounded-2xl border border-red-100 shadow-sm flex flex-col justify-center">
-              <span className="text-[10px] font-bold text-red-600 uppercase tracking-widest mb-1">Total Costs Incurred</span>
-              <p className="text-xl font-black text-red-600">₹ {(reportData.pnl?.totalCost || 0).toLocaleString('en-IN')}</p>
+            <div className="bg-red-50 p-6 rounded-xl border border-red-200 shadow-sm flex flex-col justify-center">
+              <span className="text-[10px] font-bold text-red-700 uppercase tracking-widest mb-2">Total Costs Incurred</span>
+              <p className="text-2xl font-black text-red-800 tracking-tight">₹ {(reportData.pnl?.totalCost || 0).toLocaleString('en-IN')}</p>
             </div>
           </div>
 
@@ -503,48 +508,50 @@ export default function Projects() {
             <div className="space-y-6">
               
               {/* Where we stand (Latest DPR) */}
-              <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden p-6">
-                <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                  <span>📍</span> Current Standing (Latest Daily Report)
+              <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden p-6">
+                <h3 className="text-[10px] font-bold text-zinc-900 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <svg className="w-4 h-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                  Current Standing (Latest Daily Report)
                 </h3>
                 {latestDPR ? (
                   <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-[10px] font-bold text-[#B45309] bg-amber-50 px-2 py-0.5 rounded border border-amber-200">Date: {latestDPR.date}</span>
-                      <span className="text-[10px] font-medium text-zinc-500">By: {latestDPR.loggedBy}</span>
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="text-[9px] font-bold text-zinc-700 bg-zinc-100 px-2.5 py-1 rounded-md border border-zinc-200 uppercase tracking-widest">Date: {latestDPR.date}</span>
+                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">By: {latestDPR.loggedBy}</span>
                     </div>
-                    <p className="text-sm text-zinc-800 font-medium leading-relaxed bg-zinc-50 p-3 rounded-xl border border-zinc-100">{latestDPR.summary}</p>
+                    <p className="text-sm text-zinc-800 font-medium leading-relaxed bg-zinc-50 p-4 rounded-lg border border-zinc-200 shadow-inner">{latestDPR.summary}</p>
                     
                     {latestDPR.materials_needed && (
                       <div className="mt-4">
-                        <span className="text-[10px] font-bold text-red-500 uppercase tracking-widest block mb-1">Upcoming Material Purchase List</span>
-                        <p className="text-sm text-zinc-700 bg-red-50/50 p-3 rounded-xl border border-red-100">{latestDPR.materials_needed}</p>
+                        <span className="text-[9px] font-bold text-red-600 uppercase tracking-widest block mb-2">Upcoming Material Purchase List</span>
+                        <p className="text-sm text-red-900 bg-red-50 p-4 rounded-lg border border-red-200 font-medium leading-relaxed">{latestDPR.materials_needed}</p>
                       </div>
                     )}
                   </div>
                 ) : (
-                  <p className="text-xs text-zinc-500 italic">No daily reports logged yet for this site.</p>
+                  <p className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold text-center py-6">No daily reports logged yet for this site.</p>
                 )}
               </div>
 
               {/* Tasks / Work Status */}
-              <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden p-6">
-                <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                  <span>✅</span> Work Schedule & Tasks
+              <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden p-6">
+                <h3 className="text-[10px] font-bold text-zinc-900 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <svg className="w-4 h-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  Work Schedule & Tasks
                 </h3>
                 {reportData.tasks.length === 0 ? (
-                  <p className="text-xs text-zinc-500 italic">No tasks assigned to this project.</p>
+                  <p className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold text-center py-6">No tasks assigned to this project.</p>
                 ) : (
                   <div className="space-y-3">
                     {reportData.tasks.slice(0, 5).map(task => (
-                      <div key={task.id} className="flex justify-between items-center p-3 bg-zinc-50 rounded-xl border border-zinc-100">
+                      <div key={task.id} className="flex justify-between items-center p-4 bg-zinc-50 rounded-lg border border-zinc-200 hover:border-zinc-300 transition-colors shadow-sm">
                         <div>
-                          <p className={`text-sm font-semibold ${task.status === 'Completed' ? 'text-zinc-400 line-through' : 'text-zinc-800'}`}>{task.title}</p>
-                          <p className="text-[10px] text-zinc-500 mt-0.5">Assigned to: {task.assignedTo || 'Unassigned'}</p>
+                          <p className={`text-sm font-bold tracking-tight ${task.status === 'Completed' ? 'text-zinc-400 line-through' : 'text-zinc-900'}`}>{task.title}</p>
+                          <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-1">Assigned to: {task.assignedTo || 'Unassigned'}</p>
                         </div>
-                        <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                          task.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' :
-                          task.status === 'In Progress' ? 'bg-amber-100 text-[#B45309]' : 'bg-zinc-200 text-zinc-600'
+                        <span className={`text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md border ${
+                          task.status === 'Completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                          task.status === 'In Progress' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-zinc-600 border-zinc-200'
                         }`}>
                           {task.status}
                         </span>
@@ -560,23 +567,24 @@ export default function Projects() {
             <div className="space-y-6">
 
               {/* Subcontractors Deployed */}
-              <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden p-6">
-                <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                  <span>👷</span> Subcontractors Deployed
+              <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden p-6">
+                <h3 className="text-[10px] font-bold text-zinc-900 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <svg className="w-4 h-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                  Subcontractors Deployed
                 </h3>
                 {reportData.subWOs.length === 0 ? (
-                  <p className="text-xs text-zinc-500 italic">No subcontractors allocated.</p>
+                  <p className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold text-center py-6">No subcontractors allocated.</p>
                 ) : (
                   <div className="space-y-3">
                     {reportData.subWOs.map(wo => (
-                      <div key={wo.id} className="flex justify-between items-center p-3 bg-zinc-50 rounded-xl border border-zinc-100">
+                      <div key={wo.id} className="flex justify-between items-center p-4 bg-zinc-50 rounded-lg border border-zinc-200 shadow-sm hover:border-zinc-300 transition-colors">
                         <div>
-                          <p className="text-sm font-bold text-zinc-800">{wo.subName}</p>
-                          <p className="text-[10px] font-semibold text-[#B45309] uppercase tracking-wider mt-0.5">{wo.trade}</p>
+                          <p className="text-sm font-bold text-zinc-900 tracking-tight">{wo.subName}</p>
+                          <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest mt-1">{wo.trade}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-[10px] text-zinc-500 font-medium">Contract Value</p>
-                          <p className="text-sm font-bold text-zinc-900">₹ {(wo.contractValue || 0).toLocaleString('en-IN')}</p>
+                          <p className="text-[9px] text-zinc-400 font-bold uppercase tracking-widest">Contract Value</p>
+                          <p className="text-sm font-black text-zinc-900">₹ {(wo.contractValue || 0).toLocaleString('en-IN')}</p>
                         </div>
                       </div>
                     ))}
@@ -585,22 +593,23 @@ export default function Projects() {
               </div>
 
               {/* Materials on Project (Inventory) */}
-              <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden p-6">
-                <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                  <span>🧱</span> Materials Logged to Site
+              <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden p-6">
+                <h3 className="text-[10px] font-bold text-zinc-900 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <svg className="w-4 h-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+                  Materials Logged to Site
                 </h3>
                 {reportData.inventory.length === 0 ? (
-                  <p className="text-xs text-zinc-500 italic">No materials requested or dispatched to site.</p>
+                  <p className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold text-center py-6">No materials requested or dispatched to site.</p>
                 ) : (
                   <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
                     {reportData.inventory.map(inv => (
-                      <div key={inv.id} className="flex justify-between items-center border-b border-zinc-100 pb-2 mb-2 last:border-0 last:pb-0 last:mb-0">
+                      <div key={inv.id} className="flex justify-between items-center border-b border-zinc-100 pb-3 mb-3 last:border-0 last:pb-0 last:mb-0">
                         <div>
-                          <p className="text-xs font-semibold text-zinc-800">{inv.itemName}</p>
-                          <p className="text-[9px] text-zinc-400">{inv.date}</p>
+                          <p className="text-xs font-bold text-zinc-900 tracking-tight">{inv.itemName}</p>
+                          <p className="text-[9px] text-zinc-400 font-bold uppercase tracking-widest mt-0.5">{inv.date}</p>
                         </div>
-                        <span className={`text-[11px] font-bold ${inv.type === 'IN' ? 'text-emerald-600' : 'text-red-500'}`}>
-                          {inv.type === 'IN' ? '+' : '-'}{inv.quantity} {inv.unit}
+                        <span className={`text-[11px] font-black ${inv.type === 'IN' ? 'text-emerald-700' : 'text-red-600'}`}>
+                          {inv.type === 'IN' ? '+' : '-'}{inv.quantity} <span className="text-[9px] uppercase tracking-widest ml-0.5 font-bold">{inv.unit}</span>
                         </span>
                       </div>
                     ))}
@@ -609,28 +618,29 @@ export default function Projects() {
               </div>
 
               {/* Financial Ledger (Transactions) */}
-              <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden p-6">
-                <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                  <span>💸</span> Project Ledger (Receipts & Payments)
+              <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden p-6">
+                <h3 className="text-[10px] font-bold text-zinc-900 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <svg className="w-4 h-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  Project Ledger (Receipts & Payments)
                 </h3>
                 {reportData.transactions.length === 0 ? (
-                  <p className="text-xs text-zinc-500 italic">No financial transactions recorded.</p>
+                  <p className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold text-center py-6">No financial transactions recorded.</p>
                 ) : (
                   <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
                     {reportData.transactions.map(txn => (
-                      <div key={txn.id} className="flex justify-between items-center p-3 bg-zinc-50 rounded-xl border border-zinc-100">
+                      <div key={txn.id} className="flex justify-between items-center p-4 bg-zinc-50 rounded-lg border border-zinc-200 shadow-sm hover:border-zinc-300 transition-colors">
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
-                              txn.type === 'Income' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                            <span className={`text-[8px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-md border ${
+                              txn.type === 'Income' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200'
                             }`}>
                               {txn.type}
                             </span>
-                            <span className="text-[10px] text-zinc-400 font-medium">{txn.date}</span>
+                            <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">{txn.date}</span>
                           </div>
-                          <p className="text-xs font-semibold text-zinc-700 mt-1 truncate max-w-[200px]">{txn.desc}</p>
+                          <p className="text-xs font-bold text-zinc-900 mt-2 truncate max-w-[200px] tracking-tight">{txn.desc}</p>
                         </div>
-                        <p className={`text-sm font-bold ${txn.type === 'Income' ? 'text-emerald-600' : 'text-zinc-900'}`}>
+                        <p className={`text-sm font-black ${txn.type === 'Income' ? 'text-emerald-700' : 'text-zinc-900'}`}>
                           {txn.type === 'Income' ? '+' : '-'}₹{(txn.amount || 0).toLocaleString('en-IN')}
                         </p>
                       </div>
@@ -650,30 +660,30 @@ export default function Projects() {
   // RENDER 3: FORM VIEW (CREATE / EDIT)
   // ==========================================
   return (
-    <div className="w-full h-full flex flex-col" style={{ fontFamily: 'Poppins, sans-serif' }}>
+    <div className="w-full h-full flex flex-col font-['Inter',sans-serif]">
       <div className="flex-1 flex flex-col min-h-0 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-zinc-200 pb-4 mb-6 shrink-0">
+        <div className="flex items-center justify-between border-b border-zinc-200 pb-6 mb-6 shrink-0">
           <div>
-            <h2 className="text-xl font-bold text-zinc-900 tracking-tight">
+            <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">
               {formData.id ? 'Edit Project Details' : 'Create New Project'}
             </h2>
-            <p className="text-zinc-500 text-sm mt-0.5 font-medium">Link this project to a client to track budgets and costs.</p>
+            <p className="text-zinc-500 text-sm mt-1 font-medium">Link this project to a client to track budgets and costs.</p>
           </div>
           <div className="flex gap-2">
-            <button onClick={() => setCurrentView('list')} className="text-zinc-600 hover:text-zinc-900 text-sm font-semibold transition-colors cursor-pointer bg-white px-4 py-2 rounded-xl border border-zinc-200 flex items-center gap-1.5 shadow-sm">
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+            <button onClick={() => setCurrentView('list')} className="text-zinc-700 hover:text-zinc-900 text-[10px] font-bold uppercase tracking-widest transition-colors cursor-pointer bg-white px-5 py-2.5 rounded-lg border border-zinc-200 flex items-center gap-2 shadow-sm hover:bg-zinc-50">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
               Back
             </button>
           </div>
         </div>
 
-        <form onSubmit={handleSaveProject} className="max-w-4xl space-y-6 pb-8">
+        <form onSubmit={handleSaveProject} className="max-w-4xl space-y-8 pb-10">
           
           {/* CLIENT SECTION */}
-          <div className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm space-y-4">
-            <h3 className="text-sm font-bold text-[#B45309] uppercase tracking-wider border-b border-zinc-100 pb-2">1. Client Details</h3>
+          <div className="bg-white p-8 rounded-xl border border-zinc-200 shadow-sm space-y-6">
+            <h3 className="text-[10px] font-bold text-zinc-900 uppercase tracking-widest border-b border-zinc-100 pb-3">1. Client Details</h3>
 
             {!formData.id && uniqueClients.length > 0 && (
               <div>
@@ -681,7 +691,7 @@ export default function Projects() {
                 <select 
                   value={isNewClient ? 'NEW' : formData.clientName} 
                   onChange={handleClientSelectChange} 
-                  className={`${inputClass} cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23B45309%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.25rem_1.25rem] pr-10`}
+                  className={`${inputClass} bg-zinc-50 cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%2318181B%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.25rem_1.25rem] pr-10`}
                 >
                   {uniqueClients.map(c => (
                     <option key={c.name} value={c.name}>{c.name}</option>
@@ -692,7 +702,7 @@ export default function Projects() {
             )}
 
             {(isNewClient || formData.id || uniqueClients.length === 0) && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="md:col-span-2">
                   <label className={labelClass}>Client / Company Name <span className="text-red-500">*</span></label>
                   <input 
@@ -702,7 +712,7 @@ export default function Projects() {
                     placeholder="e.g., TechCorp Inc." 
                     value={formData.clientName} 
                     onChange={e => setFormData({...formData, clientName: e.target.value})} 
-                    className={`${inputClass} ${(!isNewClient && !formData.id && uniqueClients.length > 0) ? 'opacity-60 cursor-not-allowed bg-zinc-50' : ''}`} 
+                    className={`${inputClass} ${(!isNewClient && !formData.id && uniqueClients.length > 0) ? 'opacity-60 cursor-not-allowed bg-zinc-100' : 'bg-zinc-50'}`} 
                   />
                 </div>
                 <div>
@@ -713,7 +723,7 @@ export default function Projects() {
                     placeholder="e.g., 29ABCDE1234F1Z5" 
                     value={formData.clientGstin} 
                     onChange={e => setFormData({...formData, clientGstin: e.target.value.toUpperCase()})} 
-                    className={`${inputClass} font-mono ${(!isNewClient && !formData.id && uniqueClients.length > 0) ? 'opacity-60 cursor-not-allowed bg-zinc-50' : ''}`} 
+                    className={`${inputClass} font-mono ${(!isNewClient && !formData.id && uniqueClients.length > 0) ? 'opacity-60 cursor-not-allowed bg-zinc-100' : 'bg-zinc-50'}`} 
                     maxLength="15"
                   />
                 </div>
@@ -725,7 +735,7 @@ export default function Projects() {
                     placeholder="Contact Number" 
                     value={formData.clientPhone} 
                     onChange={e => setFormData({...formData, clientPhone: e.target.value})} 
-                    className={`${inputClass} ${(!isNewClient && !formData.id && uniqueClients.length > 0) ? 'opacity-60 cursor-not-allowed bg-zinc-50' : ''}`} 
+                    className={`${inputClass} ${(!isNewClient && !formData.id && uniqueClients.length > 0) ? 'opacity-60 cursor-not-allowed bg-zinc-100' : 'bg-zinc-50'}`} 
                   />
                 </div>
               </div>
@@ -733,10 +743,10 @@ export default function Projects() {
           </div>
 
           {/* PROJECT SECTION */}
-          <div className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm space-y-4">
-            <h3 className="text-sm font-bold text-[#B45309] uppercase tracking-wider border-b border-zinc-100 pb-2">2. Project Details</h3>
+          <div className="bg-white p-8 rounded-xl border border-zinc-200 shadow-sm space-y-6">
+            <h3 className="text-[10px] font-bold text-zinc-900 uppercase tracking-widest border-b border-zinc-100 pb-3">2. Project Details</h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="md:col-span-2">
                 <label className={labelClass}>Project / Site Name <span className="text-red-500">*</span></label>
                 <input 
@@ -745,7 +755,7 @@ export default function Projects() {
                   placeholder="e.g., Office Floor 3 Fitout" 
                   value={formData.name} 
                   onChange={e => setFormData({...formData, name: e.target.value})} 
-                  className={inputClass} 
+                  className={`${inputClass} bg-zinc-50`} 
                 />
               </div>
 
@@ -758,7 +768,7 @@ export default function Projects() {
                   placeholder="0.00" 
                   value={formData.budget} 
                   onChange={e => setFormData({...formData, budget: e.target.value})} 
-                  className={inputClass} 
+                  className={`${inputClass} bg-zinc-50`} 
                 />
               </div>
               
@@ -768,7 +778,7 @@ export default function Projects() {
                   type="date" 
                   value={formData.poDate} 
                   onChange={e => setFormData({...formData, poDate: e.target.value})} 
-                  className={inputClass} 
+                  className={`${inputClass} bg-zinc-50`} 
                 />
               </div>
 
@@ -777,7 +787,7 @@ export default function Projects() {
                 <select 
                   value={formData.status} 
                   onChange={e => setFormData({...formData, status: e.target.value})} 
-                  className={`${inputClass} cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23B45309%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.25rem_1.25rem] pr-10`}
+                  className={`${inputClass} bg-zinc-50 cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%2318181B%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.25rem_1.25rem] pr-10`}
                 >
                   <option value="Planning">Planning</option>
                   <option value="Ongoing">Ongoing</option>
@@ -793,7 +803,7 @@ export default function Projects() {
               <button 
                 type="button"
                 onClick={() => handleDelete(formData.id)}
-                className="px-5 py-3 text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-xl font-bold text-sm transition-colors cursor-pointer mr-auto"
+                className="px-6 py-3.5 text-red-600 hover:text-white bg-red-50 hover:bg-red-600 rounded-lg font-bold text-[10px] uppercase tracking-widest transition-colors cursor-pointer mr-auto border border-red-200 hover:border-red-600 shadow-sm"
               >
                 Delete Project
               </button>
@@ -801,16 +811,18 @@ export default function Projects() {
             <button 
               type="button" 
               onClick={() => setCurrentView('list')}
-              className="px-6 py-3 bg-white border border-zinc-300 hover:bg-zinc-50 text-zinc-700 font-semibold rounded-xl transition-colors text-sm cursor-pointer"
+              className="px-8 py-3.5 bg-white border border-zinc-200 hover:bg-zinc-50 hover:border-zinc-300 text-zinc-700 font-bold rounded-lg transition-colors text-[10px] uppercase tracking-widest cursor-pointer shadow-sm"
             >
               Cancel
             </button>
             <button 
               type="submit" 
               disabled={submitting}
-              className="px-8 py-3 bg-[#B45309] hover:bg-[#92400E] text-white font-semibold rounded-xl transition-all shadow-sm text-sm cursor-pointer disabled:opacity-50"
+              className="px-10 py-3.5 bg-zinc-900 hover:bg-black text-white font-bold rounded-lg transition-all shadow-sm text-[10px] uppercase tracking-widest cursor-pointer disabled:opacity-50 border border-black flex items-center gap-2"
             >
-              {submitting ? 'Saving...' : 'Save Project'}
+              {submitting ? (
+                <><svg className="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> Saving...</>
+              ) : 'Save Project'}
             </button>
           </div>
         </form>

@@ -47,11 +47,39 @@ export default function RateBook() {
     loadData();
   }, []);
 
+  // Filter and group by search query
+  const filteredRates = rates.filter(r => 
+    (r.materialName || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
+    (r.vendorName || '').toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Grouping logic by Material Name
+  const groupedRates = {};
+  filteredRates.forEach(r => {
+    const matName = (r.materialName || 'Uncategorized Material').toUpperCase().trim();
+    if (!groupedRates[matName]) groupedRates[matName] = [];
+    groupedRates[matName].push(r);
+  });
+
+  // Alphabetical Categorization Engine
+  const sortedMaterialNames = Object.keys(groupedRates).sort();
+  const alphabetCategories = {};
+
+  sortedMaterialNames.forEach(material => {
+    const firstLetter = material.charAt(0).toUpperCase();
+    const category = /[A-Z]/.test(firstLetter) ? firstLetter : '#';
+
+    if (!alphabetCategories[category]) {
+      alphabetCategories[category] = [];
+    }
+    alphabetCategories[category].push(material);
+  });
+
   // Auto-expand all if searching
   useEffect(() => {
     if (searchQuery.trim() !== '') {
       const allExpanded = {};
-      Object.keys(groupedRates).forEach(key => allExpanded[key] = true);
+      Object.keys(groupedRates).forEach(key => { allExpanded[key] = true; });
       setExpandedMaterials(allExpanded);
     }
   }, [searchQuery, rates]);
@@ -124,54 +152,27 @@ export default function RateBook() {
     }));
   };
 
-  // Filter and group by search query
-  const filteredRates = rates.filter(r => 
-    (r.materialName || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
-    (r.vendorName || '').toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  // Grouping logic by Material Name
-  const groupedRates = {};
-  filteredRates.forEach(r => {
-    const matName = (r.materialName || 'Uncategorized Material').toUpperCase().trim();
-    if (!groupedRates[matName]) groupedRates[matName] = [];
-    groupedRates[matName].push(r);
-  });
-
-  // --- NEW: ALPHABETICAL CATEGORIZATION ENGINE ---
-  const sortedMaterialNames = Object.keys(groupedRates).sort();
-  const alphabetCategories = {};
-
-  sortedMaterialNames.forEach(material => {
-    const firstLetter = material.charAt(0).toUpperCase();
-    // Group anything that isn't A-Z into a '#' category
-    const category = /[A-Z]/.test(firstLetter) ? firstLetter : '#';
-
-    if (!alphabetCategories[category]) {
-      alphabetCategories[category] = [];
-    }
-    alphabetCategories[category].push(material);
-  });
-
-  const inputClass = "w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-white focus:outline-none focus:border-[#B45309] focus:ring-1 focus:ring-inset focus:ring-[#B45309] text-zinc-900 text-sm font-medium transition-all shadow-sm disabled:opacity-75 disabled:cursor-not-allowed";
-  const labelClass = "block text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5 ml-0.5";
+  const inputClass = "w-full px-4 py-3 rounded-lg border border-zinc-200 bg-zinc-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-zinc-900 text-zinc-900 text-sm font-medium transition-all shadow-sm disabled:opacity-75 disabled:cursor-not-allowed";
+  const labelClass = "block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 ml-0.5";
 
   return (
-    <div className="w-full h-full flex flex-col" style={{ fontFamily: 'Poppins, sans-serif' }}>
+    <div className="w-full h-full flex flex-col font-['Inter',sans-serif]">
       
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center pb-5 border-b border-zinc-200 mb-6 gap-4 shrink-0">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center pb-6 border-b border-zinc-200 mb-6 gap-4 shrink-0">
         <div>
-          <h2 className="text-xl font-bold text-zinc-900 tracking-tight">Material Rate Analyzer</h2>
-          <p className="text-zinc-500 text-sm mt-0.5 font-medium">Compare past purchases to find the best vendor prices.</p>
+          <h2 className="text-2xl font-bold text-zinc-900 tracking-tight">Material Rate Analyzer</h2>
+          <p className="text-zinc-500 text-sm mt-1 font-medium">Compare historical purchases to benchmark the best supplier prices.</p>
         </div>
 
         <div className="flex items-center gap-3">
           <button 
             onClick={() => setIsModalOpen(true)} 
-            className="bg-[#B45309] hover:bg-[#92400E] text-white px-5 rounded-xl text-sm font-semibold transition-all shadow-sm cursor-pointer flex items-center gap-1.5 h-10"
+            className="bg-zinc-900 hover:bg-black text-white px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all shadow-sm cursor-pointer flex items-center gap-2 border border-black"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
             Log New Rate
           </button>
         </div>
@@ -179,14 +180,16 @@ export default function RateBook() {
 
       {/* SEARCH BAR */}
       <div className="mb-6 shrink-0">
-        <div className="flex items-center h-11 bg-white border border-zinc-200 rounded-xl px-4 shadow-sm w-full max-w-2xl">
-          <span className="text-sm text-zinc-400">🔍</span>
+        <div className="flex items-center h-11 bg-white border border-zinc-200 rounded-lg px-4 shadow-sm w-full max-w-2xl focus-within:ring-2 focus-within:ring-zinc-900 transition-all">
+          <svg className="w-4 h-4 text-zinc-400 mr-2 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
           <input 
             type="text" 
-            placeholder="Search material (e.g. '18mm Plywood', 'Asian Paints', vendor name)..." 
+            placeholder="Search material (e.g. '18mm Plywood', 'Century', 'Asian Paints', vendor)..." 
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="bg-transparent border-none text-sm font-medium text-zinc-800 outline-none px-3 w-full placeholder:text-zinc-400"
+            className="bg-transparent border-none text-sm font-medium text-zinc-900 outline-none w-full placeholder:text-zinc-400"
           />
         </div>
       </div>
@@ -195,20 +198,25 @@ export default function RateBook() {
       <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pb-10">
         {loading ? (
           <div className="py-20 text-center text-zinc-400 font-medium text-sm flex flex-col items-center justify-center space-y-3">
-            <div className="w-10 h-10 border-4 border-zinc-200 border-t-[#B45309] rounded-full animate-spin"></div>
-            <p>Syncing rate book from cloud DB...</p>
+            <div className="w-10 h-10 border-4 border-zinc-200 border-t-zinc-900 rounded-full animate-spin"></div>
+            <p>Syncing rate book from cloud database...</p>
           </div>
         ) : Object.keys(alphabetCategories).length === 0 ? (
-          <div className="py-20 text-center text-zinc-400 font-medium bg-white rounded-2xl border border-dashed border-zinc-200 text-sm">
-            No material rates found. Log a new rate or add purchases to auto-build your price book.
+          <div className="py-20 text-center text-zinc-400 font-medium bg-white rounded-xl border border-dashed border-zinc-300 text-sm">
+            <div className="w-12 h-12 bg-zinc-100 rounded-full flex items-center justify-center mx-auto mb-3 text-zinc-400 border border-zinc-200">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+            </div>
+            No material rates found. Log a new rate or add purchase orders to auto-populate your rate catalog.
           </div>
         ) : (
           Object.keys(alphabetCategories).sort().map(letter => (
-            <div key={letter} className="mb-10">
+            <div key={letter} className="mb-8">
               
               {/* Alphabet Header Separator */}
               <div className="flex items-center gap-4 mb-4">
-                <h3 className="text-2xl font-black text-zinc-300 w-6">{letter}</h3>
+                <span className="text-xl font-black text-zinc-900 w-6 font-mono">{letter}</span>
                 <div className="h-px bg-zinc-200 flex-1"></div>
               </div>
 
@@ -218,52 +226,68 @@ export default function RateBook() {
                   // Sort by lowest price first
                   materialRates.sort((a, b) => (parseFloat(a.rate) || 0) - (parseFloat(b.rate) || 0));
                   const bestRateId = materialRates[0].id || materialRates[0]._id;
+                  const lowestRate = parseFloat(materialRates[0].rate) || 0;
+                  const lowestUnit = materialRates[0].unit || 'Pcs';
                   const isExpanded = expandedMaterials[material];
 
                   return (
-                    <div key={material} className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden transition-all duration-200">
+                    <div key={material} className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden transition-all duration-200">
                       
                       {/* Material Title Card Header (Clickable Accordion) */}
                       <div 
                         onClick={() => toggleMaterialExpand(material)}
-                        className="bg-zinc-50/80 px-6 py-4 border-b border-zinc-200 flex justify-between items-center cursor-pointer hover:bg-zinc-100 transition-colors"
+                        className="bg-white px-6 py-4 flex justify-between items-center cursor-pointer hover:bg-zinc-50 transition-colors border-b border-transparent data-[expanded=true]:border-zinc-200"
+                        data-expanded={isExpanded}
                       >
-                        <div className="flex items-center gap-3">
-                          <div className={`p-1.5 rounded-lg bg-white border border-zinc-200 text-[#B45309] transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}>
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                        <div className="flex items-center gap-3.5">
+                          <div className={`w-7 h-7 rounded-md bg-zinc-100 flex items-center justify-center text-zinc-700 transition-transform duration-200 border border-zinc-200 ${isExpanded ? 'rotate-180 bg-zinc-900 text-white border-black' : ''}`}>
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                            </svg>
                           </div>
-                          <h3 className="text-[13px] font-bold text-zinc-900 tracking-wide">
-                            {material}
-                          </h3>
+                          <div>
+                            <h3 className="text-sm font-bold text-zinc-900 tracking-tight">
+                              {material}
+                            </h3>
+                            {!isExpanded && (
+                              <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-0.5">
+                                Lowest Price: <span className="text-emerald-700 font-black">₹{lowestRate.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span> /{lowestUnit}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                        <span className="text-[10px] font-semibold text-zinc-500 bg-white border border-zinc-200 px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">
-                          {materialRates.length} Quote{materialRates.length > 1 ? 's' : ''} / Entry
-                        </span>
+                        <div className="flex items-center gap-3">
+                          <span className="text-[9px] font-bold text-zinc-600 bg-zinc-100 border border-zinc-200 px-3 py-1 rounded-md uppercase tracking-widest shadow-sm">
+                            {materialRates.length} {materialRates.length === 1 ? 'Quote' : 'Quotes'}
+                          </span>
+                        </div>
                       </div>
 
                       {/* Collapsible Vendor Table */}
                       {isExpanded && (
-                        <div className="overflow-x-auto w-full animate-in slide-in-from-top-2 fade-in duration-200">
+                        <div className="overflow-x-auto w-full animate-in slide-in-from-top-2 fade-in duration-200 bg-zinc-50/50">
                           <table className="w-full text-left border-collapse whitespace-nowrap min-w-[800px]">
                             <thead>
-                              <tr className="text-zinc-400 text-[10px] uppercase tracking-widest border-b border-zinc-100 bg-white">
-                                <th className="py-3 px-6 font-bold w-1/3">Vendor Name</th>
-                                <th className="py-3 px-4 font-bold text-right">Rate / Unit</th>
-                                <th className="py-3 px-4 font-bold">Date Logged</th>
-                                <th className="py-3 px-4 font-bold">Notes</th>
-                                <th className="py-3 px-6 font-bold text-right w-20">Action</th>
+                              <tr className="text-zinc-500 text-[10px] uppercase tracking-widest border-b border-zinc-200 bg-zinc-50 font-bold">
+                                <th className="py-3 px-6 w-1/3">Vendor Name</th>
+                                <th className="py-3 px-4 text-right w-44">Rate / Unit</th>
+                                <th className="py-3 px-4 w-36">Date Logged</th>
+                                <th className="py-3 px-4">Notes</th>
+                                <th className="py-3 px-6 text-right w-24">Action</th>
                               </tr>
                             </thead>
-                            <tbody className="text-sm divide-y divide-zinc-50">
+                            <tbody className="text-sm divide-y divide-zinc-100 bg-white">
                               {materialRates.map((rateObj) => {
                                 const recordId = rateObj.id || rateObj._id;
+                                const isBest = recordId === bestRateId;
+
                                 return (
-                                  <tr key={recordId} className={`transition-colors ${recordId === bestRateId ? 'bg-emerald-50/30' : 'hover:bg-zinc-50/60'}`}>
+                                  <tr key={recordId} className={`transition-colors ${isBest ? 'bg-emerald-50/40 hover:bg-emerald-50/70' : 'hover:bg-zinc-50/80'}`}>
                                     <td className="py-4 px-6">
                                       <div className="flex items-center gap-3">
-                                        <span className="font-bold text-xs text-zinc-900">{rateObj.vendorName}</span>
-                                        {recordId === bestRateId && (
-                                          <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 border border-emerald-200 text-[9px] font-bold uppercase tracking-widest rounded shadow-sm">
+                                        <span className="font-bold text-xs text-zinc-900 tracking-tight">{rateObj.vendorName}</span>
+                                        {isBest && (
+                                          <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-300 text-[8px] font-bold uppercase tracking-widest rounded shadow-sm">
                                             Best Price
                                           </span>
                                         )}
@@ -271,22 +295,24 @@ export default function RateBook() {
                                     </td>
 
                                     <td className="py-4 px-4 text-right">
-                                      <span className={`font-bold text-[13px] ${recordId === bestRateId ? 'text-emerald-600' : 'text-[#B45309]'}`}>
+                                      <span className={`font-black text-sm ${isBest ? 'text-emerald-700' : 'text-zinc-900'}`}>
                                         ₹{(parseFloat(rateObj.rate) || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}
                                       </span>
-                                      <span className="text-[10px] text-zinc-400 ml-1 font-semibold">/ {rateObj.unit || 'Pcs'}</span>
+                                      <span className="text-[10px] text-zinc-400 ml-1.5 font-bold uppercase tracking-widest">/ {rateObj.unit || 'Pcs'}</span>
                                     </td>
 
-                                    <td className="py-4 px-4 text-[11px] font-medium text-zinc-500">{rateObj.date}</td>
-                                    <td className="py-4 px-4 text-[11px] text-zinc-500 truncate max-w-[250px] font-medium">{rateObj.notes || '-'}</td>
+                                    <td className="py-4 px-4 text-xs font-bold text-zinc-500 uppercase tracking-widest">{rateObj.date}</td>
+                                    <td className="py-4 px-4 text-xs text-zinc-600 truncate max-w-[250px] font-medium">{rateObj.notes || '-'}</td>
                                     
                                     <td className="py-4 px-6 text-right">
                                       <button 
                                         onClick={() => handleDelete(recordId)} 
-                                        className="p-2 bg-white text-red-500 hover:bg-red-500 hover:text-white border border-red-200 rounded-lg transition-all cursor-pointer shadow-sm"
+                                        className="p-1.5 bg-white text-red-500 hover:bg-red-600 hover:text-white border border-red-200 rounded-lg transition-all cursor-pointer shadow-sm"
                                         title="Delete Rate"
                                       >
-                                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
                                       </button>
                                     </td>
                                   </tr>
@@ -307,25 +333,37 @@ export default function RateBook() {
 
       {/* CREATE MODAL */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh] border border-zinc-200">
             
-            <div className="px-6 py-5 border-b border-zinc-200 flex justify-between items-center bg-zinc-50 shrink-0">
+            <div className="px-8 py-6 border-b border-zinc-200 flex justify-between items-center bg-white shrink-0">
               <div>
                 <h2 className="text-xl font-bold text-zinc-900 tracking-tight">Log Material Rate</h2>
-                <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1">Record a manual quote</p>
+                <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1">Record a supplier quote</p>
               </div>
-              <button onClick={() => setIsModalOpen(false)} className="text-zinc-400 hover:text-zinc-800 cursor-pointer p-2">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              <button 
+                onClick={() => setIsModalOpen(false)} 
+                className="w-8 h-8 rounded-full bg-zinc-100 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-900 transition-colors flex items-center justify-center cursor-pointer"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
             </div>
 
-            <div className="p-6 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-              <form id="rateForm" onSubmit={handleSave} className="space-y-4">
+            <div className="p-8 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] bg-[#F4F4F5]">
+              <form id="rateForm" onSubmit={handleSave} className="space-y-5 bg-white p-6 rounded-xl border border-zinc-200 shadow-sm">
                 
                 <div>
                   <label className={labelClass}>Material Name <span className="text-red-500">*</span></label>
-                  <input type="text" required placeholder="e.g. 18mm Century Plywood" value={formData.materialName} onChange={e => setFormData({...formData, materialName: e.target.value})} className={inputClass} />
+                  <input 
+                    type="text" 
+                    required 
+                    placeholder="e.g. 18mm Century Plywood" 
+                    value={formData.materialName} 
+                    onChange={e => setFormData({...formData, materialName: e.target.value})} 
+                    className={inputClass} 
+                  />
                 </div>
                 
                 <div className="relative" ref={vendorDropdownRef}>
@@ -338,19 +376,22 @@ export default function RateBook() {
                     onChange={handleVendorInputChange} 
                     onFocus={() => {
                       if (vendorSuggestions.length > 0) setShowVendorDropdown(true);
-                    }}
+                    }} 
                     className={inputClass} 
                     autoComplete="off"
                   />
 
                   {/* Autocomplete suggestions */}
                   {showVendorDropdown && (
-                    <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-zinc-200 rounded-xl shadow-xl z-[120] max-h-48 overflow-y-auto">
+                    <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-zinc-200 rounded-xl shadow-xl z-[120] max-h-52 overflow-y-auto">
+                      <div className="p-3 border-b border-zinc-100 text-[10px] font-bold text-zinc-400 uppercase tracking-widest bg-zinc-50 sticky top-0">
+                        Select Supplier
+                      </div>
                       {vendorSuggestions.map(v => (
                         <div
                           key={v.id || v.name}
                           onClick={() => handleSelectVendor(v)}
-                          className="px-4 py-3 hover:bg-amber-50 cursor-pointer text-xs font-semibold text-zinc-900 border-b border-zinc-50 last:border-none"
+                          className="px-5 py-3 hover:bg-zinc-50 cursor-pointer text-xs font-bold text-zinc-900 border-b border-zinc-100 last:border-none transition-colors"
                         >
                           {v.name}
                         </div>
@@ -362,14 +403,22 @@ export default function RateBook() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className={labelClass}>Rate (₹) <span className="text-red-500">*</span></label>
-                    <input type="number" step="any" required placeholder="0.00" value={formData.rate} onChange={e => setFormData({...formData, rate: e.target.value})} className={inputClass} />
+                    <input 
+                      type="number" 
+                      step="any" 
+                      required 
+                      placeholder="0.00" 
+                      value={formData.rate} 
+                      onChange={e => setFormData({...formData, rate: e.target.value})} 
+                      className={inputClass} 
+                    />
                   </div>
                   <div>
                     <label className={labelClass}>Unit</label>
                     <select 
                       value={formData.unit} 
                       onChange={e => setFormData({...formData, unit: e.target.value})} 
-                      className={`${inputClass} cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%23B45309%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.25rem_1.25rem] pr-10`}
+                      className={`${inputClass} cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%2318181B%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.25rem_1.25rem] pr-10`}
                     >
                       <option value="Pcs">Pcs</option>
                       <option value="SqFt">SqFt</option>
@@ -387,23 +436,46 @@ export default function RateBook() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className={labelClass}>Date of Quote/Bill</label>
-                    <input type="date" required value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} className={inputClass} />
+                    <input 
+                      type="date" 
+                      required 
+                      value={formData.date} 
+                      onChange={e => setFormData({...formData, date: e.target.value})} 
+                      className={inputClass} 
+                    />
                   </div>
                   <div>
                     <label className={labelClass}>Notes</label>
-                    <input type="text" placeholder="e.g. Ex-factory rate" value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} className={inputClass} />
+                    <input 
+                      type="text" 
+                      placeholder="e.g. Ex-factory rate" 
+                      value={formData.notes} 
+                      onChange={e => setFormData({...formData, notes: e.target.value})} 
+                      className={inputClass} 
+                    />
                   </div>
                 </div>
 
               </form>
             </div>
 
-            <div className="px-6 py-4 border-t border-zinc-200 flex justify-end gap-3 bg-zinc-50 shrink-0">
-              <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 bg-white border border-zinc-300 hover:bg-zinc-100 text-zinc-700 font-bold rounded-xl text-xs uppercase tracking-widest transition-all cursor-pointer shadow-sm">
+            <div className="px-8 py-5 border-t border-zinc-200 flex justify-end gap-3 bg-white shrink-0">
+              <button 
+                type="button" 
+                onClick={() => setIsModalOpen(false)} 
+                className="px-6 py-2.5 bg-white border border-zinc-200 hover:bg-zinc-50 text-zinc-700 font-bold uppercase tracking-widest rounded-lg text-[10px] transition-all cursor-pointer shadow-sm"
+              >
                 Cancel
               </button>
-              <button type="submit" form="rateForm" disabled={submitting} className="px-6 py-2.5 bg-[#B45309] hover:bg-[#92400E] text-white font-bold rounded-xl text-xs uppercase tracking-widest shadow-md transition-all cursor-pointer disabled:opacity-50">
-                {submitting ? 'Saving...' : 'Save Rate'}
+              <button 
+                type="submit" 
+                form="rateForm" 
+                disabled={submitting} 
+                className="px-8 py-2.5 bg-zinc-900 hover:bg-black text-white font-bold uppercase tracking-widest rounded-lg text-[10px] shadow-sm transition-all cursor-pointer disabled:opacity-50 border border-black flex items-center gap-2"
+              >
+                {submitting ? (
+                  <><svg className="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> Saving...</>
+                ) : 'Save Rate'}
               </button>
             </div>
 
