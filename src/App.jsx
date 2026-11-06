@@ -23,6 +23,7 @@ export default function App() {
   const [adminPasskey, setAdminPasskey] = useState('');
   const [adminError, setAdminError] = useState('');
 
+  // Jyanipur Brand Filter applied across the app for icons/logos
   const teakTintFilter = 'brightness(0) saturate(100%) invert(36%) sepia(61%) saturate(2251%) hue-rotate(5deg) brightness(95%) contrast(92%)';
 
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
@@ -157,10 +158,10 @@ export default function App() {
 
   // LOGGED OUT: LOGIN SCREEN
   return (
-    <div className="fixed inset-0 w-screen h-[100dvh] flex items-center justify-center bg-[url('/background.png')] bg-cover bg-center bg-no-repeat px-4 font-['Poppins'] overflow-hidden overscroll-none bg-zinc-900">
+    <div className="fixed inset-0 w-screen h-[100dvh] flex items-center justify-center bg-[url('/background.png')] bg-cover bg-center bg-no-repeat px-4 font-['Inter',sans-serif] overflow-hidden overscroll-none bg-zinc-900">
       
-      <div className="absolute inset-0 bg-[#B45309]/30 mix-blend-multiply"></div>
-      <div className="absolute inset-0 bg-black/40"></div>
+      {/* Brand specific backdrop blending for the login screen */}
+      <div className="absolute inset-0 bg-zinc-900/60 backdrop-blur-sm"></div>
 
       {/* TOP RIGHT ADMIN BUTTON (STEALTH MODE - BIG LOGO ONLY) */}
       <button 
@@ -193,10 +194,10 @@ export default function App() {
               </button>
               
               <div className="flex flex-col items-center text-center mb-6">
-                <div className="w-12 h-12 rounded-full bg-[#B45309]/10 flex items-center justify-center mb-4">
+                <div className="w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center mb-4 border border-zinc-200">
                   <img src="/jyanipur.png" alt="Lock" className="h-5 w-auto" style={{ filter: teakTintFilter }} />
                 </div>
-                <h3 className="text-lg font-bold text-zinc-800">Admin Authorization</h3>
+                <h3 className="text-lg font-bold text-zinc-900 tracking-tight">Admin Authorization</h3>
                 <p className="text-[10px] text-zinc-500 uppercase tracking-widest mt-1 font-bold">Restricted Access Zone</p>
               </div>
 
@@ -214,12 +215,12 @@ export default function App() {
                     value={adminPasskey} 
                     onChange={(e) => setAdminPasskey(e.target.value)} 
                     placeholder="Enter admin passkey"
-                    className="w-full px-5 py-3.5 rounded-2xl border border-zinc-200 bg-zinc-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#B45309] text-zinc-900 text-sm font-medium transition-all shadow-inner" 
+                    className="w-full px-5 py-3.5 rounded-2xl border border-zinc-200 bg-zinc-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-zinc-900 text-zinc-900 text-sm font-medium transition-all shadow-inner" 
                     autoFocus
                     required 
                   />
                 </div>
-                <button type="submit" className="w-full py-3.5 bg-[#B45309] hover:bg-[#92400E] text-white font-bold rounded-2xl transition-all cursor-pointer text-sm shadow-[0_10px_20px_rgba(180,83,9,0.2)]">
+                <button type="submit" className="w-full py-3.5 bg-zinc-900 hover:bg-black text-white font-bold rounded-2xl transition-all cursor-pointer text-xs uppercase tracking-widest border border-black shadow-sm">
                   Verify & Open Console
                 </button>
               </form>
@@ -238,15 +239,15 @@ export default function App() {
           <img 
             src="/jyanipur.png" 
             alt="Jyanipur Symbol" 
-            className="h-24 w-auto object-contain drop-shadow-sm" 
+            className="h-20 w-auto object-contain drop-shadow-sm" 
             style={{ filter: teakTintFilter }} 
             onError={(e) => { e.target.style.display='none'; }} 
           />
-          <p className="text-zinc-500 text-xs uppercase tracking-widest mt-4 font-bold">Portal Access</p>
+          <p className="text-zinc-500 text-[10px] uppercase tracking-widest mt-4 font-bold">Enterprise ERP Access</p>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50/90 text-red-600 text-xs rounded-2xl border border-red-200 text-center font-bold tracking-wide">
+          <div className="mb-6 p-4 bg-red-50 text-red-600 text-[11px] rounded-2xl border border-red-200 text-center font-bold tracking-wide">
             {error}
           </div>
         )}
@@ -258,10 +259,10 @@ export default function App() {
               type="email" 
               name="email"
               autoComplete="email"
-              placeholder="Enter your registered email"
+              placeholder="accounts@jyanipur.in"
               value={email} 
               onChange={(e) => setEmail(e.target.value)} 
-              className="w-full px-5 py-4 rounded-2xl border border-zinc-200 bg-zinc-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#B45309] text-zinc-900 text-sm font-medium transition-all shadow-inner" 
+              className="w-full px-5 py-4 rounded-2xl border border-zinc-200 bg-zinc-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-zinc-900 text-zinc-900 text-sm font-medium transition-all shadow-inner placeholder:text-zinc-400" 
               required 
             />
           </div>
@@ -274,7 +275,7 @@ export default function App() {
               placeholder="Enter your secure passkey"
               value={password} 
               onChange={(e) => setPassword(e.target.value)} 
-              className="w-full px-5 py-4 rounded-2xl border border-zinc-200 bg-zinc-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#B45309] text-zinc-900 text-sm font-medium transition-all shadow-inner" 
+              className="w-full px-5 py-4 rounded-2xl border border-zinc-200 bg-zinc-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-zinc-900 text-zinc-900 text-sm font-medium transition-all shadow-inner placeholder:text-zinc-400" 
               required 
             />
           </div>
@@ -285,14 +286,14 @@ export default function App() {
               id="rememberMe" 
               checked={rememberMe}
               onChange={(e) => setRememberMe(e.target.checked)}
-              className="w-4 h-4 text-[#B45309] bg-zinc-100 border-zinc-300 rounded focus:ring-[#B45309] cursor-pointer"
+              className="w-4 h-4 text-zinc-900 bg-zinc-100 border-zinc-300 rounded focus:ring-zinc-900 cursor-pointer"
             />
             <label htmlFor="rememberMe" className="ml-3 text-xs font-bold text-zinc-500 cursor-pointer select-none">
               Keep me signed in
             </label>
           </div>
 
-          <button type="submit" className="w-full py-4 bg-[#B45309] hover:bg-[#92400E] text-white font-bold rounded-2xl transition-all cursor-pointer text-sm shadow-[0_10px_20px_rgba(180,83,9,0.2)] hover:shadow-[0_15px_25px_rgba(180,83,9,0.3)] hover:-translate-y-1 tracking-wide">
+          <button type="submit" className="w-full py-4 bg-zinc-900 hover:bg-black text-white font-bold rounded-2xl transition-all cursor-pointer text-xs uppercase tracking-widest shadow-sm border border-black hover:-translate-y-0.5 mt-2">
             Enter Portal
           </button>
         </form>
